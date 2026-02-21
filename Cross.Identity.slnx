@@ -13,6 +13,7 @@
     <File Path="RefreshToken.md" />
     <File Path="IdentityServer.png" />
     <File Path="IdentityServer.svg" />
+    <File Path="GitVersion.yml" />
   </Folder>
   <Folder Name="/_nuget/">
     <File Path="_nuget\config.nuspec" />
