@@ -102,7 +102,7 @@ jobs:
         run: echo "github.head_ref 1 ${{ github.head_ref }} 2 $GITHUB_REF 3 ${{ github.ref }}"
 
       - name: Create git Tag
-        if: ${{ contains('refs/heads/hotfix', github.ref) || contains('refs/heads/hotfix', github.ref) || contains('refs/heads/master', github.ref) }}
+        if: ${{ contains('refs/heads/hotfix', github.ref) || contains('refs/heads/release', github.ref) || contains('refs/heads/master', github.ref) }}
         run: |
           git tag v${{ env.semVer }}
 
