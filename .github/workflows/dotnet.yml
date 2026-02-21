@@ -96,7 +96,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Nuget Pack
-        run: nuget pack config.nuspec -Symbols -Version ${{ env.semVer }}
+        run: nuget pack _nuget/config.nuspec -Symbols -Version ${{ env.semVer }}
 
       - name: ref
         run: echo "github.head_ref 1 ${{ github.head_ref }} 2 $GITHUB_REF 3 ${{ github.ref }}"
