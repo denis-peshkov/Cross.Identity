@@ -65,7 +65,7 @@ jobs:
             -p:InformationalVersion="${GitVersion_InformationalVersion}" \
             -p:Company="Denis Peshkov" \
             -p:Product="Cross.Identity" \
-            -p:Description="Cross.Identity: identity and authentication flows, JWT, process engine. Published on Nuget at https://www.nuget.org/packages/Cross.Identity" \
+            -p:Description="Cross.Identity: identity and authentication flows\, JWT\, process engine. Published on Nuget at https://www.nuget.org/packages/Cross.Identity" \
             -p:RepositoryUrl="https://github.com/denis-peshkov/Cross.Identity.git" \
             -p:RepositoryType=git \
             -p:CLSCompliant=true \
