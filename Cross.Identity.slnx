@@ -1,0 +1,32 @@
+﻿<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/workflows/">
+    <File Path=".github\workflows\dotnet.yml" />
+  </Folder>
+  <Folder Name="/assets/">
+    <File Path=".editorconfig" />
+    <File Path=".gitattributes" />
+    <File Path=".gitignore" />
+    <File Path="NuGet.config" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+    <File Path="RefreshToken.md" />
+    <File Path="IdentityServer.png" />
+    <File Path="IdentityServer.svg" />
+  </Folder>
+  <Folder Name="/_nuget/">
+    <File Path="_nuget\config.nuspec" />
+  </Folder>
+  <Project Path="Cross.Identity.UnitTests\Cross.Identity.UnitTests.csproj" Type="Classic C#" />
+  <Project Path="Cross.Identity\Cross.Identity.csproj" Type="Classic C#" />
+  <Project Path="Cross.Notification\Cross.Notification.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.AwsSecretsJson\Cross.PepperVault.AwsSecretsJson.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.AzureKvJson\Cross.PepperVault.AzureKvJson.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.AzureKvVersioned\Cross.PepperVault.AzureKvVersioned.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.EnvJson\Cross.PepperVault.EnvJson.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.Env\Cross.PepperVault.Env.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.FileJson\Cross.PepperVault.FileJson.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.GcpSecretManagerJson\Cross.PepperVault.GcpSecretManagerJson.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault.HcvKv2Json\Cross.PepperVault.HcvKv2Json.csproj" Type="Classic C#" />
+  <Project Path="Cross.PepperVault\Cross.PepperVault.csproj" Type="Classic C#" />
+</Solution>

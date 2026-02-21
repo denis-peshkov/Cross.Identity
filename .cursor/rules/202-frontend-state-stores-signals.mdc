@@ -1,0 +1,119 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Управление состоянием: Stores и Signals
+
+## Текущий подход
+
+- **RxJS и сервисы** - основной подход: использование RxJS Observable и сервисов для управления состоянием
+- **LanguageStore** - использовать `LanguageStore` для управления языком приложения
+- **BehaviorSubject** - использовать `BehaviorSubject` для хранения текущего состояния
+
+## LanguageStore паттерн
+
+- **Store как сервис** - использовать сервис с Observable для хранения состояния
+- **Текущее значение** - использовать `currentLanguage$` Observable для подписки на изменения
+- **Синхронное значение** - использовать `currentLanguageCode` для получения текущего значения
+
+Пример:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class LanguageStore {
+  private readonly _currentLanguage$ = new BehaviorSubject<LanguageCode>('RU');
+
+  get currentLanguage$(): Observable<LanguageCode> {
+    return this._currentLanguage$.asObservable();
+  }
+
+  get currentLanguageCode(): LanguageCode {
+    return this._currentLanguage$.value;
+  }
+
+  setCurrentLanguageCode(lang: LanguageCode): void {
+    this._currentLanguage$.next(lang);
+  }
+}
+```
+
+## Использование в компонентах
+
+- **Подписка через pipe** - использовать `pipe(takeUntilDestroyed(this.destroyRef))` для подписки
+- **distinctUntilChanged** - использовать для предотвращения дублирующих значений
+
+Пример:
+```typescript
+this.languageStore.currentLanguage$
+  .pipe(
+    distinctUntilChanged(),
+    switchMap(lang => {
+      // Реакция на изменение языка
+      return this.loadResourcesForLanguage(lang);
+    }),
+    takeUntilDestroyed(this.destroyRef),
+  )
+  .subscribe();
+```
+
+## Кэширование в сервисах
+
+- **In-memory cache** - использовать `Map` для кэширования данных в сервисах
+- **Ключ кэша** - использовать составной ключ (например, `${lang}_${resource}`)
+
+Пример:
+```typescript
+@Injectable({ providedIn: 'root' })
+export class TranslationService {
+  private readonly memoryCache = new Map<string, Translation[]>();
+
+  loadResource$(resource: string): Observable<Translation[]> {
+    const lang = this.languageStore.currentLanguageCode;
+    const cacheKey = `${lang}_${resource}`;
+
+    if (this.memoryCache.has(cacheKey)) {
+      return of(this.memoryCache.get(cacheKey)!);
+    }
+
+    return this.http.get<Translation[]>(`/assets/i18n/${lang}/${resource}.json`)
+      .pipe(
+        tap(data => this.memoryCache.set(cacheKey, data)),
+        shareReplay(1),
+      );
+  }
+}
+```
+
+## Angular Signals (если используется)
+
+- **signal()** - использовать `signal()` для создания реактивного состояния
+- **computed()** - использовать `computed()` для вычисляемых значений
+- **effect()** - использовать `effect()` для side effects
+
+Пример:
+```typescript
+import { signal, computed } from '@angular/core';
+
+export class Component {
+  private readonly _isOpen = signal<boolean>(false);
+
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly isClosed = computed(() => !this._isOpen());
+
+  open(): void {
+    this._isOpen.set(true);
+  }
+
+  close(): void {
+    this._isOpen.set(false);
+  }
+}
+```
+
+## Примечание
+
+В проекте **основной подход - RxJS и сервисы**. Signals используются редко (только в отдельных компонентах). При создании нового функционала предпочтительно использовать паттерн с RxJS и BehaviorSubject, как в `LanguageStore`.

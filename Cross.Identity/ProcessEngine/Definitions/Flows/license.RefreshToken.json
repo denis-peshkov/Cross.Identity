@@ -1,0 +1,30 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+        ]
+      },
+      "next": "refreshToken"
+    },
+    {
+      "kind": "refreshToken",
+      "refreshTokenKey": "collectForm.RefreshToken",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "access_token": "refreshToken.AccessToken",
+        "refresh_token": "refreshToken.RefreshToken",
+        "token_type": "refreshToken.TokenType",
+        "expires_in": "refreshToken.ExpiresIn",
+        "user_id": "refreshToken.UserId"
+      },
+      "next": null
+    }
+  ]
+}

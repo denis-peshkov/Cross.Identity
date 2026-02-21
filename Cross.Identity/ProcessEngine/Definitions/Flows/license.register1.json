@@ -1,0 +1,63 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true },
+          { "key": "FullName", "type": "String", "required": true, "min": 3, "max": 128 },
+          { "key": "Company", "type": "String", "required": true, "min": 2, "max": 128 },
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
+          { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 },
+          { "key": "AcceptGetEmails", "type": "Bool", "required": false },
+          { "key": "AcceptLicenseTerms", "type": "Bool", "required": true }
+        ],
+        "validators": [
+          { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }
+        ]
+      },
+      "next": "sendCode"
+    },
+    {
+      "kind": "sendCode",
+      "channel": "email",
+      "selectorKey": "collectForm.Email",
+      "next": "collectForm"
+    },
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true },
+          { "key": "Code", "type": "String", "required": true, "min": 4, "max": 8 }
+        ]
+      },
+      "next": "verifyCode"
+    },
+    {
+      "kind": "verifyCode",
+      "channel": "email",
+      "identityKey": "verification.Email",
+      "codeKey": "verification.Code",
+      "next": "createUser"
+    },
+    {
+      "kind": "createUser",
+      "map": {
+        "Email": "registration.Email",
+        "FullName": "registration.FullName",
+        "Company": "registration.Company",
+        "AcceptGetEmails": "registration.AcceptGetEmails",
+        "AcceptLicenseTerms": "registration.AcceptLicenseTerms"
+      },
+      "next": "issueJwt"
+    },
+    {
+      "kind": "issueJwt",
+      "lifetimeSeconds": 43200,
+      "subKey": "user.Id",
+      "claims": { "scope": "license.portal", "amr": "email_code" }
+    }
+  ]
+}

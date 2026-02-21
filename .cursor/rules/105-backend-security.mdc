@@ -1,0 +1,106 @@
+# Безопасность бэкенда
+
+## Валидация входных данных
+
+- **FluentValidation** - использовать FluentValidation для валидации DTOs
+- **Валидация на уровне контроллера** - проверять валидность данных перед обработкой
+
+Пример:
+```csharp
+if (!ModelState.IsValid)
+{
+    foreach (var error in ModelState)
+    {
+        _logger.LogWarning("ModelState error for {Key}: {Errors}",
+            error.Key,
+            string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
+    }
+}
+```
+
+## Санитизация данных
+
+- **Санитизация входных данных** - санитизировать все пользовательские данные перед использованием
+- **Защита от XSS** - экранировать HTML/JavaScript в пользовательском вводе
+- **Защита от SQL Injection** - использовать параметризованные запросы, не использовать строковую конкатенацию
+
+## Логирование чувствительных данных
+
+- **Не логировать чувствительные данные** - не логировать пароли, токены, персональные данные
+- **Маскирование данных** - маскировать чувствительные данные в логах (например, `****` вместо пароля)
+- **Структурированное логирование** - использовать параметризованные сообщения для логирования
+
+Пример:
+```csharp
+// ❌ Плохо
+_logger.LogInformation("User login: {Username}, Password: {Password}", username, password);
+
+// ✅ Хорошо
+_logger.LogInformation("User login attempt: {Username}", username);
+```
+
+## CORS
+
+- **Настройка CORS** - настраивать CORS политику для разрешенных источников
+- **Порядок middleware** - CORS должен быть настроен до middleware, которые читают заголовки
+- **AllowCredentials** - использовать `AllowCredentials()` для поддержки cookies
+
+Пример:
+```csharp
+services.AddCors(o =>
+{
+    o.AddPolicy("ui", builder =>
+    {
+        builder
+            .WithOrigins(configuration["Cors:AllowedOrigins"]!.Split(","))
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()
+            .WithExposedHeaders("Set-Cookie");
+    });
+});
+
+// В ConfigureApp - CORS должен быть до других middleware
+app.UseCors("ui");
+```
+
+## HTTPS
+
+- **HTTPS в production** - использовать HTTPS в production окружении
+- **HSTS** - использовать HTTP Strict Transport Security (HSTS) в production
+- **HTTPS Redirection** - перенаправлять HTTP на HTTPS в production
+
+Пример:
+```csharp
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+```
+
+## Защита от атак
+
+- **Rate Limiting** - использовать rate limiting для защиты от DDoS атак
+- **Request Size Limits** - ограничивать размер запросов (особенно для загрузки файлов)
+- **Timeout** - устанавливать таймауты для долгих операций
+
+Пример ограничения размера:
+```csharp
+services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 10485760; // 10 MB
+    options.ValueLengthLimit = int.MaxValue;
+});
+```
+
+## Безопасность заголовков
+
+- **Security Headers** - устанавливать security headers (X-Content-Type-Options, X-Frame-Options и т.д.)
+- **Custom Headers** - использовать middleware для установки кастомных заголовков безопасности
+
+## Защита API
+
+- **API Versioning** - использовать версионирование API для контроля изменений
+- **Rate Limiting per User** - ограничивать количество запросов на пользователя
+- **IP Whitelisting** - использовать whitelist IP адресов для критичных endpoints (если необходимо)

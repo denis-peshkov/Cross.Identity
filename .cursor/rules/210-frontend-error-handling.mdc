@@ -1,0 +1,198 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Обработка ошибок
+
+## Обработка ошибок HTTP
+
+- **В ApiService** - общая обработка ошибок должна быть в `ApiService`
+- **В компонентах** - специфичная обработка ошибок в компонентах через `catchError`
+- **Пользовательские сообщения** - использовать переводы для сообщений об ошибках
+
+Пример в ApiService:
+```typescript
+private handleError = (error: HttpErrorResponse): Observable<never> => {
+  if (error.status === 401) {
+    // Обработка неавторизованного доступа
+    this.router.navigate(['/login']);
+  } else if (error.status === 403) {
+    // Обработка запрещенного доступа
+    console.error('Доступ запрещен');
+  } else if (error.status >= 500) {
+    // Обработка серверных ошибок
+    console.error('Серверная ошибка:', error);
+  }
+
+  return throwError(() => error);
+};
+```
+
+Пример в компоненте:
+```typescript
+this.apiService.post$(endpoint, formData)
+  .pipe(
+    takeUntilDestroyed(this.destroyRef),
+    catchError(error => {
+      console.error('Ошибка при отправке резюме:', error);
+      alert(this.translationService.get('common_resume_error'));
+      return of(null);
+    }),
+  )
+  .subscribe({
+    next: (response) => {
+      if (response) {
+        // Обработка успешного ответа
+      }
+    },
+  });
+```
+
+## Обработка ошибок валидации форм
+
+- **Form validation** - проверять `form.invalid` перед отправкой
+- **markAllAsTouched()** - вызывать для отображения ошибок валидации
+- **Показ ошибок** - отображать ошибки валидации рядом с полями через компоненты форм
+
+Пример:
+```typescript
+onSubmit(): void {
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    return;
+  }
+
+  // Отправка формы
+}
+```
+
+## Обработка ошибок валидации полей
+
+- **Кастомные валидаторы** - создавать кастомные валидаторы для специфичной валидации
+- **Показ ошибок** - компоненты форм автоматически показывают ошибки валидации
+- **Сообщения об ошибках** - использовать переводы для сообщений об ошибках валидации
+
+Пример:
+```typescript
+this.form = this.fb.group({
+  phone: ['', [Validators.required, this.phoneValidator]],
+});
+
+phoneValidator(control: AbstractControl): ValidationErrors | null {
+  const phone = control.value;
+  if (!phone) return null;
+
+  if (!isValidPhoneNumber(phone)) {
+    return { invalidPhone: true };
+  }
+
+  return null;
+}
+```
+
+## Обработка ошибок роутинга
+
+- **Проверка данных** - проверять наличие данных перед использованием
+- **Редирект при отсутствии** - выполнять редирект, если данные не найдены
+- **Обработка невалидных параметров** - проверять валидность параметров роута
+
+Пример:
+```typescript
+ngOnInit(): void {
+  const vacancyId = this.route.snapshot.paramMap.get('id');
+
+  if (!vacancyId) {
+    this.router.navigate(['../'], { relativeTo: this.route });
+    return;
+  }
+
+  this.vacancy = vacancies.find(v => v.id === vacancyId);
+
+  if (!this.vacancy) {
+    this.router.navigate(['../'], { relativeTo: this.route });
+    return;
+  }
+}
+```
+
+## Логирование ошибок
+
+- **console.error** - использовать `console.error` для логирования ошибок в разработке
+- **Не логировать чувствительные данные** - не логировать пароли, токены, персональные данные
+- **Структурированное логирование** - логировать с контекстом для отладки
+
+Пример:
+```typescript
+catchError(error => {
+  console.error('Ошибка при отправке резюме:', {
+    endpoint,
+    error: error.message,
+    status: error.status,
+    timestamp: new Date().toISOString(),
+  });
+  return throwError(() => error);
+})
+```
+
+## Пользовательские сообщения об ошибках
+
+- **Использовать переводы** - все сообщения об ошибках должны быть переведены через `TranslationService`
+- **Дружелюбные сообщения** - сообщения должны быть понятными для пользователя, без технических деталей
+- **Не показывать технические детали** - не показывать stack traces, коды ошибок и технические детали пользователю
+
+Пример:
+```typescript
+// ❌ Плохо
+alert(`Error: ${error.message}`);
+alert(`Status: ${error.status}`);
+
+// ✅ Хорошо
+alert(this.translationService.get('common_resume_error'));
+
+// ✅ Хорошо - с контекстом, но без технических деталей
+const message = this.translationService.get('common_resume_error');
+alert(`${message}. Пожалуйста, попробуйте позже.`);
+```
+
+## Обработка ошибок в Observable цепочках
+
+- **catchError** - использовать `catchError` для обработки ошибок в Observable цепочках
+- **Возврат fallback значения** - возвращать fallback значение через `of()` при ошибке
+- **Проброс ошибки** - использовать `throwError()` если ошибку нужно пробросить дальше
+
+Пример:
+```typescript
+this.apiService.get$<Vacancy[]>('/vacancies')
+  .pipe(
+    takeUntilDestroyed(this.destroyRef),
+    catchError(error => {
+      console.error('Ошибка загрузки вакансий:', error);
+      // Возвращаем пустой массив как fallback
+      return of([]);
+    }),
+  )
+  .subscribe(vacancies => {
+    this.vacancies = vacancies;
+  });
+```
+
+## Глобальная обработка ошибок
+
+- **ErrorHandler** - использовать Angular `ErrorHandler` для глобальной обработки необработанных ошибок
+- **Interceptors** - использовать HTTP interceptors для глобальной обработки HTTP ошибок
+
+Пример ErrorHandler:
+```typescript
+@Injectable()
+export class GlobalErrorHandler implements ErrorHandler {
+  handleError(error: Error): void {
+    console.error('Глобальная ошибка:', error);
+    // Отправка в сервис мониторинга
+  }
+}
+```

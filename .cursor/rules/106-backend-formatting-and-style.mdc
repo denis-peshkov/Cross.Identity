@@ -1,0 +1,323 @@
+# Форматирование и стиль кода бэкенда (.NET)
+
+## EditorConfig правила
+
+- **Отступ**: 4 пробела для всех C# файлов (`indent_size = 4`)
+- **Кодировка**: UTF-8-BOM (`charset = utf-8-bom`)
+- **Конец строки**: CRLF (`end_of_line = crlf`)
+- **Trailing whitespace**: удалять пробелы в конце строк (`trim_trailing_whitespace = true`)
+- **Конец файла**: всегда добавлять пустую строку в конце файла (`insert_final_newline = true`)
+
+## Использование var
+
+- **Использовать `var` везде** - использовать `var` для всех локальных переменных и параметров
+- **Тип должен быть очевиден** - использовать явный тип только если тип не очевиден из контекста
+
+Пример:
+```csharp
+// ✅ Правильно
+var request = command.Dto;
+var recipientEmail = _configuration.GetValue<string>("EmailOptions:NotificationEmail");
+var htmlBody = string.Empty;
+
+// ❌ Неправильно
+SubmitResumeDto request = command.Dto;
+string recipientEmail = _configuration.GetValue<string>("EmailOptions:NotificationEmail");
+string htmlBody = string.Empty;
+```
+
+## Именование
+
+### Private поля
+- **Префикс `_`** - все private поля должны начинаться с подчеркивания и использовать camelCase
+- **readonly поля** - private readonly поля также используют префикс `_`
+
+Пример:
+```csharp
+private readonly IMediator _mediator;
+private readonly ILogger<VacanciesController> _logger;
+private readonly string[] _requiredPermissions;
+```
+
+### Public свойства и методы
+- **PascalCase** - все public свойства и методы используют PascalCase
+- **Async методы** - все async методы должны иметь суффикс `Async`
+
+Пример:
+```csharp
+public string Name { get; set; }
+public async Task<bool> HandleAsync(SubmitResumeCommand command, CancellationToken cancellationToken)
+```
+
+### Константы
+- **PascalCase или ALL_UPPER** - константы могут использовать PascalCase или ALL_UPPER с подчеркиваниями
+
+Пример:
+```csharp
+private const string DefaultLanguage = "en";
+private const int MAX_RETRY_COUNT = 3;
+```
+
+## Модификаторы доступа
+
+- **Всегда явные** - всегда указывать модификаторы доступа (`private`, `public`, `protected`, `internal`)
+- **Порядок модификаторов** - следовать стандартному порядку: `public, private, protected, internal, static, readonly, async`
+
+Пример:
+```csharp
+public class VacanciesController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    protected override async Task<bool> HandleAsync(...)
+}
+```
+
+## Фигурные скобки
+
+- **Всегда использовать фигурные скобки** - даже для однострочных блоков
+- **Новая строка перед открывающей скобкой** - открывающая фигурная скобка на новой строке
+
+Пример:
+```csharp
+// ✅ Правильно
+if (!ModelState.IsValid)
+{
+    foreach (var error in ModelState)
+    {
+        _logger.LogWarning("Error: {Key}", error.Key);
+    }
+}
+
+// ❌ Неправильно
+if (!ModelState.IsValid)
+    _logger.LogWarning("Invalid");
+
+if (!ModelState.IsValid) {
+    _logger.LogWarning("Invalid");
+}
+```
+
+## Управляющие конструкции
+
+- **Новая строка перед else** - `else` на новой строке
+- **Новая строка перед catch** - `catch` на новой строке
+- **Новая строка перед finally** - `finally` на новой строке
+
+Пример:
+```csharp
+if (condition)
+{
+    DoSomething();
+}
+else
+{
+    DoSomethingElse();
+}
+
+try
+{
+    DoSomething();
+}
+catch (Exception ex)
+{
+    HandleError(ex);
+}
+finally
+{
+    Cleanup();
+}
+```
+
+## Expression-bodied members
+
+- **Методы** - использовать expression-bodied методы для простых однострочных методов
+- **Свойства** - использовать expression-bodied свойства для простых get-only свойств
+- **Конструкторы** - не использовать expression-bodied конструкторы
+
+Пример:
+```csharp
+// ✅ Правильно
+public static string ToCamelCase(this string input)
+    => Regex.Replace(input, "^[A-Z]", m => m.Value.ToLowerInvariant());
+
+public string Name { get; set; } = string.Empty;
+
+// ❌ Неправильно для конструкторов
+public MyClass(string name) => _name = name;
+```
+
+## Современные возможности C#
+
+### Pattern matching
+- **Использовать pattern matching** - вместо `is` с приведением типа использовать pattern matching
+
+Пример:
+```csharp
+// ✅ Правильно
+var notSpecified = language switch
+{
+    "en" => "Not specified",
+    "ru" => "Не указано",
+    _ => "Not specified"
+};
+
+// ❌ Неправильно
+string notSpecified;
+if (language == "en")
+    notSpecified = "Not specified";
+else if (language == "ru")
+    notSpecified = "Не указано";
+else
+    notSpecified = "Not specified";
+```
+
+### Null propagation
+- **Использовать null propagation** - использовать `?.` и `??` для работы с nullable типами
+
+Пример:
+```csharp
+// ✅ Правильно
+var email = _configuration.GetValue<string>("EmailOptions:NotificationEmail")
+             ?? _configuration.GetValue<string>("EmailOptions:FromUserAddress");
+var permissions = headersContextAccessor.UserPermissions?
+    .Any(claim => claim.Contains(permission)) ?? false;
+
+// ❌ Неправильно
+string email;
+if (_configuration.GetValue<string>("EmailOptions:NotificationEmail") != null)
+    email = _configuration.GetValue<string>("EmailOptions:NotificationEmail");
+else
+    email = _configuration.GetValue<string>("EmailOptions:FromUserAddress");
+```
+
+### Object и Collection initializers
+- **Использовать initializers** - использовать object и collection initializers вместо множественных присваиваний
+
+Пример:
+```csharp
+// ✅ Правильно
+var command = new SubmitResumeCommand
+{
+    Dto = request ?? new SubmitResumeDto()
+};
+
+var parameters = new Dictionary<string, string>
+{
+    { "name", request.Name },
+    { "email", request.Email }
+};
+
+// ❌ Неправильно
+var command = new SubmitResumeCommand();
+command.Dto = request ?? new SubmitResumeDto();
+```
+
+## Пробелы
+
+- **После ключевых слов** - пробел после ключевых слов в управляющих конструкциях (`if`, `for`, `while`, `catch`)
+- **Вокруг операторов** - пробелы вокруг бинарных операторов (`+`, `-`, `==`, `!=`, `&&`, `||`)
+- **После приведения типа** - без пробела после приведения типа (`(Type)variable`)
+- **В параметрах методов** - без пробелов внутри скобок параметров (`Method(param1, param2)`)
+
+Пример:
+```csharp
+// ✅ Правильно
+if (condition && otherCondition)
+{
+    var result = (string)value;
+    DoSomething(param1, param2);
+}
+
+// ❌ Неправильно
+if(condition&&otherCondition)
+{
+    var result = ( string )value;
+    DoSomething( param1, param2 );
+}
+```
+
+## Комментарии
+
+- **На русском языке** - все комментарии должны быть на русском языке
+- **XML комментарии** - использовать XML комментарии для public методов и свойств
+- **Объяснять "почему"** - комментарии должны объяснять "почему", а не "что"
+
+Пример:
+```csharp
+/// <summary>
+/// Конвертирует PascalCase/TitleCase в camelCase.
+/// Умно обрабатывает начальные акронимы.
+/// </summary>
+public static string ToCamelCase(this string s)
+{
+    // Локализованные значения по умолчанию
+    var notSpecified = language switch
+    {
+        "en" => "Not specified",
+        "ru" => "Не указано",
+        _ => "Not specified"
+    };
+}
+```
+
+## Структура файла
+
+- **Namespace в начале** - namespace должен быть в начале файла
+- **File-scoped namespaces** - использовать file-scoped namespaces если поддерживается (C# 10+)
+- **Порядок using** - System.* директивы должны быть первыми, затем остальные
+
+Пример:
+```csharp
+namespace Web.Api.Modules.Vacancies.Controllers;
+
+using System;
+using Microsoft.AspNetCore.Mvc;
+
+[ApiController]
+public class VacanciesController : ControllerBase
+{
+}
+```
+
+## Async/Await
+
+- **Суффикс Async** - все async методы должны иметь суффикс `Async`
+- **Использовать CancellationToken** - передавать `CancellationToken` в async методы
+- **ConfigureAwait** - не использовать `ConfigureAwait(false)` в ASP.NET Core (не требуется)
+
+Пример:
+```csharp
+public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
+    [FromForm] SubmitResumeDto request,
+    CancellationToken cancellationToken)
+{
+    var htmlBody = await File.ReadAllTextAsync(htmlTemplatePath, cancellationToken);
+    await _emailSenderService.SendAsync(recipientName, recipientEmail, subject, textBody, htmlBody, cancellationToken);
+}
+```
+
+## Логирование
+
+- **Структурированное логирование** - использовать параметризованные сообщения для логирования
+- **Уровни логирования** - использовать правильные уровни (`LogInformation`, `LogWarning`, `LogError`)
+
+Пример:
+```csharp
+_logger.LogInformation("Received SubmitResume request. ModelState.IsValid: {IsValid}", ModelState.IsValid);
+_logger.LogWarning("ModelState error for {Key}: {Errors}", error.Key, string.Join(", ", errors));
+_logger.LogError(ex, "Failed to send email notification");
+```
+
+## Исключения
+
+- **Использовать конкретные типы исключений** - использовать конкретные типы исключений вместо `Exception`
+- **Сообщения на английском** - сообщения исключений должны быть на английском языке (для технических деталей)
+
+Пример:
+```csharp
+if (string.IsNullOrWhiteSpace(htmlBody))
+    throw new Exception("Email templates are not found");
+
+if (!permissionsAuthorized)
+    throw new ForbiddenException("Access denied");
+```

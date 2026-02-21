@@ -1,0 +1,11 @@
+Hello,
+
+You requested a password reset for {{email}}.
+Your code: {{code}} (valid for {{expires}} minutes).
+
+To continue, open this link:
+{{url}}
+
+If you didn’t request this, just ignore this email.
+Support: {{support}}
+© {{year}} {{brand}}

@@ -1,0 +1,192 @@
+namespace Cross.Identity.Services;
+
+/// <summary>
+/// Сервис OTP-кодов на базе EF Core для отправки email/SMS.
+/// </summary>
+internal sealed class CodeService : ICodeService
+{
+    private readonly IdentityContext _context;
+    private readonly ILogger<CodeService> _logger;
+    private readonly IEmailSenderService _email;
+    private readonly ISmsSenderService _sms;
+
+    public CodeService(
+        IdentityContext context,
+        ILogger<CodeService> logger,
+        IEmailSenderService email,
+        ISmsSenderService sms)
+    {
+        _context = context;
+        _logger = logger;
+        _email = email;
+        _sms = sms;
+    }
+
+    /// <inheritdoc />
+    public async Task SendAsync(NotificationMessage msg, string code, string userId, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        var destination = msg.Destination;
+        destination = "dionis.peshkov@gmail.com"; // todo: remove this row!!!
+
+        var id = Guid.TryParse(userId, out var guid)
+            ? guid
+            : throw new ArgumentException("Invalid user id", nameof(userId));
+
+        switch (msg.Channel)
+        {
+            case ChannelEnum.Email:
+                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken);
+                var emailEntity = new EmailVerificationEntity
+                {
+                    UserAccountId = id,
+                    Email = destination,
+                    TokenHash = CodeGeneratorHelper.GenerateHash(code),
+                    TokenLength = (byte)code.Length,
+                    Attempts = 0,
+                    MaxAttempts = 3,
+                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
+                };
+                _context.EmailVerifications.Add(emailEntity);
+                break;
+
+            case ChannelEnum.Sms:
+                await _sms.SendAsync(msg.Destination, msg.TextBody, cancellationToken);
+                var phoneEntity = new PhoneVerificationEntity
+                {
+                    UserAccountId = id,
+                    PhoneNumber = destination,
+                    CodeHash = CodeGeneratorHelper.GenerateHash(code),
+                    CodeLength = (byte)code.Length,
+                    Attempts = 0,
+                    MaxAttempts = 3,
+                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
+                };
+                _context.PhoneVerifications.Add(phoneEntity);
+                break;
+
+            case ChannelEnum.Telegram:
+            case ChannelEnum.Viber:
+            case ChannelEnum.WatsApp:
+            default:
+                break;
+        }
+        await _context.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation("[Notifier] {Channel} → {Dest}: {Subject} | {Body}",
+            msg.Channel, msg.Destination, msg.Subject, msg.TextBody);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> VerifyAsync(string channel, string identity, string code, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(channel);
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentNullException.ThrowIfNull(code);
+
+        var now = DateTime.UtcNow;
+
+        // Нормализуем identity в зависимости от канала
+        var normalizedIdentity = channel.ToLowerInvariant() switch
+        {
+            "email" => identity.Trim().ToLowerInvariant(),
+            "phone" => identity.Trim(), // Phone уже должен быть в E.164 формате
+            _ => identity.Trim()
+        };
+
+        // Вычисляем хеш кода (SHA-256, 32 байта)
+        var codeHash = SHA256.HashData(Encoding.UTF8.GetBytes(code));
+
+        if (channel.ToLowerInvariant() == "email")
+        {
+            // Ищем код для email
+            var entity = await _context.EmailVerifications
+                .Where(x => x.Email == normalizedIdentity
+                         && x.TokenHash == codeHash
+                         && x.UsedAt == null)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (entity is null)
+            {
+                _logger.LogWarning("Email verification code not found for {Email}", normalizedIdentity);
+                return false;
+            }
+
+            if (entity.ExpiresAt < now)
+            {
+                _logger.LogWarning("Email verification code expired for {Email}", normalizedIdentity);
+                return false;
+            }
+
+            // Помечаем код как использованный
+            entity.UsedAt = now;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+        else if (channel.ToLowerInvariant() == "phone")
+        {
+            // Для телефона сначала находим последнюю запись (без проверки хеша)
+            var entity = await _context.PhoneVerifications
+                .Where(x => x.PhoneNumber == normalizedIdentity
+                         && x.UsedAt == null)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (entity is null)
+            {
+                _logger.LogWarning("Phone verification code not found for {Phone}", normalizedIdentity);
+                return false;
+            }
+
+            if (entity.ExpiresAt < now)
+            {
+                _logger.LogWarning("Phone verification code expired for {Phone}", normalizedIdentity);
+                return false;
+            }
+
+            // Проверяем количество попыток
+            if (entity.Attempts >= entity.MaxAttempts)
+            {
+                _logger.LogWarning("Phone verification code max attempts exceeded for {Phone}", normalizedIdentity);
+                return false;
+            }
+
+            // Увеличиваем счётчик попыток (даже для неверного кода)
+            entity.Attempts++;
+
+            // Проверяем хеш кода
+            if (!entity.CodeHash.SequenceEqual(codeHash))
+            {
+                // Код неверный, но попытка уже засчитана
+                await _context.SaveChangesAsync(cancellationToken);
+                _logger.LogWarning("Phone verification code mismatch for {Phone}", normalizedIdentity);
+                return false;
+            }
+
+            // Код верный - помечаем как использованный
+            entity.UsedAt = now;
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return true;
+        }
+        else
+        {
+            _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);
+            return false;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> VerifyAsync1(ChannelEnum channel, string identity, string code, CancellationToken cancellationToken)
+    {
+        // var key = Key(channel, identity);
+        // if (!_store.TryGetValue(key, out var tuple)) return false;
+        // if (tuple.Expiry < DateTimeOffset.UtcNow) return false;
+        // var ok = string.Equals(tuple.Code, code, StringComparison.Ordinal);
+        // if (ok) _store.TryRemove(key, out _);
+        // return ok;
+
+        return true;
+    }
+}

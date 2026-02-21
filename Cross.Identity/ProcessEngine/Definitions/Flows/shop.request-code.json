@@ -1,0 +1,20 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Phone", "type": "Phone", "required": true }
+        ]
+      },
+      "next": "sendCode"
+    },
+    {
+      "kind": "sendCode",
+      "channel": "phone",
+      "selectorKey": "request.Phone",
+      "next": null
+    }
+  ]
+}

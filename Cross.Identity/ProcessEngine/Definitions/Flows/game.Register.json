@@ -1,0 +1,64 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true },
+          { "key": "UserName", "type": "String", "required": true, "min": 3, "max": 32 },
+          { "key": "FirstName", "type": "String", "required": false, "max": 64 },
+          { "key": "LastName", "type": "String", "required": false, "max": 64 },
+          { "key": "BirthDate", "type": "Date", "required": false },
+          { "key": "Gender", "type": "String", "required": false },
+          { "key": "AgreeLow", "type": "Bool", "required": true },
+          { "key": "AgreeService", "type": "Bool", "required": true }
+        ]
+      },
+      "next": "sendCode"
+    },
+    {
+      "kind": "sendCode",
+      "channel": "email",
+      "selectorKey": "registration.Email",
+      "next": "collectForm"
+    },
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "UserName", "type": "String", "required": true },
+          { "key": "Code", "type": "String", "required": true, "min": 4, "max": 8 }
+        ]
+      },
+      "next": "verifyCode"
+    },
+    {
+      "kind": "verifyCode",
+      "channel": "email",
+      "identityKey": "verification.UserName",
+      "codeKey": "verification.Code",
+      "next": "createUser"
+    },
+    {
+      "kind": "createUser",
+      "map": {
+        "Email": "registration.Email",
+        "UserName": "registration.UserName",
+        "FirstName": "registration.FirstName",
+        "LastName": "registration.LastName",
+        "BirthDate": "registration.BirthDate",
+        "Gender": "registration.Gender",
+        "AgreeLow": "registration.AgreeLow",
+        "AgreeService": "registration.AgreeService"
+      },
+      "next": "issueJwt"
+    },
+    {
+      "kind": "issueJwt",
+      "lifetimeSeconds": 604800,
+      "subKey": "user.Id",
+      "claims": { "scope": "game.player", "amr": "email_code" }
+    }
+  ]
+}

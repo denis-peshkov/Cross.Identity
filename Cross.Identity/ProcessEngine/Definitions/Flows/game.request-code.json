@@ -1,0 +1,21 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true }
+        ]
+      },
+      "next": "sendCode"
+    },
+    {
+      "kind": "sendCode",
+      "channel": "email",
+      "selectorKey": "collectForm.Email",
+      "resolveBy": { "field": "EmailCode" },
+      "next": null
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Роутинг в Angular
+
+## Структура роутов
+
+- **Константы путей** - использовать `ROUTE_PATH` из `core/constants/route.path.ts` для всех путей
+- **Экспорт константы** - роуты должны экспортироваться как константа (например, `export const vacanciesRoutes: Routes = [...]`)
+
+Пример:
+```typescript
+import { Routes } from '@angular/router';
+import { ROUTE_PATH } from './core/constants';
+
+export const routes: Routes = [
+  {
+    path: ROUTE_PATH.COMPANY_VACANCIES,
+    loadChildren: () => import('./pages/vacancies/vacancies.routes')
+      .then(m => m.vacanciesRoutes),
+  },
+];
+```
+
+## Lazy Loading
+
+- **Всегда использовать lazy loading** - все компоненты должны загружаться лениво через `loadComponent` или `loadChildren`
+- **Динамический импорт** - использовать `import()` для динамической загрузки компонентов
+- **Экспорт константы** - для дочерних роутов экспортировать константу с роутами
+
+Пример компонента:
+```typescript
+{
+  path: ROUTE_PATH.COMPANY_VACANCIES,
+  loadComponent: () => import('./pages/vacancies/vacancies.component')
+    .then(m => m.VacanciesComponent),
+}
+```
+
+Пример дочерних роутов:
+```typescript
+// vacancies.routes.ts
+export const vacanciesRoutes: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./vacancies.component')
+      .then((m) => m.VacanciesComponent),
+  },
+  {
+    path: ':id',
+    loadComponent: () => import('./vacancy/vacancy.component')
+      .then((m) => m.VacancyComponent),
+  },
+];
+
+// app.routes.ts
+{
+  path: ROUTE_PATH.COMPANY_VACANCIES,
+  loadChildren: () => import('./pages/vacancies/vacancies.routes')
+    .then(m => m.vacanciesRoutes),
+}
+```
+
+## Параметры роутов
+
+- **Получение параметров** - использовать `ActivatedRoute.snapshot.paramMap.get('id')` для получения параметров
+- **Типизация** - проверять наличие параметра перед использованием
+- **Редирект при отсутствии** - если параметр обязателен и отсутствует, выполнять редирект
+
+Пример:
+```typescript
+ngOnInit(): void {
+  const vacancyId = this.route.snapshot.paramMap.get('id');
+
+  if (vacancyId) {
+    this.vacancy = vacancies.find(v => v.id === vacancyId) || null;
+
+    if (!this.vacancy) {
+      this.router.navigate(['../'], { relativeTo: this.route });
+      return;
+    }
+  } else {
+    this.router.navigate(['../'], { relativeTo: this.route });
+    return;
+  }
+}
+```
+
+## Навигация
+
+- **RouterLink** - использовать `[routerLink]` для навигации в шаблонах
+- **Относительные пути** - использовать относительные пути `['./', id]` для дочерних роутов
+- **Router.navigate()** - использовать `router.navigate()` для программной навигации
+
+Пример в шаблоне:
+```html
+<a [routerLink]="['./', vacancy.id]">
+  {{ vacancy.title }}
+</a>
+```
+
+Пример в компоненте:
+```typescript
+this.router.navigate(['../'], { relativeTo: this.route });
+```
+
+## Guards
+
+- **CanMatchFn** - использовать функциональные guards (`CanMatchFn`) вместо классов
+- **inject()** - использовать `inject()` для получения зависимостей в функциональных guards
+- **Применение** - применять guards через `canMatch: [guardName]` в конфигурации роутов
+
+Пример:
+```typescript
+export const langValidateGuard: CanMatchFn = (route, segments) => {
+  const router = inject(Router);
+  const languageStore = inject(LanguageStore);
+
+  // Логика guard
+  return true; // или router.createUrlTree([...])
+};
+```
+
+## Версионирование и языковые префиксы
+
+- **Языковой префикс** - использовать `:lang` в первом сегменте роута
+- **Guard для языка** - использовать `langValidateGuard` для проверки и добавления языкового префикса
+- **Константы путей** - пути без языкового префикса, префикс добавляется автоматически
+
+Пример:
+```typescript
+{
+  path: ':lang',
+  canMatch: [langValidateGuard],
+  children: [
+    {
+      path: ROUTE_PATH.COMPANY_VACANCIES,
+      loadChildren: () => import('./pages/vacancies/vacancies.routes')
+        .then(m => m.vacanciesRoutes),
+    },
+  ],
+}
+```

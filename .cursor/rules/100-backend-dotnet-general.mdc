@@ -1,0 +1,75 @@
+# Общие правила .NET бэкенда
+
+## Архитектура
+
+- **Модульная структура** - код организован по модулям в `Web.Api/Modules/`
+- **CQRS с MediatR** - использовать паттерн CQRS с библиотекой MediatR
+- **Controllers** - контроллеры только для маршрутизации, логика в Handlers
+
+## Именование
+
+- **Controllers** - PascalCase с суффиксом `Controller` (например, `VacanciesController`)
+- **Handlers** - PascalCase с суффиксом `Handler` или `CommandHandler`/`QueryHandler`
+- **DTOs** - PascalCase с суффиксом `Dto` (например, `SubmitResumeDto`)
+- **Commands/Queries** - PascalCase с суффиксом `Command`/`Query` (например, `SubmitResumeCommand`)
+- **Async методы** - все async методы должны иметь суффикс `Async`
+
+## Контроллеры
+
+- **Минимальная логика** - контроллеры должны содержать только маршрутизацию
+- **Использование MediatR** - вся бизнес-логика в Handlers через MediatR
+- **Версионирование API** - использовать `[ApiVersion("1.0")]` и `[Route("api/v{version:apiVersion}/[controller]")]`
+
+Пример:
+```csharp
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class VacanciesController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    private readonly ILogger<VacanciesController> _logger;
+
+    public VacanciesController(IMediator mediator, ILogger<VacanciesController> logger)
+    {
+        _mediator = mediator;
+        _logger = logger;
+    }
+
+    [HttpPost("SubmitResume")]
+    public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
+        [FromForm] SubmitResumeDto request,
+        CancellationToken cancellationToken)
+    {
+        var command = new SubmitResumeCommand
+        {
+            Dto = request ?? new SubmitResumeDto()
+        };
+
+        return new ApiEnvelope<bool>(await _mediator.Send(command, cancellationToken));
+    }
+}
+```
+
+## Логирование
+
+- **ILogger<T>** - использовать типизированный логгер `ILogger<T>` где T - класс контроллера/сервиса
+- **Структурированное логирование** - использовать параметризованные сообщения
+- **Уровни логирования** - использовать `LogInformation`, `LogWarning`, `LogError` соответственно
+
+Пример:
+```csharp
+_logger.LogInformation("Received SubmitResume request. ModelState.IsValid: {IsValid}", ModelState.IsValid);
+_logger.LogWarning("ModelState error for {Key}: {Errors}", error.Key, string.Join(", ", errors));
+```
+
+## Валидация
+
+- **ModelState** - проверять `ModelState.IsValid` в контроллерах
+- **FluentValidation** - использовать FluentValidation для валидации DTOs
+- **Логирование ошибок** - логировать ошибки валидации
+
+## Ответы API
+
+- **ApiEnvelope<T>** - оборачивать все ответы в `ApiEnvelope<T>` для единообразного формата
+- **CancellationToken** - всегда принимать `CancellationToken` в async методах

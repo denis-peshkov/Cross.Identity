@@ -1,0 +1,44 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
+          { "key": "Password", "type": "Password", "required": false, "min": 8, "max": 128 },
+          { "key": "Code", "type": "String", "required": false, "min": 8, "max": 128 }
+        ],
+        "validators": [
+          { "kind": "requiredIf", "when": { "field": "Code", "equals": "" }, "then": { "name": "Password", "required": true }, "message": "Укажи пароль или код." },
+          { "kind": "requiredIf", "when": { "field": "Password", "equals": "" }, "then": { "name": "Code", "required": true }, "message": "Укажи пароль или код." },
+          { "kind": "atLeastOneRequired", "fields": ["Password", "Code"], "message": "Укажи хотя бы пароль или код." }
+        ]
+      },
+      "next": "token"
+    },
+    {
+      "kind": "token",
+      "selectorKey": "collectForm.Email",
+      "passwordKey": "collectForm.Password",
+      "codeKey": "collectForm.Code",
+      "channel": "email",
+      "resolveBy": { "field": "Email", "required": true, "caseInsensitive": true },
+      "accessTokenKey": "AccessToken",
+      "refreshTokenKey": "RefreshToken",
+      "tokenTypeKey": "TokenType",
+      "expiresInKey": "ExpiresIn",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "access_token": "token.AccessToken",
+        "refresh_token": "token.RefreshToken",
+        "token_type": "token.TokenType",
+        "expires_in": "token.ExpiresIn"
+      },
+      "next": null
+    }
+  ]
+}

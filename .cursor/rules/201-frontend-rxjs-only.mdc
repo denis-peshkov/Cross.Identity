@@ -1,0 +1,93 @@
+---
+globs:
+- "apps/**/*.ts"
+- "libs/**/*.ts"
+- "client/**/*.ts"
+- "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Правила работы с RxJS
+
+## Использование RxJS
+
+- **Только RxJS** - использовать только RxJS для работы с асинхронными операциями
+- **Не использовать Promises** - избегать прямого использования Promises, оборачивать в Observable при необходимости
+- **Операторы RxJS** - использовать операторы из `rxjs/operators` и `rxjs`
+
+## Управление подписками
+
+- **`takeUntilDestroyed`** - всегда использовать для автоматической отписки
+- **Не использовать `subscribe()` без отписки** - всегда использовать `takeUntilDestroyed` или другой механизм отписки
+- **`finalize`** - использовать для выполнения кода после завершения Observable (например, установка флагов загрузки)
+
+Пример:
+```typescript
+this.translationService.loadResource$(this.resource)
+  .pipe(
+    takeUntilDestroyed(this.destroyRef),
+    finalize(() => this.isResourceLoaded = true),
+  )
+  .subscribe();
+```
+
+## Операторы
+
+- **`distinctUntilChanged`** - использовать для предотвращения дублирующих значений
+- **`switchMap`** - использовать для переключения между Observable (например, при смене языка)
+- **`map`** - использовать для трансформации данных
+- **`tap`** - использовать для side effects (логирование, кэширование)
+- **`catchError`** - использовать для обработки ошибок
+
+Пример:
+```typescript
+this.languageStore.currentLanguage$
+  .pipe(
+    distinctUntilChanged(),
+    switchMap(lang => {
+      // Загрузка ресурсов для нового языка
+      return this.loadResourcesForLanguage(lang);
+    }),
+    tap(data => console.log('Loaded:', data)),
+    catchError(error => {
+      console.error('Error:', error);
+      return of([]);
+    }),
+  )
+  .subscribe();
+```
+
+## Observable в сервисах
+
+- **Возвращать Observable** - методы сервисов должны возвращать `Observable<T>`
+- **Суффикс `$`** - использовать суффикс `$` для методов, возвращающих Observable (например, `getData$()`, `loadResource$()`)
+- **Типизация** - всегда указывать тип Observable (например, `Observable<Vacancy[]>`)
+
+Пример:
+```typescript
+loadResource$(resource: string): Observable<Translation[]> {
+  return this.http.get<Translation[]>(`/assets/i18n/${resource}.json`);
+}
+```
+
+## Кэширование
+
+- **`shareReplay`** - использовать для кэширования результатов Observable
+- **In-memory cache** - использовать Map для кэширования данных в сервисах
+
+Пример:
+```typescript
+private readonly memoryCache = new Map<string, Translation[]>();
+
+getData$(key: string): Observable<Translation[]> {
+  if (this.memoryCache.has(key)) {
+    return of(this.memoryCache.get(key)!);
+  }
+
+  return this.http.get<Translation[]>(`/api/data/${key}`)
+    .pipe(
+      tap(data => this.memoryCache.set(key, data)),
+      shareReplay(1),
+    );
+}
+```

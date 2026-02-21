@@ -1,0 +1,36 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 }
+        ]
+      },
+      "next": "token"
+    },
+    {
+      "kind": "token",
+      "selectorKey": "collectForm.Email",
+      "passwordKey": "collectForm.Password",
+      "channel": "email",
+      "accessTokenKey": "AccessToken",
+      "refreshTokenKey": "RefreshToken",
+      "tokenTypeKey": "TokenType",
+      "expiresInKey": "ExpiresIn",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "access_token": "token.AccessToken",
+        "refresh_token": "token.RefreshToken",
+        "token_type": "token.TokenType",
+        "expires_in": "token.ExpiresIn"
+      },
+      "next": null
+    }
+  ]
+}

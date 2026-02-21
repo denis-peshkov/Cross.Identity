@@ -1,0 +1,24 @@
+﻿namespace Cross.Identity.Infrastructure;
+
+public class IdentityContext : HeadersDbContext
+{
+    public static string DefaultSchema => "auth";
+
+    public DbSet<AccessTokenEntity> AccessTokens { get; set; }
+    public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
+    public DbSet<ProviderEntity> Providers  { get; set; }
+    public DbSet<EmailVerificationEntity> EmailVerifications  { get; set; }
+    public DbSet<PhoneVerificationEntity> PhoneVerifications  { get; set; }
+    public DbSet<UserAccountEntity> UsersAccounts { get; set; }
+    public DbSet<UserExternalLoginEntity> UsersExternalLogins  { get; set; }
+
+    public IdentityContext(DbContextOptions options)
+        : base(options)
+    {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
+    }
+}

@@ -1,0 +1,195 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Форматирование и стиль кода фронтенда
+
+## EditorConfig правила
+
+- **Отступ**: 2 пробела для всех файлов
+- **Кавычки**: одинарные для TypeScript/JavaScript (`'строка'`)
+- **Конец строки**: всегда добавлять пустую строку в конце файла (`insert_final_newline = true`)
+- **Trailing whitespace**: удалять пробелы в конце строк (`trim_trailing_whitespace = true`)
+
+## Пробелы в объектах
+
+- **После двоеточия**: `{ a: 1 }` (пробел после `:`)
+- **После запятой**: `{ a: 1, b: 2 }` (пробел после `,`)
+- **Внутри фигурных скобок**: `{ a: 1 }` (пробелы внутри `{}`)
+- **Вокруг стрелки**: `() => {}` (пробелы вокруг `=>`)
+
+Пример:
+```typescript
+// ✅ Правильно
+const obj = { a: 1, b: 2 };
+const arr = [{ id: 'any', name: 'All locations' }];
+const fn = (x: number) => x * 2;
+
+// ❌ Неправильно
+const obj = {a:1,b:2};
+const arr = [{ id:'any', name:'All locations' }];
+const fn = (x:number)=>x*2;
+```
+
+**Важно**: Всегда использовать пробелы после двоеточия в объектах и массивах объектов, даже в массивах констант и экспортируемых данных.
+
+## Декораторы Angular
+
+- **Пробелы после двоеточия** - все свойства декораторов должны иметь пробелы после двоеточия
+- **Пробелы в массивах** - пробелы после открывающей скобки и перед закрывающей скобкой массива в `imports`, `styleUrls`
+
+Пример:
+```typescript
+// ✅ Правильно
+@Component({
+  selector: 'app-oil',
+  standalone: true,
+  templateUrl: './oil.component.html',  // ОБЯЗАТЕЛЬНО
+  styleUrls: [ './oil.component.scss' ], // ОБЯЗАТЕЛЬНО
+  imports: [
+    CommonModule,
+    FormsModule,
+  ],
+})
+
+// ❌ Неправильно - отсутствует templateUrl
+@Component({
+  selector: 'app-oil',
+  standalone: true,
+  // templateUrl отсутствует - ОШИБКА
+  styleUrls: [ './oil.component.scss' ],
+  imports: [ CommonModule ],
+})
+
+// ❌ Неправильно - отсутствует styleUrls
+@Component({
+  selector: 'app-oil',
+  standalone: true,
+  templateUrl: './oil.component.html',
+  // styleUrls отсутствует - ОШИБКА
+  imports: [ CommonModule ],
+})
+
+// ❌ Неправильно - форматирование
+@Component({
+  selector:'app-oil',
+  standalone:true,
+  templateUrl:'./oil.component.html',
+  styleUrls:[ './oil.component.scss' ],
+  imports:[
+    CommonModule,
+    FormsModule,
+  ],
+})
+```
+
+**Важно**:
+- Всегда использовать пробелы после двоеточия в декораторах (`@Component`, `@Pipe`, `@Directive`, `@Injectable` и т.д.) и пробелы внутри массивов (`[ ... ]`)
+- **Все компоненты ДОЛЖНЫ содержать template/templateUrl и styles/styleUrls**
+
+## Модификаторы доступа
+
+- **Всегда явные** - всегда указывать модификаторы доступа (`private`, `protected`, `public`)
+- **`private readonly`** - для всех инжектированных сервисов в конструкторе
+- **`protected`** - для методов и свойств, используемых в шаблонах
+- **`readonly`** - для константных свойств
+
+Пример:
+```typescript
+export class Component {
+  private readonly service: SomeService;  // ✅
+  protected readonly resource = 'path';   // ✅
+  public title: string;                   // ✅
+  // someProperty: string;                // ❌ Нет модификатора
+}
+```
+
+## Именование
+
+- **Компоненты**: PascalCase с суффиксом `Component` (`VacancyComponent`)
+- **Сервисы**: PascalCase с суффиксом `Service` (`TranslationService`)
+- **Интерфейсы**: PascalCase (`Vacancy`, `ResumeSection`)
+- **Типы**: PascalCase с суффиксом `Id` или `Type` (`LocationId`)
+- **Константы**: camelCase (`vacanciesRoutes`, `vacancies`)
+- **Методы**: camelCase (`onSubmit()`, `getVacancyById()`)
+- **Свойства**: camelCase (`isResourceLoaded`, `vacancy`)
+
+## Импорты
+
+- **Обязательный порядок сортировки**: импорты должны быть отсортированы в следующем порядке:
+  1. `@angular/*` - все импорты из Angular (вверху)
+  2. Внешние библиотеки - все импорты из внешних npm-пакетов (jose, jwt-decode, rxjs, luxon и т.д.)
+  3. `@workspace/*` - все импорты из внутренних библиотек workspace (внизу, но не в самом низу)
+  4. Относительные импорты `from '.'` - все локальные импорты с относительными путями (в самом низу)
+- **Консолидация импортов**: все импорты из одного модуля должны быть объединены в один импорт
+- **Пустые строки**: разделять группы пустыми строками только если это улучшает читаемость
+- **Сортировка внутри группы**: импорты внутри каждой группы должны быть отсортированы по алфавиту
+
+Пример:
+```typescript
+// ✅ Правильно - консолидированные импорты
+import { Component, DestroyRef, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { JWTPayload } from 'jose';
+import { jwtDecode } from 'jwt-decode';
+import { Observable, tap, catchError, throwError, map, of, switchMap, take } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { ROUTE_PATH, RouterPaths } from '@workspace/core';
+import { ApiResponse, AuthTokenService, TokenModel, ApiService, TimeSpan, UUID } from '@workspace/shared';
+import { LanguageSelectorComponent, RequestStatusComponent, RequestStatusStore } from '@workspace/ui';
+import { AUTH_CONFIG, AuthConfig } from './auth-config';
+import { AuthService } from './auth.service';
+import { AuthStore } from './auth.store';
+
+// ❌ Неправильно - неправильный порядок
+import { AuthService } from './auth.service';
+import { Component } from '@angular/core';
+import { ROUTE_PATH } from '@workspace/core';
+import { Observable } from 'rxjs';
+
+// ❌ Неправильно - неконсолидированные импорты из одного модуля
+import { Component } from '@angular/core';
+import { DestroyRef } from '@angular/core';
+import { ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
+import { ROUTE_PATH } from '@workspace/core';
+import { RouterPaths } from '@workspace/core';
+
+// ✅ Правильно - консолидированные импорты
+import { Component, DestroyRef, ViewChild } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ROUTE_PATH, RouterPaths } from '@workspace/core';
+```
+
+**Важно**: Всегда сортировать импорты в указанном порядке. Относительные импорты (`from '.'`) должны быть в самом низу списка импортов.
+
+## Комментарии
+
+- **На русском языке** - все комментарии должны быть на русском
+- **Объяснять "почему"** - комментарии должны объяснять причину, а не описывать очевидное
+- **Краткость** - комментарии должны быть краткими и по делу
+
+Пример:
+```typescript
+// ❌ Плохо
+// Получаем ID из роута
+const id = this.route.snapshot.paramMap.get('id');
+
+// ✅ Хорошо
+// Получаем ID из роута для поиска вакансии в массиве
+const vacancyId = this.route.snapshot.paramMap.get('id');
+```
+
+## Структура файлов
+
+- **Один класс/интерфейс на файл** - каждый файл должен содержать один основной экспорт
+- **Имя файла = имя класса** - имя файла должно соответствовать имени класса (kebab-case)
+- **index.ts для реэкспорта** - использовать `index.ts` для реэкспорта из директорий

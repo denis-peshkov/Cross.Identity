@@ -1,0 +1,173 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Правила работы с формами и пользовательским контентом
+
+## Reactive Forms
+
+- **Использовать Reactive Forms** - всегда использовать `ReactiveFormsModule` и `FormBuilder`
+- **Валидация** - использовать встроенные валидаторы Angular (`Validators.required`, `Validators.email`)
+- **Кастомные валидаторы** - создавать кастомные валидаторы только при необходимости
+
+Пример:
+```typescript
+this.form = this.fb.group({
+  name: ['', Validators.required],
+  email: ['', [Validators.required, Validators.email]],
+  phone: ['', Validators.required],
+  resume: [null],
+});
+```
+
+## Валидация телефонов
+
+- **libphonenumber-js** - использовать библиотеку `libphonenumber-js` для валидации и форматирования телефонов
+- **CountryService** - использовать `CountryService` для получения кода страны и dial code
+- **Форматирование** - форматировать телефон в международном формате перед отправкой
+
+Пример:
+```typescript
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
+
+const selectedCountry = this.countryService.currentCountry;
+const phoneNumber = this.form.get('phone')?.value || '';
+const fullPhone = `${selectedCountry.dialCode}${phoneNumber}`;
+
+if (!isValidPhoneNumber(fullPhone)) {
+  this.phoneError = this.translationService.get('common_validation_phone');
+  return;
+}
+
+const parsedPhone = parsePhoneNumber(fullPhone);
+const formattedPhone = parsedPhone.formatInternational();
+```
+
+## Компоненты форм
+
+- **Использовать существующие компоненты** - использовать компоненты из `shared/components/`:
+  - `InputTextComponent`
+  - `InputEmailComponent`
+  - `InputPhoneComponent`
+  - `InputTextareaComponent`
+  - `InputFileComponent`
+  - `InputSelectComponent`
+  - `SubmitButtonComponent`
+
+- **Передача control** - передавать `FormControl` через `[control]="form.get('fieldName')!"`
+
+- **Использование переводов** - ВСЕ `label` и `placeholder` ДОЛЖНЫ использовать ключи переводов через `{{ 'key' | translate }}`. Подробные правила см. в `205-frontend-i18n.mdc`
+
+Пример:
+```html
+<app-input-text
+  [control]="form.get('fullName')!"
+  id="fullName"
+  label="{{ 'common_name' | translate }}"
+  placeholder="{{ 'common_name_placeholder' | translate }}"
+/>
+
+<app-input-email
+  [control]="form.get('email')!"
+  id="email"
+/>
+
+<app-input-phone
+  [control]="form.get('phone')!"
+  id="phone"
+  label="{{ 'common_phone_number' | translate }}"
+  placeholder="{{ 'common_phone_placeholder' | translate }}"
+  [phoneError]="phoneError"
+/>
+```
+
+## Обработка отправки форм
+
+- **Проверка валидности** - проверять `form.invalid` перед отправкой
+- **`markAllAsTouched()`** - вызывать для отображения ошибок валидации
+- **Обработка ошибок** - обрабатывать ошибки отправки и показывать пользователю сообщения
+
+Пример:
+```typescript
+onSubmit(): void {
+  if (this.form.invalid) {
+    this.form.markAllAsTouched();
+    return;
+  }
+
+  // Валидация и отправка
+  this.isSubmitting = true;
+
+  this.apiService.post$(endpoint, formData)
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe({
+      next: (response) => {
+        alert(this.translationService.get('common_resume_success'));
+        this.form.reset();
+        this.isSubmitting = false;
+      },
+      error: (error) => {
+        alert(this.translationService.get('common_resume_error'));
+        this.isSubmitting = false;
+      },
+    });
+}
+```
+
+## Загрузка файлов
+
+- **FormData** - использовать `FormData` для отправки файлов
+- **Валидация размера** - проверять размер файла перед отправкой (если необходимо)
+- **Типы файлов** - проверять тип файла (если необходимо)
+
+Пример:
+```typescript
+const formData = new FormData();
+formData.append('Name', this.form.get('name')?.value);
+formData.append('Email', this.form.get('email')?.value);
+
+const resumeFile = this.form.get('resume')?.value;
+if (resumeFile) {
+  formData.append('Resume', resumeFile);
+}
+
+this.apiService.post$(endpoint, formData, {
+  // Опции для загрузки файлов
+})
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe();
+```
+
+## Состояние загрузки
+
+- **`isSubmitting`** - использовать флаг для отслеживания состояния отправки
+- **Блокировка формы** - блокировать форму во время отправки через `[disabled]="isSubmitting"`
+
+Пример:
+```html
+<app-submit-button [isSubmitting]="isSubmitting" />
+```
+
+## Безопасность пользовательского контента
+
+- **DomSanitizer** - использовать `DomSanitizer` для безопасного отображения HTML контента
+- **SafeHtml** - использовать тип `SafeHtml` для санитизированного контента
+
+Пример:
+```typescript
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
+constructor(
+  private readonly sanitizer: DomSanitizer,
+) {
+}
+
+getSafeHtml(content: string): SafeHtml {
+  return this.sanitizer.sanitize(SecurityContext.HTML, content) || '';
+}
+```

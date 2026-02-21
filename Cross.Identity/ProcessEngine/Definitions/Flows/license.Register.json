@@ -1,0 +1,44 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true },
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
+          { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 }
+        ],
+        "validators": [
+          { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }
+        ]
+      },
+      "next": "createUser"
+    },
+    {
+      "kind": "createUser",
+      "map": {
+        "Email": "collectForm.Email",
+        "Password": "collectForm.Password"
+      },
+      "userIdKey": "UserId",
+      "selectorKey": "collectForm.Email",
+      "next": "sendCode"
+    },
+    {
+      "kind": "sendCode",
+      "channel": "email",
+      "selectorKey": "createUser.selectorKey",
+      "resolveBy": { "field": "Email" },
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "LastCode": "sendCode.LastCode",
+        "UserId": "createUser.UserId"
+      },
+      "next": null
+    }
+  ]
+}

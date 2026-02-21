@@ -1,0 +1,65 @@
+---
+globs:
+  - "apps/**/*.spec.ts"
+  - "libs/**/*.spec.ts"
+  - "client/**/*.spec.ts"
+alwaysApply: false
+---
+
+
+# Тестирование Angular
+
+## Unit тесты
+
+- **Jasmine и Karma** - использовать Jasmine для unit тестов
+- **Именование** - использовать описательные имена для тестов
+- **Изоляция** - каждый тест должен быть изолированным
+
+## Структура тестов
+
+- **describe/it** - использовать `describe` для группировки тестов, `it` для отдельных тестов
+- **beforeEach** - использовать `beforeEach` для настройки перед каждым тестом
+
+Пример:
+```typescript
+describe('VacancyComponent', () => {
+  let component: VacancyComponent;
+  let fixture: ComponentFixture<VacancyComponent>;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [VacancyComponent],
+    });
+    fixture = TestBed.createComponent(VacancyComponent);
+    component = fixture.componentInstance;
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+```
+
+## Моки и стабы
+
+- **Использовать моки** - мокировать все зависимости
+- **SpyOn** - использовать `spyOn` для мокирования методов
+
+## Типизация параметров в тестах
+
+- **Параметр `done`** - всегда типизировать параметр `done` как `DoneFn` из Jasmine, чтобы избежать ошибки TS7006
+
+Пример:
+```typescript
+it('should handle async operation', (done: DoneFn) => {
+  service.someAsyncMethod().subscribe({
+    next: (result) => {
+      expect(result).toBeTruthy();
+      done();
+    },
+    error: (err: any) => done.fail(err),
+  });
+});
+```
+
+**Важно**: Всегда указывайте тип `DoneFn` для параметра `done` в асинхронных тестах, чтобы избежать ошибки TypeScript TS7006 (Parameter 'done' implicitly has an 'any' type).

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{company}} — Verify your account</title>
+  <style>
+    /* Base */
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f7f7;
+      color: #033030;
+    }
+
+    table {
+      border-collapse: separate;
+      border-spacing: 0;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+
+    td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+
+    img {
+      border: 0;
+      outline: none;
+      text-decoration: none;
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: #3498db;
+      text-decoration: underline;
+    }
+
+    /* Layout */
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 10px;
+      font-family: sans-serif;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .section {
+      padding: 20px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .card {
+      background: #ffffff;
+      box-shadow: 0 3px 6px #00000029;
+      border-radius: 8px; /* чутка больше радиус выглядит лучше */
+      overflow: hidden; /* ключ к «плавному» переходу */
+    }
+
+    .h1 {
+      margin: 0 0 30px;
+      font: 300 35px/1.4 "Times New Roman", serif;
+      color: #000;
+    }
+
+    .hr {
+      border: 0;
+      border-bottom: 1px solid #aaa;
+      margin: 20px 0;
+    }
+
+    /* Button */
+    .btn-wrap {
+      text-align: center;
+      padding-bottom: 15px;
+    }
+
+    .btn {
+      display: inline-block;
+      min-width: 250px;
+      padding: 12px 25px;
+      font-size: 18px;
+      color: #fff;
+      background: #074F4F;
+      border: 1px solid #074F4F;
+      border-radius: 500px;
+      text-decoration: none;
+    }
+
+    /* Code box */
+    .code {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+
+    /* List */
+    .list td {
+      padding-bottom: 20px;
+    }
+
+    /* Footer */
+    .social a {
+      display: inline-block;
+      margin: 0 10px;
+    }
+
+    @media only screen and (max-width: 620px) {
+      .h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .container {
+        padding: 10px;
+      }
+
+      .section {
+        padding: 10px;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<table role="presentation" width="100%" bgcolor="#f5f7f7">
+  <tr>
+    <td align="center">
+      <div class="container">
+
+        <!-- Header -->
+        <div class="section center" style="display:inline-block; margin:0 auto; padding-top:20px;">
+          <a href="https://{{site}}/" target="_blank" rel="noopener">
+            <img src="{{imageLink}}" alt="{{company}}" width="{{imageWidth}}" height="{{imageHeight}}">
+          </a>
+        </div>
+
+        <!-- Greeting -->
+        <div class="section center">
+          <h1 class="h1">Hello, {{fullName}},</h1>
+        </div>
+
+        <!-- Main card -->
+        <table role="presentation" class="card" width="100%">
+          <tr>
+            <td class="section">
+              <p style="margin:0 0 15px;">
+                We’re glad you joined the {{company}} platform. To finish setting up your account, please use the verification code below:
+              </p>
+
+              <p class="center code" style="margin:0 0 20px;">{{code}}</p>
+
+              <div class="btn-wrap">
+                <a class="btn" href="{{verificationLink}}" target="_blank" rel="noopener">
+                  Use the code
+                </a>
+              </div>
+
+              <p style="margin:0 0 15px;">
+                If the button doesn’t work, copy and paste this link <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> into your browser.
+              </p>
+
+              <p class="center" style="margin:20px 0 0;">
+                Best regards, <br> {{company}} Team
+              </p>
+
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-spacing:0;">
+                <tr>
+                  <td style="background:#83CBDB; color:#033030; padding:16px 20px; text-align:center;">
+                    <strong>Attention!</strong> The code is valid for <strong>{{expires}}</strong>.
+                    After that, you’ll need to restart the account confirmation process.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Small help note -->
+        <div class="section center" style="font-size:12px;">
+          <p style="margin:0; padding-top:20px;">
+            If you didn’t sign up on the {{company}} platform, you can ignore this email.
+            <br>
+            Having trouble confirming your account? Write to us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
+          </p>
+        </div>
+
+        <hr class="hr">
+
+        <!-- Help section -->
+        <div class="section center">
+          <p style="margin:0; padding-top:20px;">
+            Questions about how your account works on {{site}}?
+            <br>
+            <a href="{{helpLink}}" target="_blank" rel="noopener">Visit the “My Account – Help” section</a>
+          </p>
+        </div>
+
+        <hr class="hr">
+
+        <!-- Footer -->
+        <div class="section center">
+          <div class="social">
+            <a href="https://facebook.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Facebook">
+              <img src="https://bioclinica.ro/images/emails/facebook.png" alt="Facebook" width="24" height="24">
+            </a>
+            <a href="https://instagram.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Instagram">
+              <img src="https://bioclinica.ro/images/emails/instagram.png" alt="Instagram" width="24" height="24">
+            </a>
+            <a href="https://www.youtube.com/channel/UCqGFIgNFyE-R3zFbcpym9Rg" target="_blank" rel="noopener" title="YouTube">
+              <img src="https://bioclinica.ro/images/emails/youtube.png" alt="YouTube" width="24" height="24">
+            </a>
+          </div>
+          <div style="padding-top:20px;">
+            <a href="https://{{site}}/" target="_blank" rel="noopener" style="text-decoration:none; color:#033030;">{{site}}</a>
+          </div>
+        </div>
+
+      </div>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

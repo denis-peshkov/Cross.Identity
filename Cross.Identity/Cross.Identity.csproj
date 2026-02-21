@@ -1,0 +1,66 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>11</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Configurations>Debug;Release</Configurations>
+    <Platforms>AnyCPU</Platforms>
+    <NoWarn>1701;1702;1591;CS8618;</NoWarn>
+  </PropertyGroup>
+
+  <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
+    <RemoveDir Directories=".\bin" />
+    <Delete Files=".\obj\**\*.cs" />
+  </Target>
+
+<!-- strange, why doesn't work -->
+<!--  <ItemGroup>-->
+<!--    <EmbeddedResource Include=".\ProcessEngine\Definitions\Flows\**\*.json">-->
+<!--      <Link>ProcessEngine\Definitions\Flows\%(RecursiveDir)%(Filename)%(Extension)</Link>-->
+<!--    </EmbeddedResource>-->
+<!--    <EmbeddedResource Include=".\ProcessEngine\Definitions\Templates\**\*.*">-->
+<!--      <Link>ProcessEngine\Definitions\Templates\%(RecursiveDir)%(Filename)%(Extension)</Link>-->
+<!--    </EmbeddedResource>-->
+<!--  </ItemGroup>-->
+
+  <ItemGroup>
+    <None Remove="ProcessEngine\Definitions\Flows\**\*.json" />
+    <Content Remove="ProcessEngine\Definitions\Flows\**\*.json" />
+    <None Remove="ProcessEngine\Definitions\Templates\**\*.*" />
+    <Content Remove="ProcessEngine\Definitions\Templates\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="ProcessEngine\Definitions\Flows\**\*">
+      <LogicalName>$(RootNamespace).ProcessEngine.Definitions.Flows.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="ProcessEngine\Definitions\Templates\**\*.*">
+      <LogicalName>$(RootNamespace).ProcessEngine.Definitions.Templates.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+      <WithCulture>false</WithCulture>  <!-- IMPORTANT -->
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Boilerplate.Headers" Version="7.48.0" />
+    <PackageReference Include="Boilerplate.Orm" Version="7.48.0" />
+
+    <PackageReference Include="Cross.ErrorHandlers" Version="7.3.0" />
+
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
+    <PackageReference Include="Magick.NET.Core" Version="13.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
+    <PackageReference Include="PhoneNumbersCore" Version="1.1.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Cross.Notification\Cross.Notification.csproj" />
+    <ProjectReference Include="..\Cross.PepperVault\Cross.PepperVault.csproj" />
+  </ItemGroup>
+
+</Project>

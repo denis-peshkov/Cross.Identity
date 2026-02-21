@@ -1,0 +1,20 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true }
+        ]
+      },
+      "next": "getUser"
+    },
+    {
+      "kind": "getUser",
+      "selectorField": "Email",
+      "selectorKey": "collectForm.Email",
+      "next": null
+    }
+  ]
+}

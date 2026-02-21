@@ -1,0 +1,103 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Правила работы с HTTP
+
+## ApiService
+
+- **Использовать ApiService** - все HTTP запросы должны проходить через `ApiService`
+- **Не использовать HttpClient напрямую** - не инжектировать `HttpClient` в компоненты, использовать `ApiService`
+
+## Методы ApiService
+
+- **`get$<T>(endpoint: string)`** - для GET запросов
+- **`post$<T>(endpoint: string, data: any, options?: BodyOptions)`** - для POST запросов
+- **Суффикс `$`** - все методы возвращают Observable и имеют суффикс `$`
+- **Типизация** - всегда указывать тип возвращаемого значения через generic `<T>`
+
+Пример:
+```typescript
+this.apiService.get$<Vacancy[]>('/vacancies')
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe(vacancies => {
+    this.vacancies = vacancies;
+  });
+```
+
+## Константы endpoints
+
+- **Использовать `API_ENDPOINTS`** - все endpoints должны быть определены в `core/constants/api.endpoints.ts`
+- **Не хардкодить пути** - не использовать строковые литералы для путей API
+
+Пример:
+```typescript
+import { API_ENDPOINTS } from '../../../core/constants';
+
+const endpoint = API_ENDPOINTS.VACANCIES.SUBMIT_RESUME;
+this.apiService.post$(endpoint, formData, {})
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe();
+```
+
+## Обработка ошибок
+
+- **Обработка в сервисе** - `ApiService` должен обрабатывать общие ошибки (401, 403, 500)
+- **Обработка в компоненте** - специфичные ошибки обрабатывать в компоненте через `catchError`
+
+Пример:
+```typescript
+this.apiService.post$(endpoint, data)
+  .pipe(
+    takeUntilDestroyed(this.destroyRef),
+    catchError(error => {
+      console.error('Ошибка:', error);
+      alert('Произошла ошибка при отправке данных');
+      return of(null);
+    }),
+  )
+  .subscribe(response => {
+    if (response) {
+      // Обработка успешного ответа
+    }
+  });
+```
+
+## FormData
+
+- **Использовать FormData** - для отправки файлов использовать `FormData`
+- **Типизация options** - использовать `BodyOptions` для опций запроса
+
+Пример:
+```typescript
+const formData = new FormData();
+formData.append('Name', this.form.get('name')?.value);
+formData.append('Resume', resumeFile);
+
+this.apiService.post$(endpoint, formData, {
+  observe: 'body',
+})
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe();
+```
+
+## Заголовки и параметры
+
+- **Использовать interceptors** - для общих заголовков (например, `X-Language-Code`, `X-Correlation-ID`) использовать interceptors
+- **Опции запроса** - передавать специфичные заголовки через `options`
+
+Пример:
+```typescript
+this.apiService.post$(endpoint, data, {
+  headers: {
+    'Custom-Header': 'value',
+  },
+})
+  .pipe(takeUntilDestroyed(this.destroyRef))
+  .subscribe();
+```

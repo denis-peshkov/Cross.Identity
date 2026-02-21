@@ -1,0 +1,130 @@
+---
+globs:
+  - "apps/**/*.ts"
+  - "libs/**/*.ts"
+  - "client/**/*.ts"
+  - "client/**/*.tsx"
+alwaysApply: false
+---
+
+# Guards (Защита роутов)
+
+## Функциональные guards
+
+- **Использовать функциональные guards** - использовать функциональные guards (`CanMatchFn`, `CanActivateFn`) вместо классов
+- **inject()** - использовать `inject()` для получения зависимостей в guards
+- **Типизация** - guards должны быть типизированы (`CanMatchFn`, `CanActivateFn`)
+
+Пример:
+```typescript
+import { inject } from '@angular/core';
+import { CanMatchFn, Router } from '@angular/router';
+
+export const langValidateGuard: CanMatchFn = (route, segments) => {
+  const router = inject(Router);
+  const languageStore = inject(LanguageStore);
+
+  // Логика проверки
+  const lang = segments[0]?.path?.toUpperCase();
+  const isSupportedLang = lang && Languages.includes(lang);
+
+  if (isSupportedLang) {
+    languageStore.setCurrentLanguageCode(lang);
+    return true;
+  }
+
+  // Редирект при невалидном языке
+  const currentLang = languageStore.currentLanguageCode.toLowerCase();
+  return router.createUrlTree(['/', currentLang, ...segments.map(s => s.path)]);
+};
+```
+
+## Типы guards
+
+- **CanMatchFn** - проверка перед загрузкой модуля/компонента (lazy loading)
+- **CanActivateFn** - проверка перед активацией роута
+- **CanDeactivateFn** - проверка перед деактивацией роута (например, при уходе со страницы с несохраненными данными)
+- **CanLoad** - устаревший, использовать `CanMatchFn` вместо него
+
+## Применение Guards
+
+- **canMatch** - использовать `canMatch` для проверки перед загрузкой модуля/компонента
+- **canActivate** - использовать `canActivate` для проверки перед активацией роута
+- **canDeactivate** - использовать `canDeactivate` для проверки перед деактивацией роута
+- **Массив guards** - можно применять несколько guards: `canMatch: [guard1, guard2]`
+
+Пример:
+```typescript
+{
+  path: ':lang',
+  canMatch: [langValidateGuard],
+  children: [
+    {
+      path: 'vacancies',
+      canActivate: [authGuard],
+      loadComponent: () => import('./pages/vacancies/vacancies.component')
+        .then(m => m.VacanciesComponent),
+    },
+  ],
+}
+```
+
+## Возвращаемые значения
+
+- **true** - разрешить доступ к роуту
+- **false** - запретить доступ (роут не будет активирован)
+- **UrlTree** - выполнить редирект на указанный URL
+
+Пример с редиректом:
+```typescript
+export const authGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+
+  // Редирект на страницу входа
+  const router = inject(Router);
+  return router.createUrlTree(['/login']);
+};
+```
+
+## Логика в guards
+
+- **Минимальная логика** - guards должны содержать только логику проверки доступа
+- **Бизнес-логика в сервисах** - вся бизнес-логика должна быть в сервисах, guards только вызывают методы сервисов
+- **Не использовать для загрузки данных** - guards не должны загружать данные, только проверять условия доступа
+
+Пример:
+```typescript
+// ❌ Плохо - загрузка данных в guard
+export const dataGuard: CanActivateFn = () => {
+  const dataService = inject(DataService);
+  return dataService.loadData().pipe(
+    map(data => data !== null)
+  );
+};
+
+// ✅ Хорошо - только проверка доступа
+export const authGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  return authService.isAuthenticated();
+};
+```
+
+## Асинхронные guards
+
+- **Observable/Promise** - guards могут возвращать `Observable<boolean | UrlTree>` или `Promise<boolean | UrlTree>`
+- **Использовать операторы RxJS** - использовать операторы для обработки асинхронных операций
+
+Пример:
+```typescript
+export const asyncGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+
+  return authService.checkAuth$().pipe(
+    map(isAuth => isAuth || inject(Router).createUrlTree(['/login']))
+  );
+};
+```

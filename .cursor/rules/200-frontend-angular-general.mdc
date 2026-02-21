@@ -1,0 +1,170 @@
+---
+globs:
+  - "client/**/*.ts"
+  - "client/**/*.html"
+  - "client/**/*.scss"
+  - "apps/**/*.ts"
+  - "apps/**/*.html"
+  - "apps/**/*.scss"
+  - "libs/**/*.ts"
+  - "libs/**/*.html"
+  - "libs/**/*.scss"
+alwaysApply: false
+---
+
+# Общие правила Angular
+
+## Standalone компоненты
+
+- **Всегда использовать standalone компоненты** - `standalone: true` для всех новых компонентов
+- **Явные импорты** - все зависимости должны быть явно указаны в массиве `imports: [...]`
+- **Не использовать NgModules** - использовать только standalone компоненты
+
+## Структура компонентов
+
+### Обязательные требования
+
+**Все Angular компоненты ДОЛЖНЫ содержать:**
+- ✅ `template` или `templateUrl` - HTML шаблон компонента (ОБЯЗАТЕЛЬНО)
+- ✅ `styles` или `styleUrls` - стили компонента (ОБЯЗАТЕЛЬНО)
+
+```typescript
+@Component({
+  selector: 'app-component-name',
+  standalone: true,
+  templateUrl: './component-name.component.html',  // ОБЯЗАТЕЛЬНО
+  styleUrls: ['./component-name.component.scss'],   // ОБЯЗАТЕЛЬНО
+  imports: [CommonModule, TranslatePipe, /* другие импорты */],
+})
+export class ComponentNameComponent implements OnInit {
+  // Свойства
+  isResourceLoaded = false;
+  protected readonly resource = 'path/to/strings';
+
+  constructor(
+    private readonly service: SomeService,
+    private readonly destroyRef: DestroyRef,
+  ) {
+  }
+
+  ngOnInit(): void {
+    // Инициализация
+  }
+}
+```
+
+### Альтернативный вариант с inline template/styles
+
+```typescript
+@Component({
+  selector: 'app-component-name',
+  standalone: true,
+  template: '<div>...</div>',        // ОБЯЗАТЕЛЬНО (если не используется templateUrl)
+  styles: ['.component { ... }'],    // ОБЯЗАТЕЛЬНО (если не используется styleUrls)
+  imports: [CommonModule, TranslatePipe],
+})
+export class ComponentNameComponent {}
+```
+
+### Запрещено:
+- ❌ Компоненты без template/templateUrl
+- ❌ Компоненты без styles/styleUrls
+- ❌ Пустые массивы styles: `styles: []` (используйте хотя бы пустую строку или файл)
+
+## Модификаторы доступа
+
+- **`private readonly`** - для всех инжектированных сервисов в конструкторе
+- **`protected`** - для методов и свойств, используемых в шаблонах
+- **`readonly`** - для константных свойств (например, `protected readonly resource`)
+
+## Управление подписками
+
+- **Всегда использовать `takeUntilDestroyed`** - для автоматической отписки от Observable
+- **Инжектировать `DestroyRef`** - в конструктор для управления подписками
+- **Не использовать `ngOnDestroy`** - для отписки, использовать `takeUntilDestroyed(this.destroyRef)`
+
+Пример:
+```typescript
+this.someService.getData$()
+  .pipe(
+    takeUntilDestroyed(this.destroyRef),
+    finalize(() => this.isResourceLoaded = true),
+  )
+  .subscribe();
+```
+
+## Загрузка переводов
+
+- **Паттерн `isResourceLoaded`** - использовать для контроля загрузки ресурсов переводов
+- **`protected readonly resource`** - для пути к переводам (например, `'vacancies/strings'`)
+- **Проверка перед отображением** - использовать `*ngIf="isResourceLoaded"` в шаблонах
+
+Пример:
+```typescript
+ngOnInit(): void {
+  if (this.translationService.isResourceLoaded(this.resource)) {
+    this.isResourceLoaded = true;
+  } else {
+    this.translationService.loadResource$(this.resource)
+      .pipe(
+        finalize(() => this.isResourceLoaded = true),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe();
+  }
+}
+```
+
+## Роутинг
+
+- **Lazy loading** - использовать `loadComponent` для всех компонентов
+- **Lazy loading для дочерних роутов** - использовать `loadChildren` с экспортом константы
+- **Константы путей** - использовать `ROUTE_PATH` из `core/constants` для всех путей
+
+Пример:
+```typescript
+export const vacanciesRoutes: Routes = [
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./vacancies.component')
+      .then((m) => m.VacanciesComponent),
+  },
+  {
+    path: ':id',
+    loadComponent: () => import('./vacancy/vacancy.component')
+      .then((m) => m.VacancyComponent),
+  },
+];
+```
+
+## Типизация
+
+- **Интерфейсы для всех структур данных** - не использовать `any`, создавать интерфейсы
+- **Типы для union типов** - использовать `export type` для ограниченных наборов значений
+- **Nullable типы** - явно указывать `| null` когда значение может быть null
+
+Пример:
+```typescript
+export type LocationId = 'any' | 'us' | 'ua' | 'po' | 'cy';
+
+export interface Vacancy {
+  id: string;
+  title: string;
+  location?: LocationId;
+}
+
+vacancy: Vacancy | null = null;
+```
+
+## Методы для данных
+
+- **`protected` методы** - для методов, возвращающих данные для шаблонов
+- **Именование** - использовать суффикс `_items()` или `_data()` (например, `row_16_items()`)
+
+Пример:
+```typescript
+protected row_16_items(): Vacancy[] {
+  return vacancies;
+}
+```

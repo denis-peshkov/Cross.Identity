@@ -1,0 +1,91 @@
+# Архитектура бэкенда
+
+## Модульная структура
+
+- **Организация по модулям** - код организован в `Web.Api/Modules/{ModuleName}/`
+- **Структура модуля**:
+  - `Controllers/` - контроллеры API
+  - `Dtos/` - Data Transfer Objects
+  - `Handlers/` - обработчики команд и запросов (CQRS)
+
+Пример структуры:
+```
+Modules/
+└─ Vacancies/
+   ├─ Controllers/
+   │  └─ VacanciesController.cs
+   ├─ Dtos/
+   │  └─ SubmitResumeDto.cs
+   └─ Handlers/
+      └─ Create
+      │  └─ SubmitResumeCommand.cs
+      │  └─ SubmitResumeCommandHandler.cs
+      │  └─ SubmitResumeCommandValidator.cs
+      └─ Read
+         └─ GetByIdQuery.cs
+         └─ GetByIdQueryHandler.cs
+         └─ GetByIdQueryValidator.cs
+```
+
+## CQRS с MediatR
+
+- **Разделение команд и запросов** - использовать отдельные классы для команд (изменение данных) и запросов (чтение данных)
+- **Handlers** - вся бизнес-логика в обработчиках, не в контроллерах
+- **Использование MediatR** - все взаимодействие через `IMediator.Send()` и `IMediator.Send<T>()`
+
+Пример команды:
+```csharp
+public class SubmitResumeCommand : Command<bool>
+{
+    public SubmitResumeDto Dto { get; set; }
+}
+
+public class SubmitResumeCommandHandler : CommandHandler<SubmitResumeCommand, bool>
+{
+    protected override async Task<bool> HandleAsync(SubmitResumeCommand command, CancellationToken cancellationToken)
+    {
+        // Бизнес-логика
+        return true;
+    }
+}
+```
+
+## DTOs
+
+- **Отдельные DTOs** - использовать отдельные классы для запросов и ответов
+- **Валидация** - использовать FluentValidation для валидации DTOs
+- **Именование** - суффикс `Dto` для всех DTOs
+
+Пример:
+```csharp
+public class SubmitResumeDto
+{
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public IFormFile Resume { get; set; }
+}
+```
+
+## Dependency Injection
+
+- **Constructor injection** - использовать конструктор для инжекции зависимостей
+- **Интерфейсы** - использовать интерфейсы для всех зависимостей
+- **Readonly поля** - все зависимости должны быть `readonly`
+
+Пример:
+```csharp
+public class VacanciesController : ControllerBase
+{
+    private readonly IMediator _mediator;
+    private readonly ILogger<VacanciesController> _logger;
+
+    public VacanciesController(
+        IMediator mediator,
+        ILogger<VacanciesController> logger)
+    {
+        _mediator = mediator;
+        _logger = logger;
+    }
+}
+```

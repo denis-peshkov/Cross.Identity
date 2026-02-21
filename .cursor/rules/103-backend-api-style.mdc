@@ -1,0 +1,96 @@
+# Стиль API
+
+## Версионирование
+
+- **ApiVersion атрибут** - использовать `[ApiVersion("1.0")]` для версионирования
+- **Маршрутизация** - использовать `[Route("api/v{version:apiVersion}/[controller]")]`
+- **Версии в URL** - версия указывается в URL пути
+
+Пример:
+```csharp
+[ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+public class VacanciesController : ControllerBase
+{
+}
+```
+
+## HTTP методы
+
+- **POST** - для создания ресурсов и операций с side effects
+- **GET** - только для чтения данных
+- **Именование методов** - использовать суффикс `Async` для всех async методов
+
+Пример:
+```csharp
+[HttpPost("SubmitResume")]
+public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
+    [FromForm] SubmitResumeDto request,
+    CancellationToken cancellationToken)
+{
+    // ...
+}
+```
+
+## Формат ответов
+
+- **ApiEnvelope<T>** - все ответы оборачивать в `ApiEnvelope<T>`
+- **Типизация** - всегда указывать тип возвращаемого значения
+
+Пример:
+```csharp
+return new ApiEnvelope<bool>(await _mediator.Send(command, cancellationToken));
+```
+
+## Загрузка файлов
+
+- **FromForm** - использовать `[FromForm]` для загрузки файлов
+- **RequestFormLimits** - использовать `[RequestFormLimits]` для ограничения размера файлов
+
+Пример:
+```csharp
+[HttpPost("SubmitResume")]
+[RequestFormLimits(MultipartBodyLengthLimit = 10485760, ValueLengthLimit = int.MaxValue)]
+public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
+    [FromForm] SubmitResumeDto request,
+    CancellationToken cancellationToken)
+{
+    // ...
+}
+```
+
+## Обработка ошибок
+
+- **ModelState validation** - проверять `ModelState.IsValid` в контроллерах
+- **Логирование ошибок** - логировать все ошибки валидации
+- **Единообразные ответы** - использовать `ApiEnvelope` для всех ответов, включая ошибки
+
+Пример:
+```csharp
+if (!ModelState.IsValid)
+{
+    foreach (var error in ModelState)
+    {
+        _logger.LogWarning("ModelState error for {Key}: {Errors}",
+            error.Key,
+            string.Join(", ", error.Value.Errors.Select(e => e.ErrorMessage)));
+    }
+}
+```
+
+## CancellationToken
+
+- **Всегда принимать** - все async методы должны принимать `CancellationToken`
+- **Передавать дальше** - передавать `CancellationToken` во все async операции
+
+Пример:
+```csharp
+public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
+    [FromForm] SubmitResumeDto request,
+    CancellationToken cancellationToken)
+{
+    return new ApiEnvelope<bool>(
+        await _mediator.Send(command, cancellationToken));
+}
+```
