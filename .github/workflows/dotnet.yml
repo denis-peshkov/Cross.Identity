@@ -74,14 +74,6 @@ jobs:
       - name: Run tests
         run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
 
-      # Токен обрезаем от переводов строк (0x0a/0x0d), иначе SonarCloud возвращает: Unexpected char 0x0a in Authorization value
-      - name: Prepare SonarCloud token
-        run: |
-          echo "SONAR_TOKEN<<EOF" >> $GITHUB_ENV
-          printf '%s' "${{ secrets.SONAR_TOKEN }}" | tr -d '\n\r' >> $GITHUB_ENV
-          echo "" >> $GITHUB_ENV
-          echo "EOF" >> $GITHUB_ENV
-
       - name: SonarQube Scan
         uses: sonarsource/sonarcloud-github-action@v5 # Ex: v4.0.0, See the latest version at https://github.com/marketplace/actions/sonarcloud-scan
         with:
@@ -101,7 +93,7 @@ jobs:
             -Dsonar.sources=Cross.Identity/
             -Dsonar.verbose=true
         env:
-          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Nuget Pack
         run: nuget pack config.nuspec -Symbols -Version ${{ env.semVer }}
