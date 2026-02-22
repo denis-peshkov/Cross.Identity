@@ -46,8 +46,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Boilerplate.Headers" Version="7.48.0" />
-    <PackageReference Include="Boilerplate.Orm" Version="7.48.0" />
+    <PackageReference Include="Boilerplate.Headers" Version="7.56.0" />
+    <PackageReference Include="Boilerplate.Orm" Version="7.57.0" />
 
     <PackageReference Include="Cross.ErrorHandlers" Version="7.3.0" />
 
