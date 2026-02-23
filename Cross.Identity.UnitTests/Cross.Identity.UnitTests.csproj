@@ -1,13 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <EnablePreviewFeatures>false</EnablePreviewFeatures>
     <Configurations>Debug;Release</Configurations>
     <Platforms>AnyCPU</Platforms>
-    <NoWarn>1701;1702;1591</NoWarn>
+    <NoWarn>1701;1702;1591;CS8618;CS8601;CS8602;CS8620;</NoWarn>
   </PropertyGroup>
 
   <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
@@ -34,7 +35,7 @@
     <PackageReference Include="FluentAssertions" Version="6.12.1" />
     <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="coverlet.msbuild " Version="6.0.2" />
+    <PackageReference Include="coverlet.msbuild" Version="6.0.2" />
     <PackageReference Include="opencover" Version="4.7.1221" />
   </ItemGroup>
 

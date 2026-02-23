@@ -1,4 +1,4 @@
-﻿// Global using directives
+// Global using directives
 
 global using System;
 global using System.Collections.Generic;
@@ -26,6 +26,7 @@ global using Boilerplate.Orm.Headers.DbContext;
 global using Cross.ErrorHandlers.Exceptions;
 global using Cross.Identity.Dtos;
 global using Cross.Identity.Entities;
+global using Cross.Identity.Helpers;
 global using Cross.Identity.Infrastructure;
 global using Cross.Identity.Options;
 global using Cross.Identity.ProcessEngine.Core;
