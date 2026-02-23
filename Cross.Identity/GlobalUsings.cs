@@ -82,6 +82,7 @@ global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Options;
 global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.VisualBasic;
 global using PhoneNumbers;
 global using ILogger = Microsoft.Extensions.Logging.ILogger;
 global using ValidationException = FluentValidation.ValidationException;

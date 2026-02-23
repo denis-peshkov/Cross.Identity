@@ -41,10 +41,10 @@
 #
 # image files are treated as binary by default.
 ###############################################################################
-#*.jpg   binary
-#*.png   binary
-#*.gif   binary
-#*.webp  binary
+*.jpg   binary
+*.png   binary
+*.gif   binary
+*.webp  binary
 
 ###############################################################################
 # diff behavior for common document formats
