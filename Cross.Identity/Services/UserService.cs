@@ -242,21 +242,21 @@ internal sealed class UserService : IUserService
         var isValid = false;
         switch (field)
         {
-            case "email":
+            case nameof(UserAccountEntity.NormalizedEmail):
                 var emailVerification = await _context.EmailVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
                 if (emailVerification != null) emailVerification.Attempts++;
                 isValid = emailVerification != null
                           && emailVerification.TokenLength == code.Length
-                          && emailVerification.TokenHash == CodeGeneratorHelper.GenerateHash(code)
+                          && emailVerification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
                           && emailVerification.MaxAttempts >= emailVerification.Attempts;
                 break;
 
-            case "phone" or "phonenumber":
+            case nameof(UserAccountEntity.PhoneNumber):
                 var phoneVerification = await _context.PhoneVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
                 if (phoneVerification != null) phoneVerification.Attempts++;
                 isValid = phoneVerification != null
                           && phoneVerification.CodeLength == code.Length
-                          && phoneVerification.CodeHash == CodeGeneratorHelper.GenerateHash(code)
+                          && phoneVerification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
                           && phoneVerification.MaxAttempts >= phoneVerification.Attempts;
                 break;
         }

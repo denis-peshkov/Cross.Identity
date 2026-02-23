@@ -226,7 +226,7 @@ internal sealed class PasswordHasher : IPasswordHasher
     {
         // $sha256$<saltB64>$<hashB64>
         var parts = phc.Split('$', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 3 || !parts[0].StartsWith("sha256$"))
+        if (parts is not ["sha256", _, _])
             return PasswordVerificationEnum.Failed;
 
         var salt = Convert.FromBase64String(parts[1]);

@@ -87,4 +87,112 @@ public class CodeService_Tests : EFTestsBase
         // Assert
         result.Should().BeTrue();
     }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeNotFound()
+    {
+        var result = await _codeService.VerifyAsync("email", "nobody@example.com", "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeExpired()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com", NormalizedEmail = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(-1),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-10)
+        });
+
+        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnTrue_ForPhoneChannel()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeNotFound()
+    {
+        var result = await _codeService.VerifyAsync("phone", "+9999999999", "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeExpired()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(-1),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeMismatch()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("correct"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("phone", phone, "wrongcode", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_ForUnsupportedChannel()
+    {
+        var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
 }

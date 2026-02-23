@@ -128,4 +128,83 @@ public class PasswordHasher_Tests
         // Assert
         result.Should().BeTrue();
     }
+
+    [Test]
+    public void Hash_WithArgon2id_ShouldReturnArgon2PhcString()
+    {
+        _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
+        {
+            DefaultAlgorithm = PasswordAlgoEnum.Argon2id,
+            SaltSizeBytes = 16,
+            HashOutputBytes = 32,
+            Argon2_Iterations = 2,
+            Argon2_MemoryKb = 65536,
+            Argon2_DegreeOfParallelism = 1
+        });
+        _hasher = new CrossIdentityPasswordHasher(_optionsMonitor.Object);
+
+        var hash = _hasher.Hash("P@ssw0rd!", "pepper");
+        hash.Should().NotBeNullOrEmpty().And.StartWith("$argon2id$");
+    }
+
+    [Test]
+    public void Verify_WithArgon2id_ShouldReturnSuccessForCorrectPassword()
+    {
+        _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
+        {
+            DefaultAlgorithm = PasswordAlgoEnum.Argon2id,
+            SaltSizeBytes = 16,
+            HashOutputBytes = 32,
+            Argon2_Iterations = 2,
+            Argon2_MemoryKb = 65536,
+            Argon2_DegreeOfParallelism = 1
+        });
+        _hasher = new CrossIdentityPasswordHasher(_optionsMonitor.Object);
+
+        var password = "P@ssw0rd!";
+        var pepper = "pepper";
+        var hash = _hasher.Hash(password, pepper);
+        var result = _hasher.Verify(password, hash, pepper);
+        result.Should().BeOneOf(PasswordVerificationEnum.Success, PasswordVerificationEnum.SuccessRehashNeeded);
+    }
+
+    [Test]
+    public void Hash_WithSha256_ShouldReturnSha256PhcString()
+    {
+        _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
+        {
+            DefaultAlgorithm = PasswordAlgoEnum.SHA256,
+            SaltSizeBytes = 16,
+            HashOutputBytes = 32
+        });
+        _hasher = new CrossIdentityPasswordHasher(_optionsMonitor.Object);
+
+        var hash = _hasher.Hash("P@ssw0rd!", "pepper");
+        hash.Should().NotBeNullOrEmpty().And.StartWith("$sha256$");
+    }
+
+    [Test]
+    public void Verify_WithSha256_ShouldReturnSuccessForCorrectPassword()
+    {
+        _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
+        {
+            DefaultAlgorithm = PasswordAlgoEnum.SHA256,
+            SaltSizeBytes = 16,
+            HashOutputBytes = 32
+        });
+        _hasher = new CrossIdentityPasswordHasher(_optionsMonitor.Object);
+
+        var password = "P@ssw0rd!";
+        var pepper = "pepper";
+        var hash = _hasher.Hash(password, pepper);
+        var result = _hasher.Verify(password, hash, pepper);
+        result.Should().BeOneOf(PasswordVerificationEnum.Success, PasswordVerificationEnum.SuccessRehashNeeded);
+    }
+
+    [Test]
+    public void Verify_WhenPhcUnknownPrefix_ShouldReturnFailed()
+    {
+        var result = _hasher.Verify("p", "$unknown$format", "pepper");
+        result.Should().Be(PasswordVerificationEnum.Failed);
+    }
 }

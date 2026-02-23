@@ -145,4 +145,123 @@ public class UserService_Tests : EFTestsBase
         result.Id.Should().Be(userId);
         result.Email.Should().Be(email);
     }
+
+    [Test]
+    public async Task ValidateCodeAsync_ShouldReturnTrue_ForValidEmailCode()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task ValidateCodeAsync_ShouldReturnFalse_WhenCodeWrong()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
+            TokenLength = 5,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "WRONG", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ValidateCodeAsync_ShouldReturnTrue_ForValidPhoneCode()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _userService.ValidateCodeAsync("Phone", phone, "123456", CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_ShouldReturnTrue_WhenPasswordValid()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        var password = "P@ssw0rd!";
+        var hashed = "$pbkdf2$";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
+            PasswordPhc = hashed,
+            PasswordPepperVersion = 1
+        });
+        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "test-pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, hashed, "test-pepper")).Returns(PasswordVerificationEnum.Success);
+
+        var result = await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenPasswordInvalid()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
+            PasswordPhc = "$pbkdf2$stored"
+        });
+        _hasher.Setup(h => h.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Failed);
+
+        var result = await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task SetPasswordAsync_ShouldThrowNotImplementedException()
+    {
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "test@example.com", "newPass", CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotImplementedException>();
+    }
 }
