@@ -249,3 +249,5 @@ paket-files/
 **/.idea
 *.sln.iml
 pub/
+/cross-identity-deploy-key
+/cross-identity-deploy-key.pub

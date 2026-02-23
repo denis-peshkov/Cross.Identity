@@ -13,6 +13,9 @@
     <File Path="RefreshToken.md" />
     <File Path="IdentityServer.png" />
     <File Path="IdentityServer.svg" />
+    <File Path="Configure Azure have access to GitHub.md" />
+    <File Path="cross-identity-deploy-key" />
+    <File Path="cross-identity-deploy-key.pub" />
     <File Path="GitVersion.yml" />
   </Folder>
   <Folder Name="/_nuget/">
