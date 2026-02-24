@@ -37,7 +37,7 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using System.Transactions;
 global using System.Web;
-global using Boilerplate.Headers;
+global using Cross.Headers;
 global using Cross.ErrorHandlers.Exceptions;
 global using Cross.Identity.Dtos;
 global using Cross.Identity.Entities;

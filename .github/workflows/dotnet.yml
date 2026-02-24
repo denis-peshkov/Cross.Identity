@@ -19,7 +19,7 @@ on:
 jobs:
   build:
     permissions: # <-- https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes
-      contents: read
+      contents: write
 
     env:
       BUILD_CONFIG: 'Release'
