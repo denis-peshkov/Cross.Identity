@@ -20,8 +20,8 @@ public class RefreshTokenEntity
     public string? UserAgent { get; set; }
     public string? IpAddress { get; set; }
 
-    /// <summary>Concurrency token</summary>
-    public byte[] RowVersion { get; set; } = default!;
+    /// <summary>Concurrency token (SQL Server генерирует сам; для InMemory подставляется value generator).</summary>
+    public byte[]? RowVersion { get; set; }
 }
 
 // ReplacedByTokenId

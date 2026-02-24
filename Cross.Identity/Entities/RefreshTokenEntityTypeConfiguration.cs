@@ -12,7 +12,8 @@ public class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<Refr
 
         builder.Property(x => x.RowVersion)
             .IsRowVersion()           // для SQL Server → rowversion/timestamp
-            .IsConcurrencyToken();    // говорить EF: проверяй при UPDATE
+            .IsConcurrencyToken()     // говорить EF: проверяй при UPDATE
+            .HasValueGenerator<RowVersionValueGenerator>(); // для InMemory подставляем значение; для SQL Server генератор возвращает null — БД генерирует сама
 
         builder.HasKey(u => u.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.RefreshTokens)}");
         builder.HasIndex(x => x.TokenHash).IsUnique(false);

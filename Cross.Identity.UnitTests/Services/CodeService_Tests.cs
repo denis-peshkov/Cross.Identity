@@ -190,9 +190,38 @@ public class CodeService_Tests : EFTestsBase
     }
 
     [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneMaxAttemptsExceeded()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
+            CodeLength = 6,
+            Attempts = 3,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
     public async Task VerifyAsync_ShouldReturnFalse_ForUnsupportedChannel()
     {
         var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);
         result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync1_ShouldReturnTrue()
+    {
+        var result = await _codeService.VerifyAsync1(ChannelEnum.Email, "a", "b", CancellationToken.None);
+        result.Should().BeTrue();
     }
 }

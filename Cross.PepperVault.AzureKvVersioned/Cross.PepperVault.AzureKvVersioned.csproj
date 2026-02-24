@@ -5,6 +5,7 @@
     <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <EnablePreviewFeatures>false</EnablePreviewFeatures>
     <Configurations>Debug;Release</Configurations>
     <Platforms>AnyCPU</Platforms>
     <NoWarn>1701;1702;1591;CS8618;</NoWarn>

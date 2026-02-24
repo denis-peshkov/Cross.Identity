@@ -98,9 +98,12 @@ var result = await _flowExecutor.ExecuteAsync(
 
 ## Зависимости (NuGet)
 
-- Boilerplate.Headers, Boilerplate.Orm
 - Cross.ErrorHandlers
-- Konscious.Security.Cryptography.Argon2, Magick.NET.Core
+- Cross.Headers
+- Konscious.Security.Cryptography.Argon2
+- Magick.NET.Core
+- Microsoft.EntityFrameworkCore
+- Microsoft.EntityFrameworkCore.Relational
 - Microsoft.Extensions.Http
 - PhoneNumbersCore
 - System.IdentityModel.Tokens.Jwt

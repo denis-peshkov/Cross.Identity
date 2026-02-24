@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Infrastructure;
+namespace Cross.Identity.Infrastructure;
 
 public class IdentityContext : DbContext
 {

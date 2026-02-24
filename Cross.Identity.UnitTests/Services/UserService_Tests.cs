@@ -123,6 +123,53 @@ public class UserService_Tests : EFTestsBase
     }
 
     [Test]
+    public async Task GetUserIdByAsync_ShouldReturnUserIdForUserName()
+    {
+        var userId = Guid.NewGuid();
+        var userName = "testuser";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            UserName = userName,
+            NormalizedUserName = userName.ToLowerInvariant(),
+            Email = "test@example.com",
+            NormalizedEmail = "test@example.com"
+        });
+
+        var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
+
+        result.Should().Be(userId.ToString());
+    }
+
+    [Test]
+    public async Task GetUserIdByAsync_ShouldReturnUserIdForPhone()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            PhoneNumber = phone,
+            Email = "test@example.com",
+            NormalizedEmail = "test@example.com"
+        });
+        _phoneNormalizer.Setup(p => p.NormalizeToE164(phone, "US")).Returns(phone);
+
+        var result = await _userService.GetUserIdByAsync("Phone", phone, CancellationToken.None);
+
+        result.Should().Be(userId.ToString());
+    }
+
+    [Test]
+    public async Task GetUserIdByAsync_ShouldThrow_WhenSelectorNotSupported()
+    {
+        await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Unknown", "value", CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotSupportedException>()
+            .WithMessage("*not supported*");
+    }
+
+    [Test]
     public async Task GetUserByAsync_ShouldReturnUserDictionary()
     {
         // Arrange
@@ -144,6 +191,54 @@ public class UserService_Tests : EFTestsBase
         result.Should().NotBeNull();
         result.Id.Should().Be(userId);
         result.Email.Should().Be(email);
+    }
+
+    [Test]
+    public async Task GetUserByAsync_ShouldReturnUser_WhenSelectorIsId()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "test@example.com",
+            NormalizedEmail = "test@example.com",
+            UserName = "u",
+            NormalizedUserName = "u"
+        });
+
+        var result = await _userService.GetUserByAsync("Id", userId.ToString(), CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Id.Should().Be(userId);
+    }
+
+    [Test]
+    public async Task GetUserByAsync_ShouldReturnUser_WhenSelectorIsUserName()
+    {
+        var userId = Guid.NewGuid();
+        var userName = "myuser";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            UserName = userName,
+            NormalizedUserName = userName.ToLowerInvariant(),
+            Email = "e@e.com",
+            NormalizedEmail = "e@e.com"
+        });
+
+        var result = await _userService.GetUserByAsync("UserName", userName, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        result.Id.Should().Be(userId);
+        result.UserName.Should().Be(userName);
+    }
+
+    [Test]
+    public async Task GetUserByAsync_ShouldThrow_WhenSelectorNotSupported()
+    {
+        await FluentActions.Invoking(() => _userService.GetUserByAsync("Unknown", "v", CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotSupportedException>();
     }
 
     [Test]
@@ -248,13 +343,95 @@ public class UserService_Tests : EFTestsBase
             Id = userId,
             Email = email,
             NormalizedEmail = email.ToLowerInvariant(),
-            PasswordPhc = "$pbkdf2$stored"
+            PasswordPhc = "$pbkdf2$stored",
+            PasswordPepperVersion = 1
+        });
+        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
         });
         _hasher.Setup(h => h.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .Returns(PasswordVerificationEnum.Failed);
 
         var result = await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None);
         result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenPepperNotFound()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
+            PasswordPhc = "hash",
+            PasswordPepperVersion = 99
+        });
+        _pepperVault.Setup(p => p.TryGet((short)99, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = null!;
+            return false;
+        });
+
+        var result = await _userService.ValidatePasswordAsync("Email", email, "pass", CancellationToken.None);
+
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_WhenRehashNeeded_ShouldUpdatePasswordPhc()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        var password = "P@ssw0rd!";
+        var oldHash = "$pbkdf2$old";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
+            PasswordPhc = oldHash,
+            PasswordPepperVersion = 1
+        });
+        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
+        _pepperVault.Setup(p => p.TryGetCurrentVersion(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        {
+            p = "new-pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, oldHash, "pepper")).Returns(PasswordVerificationEnum.SuccessRehashNeeded);
+        _hasher.Setup(h => h.Hash(password, "new-pepper")).Returns("$pbkdf2$new");
+
+        var result = await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None);
+
+        result.Should().BeTrue();
+        var user = await Context.UsersAccounts.FindAsync(userId);
+        user!.PasswordPhc.Should().Be("$pbkdf2$new");
+        user.PasswordPepperVersion.Should().Be((short)2);
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenSelectorValueEmpty()
+    {
+        var result = await _userService.ValidatePasswordAsync("Email", "   ", "pass", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task ValidatePasswordAsync_ShouldThrow_WhenSelectorNotSupported()
+    {
+        await FluentActions.Invoking(() => _userService.ValidatePasswordAsync("Unknown", "v", "p", CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotSupportedException>();
     }
 
     [Test]
