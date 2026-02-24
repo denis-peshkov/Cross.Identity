@@ -3,7 +3,7 @@ namespace Cross.Identity.Entities;
 /// <summary>
 /// Модель для хранения access-токенов
 /// </summary>
-public class AccessTokenEntity : IEntity<Guid>
+public class AccessTokenEntity
 {
     /// <summary>Jti</summary>
     public Guid Id { get; set; }

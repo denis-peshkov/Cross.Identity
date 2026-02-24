@@ -1,6 +1,6 @@
 namespace Cross.Identity.Entities;
 
-public class RefreshTokenEntity : IEntity<Guid>
+public class RefreshTokenEntity
 {
     /// <summary>Jti</summary>
     public Guid Id { get; set; }

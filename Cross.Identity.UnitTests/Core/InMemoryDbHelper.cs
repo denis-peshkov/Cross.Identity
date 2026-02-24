@@ -17,24 +17,7 @@ public static class InMemoryDbHelper
             CurrencyCode = "USD",
             UserAgent = "TestAgent",
         };
-        context.HeadersContextAccessor = headersContextAccessor;
-        context.DbContextListener = new NullDbContextListener();
         context.Database.EnsureCreated();
         return context;
-    }
-}
-
-internal class NullDbContextListener : IDbContextListener
-{
-    public Task RemoveNonActualCaches(IReadOnlyCollection<string> changedTables)
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task<IReadOnlyCollection<TEntity>> GetAsync<TEntity>(
-        string[] tablesNames,
-        IQueryable<TEntity> query)
-    {
-        return Task.FromResult<IReadOnlyCollection<TEntity>>((IReadOnlyCollection<TEntity>) Array.Empty<TEntity>());
     }
 }

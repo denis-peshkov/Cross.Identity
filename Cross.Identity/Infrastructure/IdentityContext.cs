@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Infrastructure;
 
-public class IdentityContext : HeadersDbContext
+public class IdentityContext : DbContext
 {
     public static string DefaultSchema => "auth";
 

@@ -12,6 +12,13 @@ public class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
+        var headersContextAccessor = new HeadersContextAccessor
+        {
+            LanguageCode = "EN",
+            CurrencyCode = "USD",
+            UserAgent = "TestAgent"
+        };
+
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<TokenStepFactory>();
@@ -19,7 +26,7 @@ public class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         // Configure service provider to return requested services
         RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            Context.HeadersContextAccessor);
+            headersContextAccessor);
         // Мокаем IUserService, чтобы управляемо возвращать успешную аутентификацию
         var userServiceMock = new Mock<IUserService>();
         var userId = Guid.NewGuid();

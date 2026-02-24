@@ -3,9 +3,8 @@ namespace Cross.Identity.Entities;
 /// <summary>
 /// Represents a user in the identity system
 /// </summary>
-/// <typeparam name="TKey">The type used for the primary key for the user.</typeparam>
-// public class UserAccountEntity<TKey> where TKey : IEquatable<TKey>
-public class UserAccountEntity : IEntity<Guid>, ICreated
+// public class UserAccountEntity
+public class UserAccountEntity
 {
     /// <summary>
     /// Gets or sets the primary key for this user.

@@ -12,13 +12,20 @@ public class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
+        var headersContextAccessor = new HeadersContextAccessor
+        {
+            LanguageCode = "EN",
+            CurrencyCode = "USD",
+            UserAgent = "TestAgent"
+        };
+
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<SendCodeStepFactory>();
 
         // Configure service provider to return requested services
         RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            Context.HeadersContextAccessor);
+            headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(
@@ -28,7 +35,7 @@ public class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<IPepperVaultProvider>(),
                 Mock.Of<IPasswordHasher>(),
                 Mock.Of<IPhoneNormalizer>(),
-                Context.HeadersContextAccessor));
+                headersContextAccessor));
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,
