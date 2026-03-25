@@ -1,24 +1,23 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
-
 name: .NET
 
 on:
   push:
     branches:
       - master
-      - dev
-      - hotfix/*
       - release/*
+      - hotfix/*
+      - dev
       - feature/*
   pull_request:
     branches:
       - master
-  workflow_dispatch: # <-- вот это даёт ручной запуск
+  workflow_dispatch: # allows manual runs from the Actions tab
 
 jobs:
   build:
-    permissions: # <-- https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes
+    permissions: # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes
       contents: write
 
     env:
@@ -28,21 +27,26 @@ jobs:
     runs-on: ubuntu-22.04 # ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Disabling shallow clones is recommended for improving the relevancy of reporting
-          fetch-depth: 0
+          fetch-depth: 0 # Disabling shallow clones is recommended for improving the relevancy of reporting
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: |
+            6.0.x
+            7.0.x
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v2.0.0
 
-      - name: Install GitVersion
+      - name: Setup GitVersion
         uses: gittools/actions/gitversion/setup@v1.1.1
         with:
           versionSpec: 5.12.0
@@ -72,25 +76,25 @@ jobs:
             -p:NeutralLanguage=en
 
       - name: Run tests
-        run: dotnet test /p:Configuration=$BUILD_CONFIG --no-restore --no-build --verbosity normal
+        run: >
+          dotnet test /p:Configuration=$BUILD_CONFIG
+          --no-restore
+          --no-build
+          --verbosity normal
+          --collect:"XPlat Code Coverage"
+          --results-directory ./TestResults
+          --
+          DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 
       - name: SonarQube Scan
         uses: sonarsource/sonarcloud-github-action@v5 # Ex: v4.0.0, See the latest version at https://github.com/marketplace/actions/sonarcloud-scan
         with:
-          #          projectBaseDir: app/
-          #          args: >
-          #            -Dsonar.organization=peshkov
-          #            -Dsonar.projectKey=Cross.Identity
-          #            -Dsonar.python.coverage.reportPaths=coverage.xml
-          #            -Dsonar.sources=Cross.Identity/
-          #            -Dsonar.tests=tests/
-          #            -Dsonar.test.exclusions=tests/**
-          #            -Dsonar.verbose=true
           args: >
             -Dsonar.organization=peshkov
             -Dsonar.projectKey=Cross.Identity
-            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
+            -Dsonar.tests=Cross.Identity.UnitTests/
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -98,11 +102,8 @@ jobs:
       - name: Nuget Pack
         run: nuget pack _nuget/config.nuspec -Symbols -Version ${{ env.semVer }}
 
-      - name: ref
-        run: echo "github.head_ref 1 ${{ github.head_ref }} 2 $GITHUB_REF 3 ${{ github.ref }}"
-
       - name: Create git Tag
-        if: ${{ contains('refs/heads/hotfix', github.ref) || contains('refs/heads/release', github.ref) || contains('refs/heads/master', github.ref) }}
+        if: ${{ contains('refs/heads/master', github.ref) || contains('refs/heads/release', github.ref) || contains('refs/heads/hotfix', github.ref) }}
         run: |
           git tag v${{ env.semVer }}
 
