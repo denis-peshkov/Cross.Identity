@@ -194,6 +194,17 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
+    public async Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken = default)
+    {
+        var entity = await _context.AccessTokens
+            .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken);
+
+        return entity is { RevokedAt: null }
+               && entity.ExpiresAt >= DateTime.UtcNow
+               && entity.CreatedAt <= DateTime.UtcNow;
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
     {
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
