@@ -76,7 +76,8 @@ internal sealed class RefreshTokenStep : IStep
         var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())});
 
         // 7) Invalidate old RefreshToken
-        var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti) ?? string.Empty;
+        var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti);
+        ArgumentException.ThrowIfNullOrEmpty(newJti);
         await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken);
 
         // 8) Complete Transaction

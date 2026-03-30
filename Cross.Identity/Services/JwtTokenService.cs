@@ -268,7 +268,6 @@ internal class JwtTokenService : IJwtTokenService
     {
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
-
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
             .FirstOrDefaultAsync(cancellationToken)
