@@ -1,8 +1,5 @@
 namespace Cross.Identity.UnitTests.Identity.StepTests;
 
-using System.Security.Claims;
-using Microsoft.IdentityModel.JsonWebTokens;
-
 [TestFixture]
 public class RefreshToken_StepTests
 {

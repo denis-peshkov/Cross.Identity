@@ -1,7 +1,5 @@
 ﻿namespace Cross.Identity.UnitTests.Extensions;
 
-using Cross.Identity.Extensions;
-
 [TestFixture]
 public class TimeSpanExtensions_Tests
 {

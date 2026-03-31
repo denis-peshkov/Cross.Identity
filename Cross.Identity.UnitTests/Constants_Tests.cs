@@ -1,7 +1,5 @@
 ﻿namespace Cross.Identity.UnitTests;
 
-using Cross.Identity;
-
 [TestFixture]
 public class Constants_Tests
 {

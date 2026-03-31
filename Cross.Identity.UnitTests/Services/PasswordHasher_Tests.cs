@@ -1,8 +1,5 @@
 namespace Cross.Identity.UnitTests.Services;
 
-using CrossIdentityPasswordHasher = Cross.Identity.Services.Crypto.PasswordHasher;
-using CrossIdentityPasswordHasherOptions = Cross.Identity.Services.Crypto.PasswordHasherOptions;
-
 [TestFixture]
 public class PasswordHasher_Tests
 {

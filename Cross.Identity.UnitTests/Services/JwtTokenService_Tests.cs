@@ -1,8 +1,5 @@
 ﻿namespace Cross.Identity.UnitTests.Services;
 
-using System.Security.Claims;
-using Microsoft.IdentityModel.JsonWebTokens;
-
 [TestFixture]
 public class JwtTokenService_Tests : EFTestsBase
 {
