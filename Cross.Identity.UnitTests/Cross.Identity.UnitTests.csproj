@@ -11,11 +11,6 @@
     <NoWarn>1701;1702;1591;CS8618;CS8601;CS8602;CS8620;</NoWarn>
   </PropertyGroup>
 
-  <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
-    <RemoveDir Directories=".\bin" />
-    <Delete Files=".\obj\**\*.cs" />
-  </Target>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />

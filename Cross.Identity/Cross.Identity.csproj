@@ -11,11 +11,6 @@
     <NoWarn>1701;1702;1591;CS8618;</NoWarn>
   </PropertyGroup>
 
-  <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
-    <RemoveDir Directories=".\bin" />
-    <Delete Files=".\obj\**\*.cs" />
-  </Target>
-
 <!-- strange, why doesn't work -->
 <!--  <ItemGroup>-->
 <!--    <EmbeddedResource Include=".\ProcessEngine\Definitions\Flows\**\*.json">-->
