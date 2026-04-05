@@ -252,7 +252,7 @@ internal class JwtTokenService : IJwtTokenService
         static string DecodeJwtPayload(string jwt)
         {
             var p = jwt.Split('.');
-            if (p.Length < 2) throw new ArgumentException("Not a JWT");
+            if (p.Length < 2) throw new ArgumentException("Not a JWT token.");
             var payload = p[1].Replace('-', '+').Replace('_', '/');
             switch (payload.Length % 4) { case 2: payload += "=="; break; case 3: payload += "="; break; }
             return Encoding.UTF8.GetString(Convert.FromBase64String(payload));
