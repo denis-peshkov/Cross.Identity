@@ -1,7 +1,9 @@
 namespace Cross.Notification.Email.Options;
 
-public class EmailOptions
+public class NotificationEmailOptions
 {
+    public const string SectionName = "NotificationEmail";
+
     public string SmtpHost { get; set; }
 
     public int SmtpPort { get; set; }
@@ -23,4 +25,6 @@ public class EmailOptions
     public string FromUserName { get; set; }
 
     public string FromUserAddress { get; set; }
+
+    public string RecipientOverride { get; set; }
 }

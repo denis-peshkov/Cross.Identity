@@ -3,9 +3,11 @@ namespace Cross.Notification.Email.Services;
 public class EmailSenderService : IEmailSenderService
 {
     private readonly ILogger<EmailSenderService> _logger;
-    private readonly EmailOptions _options;
+    private readonly NotificationEmailOptions _options;
 
-    public EmailSenderService(ILogger<EmailSenderService> logger, IOptionsSnapshot<EmailOptions> options)
+    public EmailSenderService(
+        ILogger<EmailSenderService> logger,
+        IOptionsSnapshot<NotificationEmailOptions> options)
     {
         _logger = logger;
         _options = options.Value;
