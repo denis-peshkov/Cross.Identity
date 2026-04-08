@@ -1,4 +1,4 @@
-using Cross.Notification.Email.Options;
+﻿using Cross.Notification.Email.Options;
 
 namespace Cross.Identity.Services;
 
@@ -32,7 +32,7 @@ internal sealed class CodeService : ICodeService
     {
         var destination = msg.Destination;
 
-        if (string.IsNullOrEmpty(_options.Value.RecipientOverride))
+        if (!string.IsNullOrEmpty(_options.Value.RecipientOverride))
         {
             destination = _options.Value.RecipientOverride;
         }
