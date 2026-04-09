@@ -1,4 +1,4 @@
-namespace Cross.Identity.UnitTests.Services;
+﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
 public class CodeService_Tests : EFTestsBase
@@ -15,7 +15,12 @@ public class CodeService_Tests : EFTestsBase
         _logger = new Mock<ILogger<CodeService>>();
         _emailService = new Mock<IEmailSenderService>();
         _smsService = new Mock<ISmsSenderService>();
-        _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object);
+        var options = new Mock<IOptionsSnapshot<NotificationEmailOptions>>();
+        options.Setup(o => o.Value).Returns(new NotificationEmailOptions
+        {
+            RecipientOverride = "dionis.peshkov@gmail.com"
+        });
+        _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object, options.Object);
     }
 
     [Test]

@@ -249,13 +249,29 @@ internal class JwtTokenService : IJwtTokenService
     {
         ArgumentNullException.ThrowIfNull(token);
 
-        var jwt = _handler.ReadJwtToken(token);
-        var userId = jwt.Claims
-            .Where(c => claimTypes.Contains(c.Type, StringComparer.OrdinalIgnoreCase))
-            .FirstOrDefault()
-            ?.Value;
+        static string DecodeJwtPayload(string jwt)
+        {
+            var p = jwt.Split('.');
+            if (p.Length < 2) throw new ArgumentException("Not a JWT token.");
+            var payload = p[1].Replace('-', '+').Replace('_', '/');
+            switch (payload.Length % 4) { case 2: payload += "=="; break; case 3: payload += "="; break; }
+            return Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+        }
 
-        return Task.FromResult(userId);
+        var t = DecodeJwtPayload(token);
+        using var json = JsonDocument.Parse(t);
+        var root = json.RootElement;
+
+        string? result = null;
+        foreach (var claimType in claimTypes)
+        {
+            if (root.TryGetProperty(claimType, out var res))
+            {
+                result = res.GetString();
+            }
+        }
+
+        return Task.FromResult(result);
     }
 
     /// <inheritdoc/>

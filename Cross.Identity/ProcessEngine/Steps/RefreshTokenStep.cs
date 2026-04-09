@@ -37,9 +37,7 @@ internal sealed class RefreshTokenStep : IStep
         // 1) валидируем токен
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue))
-        {
             throw new NotAuthorizedException("Invalid or expired refresh token.");
-        }
 
         // 2) open Transaction
         // var transactionOptions = new TransactionOptions
@@ -52,14 +50,14 @@ internal sealed class RefreshTokenStep : IStep
         // 3) получаем UserId из рефреш токена
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken);
         if (oldRefreshToken is null)
-        {
-            throw new InvalidOperationException("User not found after refresh token validation.");
-        }
+            throw new InvalidOperationException("User not found when refresh token.");
 
         // 4) получаем данные юзера
         var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken)).ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
+        if (userId == Guid.Empty)
+            throw new InvalidOperationException("Invalid user ID when refresh token.");
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
         var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
         var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
@@ -71,9 +69,11 @@ internal sealed class RefreshTokenStep : IStep
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
         var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims);
+        ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
         // 6) генерация RefreshToken
         var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())});
+        ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
         // 7) Invalidate old RefreshToken
         var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti);

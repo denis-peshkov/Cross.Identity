@@ -1,4 +1,4 @@
-namespace Cross.Identity.UnitTests.Identity.FlowTests;
+﻿namespace Cross.Identity.UnitTests.Identity.FlowTests;
 
 [TestFixture]
 public class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
@@ -38,12 +38,15 @@ public class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<IPasswordHasher>(),
                 Mock.Of<IPhoneNormalizer>(),
                 headersContextAccessor));
+        var notificationOptions = new Mock<IOptionsSnapshot<NotificationEmailOptions>>();
+        notificationOptions.Setup(o => o.Value).Returns(new NotificationEmailOptions());
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>()));
+                Mock.Of<ISmsSenderService>(),
+                notificationOptions.Object));
 
         // Берём JSON как embedded /Flows/Definitions/licenses.register.json
         // AddJson("""
