@@ -42,8 +42,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Cross.Identity\Cross.Identity.csproj" />
-    <ProjectReference Include="..\Cross.PepperVault.EnvJson\Cross.PepperVault.EnvJson.csproj" />
-    <ProjectReference Include="..\Cross.PepperVault.Env\Cross.PepperVault.Env.csproj" />
   </ItemGroup>
 
 </Project>

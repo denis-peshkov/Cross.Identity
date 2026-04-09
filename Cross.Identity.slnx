@@ -17,20 +17,8 @@
     <File Path="cross-identity-deploy-key.pub" />
     <File Path="GitVersion.yml" />
   </Folder>
-  <Folder Name="/_nuget/">
-    <File Path="_nuget\config.nuspec" />
-  </Folder>
   <Project Path="Cross.Identity.UnitTests\Cross.Identity.UnitTests.csproj" />
   <Project Path="Cross.Identity\Cross.Identity.csproj" />
   <Project Path="Cross.Notification\Cross.Notification.csproj" />
-  <Project Path="Cross.PepperVault.AwsSecretsJson\Cross.PepperVault.AwsSecretsJson.csproj" />
-  <Project Path="Cross.PepperVault.AzureKvJson\Cross.PepperVault.AzureKvJson.csproj" />
-  <Project Path="Cross.PepperVault.AzureKvVersioned\Cross.PepperVault.AzureKvVersioned.csproj" />
-  <Project Path="Cross.PepperVault.EnvJson\Cross.PepperVault.EnvJson.csproj" />
-  <Project Path="Cross.PepperVault.Env\Cross.PepperVault.Env.csproj" />
-  <Project Path="Cross.PepperVault.FileJson\Cross.PepperVault.FileJson.csproj" />
-  <Project Path="Cross.PepperVault.GcpSecretManagerJson\Cross.PepperVault.GcpSecretManagerJson.csproj" />
-  <Project Path="Cross.PepperVault.HcvKv2Json\Cross.PepperVault.HcvKv2Json.csproj" />
-  <Project Path="Cross.PepperVault\Cross.PepperVault.csproj" />
   <Project Path="Sample.Api/Sample.Api.csproj" />
 </Solution>
