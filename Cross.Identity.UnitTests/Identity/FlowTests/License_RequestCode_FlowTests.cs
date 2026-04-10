@@ -36,8 +36,8 @@ public class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<IPasswordHasher>(),
                 Mock.Of<IPhoneNormalizer>(),
                 headersContextAccessor));
-        var notificationOptions = new Mock<IOptionsSnapshot<NotificationEmailOptions>>();
-        notificationOptions.Setup(o => o.Value).Returns(new NotificationEmailOptions());
+        var notificationOptions = new Mock<IOptionsSnapshot<MessagingEmailOptions>>();
+        notificationOptions.Setup(o => o.Value).Returns(new MessagingEmailOptions());
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,

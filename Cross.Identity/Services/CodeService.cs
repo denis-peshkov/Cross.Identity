@@ -1,6 +1,4 @@
-﻿using Cross.Notification.Email.Options;
-
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Сервис OTP-кодов на базе EF Core для отправки email/SMS.
@@ -11,14 +9,14 @@ internal sealed class CodeService : ICodeService
     private readonly ILogger<CodeService> _logger;
     private readonly IEmailSenderService _email;
     private readonly ISmsSenderService _sms;
-    private readonly IOptionsSnapshot<NotificationEmailOptions> _options;
+    private readonly IOptionsSnapshot<MessagingEmailOptions> _options;
 
     public CodeService(
         IdentityContext context,
         ILogger<CodeService> logger,
         IEmailSenderService email,
         ISmsSenderService sms,
-        IOptionsSnapshot<NotificationEmailOptions> options)
+        IOptionsSnapshot<MessagingEmailOptions> options)
     {
         _context = context;
         _logger = logger;

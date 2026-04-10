@@ -45,8 +45,8 @@ public class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 NormalizedEmail = "test@example.com",
             });
         RegisterToServiceProvider<IUserService, IUserService>(userServiceMock.Object);
-        var notificationOptions = new Mock<IOptionsSnapshot<NotificationEmailOptions>>();
-        notificationOptions.Setup(o => o.Value).Returns(new NotificationEmailOptions());
+        var notificationOptions = new Mock<IOptionsSnapshot<MessagingEmailOptions>>();
+        notificationOptions.Setup(o => o.Value).Returns(new MessagingEmailOptions());
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,

@@ -19,6 +19,5 @@
   </Folder>
   <Project Path="Cross.Identity.UnitTests\Cross.Identity.UnitTests.csproj" />
   <Project Path="Cross.Identity\Cross.Identity.csproj" />
-  <Project Path="Cross.Notification\Cross.Notification.csproj" />
   <Project Path="Sample.Api/Sample.Api.csproj" />
 </Solution>
