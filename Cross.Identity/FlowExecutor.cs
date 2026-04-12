@@ -62,14 +62,7 @@ public class FlowExecutor : IFlowExecutor
         object? data;
         switch (resultPairs.Count)
         {
-            case 0:
-                data = null;
-                break;
-            case 1:
-                // одно поле — отдаём сразу его значение, без обёртки
-                data = resultPairs[0].Value;
-                break;
-            default:
+            case > 0:
                 // несколько полей — отдаём объект { field : value }, с обрезанным префиксом
                 var trimmed = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (k, v) in resultPairs)
@@ -77,8 +70,10 @@ public class FlowExecutor : IFlowExecutor
                     var name = k.Substring(prefix.Length); // "userId" из "collectResult.userId"
                     trimmed[name] = v;
                 }
-
                 data = trimmed;
+                break;
+            default:
+                data = null;
                 break;
         }
 
