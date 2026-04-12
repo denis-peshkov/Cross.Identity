@@ -12,7 +12,7 @@ namespace Cross.Identity.ProcessEngine.Steps;
 /// </list>
 /// </para>
 /// </summary>
-internal sealed class GetUserStep : IStep
+internal sealed class GetUserIdStep : IStep
 {
     /// <inheritdoc />
     public required string Kind { get; init; }
@@ -32,13 +32,6 @@ internal sealed class GetUserStep : IStep
     /// </summary>
     public required string SelectorKey { get; init; }
 
-    /// <summary>
-    /// Ключ в <see cref="Bag"/>, куда положить найденный идентификатор пользователя.
-    /// Если ключ относительный (без точки), он будет сохранён как <c>"{Kind}.UserIdKey"</c>.
-    /// По умолчанию <c>"UserId"</c>.
-    /// </summary>
-    public string? UserIdKey { get; init; } = "UserId";
-
     /// <inheritdoc />
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
@@ -50,7 +43,7 @@ internal sealed class GetUserStep : IStep
             return StepResult.Fail(new KeyNotFoundException("User not found."));
 
         // относительный → "{Kind}.{UserIdKey}"
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey!), userId);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
 
         return StepResult.Ok(Next);
     }

@@ -12,4 +12,5 @@ public enum FlowOperationEnum
     RequestCode,
     ResetPassword,
     ForgotPassword,
+    GetUserId,
 }

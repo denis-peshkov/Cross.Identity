@@ -1,7 +1,7 @@
 namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="GetUserStep"/>.
+/// Фабрика шага <see cref="GetUserIdStep"/>.
 /// JSON-параметры:
 /// <list type="bullet">
 /// <item><description><c>name</c> — имя шага;</description></item>
@@ -14,7 +14,7 @@ namespace Cross.Identity.ProcessEngine.Factories;
 /// <item><description><c>next</c> — (опц.) имя следующего шага, <c>null</c> — завершить.</description></item>
 /// </list>
 /// </summary>
-internal sealed class GetUserStepFactory : IStepFactory
+internal sealed class GetUserIdStepFactory : IStepFactory
 {
     /// <inheritdoc />
     public string Kind => ((IStepFactory)this).GetKind;
@@ -24,13 +24,12 @@ internal sealed class GetUserStepFactory : IStepFactory
     {
         var userService = sp.GetRequiredService<IUserService>();
 
-        return new GetUserStep
+        return new GetUserIdStep
         {
             Kind          = Kind,
             UserService   = userService,
             SelectorField = cfg.Str("selectorField"),
             SelectorKey   = cfg.Str("selectorKey"),
-            UserIdKey     = cfg.StrOpt("userIdKey") ?? "UserId", // относительный по умолчанию
             Next          = cfg.StrOpt("next")
         };
     }

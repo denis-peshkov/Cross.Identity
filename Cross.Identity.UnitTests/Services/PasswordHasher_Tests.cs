@@ -204,4 +204,14 @@ public class PasswordHasher_Tests
         var result = _hasher.Verify("p", "$unknown$format", "pepper");
         result.Should().Be(PasswordVerificationEnum.Failed);
     }
+
+    [Test]
+    public void Verify_WhenPhcMalformedPbkdf2_ShouldReturnFailedNotThrow()
+    {
+        var badIter = _hasher.Verify("p", "$pbkdf2-sha256$i=notanumber$YmFzZTY0$YmFzZTY0", "pepper");
+        badIter.Should().Be(PasswordVerificationEnum.Failed);
+
+        var badB64 = _hasher.Verify("p", "$pbkdf2-sha256$i=1000$!!!not-base64!!!$YmFzZTY0", "pepper");
+        badB64.Should().Be(PasswordVerificationEnum.Failed);
+    }
 }
