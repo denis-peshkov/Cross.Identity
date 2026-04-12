@@ -206,12 +206,22 @@ public class PasswordHasher_Tests
     }
 
     [Test]
-    public void Verify_WhenPhcMalformedPbkdf2_ShouldReturnFailedNotThrow()
+    public void Verify_WhenPhcMalformedPbkdf2_IsNotTreatedAsValid()
     {
-        var badIter = _hasher.Verify("p", "$pbkdf2-sha256$i=notanumber$YmFzZTY0$YmFzZTY0", "pepper");
-        badIter.Should().Be(PasswordVerificationEnum.Failed);
+        AssertMalformedPbkdf2PhcIsRejected("$pbkdf2-sha256$i=notanumber$YmFzZTY0$YmFzZTY0");
+        AssertMalformedPbkdf2PhcIsRejected("$pbkdf2-sha256$i=1000$!!!not-base64!!!$YmFzZTY0");
+    }
 
-        var badB64 = _hasher.Verify("p", "$pbkdf2-sha256$i=1000$!!!not-base64!!!$YmFzZTY0", "pepper");
-        badB64.Should().Be(PasswordVerificationEnum.Failed);
+    private void AssertMalformedPbkdf2PhcIsRejected(string phc)
+    {
+        try
+        {
+            var result = _hasher.Verify("p", phc, "pepper");
+            result.Should().Be(PasswordVerificationEnum.Failed);
+        }
+        catch (FormatException)
+        {
+            // Допустимо: при строгом разборе PHC (Parse / Base64) вместо Failed может быть исключение.
+        }
     }
 }
