@@ -23,48 +23,48 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUser",
+              "kind": "getUserId",
               "selectorField": "Email",
               "selectorKey": "collectForm.Email",
-              "userIdKey": "UserId",
               "next": "token"
             }
             """);
 
-        var factory = new GetUserStepFactory();
+        var factory = new GetUserIdStepFactory();
 
         // Act
-        var step = (GetUserStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.Kind.Should().Be("getUser");
+        step.Kind.Should().Be("getUserId");
         step.SelectorField.Should().Be("Email");
         step.SelectorKey.Should().Be("collectForm.Email");
-        step.UserIdKey.Should().Be("UserId");
         step.Next.Should().Be("token");
         step.UserService.Should().NotBeNull();
     }
 
     [Test]
-    public void GetUserStepFactory_ShouldUseDefaultUserIdKey()
+    public void GetUserStepFactory_ShouldCreateStep_WithoutOptionalNext()
     {
         // Arrange
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUser",
+              "kind": "getUserId",
               "selectorField": "Email",
               "selectorKey": "collectForm.Email"
             }
             """);
 
-        var factory = new GetUserStepFactory();
+        var factory = new GetUserIdStepFactory();
 
         // Act
-        var step = (GetUserStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
-        step.UserIdKey.Should().Be("UserId"); // значение по умолчанию
+        // Assert — идентификатор на выполнении пишется в "{kind}.UserId" (см. GetUserIdStep.ExecuteAsync)
+        step.SelectorField.Should().Be("Email");
+        step.SelectorKey.Should().Be("collectForm.Email");
+        step.Next.Should().BeNull();
     }
 
     [Test]
@@ -74,16 +74,16 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUser",
+              "kind": "getUserId",
               "selectorField": "Phone",
               "selectorKey": "collectForm.Phone"
             }
             """);
 
-        var factory = new GetUserStepFactory();
+        var factory = new GetUserIdStepFactory();
 
         // Act
-        var step = (GetUserStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
         step.SelectorField.Should().Be("Phone");

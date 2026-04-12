@@ -21,13 +21,12 @@ public class GetUser_StepTests
         users.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
 
-        var step = new GetUserStep
+        var step = new GetUserIdStep
         {
             Kind = "lookup",
             UserService = users.Object,
             SelectorField = "Email",
             SelectorKey = "get.Email",
-            UserIdKey = "user.Id",
             Next = "done"
         };
 
@@ -37,7 +36,7 @@ public class GetUser_StepTests
 
         res.Status.Should().Be(StepStatusEnum.Ok);
         res.Next.Should().Be("done");
-        bag.Get<string>("user.Id").Should().Be(userId);
+        bag.Get<string>("lookup.UserId").Should().Be(userId);
 
         users.VerifyAll();
     }
@@ -50,7 +49,7 @@ public class GetUser_StepTests
         users.Setup(s => s.GetUserIdByAsync("Phone", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
-        var step = new GetUserStep
+        var step = new GetUserIdStep
         {
             Kind = "lookup",
             UserService = users.Object,
