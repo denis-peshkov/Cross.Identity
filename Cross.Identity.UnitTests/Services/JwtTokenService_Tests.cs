@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.UnitTests.Services;
+namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
 public class JwtTokenService_Tests : EFTestsBase
@@ -293,6 +293,46 @@ public class JwtTokenService_Tests : EFTestsBase
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Refresh token not found*");
+    }
+
+    [Test]
+    public async Task RevokeRefreshTokenForLogoutAsync_ShouldSetRevokedAtAndUserLogoutReason()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, CancellationToken.None);
+
+        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
+        entity.RevokedAt.Should().NotBeNull();
+        entity.RevokeReason.Should().Be(RefreshTokenRevokeReason.USER_LOGOUT);
+    }
+
+    [Test]
+    public async Task RevokeRefreshTokenForLogoutAsync_WhenNullOrEmpty_ShouldNotThrow()
+    {
+        var act = async () =>
+        {
+            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(null, CancellationToken.None);
+            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync("   ", CancellationToken.None);
+        };
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    public async Task RevokeRefreshTokenForLogoutAsync_WhenAlreadyRevoked_ShouldNotThrow()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, CancellationToken.None);
+
+        var act = () => _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
     }
 
     [Test]

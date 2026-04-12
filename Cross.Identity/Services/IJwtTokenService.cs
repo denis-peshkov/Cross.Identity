@@ -108,6 +108,13 @@ public interface IJwtTokenService
     /// </param>
     /// <param name="cancellationToken">Токен отмены.</param>
     Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Отозвать refresh-токен при выходе пользователя (logout): пометить в БД, чтобы повторный refresh был невозможен.
+    /// </summary>
+    /// <param name="refreshToken">Строка refresh-токена (например из httpOnly cookie).</param>
+    /// <param name="cancellationToken">Токен отмены.</param>
+    Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
 }
 
 // /// <summary>

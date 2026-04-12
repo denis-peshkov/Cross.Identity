@@ -309,4 +309,30 @@ internal class JwtTokenService : IJwtTokenService
 
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    /// <inheritdoc/>
+    public async Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return;
+        }
+
+        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+
+        var entity = await _context.RefreshTokens
+            .Where(x => x.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (entity is null || entity.RevokedAt is not null)
+        {
+            return;
+        }
+
+        entity.RevokedAt = DateTime.UtcNow;
+        entity.RevokeReason = RefreshTokenRevokeReason.USER_LOGOUT;
+        entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        await _context.SaveChangesAsync(cancellationToken);
+    }
 }

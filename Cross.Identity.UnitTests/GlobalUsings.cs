@@ -25,6 +25,7 @@ global using Cross.ErrorHandlers.Exceptions;
 global using Cross.Identity;
 global using Cross.Identity.Dtos;
 global using Cross.Identity.Entities;
+global using Cross.Identity.Enums;
 global using Cross.Identity.Extensions;
 global using Cross.Identity.Helpers;
 global using Cross.Identity.Infrastructure;
