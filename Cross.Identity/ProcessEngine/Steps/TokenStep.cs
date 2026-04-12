@@ -42,26 +42,27 @@ internal sealed class TokenStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) достаём email и пароль (с учётом относительных ключей)
+        // 1) email/логин + пароль или код (абсолютные ключи вида collectForm.Email не префиксируются Kind шага token)
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
-        var passwordValue = string.Empty;
+        string? passwordValue = null;
         if (PasswordKey != null)
         {
             ctx.TryGet(BagKey.Qualify(Kind, PasswordKey), out passwordValue);
         }
-        var codeValue = string.Empty;
+
+        string? codeValue = null;
         if (CodeKey != null)
         {
             ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out codeValue);
         }
 
-        // 2) валидация
+        // 2) валидация: при отсутствии PasswordKey в JSON нельзя трактовать "" как «пароль задан» — иначе ветка кода не выполняется (TokenByCode).
         var validated = false;
-        if (passwordValue != null)
+        if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
             validated = await UserService.ValidatePasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken);
         }
-        else if (codeValue != null)
+        else if (CodeKey != null && !string.IsNullOrEmpty(codeValue))
         {
             validated = await UserService.ValidateCodeAsync(ResolveBy.Field, selectorValue, codeValue, cancellationToken);
         }
