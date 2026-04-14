@@ -261,6 +261,9 @@ public class UserService_Tests : EFTestsBase
 
         var result = await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None);
         result.Should().BeTrue();
+
+        var user = Context.UsersAccounts.First(x => x.Id == userId);
+        user.EmailConfirmed.Should().BeTrue();
     }
 
     [Test]
@@ -305,6 +308,9 @@ public class UserService_Tests : EFTestsBase
 
         var result = await _userService.ValidateCodeAsync("Phone", phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
+
+        var user = Context.UsersAccounts.First(x => x.Id == userId);
+        user.PhoneConfirmed.Should().BeTrue();
     }
 
     [Test]

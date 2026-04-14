@@ -249,6 +249,10 @@ internal sealed class UserService : IUserService
                           && emailVerification.TokenLength == code.Length
                           && emailVerification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
                           && emailVerification.MaxAttempts >= emailVerification.Attempts;
+                if (isValid)
+                {
+                    user.EmailConfirmed = true;
+                }
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
@@ -258,6 +262,10 @@ internal sealed class UserService : IUserService
                           && phoneVerification.CodeLength == code.Length
                           && phoneVerification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
                           && phoneVerification.MaxAttempts >= phoneVerification.Attempts;
+                if (isValid)
+                {
+                    user.PhoneConfirmed = true;
+                }
                 break;
         }
         await _context.SaveChangesAsync(cancellationToken);
