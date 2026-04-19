@@ -1,6 +1,6 @@
 namespace Cross.Identity.Entities;
 
-public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
+internal class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
 {
     public void Configure(EntityTypeBuilder<EmailVerificationEntity> builder)
     {

@@ -1,6 +1,6 @@
 namespace Cross.Identity.Services.Crypto;
 
-internal enum PasswordVerificationEnum
+public enum PasswordVerificationEnum
 {
     Failed,
     Success,

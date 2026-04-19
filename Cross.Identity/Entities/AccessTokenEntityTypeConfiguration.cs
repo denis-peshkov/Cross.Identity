@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class AccessTokenEntityTypeConfiguration : IEntityTypeConfiguration<AccessTokenEntity>
+internal class AccessTokenEntityTypeConfiguration : IEntityTypeConfiguration<AccessTokenEntity>
 {
     public void Configure(EntityTypeBuilder<AccessTokenEntity> builder)
     {

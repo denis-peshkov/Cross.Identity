@@ -9,10 +9,11 @@ public class ResetPassword_StepFactoryTests
     public void SetUp()
     {
         var sc = new ServiceCollection();
-        sc.AddScoped<ICodeService>(_ => Mock.Of<ICodeService>());
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddScoped<IEmailSenderService>(_ => Mock.Of<IEmailSenderService>());
+        sc.AddScoped<ISmsSenderService>(_ => Mock.Of<ISmsSenderService>());
+        sc.AddSingleton<IHttpContextAccessor>(_ => new HttpContextAccessor());
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
-        sc.AddSingleton<IHostEnvironment>(new HostingEnvironment { EnvironmentName = "Test" });
         _sp = sc.BuildServiceProvider();
     }
 
@@ -28,6 +29,7 @@ public class ResetPassword_StepFactoryTests
               "kind": "resetPassword",
               "channel": "email",
               "selectorKey": "forgotPassword.email",
+              "passwordKey": "forgotPassword.password",
               "resolveBy": { "field": "Email" },
               "next": "done"
             }
@@ -39,9 +41,30 @@ public class ResetPassword_StepFactoryTests
         step.Kind.Should().Be("resetPassword");
         step.Channel.Should().Be(ChannelEnum.Email);
         step.SelectorKey.Should().Be("forgotPassword.email");
+        step.PasswordKey.Should().Be("forgotPassword.password");
         step.ResolveBy.Field.Should().Be("Email");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
+    }
+
+    [Test]
+    public void ResetPasswordStepFactory_ShouldThrowWhenPasswordKeyMissing()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "resetPassword",
+              "channel": "email",
+              "selectorKey": "email",
+              "resolveBy": { "field": "Email" }
+            }
+            """);
+
+        var factory = new ResetPasswordStepFactory();
+
+        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
+            .Should()
+            .Throw<KeyNotFoundException>();
     }
 
     [Test]
@@ -52,6 +75,7 @@ public class ResetPassword_StepFactoryTests
             {
               "kind": "resetPassword",
               "selectorKey": "email",
+              "passwordKey": "password",
               "resolveBy": { "field": "Email" }
             }
             """);
@@ -72,7 +96,8 @@ public class ResetPassword_StepFactoryTests
             {
               "kind": "resetPassword",
               "channel": "email",
-              "selectorKey": "email"
+              "selectorKey": "email",
+              "passwordKey": "password"
             }
             """);
 

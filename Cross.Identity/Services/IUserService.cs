@@ -9,7 +9,7 @@ namespace Cross.Identity.Services;
 /// <item><description><c>GetUserStep</c> — <see cref="GetUserIdByAsync"/></description></item>
 /// </list>
 /// </summary>
-internal interface IUserService
+public interface IUserService
 {
     /// <summary>
     /// Найти идентификатор пользователя по полю-селектору.

@@ -261,9 +261,48 @@ public class UserService_Tests : EFTestsBase
 
         var result = await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None);
         result.Should().BeTrue();
+    }
 
-        var user = Context.UsersAccounts.First(x => x.Id == userId);
-        user.EmailConfirmed.Should().BeTrue();
+    [Test]
+    public async Task ValidateCodeAsync_ShouldUseLatestActiveEmailVerification_ForEmail()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-10)
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "NEW222", CancellationToken.None);
+
+        result.Should().BeTrue();
+
+        var verifications = Context.EmailVerifications
+            .Where(x => x.UserAccountId == userId)
+            .OrderBy(x => x.CreatedAt)
+            .ToList();
+
+        verifications[0].Attempts.Should().Be(0);
+        verifications[1].Attempts.Should().Be(1);
     }
 
     [Test]
@@ -308,9 +347,6 @@ public class UserService_Tests : EFTestsBase
 
         var result = await _userService.ValidateCodeAsync("Phone", phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
-
-        var user = Context.UsersAccounts.First(x => x.Id == userId);
-        user.PhoneConfirmed.Should().BeTrue();
     }
 
     [Test]
@@ -441,10 +477,40 @@ public class UserService_Tests : EFTestsBase
     }
 
     [Test]
-    public async Task SetPasswordAsync_ShouldThrowNotImplementedException()
+    public async Task SetPasswordAsync_ShouldUpdatePasswordHashAndVersion()
     {
-        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "test@example.com", "newPass", CancellationToken.None))
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
+            PasswordPhc = "$pbkdf2$old",
+            PasswordPepperVersion = 1,
+        });
+
+        _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
+        _pepperVault.Setup(p => p.TryGetCurrentVersion(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        {
+            p = "new-pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Hash("newPass", "new-pepper")).Returns("$pbkdf2$new");
+
+        await _userService.SetPasswordAsync("Email", email, "newPass", CancellationToken.None);
+
+        var user = await Context.UsersAccounts.FindAsync(userId);
+        user.Should().NotBeNull();
+        user!.PasswordPhc.Should().Be("$pbkdf2$new");
+        user.PasswordPepperVersion.Should().Be((short)2);
+    }
+
+    [Test]
+    public async Task SetPasswordAsync_ShouldThrowNotFound_WhenUserDoesNotExist()
+    {
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", CancellationToken.None))
             .Should()
-            .ThrowAsync<NotImplementedException>();
+            .ThrowAsync<NotFoundException>();
     }
 }

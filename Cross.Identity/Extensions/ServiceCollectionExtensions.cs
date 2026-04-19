@@ -7,7 +7,7 @@ public static class ServiceCollectionExtensions
 {
       private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<AuthenticationOptions>(configuration.GetSection("Authentication"));
+        services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
 
         // var authOptions = new AuthenticationOptions();

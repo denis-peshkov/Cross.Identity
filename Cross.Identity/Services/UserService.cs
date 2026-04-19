@@ -4,7 +4,7 @@ namespace Cross.Identity.Services;
 /// Базовая in-memory реализация <see cref="IUserService"/>.
 /// Поддерживает создание, поиск по Email/UserName/Phone и проверку пароля (PBKDF2).
 /// </summary>
-internal sealed class UserService : IUserService
+public sealed class UserService : IUserService
 {
     private readonly IdentityContext _context;
     private readonly ILogger<UserService> _logger;
@@ -243,7 +243,14 @@ internal sealed class UserService : IUserService
         switch (field)
         {
             case nameof(UserAccountEntity.NormalizedEmail):
-                var emailVerification = await _context.EmailVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
+                var normalizedEmail = selectorValue.Trim().ToLowerInvariant();
+                var now = DateTime.UtcNow;
+                var emailVerification = await _context.EmailVerifications
+                    .Where(x => x.Email == normalizedEmail
+                                && x.UsedAt == null
+                                && x.ExpiresAt >= now)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken);
                 if (emailVerification != null) emailVerification.Attempts++;
                 isValid = emailVerification != null
                           && emailVerification.TokenLength == code.Length
@@ -281,8 +288,46 @@ internal sealed class UserService : IUserService
         return isValid;
     }
 
-    public Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
+    public async Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(selectorField);
+        ArgumentNullException.ThrowIfNull(selectorValue);
+        ArgumentNullException.ThrowIfNull(newPassword);
+
+        string field = selectorField.ToLowerInvariant() switch
+        {
+            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "username" => nameof(UserAccountEntity.NormalizedUserName),
+            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
+            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
+        };
+
+        string? value = field switch
+        {
+            nameof(UserAccountEntity.NormalizedEmail) or nameof(UserAccountEntity.NormalizedUserName)
+                => selectorValue.Trim().ToLowerInvariant(),
+            nameof(UserAccountEntity.PhoneNumber)
+                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
+            _ => selectorValue
+        };
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ValidationException("Selector value is invalid.");
+        }
+
+        var user = await _context.UsersAccounts
+            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+            ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+
+        if (!_pepperVault.TryGetCurrentVersion(out var pepper) || string.IsNullOrWhiteSpace(pepper))
+        {
+            throw new InvalidOperationException("Current pepper version is not available.");
+        }
+
+        user.PasswordPhc = _hasher.Hash(newPassword, pepper);
+        user.PasswordPepperVersion = _pepperVault.CurrentVersion;
+
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

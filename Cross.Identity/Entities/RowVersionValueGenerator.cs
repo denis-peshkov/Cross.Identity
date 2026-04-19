@@ -4,7 +4,7 @@
 /// Генерирует значение для RowVersion только при использовании InMemory-провайдера.
 /// Для SQL Server возвращает null — значение генерирует БД (rowversion/timestamp).
 /// </summary>
-public class RowVersionValueGenerator : ValueGenerator<byte[]?>
+internal class RowVersionValueGenerator : ValueGenerator<byte[]?>
 {
     public override bool GeneratesTemporaryValues => false;
 

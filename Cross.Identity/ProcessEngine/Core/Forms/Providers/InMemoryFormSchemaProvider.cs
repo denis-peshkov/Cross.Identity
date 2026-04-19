@@ -4,7 +4,7 @@ namespace Cross.Identity.ProcessEngine.Core.Forms.Providers;
 /// In-memory провайдер схем форм. Имена схем — уникальные строки,
 /// напр. <c>"game.registration"</c>, <c>"shop.auth"</c>.
 /// </summary>
-public sealed class InMemoryFormSchemaProvider : IFormSchemaProvider
+internal sealed class InMemoryFormSchemaProvider : IFormSchemaProvider
 {
     private readonly Dictionary<string, FormSchema> _map = new(StringComparer.OrdinalIgnoreCase);
 

@@ -1,6 +1,6 @@
 namespace Cross.Identity.Entities;
 
-public class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEntity>
+internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEntity>
 {
     public void Configure(EntityTypeBuilder<ProviderEntity> builder)
     {
