@@ -68,7 +68,9 @@ public class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         // Assert
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull();
-        result.Data.ToString().Length.Should().Be(8);
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload.Should().ContainKey("LastCode");
+        payload["LastCode"].Should().BeOfType<string>().Which.Should().HaveLength(8);
         // проверка вызовов GetService<T>()
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);
