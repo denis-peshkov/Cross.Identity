@@ -1,6 +1,6 @@
 namespace Cross.Identity.UnitTests.Core;
 
-public class RunFlowCommandHandlerTestsBase : EFTestsBase
+internal class RunFlowCommandHandlerTestsBase : EFTestsBase
 {
     // ReSharper disable InconsistentNaming
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
@@ -14,7 +14,7 @@ public class RunFlowCommandHandlerTestsBase : EFTestsBase
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
     // ReSharper restore InconsistentNaming
 
-    public void Initialize()
+    protected void Initialize()
     {
         _serviceScopeMock = new Mock<IServiceScope>();
         _serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
@@ -86,7 +86,7 @@ public class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(env);
     }
 
-    public void RegisterToServiceProvider<I, T>(T instance)
+    protected void RegisterToServiceProvider<I, T>(T instance)
         where T :  class
     {
         _serviceProviderMock
@@ -98,7 +98,7 @@ public class RunFlowCommandHandlerTestsBase : EFTestsBase
     /// Register step factories
     /// </summary>
     /// <typeparam name="T">See <inheritdoc cref="IStepFactory"/>.</typeparam>
-    public void AddRegistryStep<T>()
+    protected void AddRegistryStep<T>()
         where T : IStepFactory, new()
     {
         var factory = new T();              // явное создание экземпляра
@@ -106,7 +106,7 @@ public class RunFlowCommandHandlerTestsBase : EFTestsBase
     }
 
     [Obsolete]
-    public void AddJson(string json)
+    protected void AddJson(string json)
     {
         // _definitionProviderMock
         //     .Setup(x => x.GetJson(It.IsAny<string>(), It.IsAny<FlowOperationEnum>()))

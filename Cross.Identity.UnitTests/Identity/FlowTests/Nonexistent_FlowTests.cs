@@ -1,7 +1,7 @@
 namespace Cross.Identity.UnitTests.Identity.FlowTests;
 
 [TestFixture]
-public class Nonexistent_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Nonexistent_FlowTests : RunFlowCommandHandlerTestsBase
 {
     [Test]
     public async Task Handle_NoneExistFlow_ThrowsException()

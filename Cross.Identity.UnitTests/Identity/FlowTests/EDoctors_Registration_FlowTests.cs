@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Identity.FlowTests;
 
 [TestFixture]
-public class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
+internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private string FLOW => "edoctors";
 

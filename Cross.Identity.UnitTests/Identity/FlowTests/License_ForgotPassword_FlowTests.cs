@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Identity.FlowTests;
 
 [TestFixture]
-public class License_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
+internal class License_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private string FLOW => "license";
 
