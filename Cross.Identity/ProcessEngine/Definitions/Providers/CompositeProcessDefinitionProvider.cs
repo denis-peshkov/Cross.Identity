@@ -7,7 +7,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// Умеет кэшировать найденные дефиниции (по ключу "flow.operation") до рестарта приложения.
 /// </para>
 /// </summary>
-public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
+internal sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
 {
     private readonly IReadOnlyList<IProcessDefinitionProvider> _providers;
     private readonly ConcurrentDictionary<string, string> _flowCache = new(StringComparer.OrdinalIgnoreCase);

@@ -9,7 +9,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// <item>горячую перезагрузку через <see cref="FileSystemWatcher"/> (опционально).</item>
 /// </list>
 /// </summary>
-public sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProvider, IDisposable
+internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProvider, IDisposable
 {
     private readonly IOptions<FileSystemProcessDefinitionOptions> _opt;
 

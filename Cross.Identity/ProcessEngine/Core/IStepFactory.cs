@@ -3,7 +3,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// <summary>
 /// Фабрика построения шага из JSON-конфига и DI.
 /// </summary>
-public interface IStepFactory
+internal interface IStepFactory
 {
     /// <summary>
     /// Тип (kind) шага: "collectForm", "sendCode", "verifyCode", ...

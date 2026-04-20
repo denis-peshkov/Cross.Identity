@@ -1,6 +1,6 @@
 namespace Cross.Identity;
 
-public class FlowExecutor : IFlowExecutor
+internal class FlowExecutor : IFlowExecutor
 {
     private readonly IServiceProvider _sp;
     private readonly StepRegistry _registry;

@@ -5,7 +5,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// Каждый шаг имеет уникальное имя и выполняет свою логику,
 /// оперируя <see cref="Bag"/> для передачи данных.
 /// </summary>
-public interface IStep
+internal interface IStep
 {
     /// <summary>
     /// Уникальное имя шага в рамках процесса.

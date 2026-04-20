@@ -11,7 +11,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// }
 /// </code>
 /// </summary>
-public interface IProcessDefinitionProvider
+internal interface IProcessDefinitionProvider
 {
     /// <summary>
     /// Получить JSON-дефиницию процесса по идентификаторам флоу и операции.

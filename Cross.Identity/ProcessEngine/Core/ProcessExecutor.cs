@@ -3,7 +3,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// <summary>
 /// Исполнитель процесса: хранит карту шагов (по <c>Kind</c>) и выполняет переходы по <c>Next</c>.
 /// </summary>
-public sealed class ProcessExecutor
+internal sealed class ProcessExecutor
 {
     private readonly Dictionary<string, IStep> _steps;
     private readonly string _start;

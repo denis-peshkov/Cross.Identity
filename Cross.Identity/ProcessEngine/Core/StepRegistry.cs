@@ -7,7 +7,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// после чего только чтение. Если нужно регистрировать во время работы — оборачивайте синхронизацией.
 /// </para>
 /// </summary>
-public sealed class StepRegistry
+internal sealed class StepRegistry
 {
     private readonly Dictionary<string, IStepFactory> _steps = new(StringComparer.OrdinalIgnoreCase);
 

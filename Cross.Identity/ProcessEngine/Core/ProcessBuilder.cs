@@ -4,7 +4,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// Удобный билдер для декларативной сборки процесса кодом (альтернатива JSON-определениям).
 /// Требование: в одном процессе каждый <c>Kind</c> шага уникален (без учёта регистра).
 /// </summary>
-public sealed class ProcessBuilder
+internal sealed class ProcessBuilder
 {
     private readonly List<IStep> _steps = new();
     private readonly HashSet<string> _kinds = new(StringComparer.OrdinalIgnoreCase);
