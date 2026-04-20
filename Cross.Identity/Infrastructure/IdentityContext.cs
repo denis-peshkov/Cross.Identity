@@ -22,3 +22,22 @@ public class IdentityContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
     }
 }
+
+public class ReadonlyIdentityContext : IdentityContext
+{
+    private readonly IdentityContext _context;
+
+    public DbSet<AccessTokenEntity> AccessTokens => _context.AccessTokens;
+    public DbSet<RefreshTokenEntity> RefreshTokens => _context.RefreshTokens;
+    public DbSet<ProviderEntity> Providers => _context.Providers;
+    public DbSet<EmailVerificationEntity> EmailVerifications => _context.EmailVerifications;
+    public DbSet<PhoneVerificationEntity> PhoneVerifications => _context.PhoneVerifications;
+    public DbSet<UserAccountEntity> UsersAccounts => _context.UsersAccounts;
+    public DbSet<UserExternalLoginEntity> UsersExternalLogins => _context.UsersExternalLogins;
+
+    public ReadonlyIdentityContext(DbContextOptions options, IdentityContext context)
+        : base(options)
+    {
+        _context = context;
+    }
+}
