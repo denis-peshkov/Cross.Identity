@@ -5,7 +5,7 @@ namespace Cross.Identity.ProcessEngine.Core.Forms;
 /// ВАЖНО: имя схемы (<see cref="Name"/>) — служебное.
 /// Префикс для Bag задаётся <b>kind шага</b>, а не именем схемы.
 /// </summary>
-public sealed class FormSchema
+internal sealed class FormSchema
 {
     /// <summary>Произвольное имя схемы (для отладки/логов/кэша).</summary>
     public string Name { get; }
