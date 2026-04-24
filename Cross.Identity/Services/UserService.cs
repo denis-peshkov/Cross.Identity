@@ -4,7 +4,7 @@
 /// Базовая in-memory реализация <see cref="IUserService"/>.
 /// Поддерживает создание, поиск по Email/UserName/Phone и проверку пароля (PBKDF2).
 /// </summary>
-public sealed class UserService : IUserService
+internal sealed class UserService : IUserService
 {
     private readonly IdentityContext _context;
     private readonly ILogger<UserService> _logger;

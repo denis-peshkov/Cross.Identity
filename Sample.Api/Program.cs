@@ -42,7 +42,7 @@ app.MapPost(
             IFlowExecutor flowExecutor,
             CancellationToken cancellation) =>
         {
-            var result = await flowExecutor.ExecuteAsync(body, flow, operation, cancellation);
+            var result = await flowExecutor.ExecuteAsync(body, flow, operation, cancellation).ConfigureAwait(false);
             return Results.Ok(result.Data);
         })
     .AllowAnonymous()
