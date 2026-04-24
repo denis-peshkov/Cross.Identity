@@ -141,7 +141,7 @@ internal sealed class UserService : IUserService
             ConcurrencyStamp = Guid.NewGuid(),
         };
 
-        _context.UsersAccounts.Add(user);
+        await _context.UsersAccounts.AddAsync(user).ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

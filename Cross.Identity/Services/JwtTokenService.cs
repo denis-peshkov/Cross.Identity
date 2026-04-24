@@ -117,7 +117,7 @@ internal class JwtTokenService : IJwtTokenService
         // await _context.AccessTokens.Where(x => x.UserId == userId && x.ExpiresAt < DateTime.UtcNow).DeleteFromQueryAsync();
 
         // Сохранить jti в таблицу access-токенов (для blacklist, аудит, и отзывов)
-        _context.AccessTokens.Add(entity);
+        await _context.AccessTokens.AddAsync(entity).ConfigureAwait(false);
 
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
@@ -155,7 +155,7 @@ internal class JwtTokenService : IJwtTokenService
 
         // await _context.RefreshTokens.Where(x => x.IsRevoked).DeleteFromQueryAsync();
         // await _context.RefreshTokens.Where(x => x.UserId == userId && x.ExpiresAt < DateTime.UtcNow).DeleteFromQueryAsync();
-        _context.RefreshTokens.Add(
+        await _context.RefreshTokens.AddAsync(
             new RefreshTokenEntity
             {
                 Id = jti,
@@ -168,7 +168,8 @@ internal class JwtTokenService : IJwtTokenService
                 DeviceFingerprint = null,
                 UserAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString(),
                 IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
-            });
+            })
+            .ConfigureAwait(false);
 
         await _context.SaveChangesAsync().ConfigureAwait(false);
 
