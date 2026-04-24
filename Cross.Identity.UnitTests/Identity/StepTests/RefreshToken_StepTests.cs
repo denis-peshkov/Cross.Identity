@@ -1,4 +1,4 @@
-namespace Cross.Identity.UnitTests.Identity.StepTests;
+﻿namespace Cross.Identity.UnitTests.Identity.StepTests;
 
 [TestFixture]
 public class RefreshToken_StepTests
@@ -7,6 +7,7 @@ public class RefreshToken_StepTests
     private Mock<IJwtTokenService> _jwtTokenService = null!;
     private Mock<IUserService> _userService = null!;
     private Mock<ILogger> _logger = null!;
+    private IdentityContext _context = null!;
 
     [SetUp]
     public void SetUp()
@@ -15,6 +16,17 @@ public class RefreshToken_StepTests
         _jwtTokenService = new Mock<IJwtTokenService>();
         _userService = new Mock<IUserService>();
         _logger = new Mock<ILogger>();
+        var options = new DbContextOptionsBuilder<IdentityContext>()
+            .UseInMemoryDatabase($"refresh-token-step-{Guid.NewGuid()}")
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
+            .Options;
+        _context = new IdentityContext(options);
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _context.Dispose();
     }
 
     [Test]
@@ -57,6 +69,7 @@ public class RefreshToken_StepTests
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
+            Context = _context,
             Next = "done"
         };
 
@@ -85,6 +98,7 @@ public class RefreshToken_StepTests
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
+            Context = _context,
             Next = null
         };
 

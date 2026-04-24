@@ -184,17 +184,4 @@ internal sealed class CodeService : ICodeService
                 return false;
         }
     }
-
-    /// <inheritdoc/>
-    public async Task<bool> VerifyAsync1(ChannelEnum channel, string identity, string code, CancellationToken cancellationToken)
-    {
-        // var key = Key(channel, identity);
-        // if (!_store.TryGetValue(key, out var tuple)) return false;
-        // if (tuple.Expiry < DateTimeOffset.UtcNow) return false;
-        // var ok = string.Equals(tuple.Code, code, StringComparison.Ordinal);
-        // if (ok) _store.TryRemove(key, out _);
-        // return ok;
-
-        return true;
-    }
 }

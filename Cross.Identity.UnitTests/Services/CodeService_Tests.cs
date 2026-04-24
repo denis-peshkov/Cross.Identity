@@ -223,10 +223,4 @@ public class CodeService_Tests : EFTestsBase
         result.Should().BeFalse();
     }
 
-    [Test]
-    public async Task VerifyAsync1_ShouldReturnTrue()
-    {
-        var result = await _codeService.VerifyAsync1(ChannelEnum.Email, "a", "b", CancellationToken.None);
-        result.Should().BeTrue();
-    }
 }
