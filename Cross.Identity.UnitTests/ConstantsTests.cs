@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests;
 
 [TestFixture]
-public class Constants_Tests
+public class ConstantsTests
 {
     [Test]
     public void ClaimConstants_Username_ShouldReturnExpected()

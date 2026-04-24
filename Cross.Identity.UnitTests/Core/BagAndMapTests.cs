@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Core;
+﻿namespace Cross.Identity.UnitTests.Core;
 
 [TestFixture]
-public sealed class Bag_And_Map_Tests
+public sealed class BagAndMapTests
 {
     [Test]
     public void Bag_GetTrySetAndReadOnlyMembers_ShouldWork()

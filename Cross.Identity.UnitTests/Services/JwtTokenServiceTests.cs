@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Services;
+﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
-public class JwtTokenService_Tests : EFTestsBase
+public class JwtTokenServiceTests : EFTestsBase
 {
     private JwtTokenService _jwtTokenService = null!;
     private Mock<IHttpContextAccessor> _httpContextAccessor = null!;

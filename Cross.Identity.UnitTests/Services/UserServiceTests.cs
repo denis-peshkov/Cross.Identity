@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Services;
+﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
-public class UserService_Tests : EFTestsBase
+public class UserServiceTests : EFTestsBase
 {
     private Mock<ILogger<UserService>> _logger = null!;
     private Mock<IPepperVaultProvider> _pepperVault = null!;

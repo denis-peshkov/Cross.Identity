@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Extensions;
 
 [TestFixture]
-public class ProblemDetailsFactoryExtensions_Tests
+public class ProblemDetailsFactoryExtensionsTests
 {
     [Test]
     public void ToValidationProblemDetails_FromValidationException_ShouldMapErrors()

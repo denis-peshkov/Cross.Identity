@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Core;
+﻿namespace Cross.Identity.UnitTests.Core;
 
 [TestFixture]
-public sealed class Registry_Loader_And_Validator_Tests
+public sealed class RegistryLoaderAndValidatorTests
 {
     [Test]
     public void StepRegistry_RegisterCreateAndHelpers_ShouldWork()

@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Extensions;
 
 [TestFixture]
-public class ByteArrayExtensions_Tests
+public class ByteArrayExtensionsTests
 {
     [Test]
     public void GetBytes_WhenSourceNull_ShouldThrow()

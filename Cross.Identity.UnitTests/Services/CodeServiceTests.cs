@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
-public class CodeService_Tests : EFTestsBase
+public class CodeServiceTests : EFTestsBase
 {
     private Mock<ILogger<CodeService>> _logger = null!;
     private Mock<IEmailSenderService> _emailService = null!;

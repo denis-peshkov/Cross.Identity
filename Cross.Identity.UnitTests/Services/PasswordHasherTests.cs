@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Services;
+﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
-public class PasswordHasher_Tests
+public class PasswordHasherTests
 {
     private CrossIdentityPasswordHasher _hasher = null!;
     private Mock<IOptionsMonitor<CrossIdentityPasswordHasherOptions>> _optionsMonitor = null!;

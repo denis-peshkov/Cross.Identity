@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Extensions;
 
 [TestFixture]
-public class TimeSpanExtensions_Tests
+public class TimeSpanExtensionsTests
 {
     [Test]
     public void ToHumanString_WhenOnlySeconds_ReturnsSeconds()

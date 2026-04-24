@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Core;
+﻿namespace Cross.Identity.UnitTests.Core;
 
 [TestFixture]
-public sealed class EmbeddedProvider_Tests
+public sealed class EmbeddedProviderTests
 {
     [Test]
     public void EmbeddedProvider_ShouldLoadAndReturnKnownFlow()

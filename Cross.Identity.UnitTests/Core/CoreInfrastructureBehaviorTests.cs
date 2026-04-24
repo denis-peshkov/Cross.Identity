@@ -258,7 +258,7 @@ public sealed class CoreInfrastructureBehaviorTests
 
             services.Any(x => x.ServiceType == typeof(CompositeProcessDefinitionProvider)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(IJwtTokenService)).Should().BeTrue();
-            services.Any(x => x.ServiceType == typeof(Microsoft.IdentityModel.Tokens.RsaSecurityKey)).Should().BeTrue();
+            services.Any(x => x.ServiceType == typeof(RsaSecurityKey)).Should().BeTrue();
         }
         finally
         {
@@ -271,7 +271,7 @@ public sealed class CoreInfrastructureBehaviorTests
     {
         var resolve = typeof(FileSystemProcessDefinitionProvider).GetMethod(
             "ResolveTemplatesRoot",
-            System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+            BindingFlags.Static | BindingFlags.NonPublic)!;
         var flowRoot = Path.Combine(Path.GetTempPath(), $"resolve-{Guid.NewGuid():N}");
         var parentTemplates = Path.Combine(Directory.GetParent(flowRoot)!.FullName, "TemplatesX");
         Directory.CreateDirectory(flowRoot);
@@ -287,7 +287,7 @@ public sealed class CoreInfrastructureBehaviorTests
             Directory.Delete(parentTemplates, recursive: true);
         }
 
-        var isFlowAcceptable = typeof(FileSystemProcessDefinitionProvider).GetMethod("IsFlowAcceptable", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+        var isFlowAcceptable = typeof(FileSystemProcessDefinitionProvider).GetMethod("IsFlowAcceptable", BindingFlags.Static | BindingFlags.NonPublic)!;
         ((bool)isFlowAcceptable.Invoke(null, new object?[] { "a.token.json" })!).Should().BeTrue();
         ((bool)isFlowAcceptable.Invoke(null, new object?[] { "a.txt" })!).Should().BeFalse();
     }
@@ -362,5 +362,4 @@ public sealed class CoreInfrastructureBehaviorTests
         public string GetJson(string flow, FlowOperationEnum operation) => "{}";
         public string GetTemplate(string name, string languageCode, string format) => "t";
     }
-
 }

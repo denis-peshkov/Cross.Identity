@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Core;
+﻿namespace Cross.Identity.UnitTests.Core;
 
 [TestFixture]
-public sealed class FileSystemProvider_Watcher_Tests
+public sealed class FileSystemProviderWatcherTests
 {
     [Test]
     public void Ctor_WhenTemplatesDirectoryMissing_ShouldThrow()

@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.UnitTests.Extensions;
 
 [TestFixture]
-public class StringExtensions_Tests
+public class StringExtensionsTests
 {
     [Test]
     public void ToCamelCase_WhenNull_ReturnsEmpty()

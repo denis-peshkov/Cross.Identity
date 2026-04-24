@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Services;
+﻿namespace Cross.Identity.UnitTests.Services;
 
 [TestFixture]
-public class PhoneNormalizer_Tests
+public class PhoneNormalizerTests
 {
     private PhoneNormalizer _normalizer = null!;
 

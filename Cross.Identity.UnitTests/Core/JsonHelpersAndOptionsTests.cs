@@ -1,7 +1,7 @@
-namespace Cross.Identity.UnitTests.Core;
+﻿namespace Cross.Identity.UnitTests.Core;
 
 [TestFixture]
-public sealed class JsonHelpers_And_Options_Tests
+public sealed class JsonHelpersAndOptionsTests
 {
     [Test]
     public void JsonHelpers_Methods_ShouldHandleCommonCases()
