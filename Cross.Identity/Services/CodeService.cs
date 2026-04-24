@@ -42,7 +42,7 @@ internal sealed class CodeService : ICodeService
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
-                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken);
+                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
@@ -53,11 +53,11 @@ internal sealed class CodeService : ICodeService
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
                 };
-                _context.EmailVerifications.Add(emailEntity);
+                await _context.EmailVerifications.AddAsync(emailEntity, cancellationToken).ConfigureAwait(false);
                 break;
 
             case ChannelEnum.Sms:
-                await _sms.SendAsync(msg.Destination, msg.TextBody, cancellationToken);
+                await _sms.SendAsync(msg.Destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     UserAccountId = id,
@@ -68,7 +68,7 @@ internal sealed class CodeService : ICodeService
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
                 };
-                _context.PhoneVerifications.Add(phoneEntity);
+                await _context.PhoneVerifications.AddAsync(phoneEntity, cancellationToken).ConfigureAwait(false);
                 break;
 
             case ChannelEnum.Telegram:
@@ -77,7 +77,7 @@ internal sealed class CodeService : ICodeService
             default:
                 break;
         }
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation("[Notifier] {Channel} → {Dest}: {Subject} | {Body}",
             msg.Channel, msg.Destination, msg.Subject, msg.TextBody);
@@ -113,7 +113,7 @@ internal sealed class CodeService : ICodeService
                                     && x.TokenHash == codeHash
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
                     if (entity is null)
                     {
@@ -129,7 +129,7 @@ internal sealed class CodeService : ICodeService
 
                     // Помечаем код как использованный
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                     return true;
                 }
@@ -140,7 +140,7 @@ internal sealed class CodeService : ICodeService
                         .Where(x => x.PhoneNumber == normalizedIdentity
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
                     if (entity is null)
                     {
@@ -168,14 +168,14 @@ internal sealed class CodeService : ICodeService
                     if (!entity.CodeHash.SequenceEqual(codeHash))
                     {
                         // Код неверный, но попытка уже засчитана
-                        await _context.SaveChangesAsync(cancellationToken);
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                         _logger.LogWarning("Phone verification code mismatch for {Phone}", normalizedIdentity);
                         return false;
                     }
 
                     // Код верный - помечаем как использованный
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                     return true;
                 }

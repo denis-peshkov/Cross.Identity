@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг сбора данных формы.
@@ -30,10 +30,10 @@ internal sealed class CollectFormStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         // 1) входные данные
-        var data = await FetchIncoming(cancellationToken);
+        var data = await FetchIncoming(cancellationToken).ConfigureAwait(false);
 
         // 2) валидация
-        var res = await Validator.ValidateAsync(data, cancellationToken);
+        var res = await Validator.ValidateAsync(data, cancellationToken).ConfigureAwait(false);
         if (!res.IsValid)
             return StepResult.Fail(new ValidationException(res.Errors));
 

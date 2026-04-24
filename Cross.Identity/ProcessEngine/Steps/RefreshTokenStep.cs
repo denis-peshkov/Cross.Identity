@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг выпуска JWT-токена через MediatR-команду приложения
@@ -37,11 +37,12 @@ internal sealed class RefreshTokenStep : IStep
     {
         // 1) валидируем токен
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue))
+        if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue).ConfigureAwait(false))
             throw new NotAuthorizedException("Invalid or expired refresh token.");
 
         // 2) open Transaction
-        await using var transaction = await Context.Database.BeginTransactionAsync(cancellationToken);
+        var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using var _ = transaction.ConfigureAwait(false);
         // var transactionOptions = new TransactionOptions
         // {
         //     IsolationLevel = IsolationLevel.ReadCommitted,
@@ -52,12 +53,12 @@ internal sealed class RefreshTokenStep : IStep
         try
         {
             // 3) получаем UserId из рефреш токена
-            var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken);
+            var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
             if (oldRefreshToken is null)
                 throw new InvalidOperationException("User not found when refresh token.");
 
             // 4) получаем данные юзера
-            var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken)).ToBag();
+            var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
             ArgumentNullException.ThrowIfNull(user);
             var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
             if (userId == Guid.Empty)
@@ -72,20 +73,20 @@ internal sealed class RefreshTokenStep : IStep
                 .AddIfNotNull(ClaimTypes.Email, email)
                 .AddIfNotNull(ClaimTypes.MobilePhone, phone)
                 .AddIfNotNull(ClaimConstants.Username, username);
-            var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims);
+            var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims).ConfigureAwait(false);
             ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
             // 6) генерация RefreshToken
-            var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())});
+            var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}).ConfigureAwait(false);
             ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
             // 7) Invalidate old RefreshToken
-            var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti);
+            var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti).ConfigureAwait(false);
             ArgumentException.ThrowIfNullOrEmpty(newJti);
-            await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken);
+            await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
 
             // 8) Complete Transaction
-            await transaction.CommitAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             // scope.Complete();
 
             // 9) сохраняем токен в Bag
@@ -99,7 +100,7 @@ internal sealed class RefreshTokenStep : IStep
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync(cancellationToken);
+            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             throw;
         }
     }

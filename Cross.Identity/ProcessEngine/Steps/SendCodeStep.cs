@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг отправки одноразового кода пользователю.
@@ -53,7 +53,7 @@ internal sealed class SendCodeStep : IStep
     {
         var destination = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
 
-        var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, destination, cancellationToken);
+        var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, destination, cancellationToken).ConfigureAwait(false);
 
         var code = Channel == ChannelEnum.Sms
             ? CodeGeneratorHelper.GenerateNumericCode()
@@ -97,7 +97,7 @@ internal sealed class SendCodeStep : IStep
         {
             if (Environment.IsDevelopment())
             {
-                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken); // todo: remove this row!!!
+                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false); // todo: remove this row!!!
 
                 // Для отладки/тестов сохраняем последний код
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: не отображается в схеме, не видно что оно есть, может отображать как коллекцию полей Output?
@@ -105,7 +105,7 @@ internal sealed class SendCodeStep : IStep
             else
             {
                 // сохраняем/отправляем через сервис
-                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken);
+                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)

@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг создания нового пользователя в системе.
@@ -68,7 +68,7 @@ internal sealed class CreateUserStep : IStep
         }
 
         // Создаём пользователя
-        var userId = await UserService.CreateUserAsync(userFields, cancellationToken);
+        var userId = await UserService.CreateUserAsync(userFields, cancellationToken).ConfigureAwait(false);
 
         // Сохраняем Id в Bag (относительный → "{Kind}.UserIdKey")
         ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId);

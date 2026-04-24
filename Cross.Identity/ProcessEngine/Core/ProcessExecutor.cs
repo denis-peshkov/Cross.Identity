@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Исполнитель процесса: хранит карту шагов (по <c>Kind</c>) и выполняет переходы по <c>Next</c>.
@@ -37,7 +37,7 @@ internal sealed class ProcessExecutor
                 throw new InvalidOperationException(
                     $"Step '{current}' not found.");
 
-            var result = await step.ExecuteAsync(ctx, cancellationToken);
+            var result = await step.ExecuteAsync(ctx, cancellationToken).ConfigureAwait(false);
 
             if (result.Status == StepStatusEnum.Fail)
                 throw result.Error!; // ошибка шага пробрасывается наверх

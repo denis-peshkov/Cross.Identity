@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 internal class JwtTokenService : IJwtTokenService
 {
@@ -119,7 +119,7 @@ internal class JwtTokenService : IJwtTokenService
         // Сохранить jti в таблицу access-токенов (для blacklist, аудит, и отзывов)
         _context.AccessTokens.Add(entity);
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         return tokenString;
     }
@@ -170,7 +170,7 @@ internal class JwtTokenService : IJwtTokenService
                 IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
             });
 
-        await _context.SaveChangesAsync();
+        await _context.SaveChangesAsync().ConfigureAwait(false);
 
         return tokenString;
     }
@@ -186,7 +186,7 @@ internal class JwtTokenService : IJwtTokenService
             return false; // невалидный токен
         }
 
-        var entity = await _context.AccessTokens.FindAsync(jtiGuid);
+        var entity = await _context.AccessTokens.FindAsync(jtiGuid).ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
@@ -197,7 +197,7 @@ internal class JwtTokenService : IJwtTokenService
     public async Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken = default)
     {
         var entity = await _context.AccessTokens
-            .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken);
+            .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken).ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
@@ -211,7 +211,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync().ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
@@ -222,11 +222,11 @@ internal class JwtTokenService : IJwtTokenService
     /// <inheritdoc/>
     public async Task RevokeAccessTokenAsync(Guid jti)
     {
-        var entry = await _context.AccessTokens.FindAsync(jti);
+        var entry = await _context.AccessTokens.FindAsync(jti).ConfigureAwait(false);
         if (entry != null)
         {
             entry.RevokedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
         }
     }
 
@@ -235,12 +235,12 @@ internal class JwtTokenService : IJwtTokenService
     {
         var expired = await _context.AccessTokens
             .Where(x => x.ExpiresAt < DateTime.UtcNow)
-            .ToListAsync();
+            .ToListAsync().ConfigureAwait(false);
 
         if (expired.Any())
         {
             _context.AccessTokens.RemoveRange(expired);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync().ConfigureAwait(false);
         }
     }
 
@@ -282,7 +282,7 @@ internal class JwtTokenService : IJwtTokenService
         var entity = await _context.RefreshTokens
             .AsNoTracking()
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         return entity;
     }
@@ -297,7 +297,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
                      ?? throw new InvalidOperationException("Refresh token not found.");
 
         var jti = Guid.Parse(newJti);
@@ -307,7 +307,7 @@ internal class JwtTokenService : IJwtTokenService
         entity.RevokeReason = RefreshTokenRevokeReason.ROTATION_REQUIRED;
         entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -322,7 +322,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
         if (entity is null || entity.RevokedAt is not null)
         {
@@ -333,6 +333,6 @@ internal class JwtTokenService : IJwtTokenService
         entity.RevokeReason = RefreshTokenRevokeReason.USER_LOGOUT;
         entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

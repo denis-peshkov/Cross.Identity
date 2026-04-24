@@ -1,4 +1,4 @@
-namespace Cross.Identity;
+﻿namespace Cross.Identity;
 
 internal class FlowExecutor : IFlowExecutor
 {
@@ -47,7 +47,7 @@ internal class FlowExecutor : IFlowExecutor
 
         // 5) исполняем
         var bag = new Bag();
-        await process.RunAsync(bag, cancellationToken);
+        await process.RunAsync(bag, cancellationToken).ConfigureAwait(false);
 
         // 6) политика возврата по префиксу "collectResult.":
         //    - нет collectResult.*       -> вернуть весь Bag (как словарь)

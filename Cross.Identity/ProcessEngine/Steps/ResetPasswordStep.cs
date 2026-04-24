@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг смены пароля пользователя по селектору.
@@ -31,7 +31,7 @@ internal sealed class ResetPasswordStep : IStep
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
 
-        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken);
+        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
 
         var ip = HttpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         var changedAt = DateTime.UtcNow.ToString("u");
@@ -44,10 +44,10 @@ internal sealed class ResetPasswordStep : IStep
             switch (Channel)
             {
                 case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken);
+                    await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
                     break;
                 case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(selectorValue, textBody, cancellationToken);
+                    await SmsSenderService.SendAsync(selectorValue, textBody, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }

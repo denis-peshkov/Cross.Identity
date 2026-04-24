@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Базовая in-memory реализация <see cref="IUserService"/>.
@@ -50,7 +50,7 @@ public sealed class UserService : IUserService
                    .AsNoTracking()
                    .Where(u => EF.Property<string>(u, field) == value)
                    .Select(u => u.Id.ToString())
-                   .FirstOrDefaultAsync(cancellationToken)
+                   .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
                ?? throw new NotFoundException($"User with given {field} '{value}' not found");
     }
 
@@ -86,7 +86,7 @@ public sealed class UserService : IUserService
                 .Where(u => EF.Property<string>(u, field) == value);
         }
         var result = await userAccountsFiltered
-                         .FirstOrDefaultAsync(cancellationToken)
+                         .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
                      ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
         return result;
@@ -108,13 +108,13 @@ public sealed class UserService : IUserService
 
         // 3) Уникальность
         if (normalizedUserName is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("UserName already exists.");
         if (normalizedEmail is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Email already exists.");
         if (normalizedPhone is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("PhoneNumber already exists.");
 
         // 4) Хеш пароля (PHC) + текущая версия pepper
@@ -143,7 +143,7 @@ public sealed class UserService : IUserService
 
         _context.UsersAccounts.Add(user);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return user.Id.ToString();
     }
@@ -177,7 +177,7 @@ public sealed class UserService : IUserService
 
         // 2) Ищем пользователя (tracked, без AsNoTracking — чтобы при необходимости обновить хеш/версию перца)
         var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken);
+            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken).ConfigureAwait(false);
 
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
             return false;
@@ -210,7 +210,7 @@ public sealed class UserService : IUserService
 
             try
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -228,7 +228,7 @@ public sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
         ArgumentNullException.ThrowIfNull(code);
 
-        var user = await GetUserByAsync(selectorField, selectorValue, cancellationToken);
+        var user = await GetUserByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
 
         // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
         var field = selectorField.ToLowerInvariant() switch
@@ -250,7 +250,7 @@ public sealed class UserService : IUserService
                                 && x.UsedAt == null
                                 && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(cancellationToken);
+                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
                 if (emailVerification != null) emailVerification.Attempts++;
                 isValid = emailVerification != null
                           && emailVerification.TokenLength == code.Length
@@ -263,7 +263,7 @@ public sealed class UserService : IUserService
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
-                var phoneVerification = await _context.PhoneVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
+                var phoneVerification = await _context.PhoneVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken).ConfigureAwait(false);
                 if (phoneVerification != null) phoneVerification.Attempts++;
                 isValid = phoneVerification != null
                           && phoneVerification.CodeLength == code.Length
@@ -275,7 +275,7 @@ public sealed class UserService : IUserService
                 }
                 break;
         }
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         if (!isValid)
         {
@@ -317,7 +317,7 @@ public sealed class UserService : IUserService
         }
 
         var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken).ConfigureAwait(false)
             ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
         if (!_pepperVault.TryGetCurrentVersion(out var pepper) || string.IsNullOrWhiteSpace(pepper))
@@ -328,6 +328,6 @@ public sealed class UserService : IUserService
         user.PasswordPhc = _hasher.Hash(newPassword, pepper);
         user.PasswordPepperVersion = _pepperVault.CurrentVersion;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

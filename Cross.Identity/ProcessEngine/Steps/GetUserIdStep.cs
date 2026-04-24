@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг поиска пользователя и публикации его идентификатора в контекст процесса (<see cref="Bag"/>).
@@ -38,7 +38,7 @@ internal sealed class GetUserIdStep : IStep
         // относительный → "{Kind}.{SelectorKey}"
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
 
-        var userId = await UserService.GetUserIdByAsync(SelectorField, selectorValue, cancellationToken);
+        var userId = await UserService.GetUserIdByAsync(SelectorField, selectorValue, cancellationToken).ConfigureAwait(false);
         if (userId is null)
             return StepResult.Fail(new KeyNotFoundException("User not found."));
 

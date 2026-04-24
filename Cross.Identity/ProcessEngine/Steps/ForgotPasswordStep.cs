@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг выпуска JWT-токена через MediatR-команду приложения
@@ -98,7 +98,7 @@ internal sealed class ForgotPasswordStep : IStep
             if (!Environment.IsDevelopment())
             {
                 // сохраняем/отправляем через сервис
-                await CodeService.SendAsync(msg, code, "", Ttl, cancellationToken);
+                await CodeService.SendAsync(msg, code, "", Ttl, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
