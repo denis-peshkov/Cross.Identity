@@ -128,6 +128,22 @@ public class JwtTokenService_Tests : EFTestsBase
     }
 
     [Test]
+    public async Task ValidateAccessTokenJtiAsync_ShouldReflectTokenState()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        _ = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>());
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, CancellationToken.None)).Should().BeTrue();
+
+        entity.RevokedAt = DateTime.UtcNow;
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
     public async Task ValidateAccessTokenAsync_ShouldReturnFalse_WhenTokenExpired()
     {
         var userId = Guid.NewGuid();

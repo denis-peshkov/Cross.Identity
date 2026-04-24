@@ -161,4 +161,73 @@ public class CollectForm_StepFactoryTests
         res.Status.Should().Be(StepStatusEnum.Fail);
         res.Error.Should().BeOfType<ValidationException>();
     }
+
+    [Test]
+    public void CollectForm_WhenKindMismatch_ShouldThrow()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "otherKind",
+              "schemaDef": {
+                "fields": [ { "key": "Email", "type": "Email", "required": true } ]
+              }
+            }
+            """);
+
+        var act = () => new CollectFormStepFactory().Create(json.RootElement, _sp);
+        act.Should().Throw<InvalidOperationException>();
+    }
+
+    [Test]
+    public void CollectForm_WithSchemaNameWithoutProvider_ShouldThrow()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "collectForm",
+              "schema": "registration",
+              "next": "n"
+            }
+            """);
+
+        var act = () => new CollectFormStepFactory().Create(json.RootElement, _sp);
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*IFormSchemaProvider is not registered*");
+    }
+
+    [Test]
+    public void CollectForm_WhenSchemaDefWithoutFields_ShouldThrow()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "collectForm",
+              "schemaDef": { "validators": [] },
+              "next": "n"
+            }
+            """);
+
+        var act = () => new CollectFormStepFactory().Create(json.RootElement, _sp);
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*requires 'fields' array*");
+    }
+
+    [Test]
+    public void CollectForm_WhenUnknownFieldType_ShouldThrow()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "collectForm",
+              "schemaDef": {
+                "fields": [ { "key": "X", "type": "UnknownType", "required": false } ]
+              },
+              "next": "n"
+            }
+            """);
+
+        var act = () => new CollectFormStepFactory().Create(json.RootElement, _sp);
+        act.Should().Throw<ArgumentOutOfRangeException>();
+    }
 }
