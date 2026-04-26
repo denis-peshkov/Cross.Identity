@@ -46,11 +46,8 @@
     <PackageReference Include="Cross.Headers" Version="1.2.1" />
     <PackageReference Include="Cross.Messaging" Version="1.1.4" />
     <PackageReference Include="Cross.PepperVault" Version="1.0.0" />
-    <PackageReference Include="Cross.PepperVault.Env" Version="1.0.0" />
-    <PackageReference Include="Cross.PepperVault.EnvJson" Version="1.0.0" />
-
+  
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
-    <PackageReference Include="Magick.NET.Core" Version="13.6.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />

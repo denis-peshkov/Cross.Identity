@@ -147,3 +147,7 @@ dotnet test
 
 - [RefreshToken.md](RefreshToken.md) — рекомендации по срокам жизни access/refresh токенов и ротации.
 - [LICENSE.md](LICENSE.md) — лицензия.
+
+## ToDo
+
+- [] Организовать переход с System.IdentityModel.Tokens.Jwt на Microsoft.IdentityModel.JsonWebTokens
