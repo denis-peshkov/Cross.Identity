@@ -76,7 +76,7 @@ public class UserServiceTests : EFTestsBase
         {
             Id = Guid.NewGuid(),
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant()
+            NormalizedEmail = email.ToLowerInvariant(),
         });
 
         var map = new Dictionary<string, object?>
@@ -102,7 +102,7 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant()
+            NormalizedEmail = email.ToLowerInvariant(),
         });
 
         // Act
@@ -133,7 +133,7 @@ public class UserServiceTests : EFTestsBase
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com"
+            NormalizedEmail = "test@example.com",
         });
 
         var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
@@ -151,7 +151,7 @@ public class UserServiceTests : EFTestsBase
             Id = userId,
             PhoneNumber = phone,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com"
+            NormalizedEmail = "test@example.com",
         });
         _phoneNormalizer.Setup(p => p.NormalizeToE164(phone, "US")).Returns(phone);
 
@@ -251,6 +251,7 @@ public class UserServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
             TokenLength = 6,
             Attempts = 0,
@@ -273,6 +274,7 @@ public class UserServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
             TokenLength = 6,
             Attempts = 0,
@@ -284,6 +286,7 @@ public class UserServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
             TokenLength = 6,
             Attempts = 0,
@@ -315,6 +318,7 @@ public class UserServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = email,
+            NormalizedEmail = email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
             TokenLength = 5,
             Attempts = 0,

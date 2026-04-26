@@ -246,7 +246,7 @@ internal sealed class UserService : IUserService
                 var normalizedEmail = selectorValue.Trim().ToLowerInvariant();
                 var now = DateTime.UtcNow;
                 var emailVerification = await _context.EmailVerifications
-                    .Where(x => x.Email == normalizedEmail
+                    .Where(x => x.NormalizedEmail == normalizedEmail
                                 && x.UsedAt == null
                                 && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
