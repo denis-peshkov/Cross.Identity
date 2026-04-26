@@ -41,7 +41,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var claimsIdentity = claims
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
-            .AddIfNotNull(JwtRegisteredClaimNames.Typ, "id_token");
+            .AddIfNotNull(JwtRegisteredClaimNames.Typ, IdentityConstants.IdToken);
 
         var createdAt = DateTime.UtcNow;
 
@@ -69,7 +69,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var claimsIdentity = claims
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
-            .AddIfNotNull(JwtRegisteredClaimNames.Typ, "access_token");
+            .AddIfNotNull(JwtRegisteredClaimNames.Typ, IdentityConstants.AccessToken);
 
         claimsIdentity.AddRange(permissions.Select(p => new Claim(ClaimConstants.Permission, p)));
 
@@ -131,7 +131,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var claimsIdentity = claims
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
-            .AddIfNotNull(JwtRegisteredClaimNames.Typ, "refresh_token");
+            .AddIfNotNull(JwtRegisteredClaimNames.Typ, IdentityConstants.RefreshToken);
 
         var createdAt = DateTime.UtcNow;
         var expiresAt = createdAt.Add(_options.Jwt.RefreshTokenExpires);
