@@ -12,7 +12,7 @@ global using System.Data.SqlClient;
 global using System.Diagnostics;
 global using System.Diagnostics.CodeAnalysis;
 global using System.Globalization;
-global using System.IdentityModel.Tokens.Jwt;
+global using Microsoft.IdentityModel.JsonWebTokens;
 global using System.IO;
 global using System.Linq;
 global using System.Linq.Expressions;

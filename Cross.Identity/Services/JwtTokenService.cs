@@ -7,7 +7,7 @@ internal class JwtTokenService : IJwtTokenService
     private readonly SymmetricSecurityKey _signingKey;
     private readonly SymmetricSecurityKey _encryptionKey;
     private readonly AuthenticationOptions _options;
-    private readonly JwtSecurityTokenHandler _handler = new();
+    private readonly JsonWebTokenHandler _handler = new();
 
     public JwtTokenService(
         IdentityContext context,
@@ -56,8 +56,7 @@ internal class JwtTokenService : IJwtTokenService
             SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256)
         };
 
-        var token = _handler.CreateToken(descriptor);
-        var tokenString = _handler.WriteToken(token);
+        var tokenString = _handler.CreateToken(descriptor);
 
         return tokenString;
     }
@@ -96,8 +95,7 @@ internal class JwtTokenService : IJwtTokenService
                 SecurityAlgorithms.Aes256CbcHmacSha512);
         }
 
-        var token = _handler.CreateToken(descriptor);
-        var tokenString = _handler.WriteToken(token);
+        var tokenString = _handler.CreateToken(descriptor);
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(tokenString)));
 
         var entity = new AccessTokenEntity
@@ -149,8 +147,7 @@ internal class JwtTokenService : IJwtTokenService
             Claims = null,
         };
 
-        var token = _handler.CreateToken(descriptor);
-        var tokenString = _handler.WriteToken(token);
+        var tokenString = _handler.CreateToken(descriptor);
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(tokenString)));
 
         // await _context.RefreshTokens.Where(x => x.IsRevoked).DeleteFromQueryAsync();
@@ -179,8 +176,8 @@ internal class JwtTokenService : IJwtTokenService
     /// <inheritdoc/>
     public async Task<bool> ValidateAccessTokenAsync(string accessToken)
     {
-        var jwt = _handler.ReadJwtToken(accessToken);
-        var jti = jwt.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+        var jwt = _handler.ReadJsonWebToken(accessToken);
+        var jti = jwt.GetClaim(JwtRegisteredClaimNames.Jti)?.Value;
 
         if (!Guid.TryParse(jti, out var jtiGuid))
         {
