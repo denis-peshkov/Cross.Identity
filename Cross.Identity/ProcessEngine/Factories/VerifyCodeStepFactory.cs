@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
 /// Фабрика шага <see cref="VerifyCodeStep"/>.

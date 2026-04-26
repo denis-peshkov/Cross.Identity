@@ -113,7 +113,8 @@ internal sealed class CodeService : ICodeService
                                     && x.TokenHash == codeHash
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                        .FirstOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
                     if (entity is null)
                     {
@@ -140,7 +141,8 @@ internal sealed class CodeService : ICodeService
                         .Where(x => x.PhoneNumber == normalizedIdentity
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                        .FirstOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
                     if (entity is null)
                     {

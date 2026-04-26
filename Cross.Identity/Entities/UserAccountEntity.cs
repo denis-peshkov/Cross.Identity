@@ -1,4 +1,4 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
 /// <summary>
 /// Represents a user in the identity system

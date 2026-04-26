@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Сборщик процесса из JSON-дефиниции: поле <c>start</c> + массив <c>steps</c>.

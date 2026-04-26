@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 public interface IJwtTokenService
 {

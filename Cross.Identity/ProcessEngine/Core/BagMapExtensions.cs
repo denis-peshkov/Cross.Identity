@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 public static class BagMapExtensions
 {

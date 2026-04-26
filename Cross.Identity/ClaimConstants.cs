@@ -1,4 +1,4 @@
-namespace Cross.Identity;
+﻿namespace Cross.Identity;
 
 public static class ClaimConstants
 {

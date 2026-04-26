@@ -212,7 +212,8 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync().ConfigureAwait(false);
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
@@ -236,7 +237,8 @@ internal class JwtTokenService : IJwtTokenService
     {
         var expired = await _context.AccessTokens
             .Where(x => x.ExpiresAt < DateTime.UtcNow)
-            .ToListAsync().ConfigureAwait(false);
+            .ToListAsync()
+            .ConfigureAwait(false);
 
         if (expired.Any())
         {
@@ -283,7 +285,8 @@ internal class JwtTokenService : IJwtTokenService
         var entity = await _context.RefreshTokens
             .AsNoTracking()
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         return entity;
     }
@@ -298,7 +301,8 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false)
                      ?? throw new InvalidOperationException("Refresh token not found.");
 
         var jti = Guid.Parse(newJti);
@@ -323,7 +327,8 @@ internal class JwtTokenService : IJwtTokenService
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
 
         if (entity is null || entity.RevokedAt is not null)
         {

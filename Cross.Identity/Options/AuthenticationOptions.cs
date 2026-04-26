@@ -1,4 +1,4 @@
-namespace Cross.Identity.Options;
+﻿namespace Cross.Identity.Options;
 
 public sealed class AuthenticationOptions
 {

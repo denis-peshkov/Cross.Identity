@@ -1,10 +1,10 @@
-namespace Cross.Identity.Infrastructure;
+﻿namespace Cross.Identity.Infrastructure;
 
 public class DbContextReadOnlyAdapter : IReadOnlyDbContext
 {
-    private readonly DbContext _dbContext;
+    private readonly IdentityContext _dbContext;
 
-    public DbContextReadOnlyAdapter(DbContext dbContext)
+    public DbContextReadOnlyAdapter(IdentityContext dbContext)
     {
         _dbContext = dbContext;
     }

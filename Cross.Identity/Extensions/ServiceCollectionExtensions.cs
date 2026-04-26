@@ -1,7 +1,8 @@
 namespace Cross.Identity.Extensions;
 
 /// <summary>
-/// DI-расширения для регистрации провайдера JSON-дефиниций из embedded-ресурсов.
+/// DI-расширения для регистрации инфраструктуры Cross.Identity:
+/// сервисов идентификации, process engine, шагов, валидаторов и провайдеров flow-дефиниций.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -16,6 +17,12 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Регистрирует основные сервисы Cross.Identity и их зависимости в контейнере DI.
+    /// </summary>
+    /// <param name="services">Коллекция сервисов приложения.</param>
+    /// <param name="configuration">Конфигурация приложения.</param>
+    /// <returns>Текущую коллекцию сервисов для fluent-цепочки.</returns>
     public static IServiceCollection AddCrossIdentity(this IServiceCollection services, IConfiguration configuration)
     {
         services
@@ -77,7 +84,8 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Композит: сначала файловая система, затем embedded-ресурсы библиотеки/приложения.
+    /// Регистрирует композитный провайдер flow-дефиниций:
+    /// сначала чтение из файловой системы, затем fallback к embedded-ресурсам.
     /// </summary>
     public static IServiceCollection AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(this IServiceCollection services, IConfiguration configuration)
     {

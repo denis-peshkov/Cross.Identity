@@ -1,4 +1,4 @@
-namespace Cross.Identity.Enums;
+﻿namespace Cross.Identity.Enums;
 
 public enum RefreshTokenRevokeReason : short
 {

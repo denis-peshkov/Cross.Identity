@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
 /// Провайдер JSON-дефиниций процессов, читающий их из папки файловой системы.
@@ -217,7 +217,6 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
     }
 
     // ---- helpers ----
-
 
     private static string ResolveTemplatesRoot(string flowRoot, string templatesSubfolderOrAbsolute)
     {

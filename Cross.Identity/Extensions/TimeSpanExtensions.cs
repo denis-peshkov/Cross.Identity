@@ -1,4 +1,4 @@
-namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Extensions;
 
 public static class TimeSpanExtensions
 {

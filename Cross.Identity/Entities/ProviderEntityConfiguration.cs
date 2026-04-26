@@ -1,4 +1,4 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
 internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEntity>
 {

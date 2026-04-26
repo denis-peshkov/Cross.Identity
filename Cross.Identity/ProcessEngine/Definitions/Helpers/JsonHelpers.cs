@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Helpers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Helpers;
 
 /// <summary>Утилиты для удобного чтения значений из <see cref="JsonElement"/>.</summary>
 public static class JsonHelpers

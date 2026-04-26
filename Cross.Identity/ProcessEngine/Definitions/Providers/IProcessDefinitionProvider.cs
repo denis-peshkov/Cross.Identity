@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
 /// Источник JSON-дефиниций динамических процессов (flows).

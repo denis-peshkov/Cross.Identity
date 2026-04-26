@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Результат выполнения шага.

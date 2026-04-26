@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
 /// Композитный провайдер: опрашивает цепочку <see cref="IProcessDefinitionProvider"/> по порядку.
@@ -48,7 +48,6 @@ internal sealed class CompositeProcessDefinitionProvider : IProcessDefinitionPro
 
         throw new KeyNotFoundException($"Process definition not found in composite for '{key}'.");
     }
-
 
     /// <inheritdoc />
     public string GetTemplate(string name, string languageCode, string format)

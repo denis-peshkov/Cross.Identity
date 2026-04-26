@@ -1,4 +1,4 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
 internal class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<RefreshTokenEntity>
 {

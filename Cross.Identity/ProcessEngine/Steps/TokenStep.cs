@@ -1,19 +1,19 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг выпуска JWT-токена через MediatR-команду приложения
-/// <c>TokenCommand(string email, string password)</c>.
+/// Шаг аутентификации пользователя (по паролю или коду)
+/// и выпуска пары JWT-токенов (access + refresh).
 /// <para>
 /// Ключи:
 /// <list type="bullet">
-///   <item><description><see cref="SelectorKey"/> и <see cref="PasswordKey"/>:
-///     если ключ относительный (без точки), читается как <c>"{Name}.{Key}"</c>;
+///   <item><description><see cref="SelectorKey"/>, <see cref="PasswordKey"/> и <see cref="CodeKey"/>:
+///     если ключ относительный (без точки), читается как <c>"{Kind}.{Key}"</c>;
 ///     чтобы читать данные из другого шага, укажи абсолютный ключ вида <c>"other-step.Field"</c>.</description></item>
-///   <item><description><see cref="ResultKey"/> — если ключ относительный, записывается как <c>"{Name}.{ResultKey}"</c>.</description></item>
+///   <item><description>Результат всегда пишется в ключи:
+///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserId</c>
+///     (с префиксом <c>{Kind}.</c> для относительного доступа).</description></item>
 /// </list>
 /// </para>
-/// Ожидается, что результат обработчика содержит строковое свойство <c>AccessToken</c>
-/// (или <c>Token</c>), либо сам является строкой. Значение будет записано в <see cref="Bag"/>.
 /// </summary>
 internal sealed class TokenStep : IStep
 {
@@ -32,8 +32,13 @@ internal sealed class TokenStep : IStep
     /// <summary>Ключ в <see cref="Bag"/>, откуда взять код. Может быть относительным или абсолютным.</summary>
     public string? CodeKey { get; init; }
 
+    /// <summary>Логгер шага.</summary>
     public ILogger Logger { get; set; }
+
+    /// <summary>Сервис выпуска токенов.</summary>
     public IJwtTokenService JwtTokenService { get; set; }
+
+    /// <summary>Сервис проверки учетных данных и чтения пользователя.</summary>
     public IUserService UserService { get; set; }
 
     /// <summary>Настройки поиска пользователя: по какому полю искать (например, "Email" или "Phone").</summary>

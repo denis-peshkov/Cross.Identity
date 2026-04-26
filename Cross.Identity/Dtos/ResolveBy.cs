@@ -1,4 +1,4 @@
-namespace Cross.Identity.Dtos;
+﻿namespace Cross.Identity.Dtos;
 
 /// <summary>
 /// Настройки поиска пользователя для <see cref="CodeAuthStep"/>.
