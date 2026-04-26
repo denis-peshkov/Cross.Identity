@@ -150,4 +150,4 @@ dotnet test
 
 ## ToDo
 
-- [] Организовать переход с System.IdentityModel.Tokens.Jwt на Microsoft.IdentityModel.JsonWebTokens
+- ~~[x] Организовать переход с System.IdentityModel.Tokens.Jwt на Microsoft.IdentityModel.JsonWebTokens~~
