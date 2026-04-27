@@ -34,14 +34,14 @@ public class CodeServiceTests : EFTestsBase
         var ttl = TimeSpan.FromMinutes(5);
         const string userId = "00000000-0000-0000-0000-000000000001";
 
-        _emailService.Setup(s => s.SendAsync("", "dionis.peshkov@gmail.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()))
+        _emailService.Setup(s => s.SendAsync("", "test@example.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
         await _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None);
 
         // Assert
-        _emailService.Verify(s => s.SendAsync("", "dionis.peshkov@gmail.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()), Times.Once);
+        _emailService.Verify(s => s.SendAsync("", "test@example.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
