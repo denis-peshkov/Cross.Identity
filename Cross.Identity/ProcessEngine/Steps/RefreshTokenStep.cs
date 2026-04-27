@@ -53,7 +53,7 @@ internal sealed class RefreshTokenStep : IStep
         // 2) open Transaction
         // var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         // await using var _ = transaction.ConfigureAwait(false);
-
+        // or
         // var transactionOptions = new TransactionOptions
         // {
         //     IsolationLevel = IsolationLevel.ReadCommitted,
