@@ -15,7 +15,7 @@ public static class BagMapExtensions
         bool includeNulls = false,
         bool enumAsString = true)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         var type = source.GetType();
         var dict = new Dictionary<string, object?>(StringComparer.Ordinal);
@@ -40,6 +40,12 @@ public static class BagMapExtensions
             if (value is null && !includeNulls)
                 continue;
 
+            // Trim значения строкового типа
+            if (underlying == typeof(string))
+            {
+                value = value?.ToString()?.Trim();
+            }
+
             // Ключ: JsonPropertyName или имя свойства
             var jsonName = prop.GetCustomAttribute<JsonPropertyNameAttribute>(inherit: true)?.Name;
             var key = string.IsNullOrWhiteSpace(jsonName) ? prop.Name : jsonName;
@@ -47,7 +53,9 @@ public static class BagMapExtensions
             // enum как строка/число
             if (value is not null && (underlying?.IsEnum ?? propType.IsEnum))
             {
-                value = enumAsString ? value.ToString() : Convert.ChangeType(value, Enum.GetUnderlyingType(underlying ?? propType));
+                value = enumAsString
+                    ? value.ToString()
+                    : Convert.ChangeType(value, Enum.GetUnderlyingType(underlying ?? propType), CultureInfo.InvariantCulture);
             }
 
             dict[key] = value;
@@ -65,7 +73,7 @@ public static class BagMapExtensions
         this IDictionary<string, object?> dict,
         bool enumFromString = true) where T : new()
     {
-        if (dict is null) throw new ArgumentNullException(nameof(dict));
+        ArgumentNullException.ThrowIfNull(dict);
 
         // делаем регистронезависимый доступ
         var src = dict is Dictionary<string, object?> d && d.Comparer.Equals(StringComparer.OrdinalIgnoreCase)
@@ -161,7 +169,7 @@ public static class BagMapExtensions
         if (core == typeof(DateTimeOffset) && value is string dto)
             return DateTimeOffset.Parse(dto, null, DateTimeStyles.RoundtripKind);
         if (core == typeof(TimeSpan) && value is string ts)
-            return TimeSpan.Parse(ts);
+            return TimeSpan.Parse(ts, CultureInfo.InvariantCulture);
 
 #if NET6_0_OR_GREATER
         if (core == typeof(DateOnly) && value is string dos)

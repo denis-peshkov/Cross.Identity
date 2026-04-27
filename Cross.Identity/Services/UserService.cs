@@ -50,7 +50,8 @@ internal sealed class UserService : IUserService
                    .AsNoTracking()
                    .Where(u => EF.Property<string>(u, field) == value)
                    .Select(u => u.Id.ToString())
-                   .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+                   .FirstOrDefaultAsync(cancellationToken)
+                   .ConfigureAwait(false)
                ?? throw new NotFoundException($"User with given {field} '{value}' not found");
     }
 
@@ -85,8 +86,10 @@ internal sealed class UserService : IUserService
             userAccountsFiltered = userAccounts
                 .Where(u => EF.Property<string>(u, field) == value);
         }
+
         var result = await userAccountsFiltered
-                         .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+                         .FirstOrDefaultAsync(cancellationToken)
+                         .ConfigureAwait(false)
                      ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
         return result;
@@ -177,7 +180,8 @@ internal sealed class UserService : IUserService
 
         // 2) Ищем пользователя (tracked, без AsNoTracking — чтобы при необходимости обновить хеш/версию перца)
         var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken).ConfigureAwait(false);
+            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+            .ConfigureAwait(false);
 
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
             return false;
@@ -224,11 +228,12 @@ internal sealed class UserService : IUserService
 
     public async Task<bool> ValidateCodeAsync(string selectorField, string selectorValue, string code, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(selectorField);
-        ArgumentNullException.ThrowIfNull(selectorValue);
-        ArgumentNullException.ThrowIfNull(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(selectorField);
+        ArgumentException.ThrowIfNullOrWhiteSpace(selectorValue);
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        code = code.Trim();
 
-        var user = await GetUserByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
+        var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
 
         // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
         var field = selectorField.ToLowerInvariant() switch
@@ -240,17 +245,20 @@ internal sealed class UserService : IUserService
         };
 
         var isValid = false;
+        var now = DateTime.UtcNow;
         switch (field)
         {
             case nameof(UserAccountEntity.NormalizedEmail):
                 var normalizedEmail = selectorValue.Trim().ToLowerInvariant();
-                var now = DateTime.UtcNow;
                 var emailVerification = await _context.EmailVerifications
-                    .Where(x => x.NormalizedEmail == normalizedEmail
-                                && x.UsedAt == null
-                                && x.ExpiresAt >= now)
+                    .Where(x =>
+                        x.NormalizedEmail == normalizedEmail
+                        && x.UsedAt == null
+                        && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
+                    .FirstOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
                 if (emailVerification != null) emailVerification.Attempts++;
                 isValid = emailVerification != null
                           && emailVerification.TokenLength == code.Length
@@ -259,11 +267,14 @@ internal sealed class UserService : IUserService
                 if (isValid)
                 {
                     user.EmailConfirmed = true;
+                    emailVerification!.UsedAt = now;
                 }
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
-                var phoneVerification = await _context.PhoneVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken).ConfigureAwait(false);
+                var phoneVerification = await _context.PhoneVerifications
+                    .FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken)
+                    .ConfigureAwait(false);
                 if (phoneVerification != null) phoneVerification.Attempts++;
                 isValid = phoneVerification != null
                           && phoneVerification.CodeLength == code.Length
@@ -272,9 +283,11 @@ internal sealed class UserService : IUserService
                 if (isValid)
                 {
                     user.PhoneConfirmed = true;
+                    phoneVerification!.UsedAt = now;
                 }
                 break;
         }
+
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         if (!isValid)
@@ -317,8 +330,9 @@ internal sealed class UserService : IUserService
         }
 
         var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken).ConfigureAwait(false)
-            ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+                       .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+                       .ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
         if (!_pepperVault.TryGetCurrentVersion(out var pepper) || string.IsNullOrWhiteSpace(pepper))
         {
