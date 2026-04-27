@@ -51,8 +51,9 @@ internal sealed class RefreshTokenStep : IStep
             throw new NotAuthorizedException("Invalid or expired refresh token.");
 
         // 2) open Transaction
-        var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        await using var _ = transaction.ConfigureAwait(false);
+        // var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        // await using var _ = transaction.ConfigureAwait(false);
+
         // var transactionOptions = new TransactionOptions
         // {
         //     IsolationLevel = IsolationLevel.ReadCommitted,
@@ -96,7 +97,7 @@ internal sealed class RefreshTokenStep : IStep
             await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
 
             // 8) Complete Transaction
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            // await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             // scope.Complete();
 
             // 9) сохраняем токен в Bag
@@ -110,7 +111,7 @@ internal sealed class RefreshTokenStep : IStep
         }
         catch (Exception)
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+            // await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
             throw;
         }
     }
