@@ -139,7 +139,7 @@ dotnet test
 - **When** — действие.
 - **Then** — ожидаемый результат.
 
-Пример: `Given_ExistingUser_When_RequestCode_Then_SendsCodeAndReturnsLastCode`.
+Пример: `ExistingUser_RequestCode_SendsCodeAndReturnsLastCode`.
 
 Тесты потоков и шагов расположены в `Cross.Identity.UnitTests/Identity/` (FlowTests, StepTests, StepFactoryTests).
 
