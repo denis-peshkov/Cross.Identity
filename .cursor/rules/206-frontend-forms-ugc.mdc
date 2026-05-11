@@ -50,7 +50,7 @@ const formattedPhone = parsedPhone.formatInternational();
 
 ## Компоненты форм
 
-- **Использовать существующие компоненты** - использовать компоненты из `shared/components/`:
+- **Использовать существующие компоненты** - использовать компоненты из `libs/ui/src/components/` (`@guru/ui`):
   - `InputTextComponent`
   - `InputEmailComponent`
   - `InputPhoneComponent`
