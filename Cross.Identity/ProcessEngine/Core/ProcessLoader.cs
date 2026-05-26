@@ -1,10 +1,10 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Сборщик процесса из JSON-дефиниции: поле <c>start</c> + массив <c>steps</c>.
 /// Каждый шаг содержит <c>kind</c> и параметры; создание шага делегируется в <see cref="StepRegistry"/>.
 /// </summary>
-public static class ProcessLoader
+internal static class ProcessLoader
 {
     /// <summary>
     /// Построить исполняемый процесс из JSON-строки.

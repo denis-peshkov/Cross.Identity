@@ -1,6 +1,6 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
-public class UserExternalLoginEntityConfiguration : IEntityTypeConfiguration<UserExternalLoginEntity>
+internal class UserExternalLoginEntityConfiguration : IEntityTypeConfiguration<UserExternalLoginEntity>
 {
     public void Configure(EntityTypeBuilder<UserExternalLoginEntity> builder)
     {

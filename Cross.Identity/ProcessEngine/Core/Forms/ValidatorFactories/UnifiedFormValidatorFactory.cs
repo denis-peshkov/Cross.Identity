@@ -3,7 +3,7 @@ namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories;
 /// <summary>
 /// Универсальная реализация валидатора форм, сочетающая базовую и расширенную валидацию.
 /// </summary>
-public sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
+internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
 {
     public IValidator<IDictionary<string, object?>> Create(FormSchema schema)
     {

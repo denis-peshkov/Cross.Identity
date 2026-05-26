@@ -1,6 +1,6 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
-public class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAccountEntity>
+internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAccountEntity>
 {
     public void Configure(EntityTypeBuilder<UserAccountEntity> builder)
     {

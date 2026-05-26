@@ -8,7 +8,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// <c>MyCompany.MyApp.Flows.Definitions.licenses.getuser.json</c>.
 /// </para>
 /// </summary>
-public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefinitionProvider
+internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefinitionProvider
 {
     private readonly IOptions<EmbeddedProcessDefinitionOptions> _opt;
 

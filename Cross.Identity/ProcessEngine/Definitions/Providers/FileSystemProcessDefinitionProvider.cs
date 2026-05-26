@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
 /// Провайдер JSON-дефиниций процессов, читающий их из папки файловой системы.
@@ -9,7 +9,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// <item>горячую перезагрузку через <see cref="FileSystemWatcher"/> (опционально).</item>
 /// </list>
 /// </summary>
-public sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProvider, IDisposable
+internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProvider, IDisposable
 {
     private readonly IOptions<FileSystemProcessDefinitionOptions> _opt;
 
@@ -217,7 +217,6 @@ public sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProv
     }
 
     // ---- helpers ----
-
 
     private static string ResolveTemplatesRoot(string flowRoot, string templatesSubfolderOrAbsolute)
     {

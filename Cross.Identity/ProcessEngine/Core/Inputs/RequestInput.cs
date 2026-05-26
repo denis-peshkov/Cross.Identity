@@ -3,7 +3,7 @@ namespace Cross.Identity.ProcessEngine.Core.Inputs;
 /// <summary>
 /// Стандартная реализация <see cref="IRequestInput"/> для одного HTTP-запроса.
 /// </summary>
-public sealed class RequestInput : IRequestInput
+internal sealed class RequestInput : IRequestInput
 {
     private IDictionary<string, object?>? _data;
 

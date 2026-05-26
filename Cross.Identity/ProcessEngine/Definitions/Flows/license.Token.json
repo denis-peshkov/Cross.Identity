@@ -6,8 +6,8 @@
       "schemaDef": {
         "fields": [
           { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
-          { "key": "Password", "type": "Password", "required": false, "min": 8, "max": 128 },
-          { "key": "Code", "type": "String", "required": false, "min": 8, "max": 128 }
+          { "key": "Password", "type": "Password", "required": false, "min": 8, "max": 32 },
+          { "key": "Code", "type": "String", "required": false, "min": 4, "max": 32 }
         ],
         "validators": [
           { "kind": "requiredIf", "when": { "field": "Code", "equals": "" }, "then": { "name": "Password", "required": true }, "message": "Укажи пароль или код." },
@@ -36,7 +36,8 @@
         "access_token": "token.AccessToken",
         "refresh_token": "token.RefreshToken",
         "token_type": "token.TokenType",
-        "expires_in": "token.ExpiresIn"
+        "expires_in": "token.ExpiresIn",
+        "user_id": "token.UserId"
       },
       "next": null
     }

@@ -1,4 +1,4 @@
-namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Extensions;
 
 /// <summary>
 /// Утилиты для преобразования ValidationException в ValidationProblemDetails.

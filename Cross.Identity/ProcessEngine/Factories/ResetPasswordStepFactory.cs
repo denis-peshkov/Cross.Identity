@@ -11,32 +11,32 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var codeService     = sp.GetRequiredService<ICodeService>();
         var loggerFactory   = sp.GetRequiredService<ILoggerFactory>();
         var userService     = sp.GetRequiredService<IUserService>();
-        var hostEnvironment = sp.GetRequiredService<IHostEnvironment>();
-
-        // ttlSeconds (опционально), по умолчанию 5 минут
-        var ttl = cfg.TimeSpanSecondsOpt("ttlSeconds") ?? TimeSpan.FromMinutes(5);
-
+        var emailSenderService = sp.GetRequiredService<IEmailSenderService>();
+        var smsSenderService = sp.GetRequiredService<ISmsSenderService>();
+        var httpContextAccessor = sp.GetRequiredService<IHttpContextAccessor>();
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
         // resolveBy — объект опционален; если не задан, берём разумный дефолт от канала
         if (!cfg.TryGetProperty("resolveBy", out var resolveEl) || resolveEl.ValueKind != JsonValueKind.Object)
-            throw new InvalidOperationException("codeAuth: 'resolveBy' object is required.");
+            throw new InvalidOperationException("resetPassword: 'resolveBy' object is required.");
         var field = resolveEl.Str("field");
 
         return new ResetPasswordStep
         {
             Kind        = Kind,
-            Channel     = channel,
             SelectorKey = cfg.Str("selectorKey"),
+            PasswordKey = cfg.Str("passwordKey"),
             UserService = userService,
+            EmailSenderService = emailSenderService,
+            SmsSenderService = smsSenderService,
+            HttpContextAccessor = httpContextAccessor,
+            Channel = channel,
             ResolveBy   = new ResolveBy { Field = field },
-            Logger      = loggerFactory.CreateLogger<SendCodeStep>(),
+            Logger      = loggerFactory.CreateLogger<ResetPasswordStep>(),
             Next        = cfg.StrOpt("next"),
-            PasswordKey = null,
         };
     }
 }

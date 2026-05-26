@@ -1,6 +1,6 @@
-namespace Cross.Identity.Services.Crypto;
+﻿namespace Cross.Identity.Services.Crypto;
 
-internal interface IPhoneNormalizer
+public interface IPhoneNormalizer
 {
     string NormalizePhone(string phoneRaw);
 

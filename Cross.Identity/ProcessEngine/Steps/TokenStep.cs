@@ -1,19 +1,19 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг выпуска JWT-токена через MediatR-команду приложения
-/// <c>TokenCommand(string email, string password)</c>.
+/// Шаг аутентификации пользователя (по паролю или коду)
+/// и выпуска пары JWT-токенов (access + refresh).
 /// <para>
 /// Ключи:
 /// <list type="bullet">
-///   <item><description><see cref="SelectorKey"/> и <see cref="PasswordKey"/>:
-///     если ключ относительный (без точки), читается как <c>"{Name}.{Key}"</c>;
+///   <item><description><see cref="SelectorKey"/>, <see cref="PasswordKey"/> и <see cref="CodeKey"/>:
+///     если ключ относительный (без точки), читается как <c>"{Kind}.{Key}"</c>;
 ///     чтобы читать данные из другого шага, укажи абсолютный ключ вида <c>"other-step.Field"</c>.</description></item>
-///   <item><description><see cref="ResultKey"/> — если ключ относительный, записывается как <c>"{Name}.{ResultKey}"</c>.</description></item>
+///   <item><description>Результат всегда пишется в ключи:
+///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserId</c>
+///     (с префиксом <c>{Kind}.</c> для относительного доступа).</description></item>
 /// </list>
 /// </para>
-/// Ожидается, что результат обработчика содержит строковое свойство <c>AccessToken</c>
-/// (или <c>Token</c>), либо сам является строкой. Значение будет записано в <see cref="Bag"/>.
 /// </summary>
 internal sealed class TokenStep : IStep
 {
@@ -32,8 +32,13 @@ internal sealed class TokenStep : IStep
     /// <summary>Ключ в <see cref="Bag"/>, откуда взять код. Может быть относительным или абсолютным.</summary>
     public string? CodeKey { get; init; }
 
+    /// <summary>Логгер шага.</summary>
     public ILogger Logger { get; set; }
+
+    /// <summary>Сервис выпуска токенов.</summary>
     public IJwtTokenService JwtTokenService { get; set; }
+
+    /// <summary>Сервис проверки учетных данных и чтения пользователя.</summary>
     public IUserService UserService { get; set; }
 
     /// <summary>Настройки поиска пользователя: по какому полю искать (например, "Email" или "Phone").</summary>
@@ -42,28 +47,29 @@ internal sealed class TokenStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) достаём email и пароль (с учётом относительных ключей)
+        // 1) email/логин + пароль или код (абсолютные ключи вида collectForm.Email не префиксируются Kind шага token)
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
-        var passwordValue = string.Empty;
+        string? passwordValue = null;
         if (PasswordKey != null)
         {
             ctx.TryGet(BagKey.Qualify(Kind, PasswordKey), out passwordValue);
         }
-        var codeValue = string.Empty;
+
+        string? codeValue = null;
         if (CodeKey != null)
         {
             ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out codeValue);
         }
 
-        // 2) валидация
+        // 2) валидация: при отсутствии PasswordKey в JSON нельзя трактовать "" как «пароль задан» — иначе ветка кода не выполняется (TokenByCode).
         var validated = false;
-        if (passwordValue != null)
+        if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
-            validated = await UserService.ValidatePasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken);
+            validated = await UserService.ValidatePasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
         }
-        else if (codeValue != null)
+        else if (CodeKey != null && !string.IsNullOrEmpty(codeValue))
         {
-            validated = await UserService.ValidateCodeAsync(ResolveBy.Field, selectorValue, codeValue, cancellationToken);
+            validated = await UserService.ValidateCodeAsync(ResolveBy.Field, selectorValue, codeValue, cancellationToken).ConfigureAwait(false);
         }
         if (!validated)
         {
@@ -71,7 +77,7 @@ internal sealed class TokenStep : IStep
         }
 
         // 3) получаем данные юзера
-        var user = (await UserService.GetUserByAsync(ResolveBy.Field, selectorValue, cancellationToken)).ToBag();
+        var user = (await UserService.GetUserByAsync(ResolveBy.Field, selectorValue, cancellationToken).ConfigureAwait(false)).ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var id     = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
@@ -90,10 +96,10 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims).ConfigureAwait(false);
 
         // 5) генерация RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) });
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }).ConfigureAwait(false);
 
         // 6) сохраняем токен в Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

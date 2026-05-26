@@ -5,7 +5,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// если ключ относительный (без точки) — возвращает "{stepName}.{key}",
 /// если абсолютный (с точкой) — возвращает как есть.
 /// </summary>
-public static class BagKey
+internal static class BagKey
 {
     public static string Qualify(string stepName, string key)
     {

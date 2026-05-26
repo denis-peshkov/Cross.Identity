@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Простой property-bag для обмена данными между шагами процесса.

@@ -1,6 +1,6 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
-public class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<PhoneVerificationEntity>
+internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<PhoneVerificationEntity>
 {
     public void Configure(EntityTypeBuilder<PhoneVerificationEntity> builder)
     {

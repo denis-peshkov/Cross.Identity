@@ -1,0 +1,27 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "Email", "type": "Email", "required": true }
+        ]
+      },
+      "next": "getUserId"
+    },
+    {
+      "kind": "getUserId",
+      "selectorField": "Email",
+      "selectorKey": "collectForm.Email",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "user_id": "getUserId.UserId"
+      },
+      "next": null
+    }
+  ]
+}

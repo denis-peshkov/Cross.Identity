@@ -1,7 +1,12 @@
-namespace Cross.Identity.Options;
+﻿namespace Cross.Identity.Options;
 
 public sealed class AuthenticationOptions
 {
+    /// <summary>
+    /// Configuration section name for binding email settings.
+    /// </summary>
+    public const string SectionName = "Authentication";
+
     public JwtOptions Jwt { get; set; }
 
     /// <summary>Опции выпуска JWT.</summary>

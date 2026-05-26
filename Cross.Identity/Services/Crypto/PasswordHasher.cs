@@ -150,7 +150,7 @@ internal sealed class PasswordHasher : IPasswordHasher
     {
         // $pbkdf2-sha256$i=210000$<saltB64>$<hashB64>
         var parts = phc.Split('$', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 4 || !parts[0].StartsWith("pbkdf2-"))
+        if (parts.Length != 4 || !parts[0].StartsWith("pbkdf2-", StringComparison.Ordinal))
             return PasswordVerificationEnum.Failed;
 
         var algo = parts[0].Substring("pbkdf2-".Length);

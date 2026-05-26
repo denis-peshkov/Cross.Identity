@@ -1,4 +1,4 @@
-namespace Cross.Identity.Helpers;
+﻿namespace Cross.Identity.Helpers;
 
 public static class JwtKeys
 {

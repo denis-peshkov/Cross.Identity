@@ -1,6 +1,6 @@
-namespace Cross.Identity.Services.Crypto;
+﻿namespace Cross.Identity.Services.Crypto;
 
-internal interface IPasswordHasher
+public interface IPasswordHasher
 {
 
     /// <summary>

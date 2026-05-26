@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
 /// Композитный провайдер: опрашивает цепочку <see cref="IProcessDefinitionProvider"/> по порядку.
@@ -7,7 +7,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 /// Умеет кэшировать найденные дефиниции (по ключу "flow.operation") до рестарта приложения.
 /// </para>
 /// </summary>
-public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
+internal sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
 {
     private readonly IReadOnlyList<IProcessDefinitionProvider> _providers;
     private readonly ConcurrentDictionary<string, string> _flowCache = new(StringComparer.OrdinalIgnoreCase);
@@ -48,7 +48,6 @@ public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvi
 
         throw new KeyNotFoundException($"Process definition not found in composite for '{key}'.");
     }
-
 
     /// <inheritdoc />
     public string GetTemplate(string name, string languageCode, string format)

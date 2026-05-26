@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core.Enums;
+﻿namespace Cross.Identity.ProcessEngine.Core.Enums;
 
 public enum ChannelEnum
 {

@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг проверки аутентификации по паролю.
@@ -54,12 +54,12 @@ internal sealed class PasswordAuthStep : IStep
         var password      = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
 
         // валидация пароля
-        var ok = await UserService.ValidatePasswordAsync(SelectorField, selectorValue, password, cancellationToken);
+        var ok = await UserService.ValidatePasswordAsync(SelectorField, selectorValue, password, cancellationToken).ConfigureAwait(false);
         if (!ok)
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
 
         // резолв идентификатора
-        var userId = await UserService.GetUserIdByAsync(SelectorField, selectorValue, cancellationToken)
+        var userId = await UserService.GetUserIdByAsync(SelectorField, selectorValue, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("User not found after password validation.");
 
         // писать: относительный ключ → "{Kind}.UserIdKey"

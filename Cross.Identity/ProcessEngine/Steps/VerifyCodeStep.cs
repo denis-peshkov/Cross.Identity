@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг проверки кода подтверждения (email/phone).
@@ -45,7 +45,7 @@ internal sealed class VerifyCodeStep : IStep
         var identity = ctx.Get<string>(BagKey.Qualify(Kind, IdentityKey));
         var code     = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken);
+        var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken).ConfigureAwait(false);
 
         if (!ok)
             return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));

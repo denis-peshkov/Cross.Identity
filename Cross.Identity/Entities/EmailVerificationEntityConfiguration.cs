@@ -1,6 +1,6 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
-public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
+internal class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
 {
     public void Configure(EntityTypeBuilder<EmailVerificationEntity> builder)
     {
@@ -8,6 +8,7 @@ public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<Ema
 
         builder.Property(x => x.Id).HasColumnName("EmailVerificationId");
         builder.Property(x => x.Email).IsRequired().HasMaxLength(320);
+        builder.Property(x => x.NormalizedEmail).IsRequired().HasMaxLength(320);
         builder.Property(x => x.TokenHash).IsRequired().HasColumnType("binary(32)");
         builder.Property(x => x.TokenLength).IsRequired();
         builder.Property(x => x.Attempts).IsRequired();
@@ -18,6 +19,7 @@ public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<Ema
 
         builder.HasKey(x => x.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}");
         builder.HasIndex(x => x.UserAccountId).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_UserAccount");
+        builder.HasIndex(x => x.NormalizedEmail).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_NormalizedEmail");
         builder.HasIndex(x => x.ExpiresAt).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_ExpiresAt");
         builder.HasIndex(x => x.TokenHash).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_TokenHash");
     }

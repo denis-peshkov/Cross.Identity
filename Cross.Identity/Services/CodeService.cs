@@ -28,12 +28,7 @@ internal sealed class CodeService : ICodeService
     /// <inheritdoc />
     public async Task SendAsync(NotificationMessage msg, string code, string userId, TimeSpan ttl, CancellationToken cancellationToken)
     {
-        var destination = msg.Destination;
-
-        if (!string.IsNullOrEmpty(_options.Value.RecipientOverride))
-        {
-            destination = _options.Value.RecipientOverride;
-        }
+        var destination = msg.Destination.Trim();
 
         var id = Guid.TryParse(userId, out var guid)
             ? guid
@@ -42,22 +37,23 @@ internal sealed class CodeService : ICodeService
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
-                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken);
+                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
                     Email = destination,
+                    NormalizedEmail = destination.ToLowerInvariant(),
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
                 };
-                _context.EmailVerifications.Add(emailEntity);
+                await _context.EmailVerifications.AddAsync(emailEntity, cancellationToken).ConfigureAwait(false);
                 break;
 
             case ChannelEnum.Sms:
-                await _sms.SendAsync(msg.Destination, msg.TextBody, cancellationToken);
+                await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     UserAccountId = id,
@@ -68,7 +64,7 @@ internal sealed class CodeService : ICodeService
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
                 };
-                _context.PhoneVerifications.Add(phoneEntity);
+                await _context.PhoneVerifications.AddAsync(phoneEntity, cancellationToken).ConfigureAwait(false);
                 break;
 
             case ChannelEnum.Telegram:
@@ -77,7 +73,7 @@ internal sealed class CodeService : ICodeService
             default:
                 break;
         }
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation("[Notifier] {Channel} → {Dest}: {Subject} | {Body}",
             msg.Channel, msg.Destination, msg.Subject, msg.TextBody);
@@ -109,11 +105,12 @@ internal sealed class CodeService : ICodeService
                 {
                     // Ищем код для email
                     var entity = await _context.EmailVerifications
-                        .Where(x => x.Email == normalizedIdentity
+                        .Where(x => x.NormalizedEmail == normalizedIdentity
                                     && x.TokenHash == codeHash
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
                     if (entity is null)
                     {
@@ -129,7 +126,7 @@ internal sealed class CodeService : ICodeService
 
                     // Помечаем код как использованный
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                     return true;
                 }
@@ -140,7 +137,8 @@ internal sealed class CodeService : ICodeService
                         .Where(x => x.PhoneNumber == normalizedIdentity
                                     && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken);
+                        .FirstOrDefaultAsync(cancellationToken)
+                        .ConfigureAwait(false);
 
                     if (entity is null)
                     {
@@ -168,14 +166,14 @@ internal sealed class CodeService : ICodeService
                     if (!entity.CodeHash.SequenceEqual(codeHash))
                     {
                         // Код неверный, но попытка уже засчитана
-                        await _context.SaveChangesAsync(cancellationToken);
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                         _logger.LogWarning("Phone verification code mismatch for {Phone}", normalizedIdentity);
                         return false;
                     }
 
                     // Код верный - помечаем как использованный
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken);
+                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
                     return true;
                 }
@@ -183,18 +181,5 @@ internal sealed class CodeService : ICodeService
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);
                 return false;
         }
-    }
-
-    /// <inheritdoc/>
-    public async Task<bool> VerifyAsync1(ChannelEnum channel, string identity, string code, CancellationToken cancellationToken)
-    {
-        // var key = Key(channel, identity);
-        // if (!_store.TryGetValue(key, out var tuple)) return false;
-        // if (tuple.Expiry < DateTimeOffset.UtcNow) return false;
-        // var ok = string.Equals(tuple.Code, code, StringComparison.Ordinal);
-        // if (ok) _store.TryRemove(key, out _);
-        // return ok;
-
-        return true;
     }
 }

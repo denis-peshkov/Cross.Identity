@@ -4,7 +4,7 @@ namespace Cross.Identity.ProcessEngine.Definitions.Providers.Options;
 /// Опции загрузки JSON-дефиниций из embedded-ресурсов.
 /// Используются при DI-регистрации провайдера.
 /// </summary>
-public sealed class EmbeddedProcessDefinitionOptions
+internal sealed class EmbeddedProcessDefinitionOptions
 {
     /// <summary>
     /// Имя сборки, из которой читаются ресурсы (например, "MyCompany.MyApp").

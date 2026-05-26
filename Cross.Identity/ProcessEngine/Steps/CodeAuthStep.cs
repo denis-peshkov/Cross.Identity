@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Шаг аутентификации пользователя по одноразовому коду (OTP).
@@ -63,12 +63,12 @@ internal sealed class CodeAuthStep : IStep
         var code     = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
         // 1) Проверка кода
-        var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken);
+        var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken).ConfigureAwait(false);
         if (!ok)
             return StepResult.Fail(new NotAuthorizedException("Invalid or expired code."));
 
         // 2) Резолв пользователя
-        var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, identity, cancellationToken);
+        var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, identity, cancellationToken).ConfigureAwait(false);
         if (userId is null)
             return StepResult.Fail(new KeyNotFoundException("User not found."));
 

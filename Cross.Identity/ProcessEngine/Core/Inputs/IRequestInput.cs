@@ -4,7 +4,7 @@ namespace Cross.Identity.ProcessEngine.Core.Inputs;
 /// Scoped-провайдер входных данных HTTP-запроса для шагов сбора формы.
 /// Контроллер/эндпойнт кладёт тело запроса, шаг <c>CollectFormStep</c> его читает.
 /// </summary>
-public interface IRequestInput
+internal interface IRequestInput
 {
     /// <summary>Получить данные запроса.</summary>
     Task<IDictionary<string, object?>> GetAsync(CancellationToken cancellation);

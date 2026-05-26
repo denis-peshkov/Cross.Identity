@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
 /// Результат выполнения шага.
@@ -6,7 +6,7 @@ namespace Cross.Identity.ProcessEngine.Core;
 /// <param name="Status">Статус шага.</param>
 /// <param name="Next">Имя следующего шага (null = завершить).</param>
 /// <param name="Error">Исключение, если Status = Fail.</param>
-public readonly record struct StepResult(StepStatusEnum Status, string? Next = null, Exception? Error = null)
+internal readonly record struct StepResult(StepStatusEnum Status, string? Next = null, Exception? Error = null)
 {
     public static StepResult Ok(string? next = null)
         => new(StepStatusEnum.Ok, next);
