@@ -94,7 +94,7 @@ jobs:
             -Dsonar.projectKey=Cross.Identity
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
-            -Dsonar.tests=Cross.Identity.UnitTests/
+            -Dsonar.tests=Cross.Identity.Tests/
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
