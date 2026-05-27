@@ -74,7 +74,7 @@ internal sealed class TokenStep : IStep
         if (!validated)
         {
             ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), true);
-            return StepResult.Ok(Next);//new NotAuthorizedException("Invalid credentials."));
+            return StepResult.Ok(Next);
         }
 
         // 3) получаем данные юзера

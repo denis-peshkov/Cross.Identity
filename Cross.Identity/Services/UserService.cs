@@ -265,6 +265,7 @@ internal sealed class UserService : IUserService
                 {
                     user.EmailConfirmed = true;
                     emailVerification!.UsedAt = now;
+                    emailVerification!.ExpiresAt = now;
                 }
                 break;
 
