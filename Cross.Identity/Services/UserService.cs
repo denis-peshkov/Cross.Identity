@@ -251,10 +251,7 @@ internal sealed class UserService : IUserService
             case nameof(UserAccountEntity.NormalizedEmail):
 
                 var emailVerification = await _context.EmailVerifications
-                    .Where(x =>
-                        x.UserAccountId == user.Id
-                        && x.UsedAt == null
-                        && x.ExpiresAt >= now)
+                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -273,10 +270,7 @@ internal sealed class UserService : IUserService
 
             case nameof(UserAccountEntity.PhoneNumber):
                 var phoneVerification = await _context.PhoneVerifications
-                    .Where(x =>
-                        x.UserAccountId == user.Id
-                        && x.UsedAt == null
-                        && x.ExpiresAt >= now)
+                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
                     .FirstOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
                 if (phoneVerification != null) phoneVerification.Attempts++;
