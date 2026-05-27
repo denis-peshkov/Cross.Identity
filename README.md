@@ -35,7 +35,7 @@
 ```
 Cross.Identity.slnx
 ├── Cross.Identity               # Основная библиотека (flow, JWT, сущности, сервисы)
-├── Cross.Identity.UnitTests     # Юнит-тесты (NUnit, Moq, FluentAssertions)
+├── Cross.Identity.Tests     # Тесты (NUnit, Moq, FluentAssertions)
 ├── Cross.Notification           # Отправка уведомлений: Email (MailKit), SMS (net7.0/net8.0)
 ├── Cross.PepperVault            # Хранение секретов (pepper и др.)
 ├── Cross.PepperVault.*          # Провайдеры: Env, FileJson, AwsSecretsJson, AzureKv*, GcpSecretManagerJson, HcvKv2Json
@@ -131,9 +131,28 @@ dotnet build
 dotnet test
 ```
 
-## Unit-тесты
+## Тесты
 
-Используется соглашение именования **Given_When_Then**:
+### Категории (NUnit)
+
+Константы — `Cross.Identity.Tests.Common.TestCategory`, атрибуты: `[Category(TestCategory.UNIT)]`, `[Category(TestCategory.INTEGRATION)]`, `[Category(TestCategory.FUNCTIONAL)]`.
+
+| Категория | Назначение |
+|-----------|------------|
+| **UNIT** | Моки, один компонент, без InMemory EF |
+| **INTEGRATION** | `EFTestsBase` (InMemory EF + реальные сервисы), `RunFlowCommandHandlerTestsBase` / `Identity/FlowTests` (сквозной process engine) |
+| **FUNCTIONAL** | Зарезервировано (E2E / TestServer / внешние зависимости), пока не используется |
+
+Примеры запуска:
+
+```bash
+dotnet test --filter "Category=Unit"
+dotnet test --filter "Category=Integration"
+```
+
+### Именование методов
+
+Соглашение **Given_When_Then**:
 
 - **Given** — контекст/предусловия.
 - **When** — действие.
@@ -141,7 +160,7 @@ dotnet test
 
 Пример: `ExistingUser_RequestCode_SendsCodeAndReturnsLastCode`.
 
-Тесты потоков и шагов расположены в `Cross.Identity.UnitTests/Identity/` (FlowTests, StepTests, StepFactoryTests).
+Структура: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests и StepFactoryTests (unit); `Services/` — unit или integration в зависимости от базового класса (`EFTestsBase` → integration).
 
 ## Дополнительно
 
