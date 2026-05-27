@@ -249,10 +249,10 @@ internal sealed class UserService : IUserService
         switch (field)
         {
             case nameof(UserAccountEntity.NormalizedEmail):
-                var normalizedEmail = selectorValue.Trim().ToLowerInvariant();
+
                 var emailVerification = await _context.EmailVerifications
                     .Where(x =>
-                        x.NormalizedEmail == normalizedEmail
+                        x.UserAccountId == user.Id
                         && x.UsedAt == null
                         && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
@@ -273,7 +273,11 @@ internal sealed class UserService : IUserService
 
             case nameof(UserAccountEntity.PhoneNumber):
                 var phoneVerification = await _context.PhoneVerifications
-                    .FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken)
+                    .Where(x =>
+                        x.UserAccountId == user.Id
+                        && x.UsedAt == null
+                        && x.ExpiresAt >= now)
+                    .FirstOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
                 if (phoneVerification != null) phoneVerification.Attempts++;
                 isValid = phoneVerification != null

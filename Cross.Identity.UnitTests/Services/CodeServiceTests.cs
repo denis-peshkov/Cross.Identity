@@ -78,7 +78,6 @@ public class CodeServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
             TokenLength = 6,
             Attempts = 0,
@@ -110,7 +109,6 @@ public class CodeServiceTests : EFTestsBase
         {
             UserAccountId = userId,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
             TokenLength = 6,
             Attempts = 0,
