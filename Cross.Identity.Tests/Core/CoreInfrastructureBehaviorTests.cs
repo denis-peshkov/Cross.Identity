@@ -159,7 +159,7 @@ public sealed class CoreInfrastructureBehaviorTests
             var indexedTemplate = sut.GetTemplate("welcome", "en", "html");
             indexedTemplate.Should().Contain("Hello");
 
-            var lazyFlowFile = Path.Combine(root, "license.refreshtoken.json");
+            var lazyFlowFile = Path.Combine(root, $"license.{FlowOperationEnum.RefreshToken}.json");
             File.WriteAllText(lazyFlowFile, "{\"flow\":\"lazy\"}");
             var lazyFlow = sut.GetJson("license", FlowOperationEnum.RefreshToken);
             lazyFlow.Should().Contain("lazy");
