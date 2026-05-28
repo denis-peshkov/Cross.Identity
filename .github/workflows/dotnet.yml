@@ -100,7 +100,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Nuget Pack
-        run: nuget pack _nuget/config.nuspec -Symbols -Version ${{ env.semVer }}
+        run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}
 
       - name: Create git Tag
         if: ${{ contains('refs/heads/master', github.ref) || contains('refs/heads/release', github.ref) || contains('refs/heads/hotfix', github.ref) }}
