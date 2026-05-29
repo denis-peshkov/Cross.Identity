@@ -61,7 +61,7 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
 
         // приведение к ожидаемому имени
-        string field = selectorField.ToLowerInvariant() switch
+        var field = selectorField.ToLowerInvariant() switch
         {
             "id" => nameof(UserAccountEntity.Id), // не работает так как Guid != String
             "email" => nameof(UserAccountEntity.NormalizedEmail),
@@ -70,7 +70,7 @@ internal sealed class UserService : IUserService
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
         };
 
-        string value = selectorValue.ToLowerInvariant();
+        var value = selectorValue.ToLowerInvariant();
 
         var userAccounts = _context.UsersAccounts
             .AsNoTracking();
