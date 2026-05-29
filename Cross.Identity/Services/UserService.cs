@@ -283,6 +283,7 @@ internal sealed class UserService : IUserService
                 {
                     user.PhoneConfirmed = true;
                     phoneVerification!.UsedAt = now;
+                    phoneVerification!.ExpiresAt = now;
                 }
                 break;
         }
