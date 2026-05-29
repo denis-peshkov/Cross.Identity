@@ -122,7 +122,7 @@ internal sealed class UserService : IUserService
 
         // 4) Хеш пароля (PHC) + текущая версия pepper
         var pepperVersion = _pepperVault.CurrentVersion;
-        _pepperVault.TryGetCurrentVersion(out var pepper);
+        _pepperVault.TryGetCurrentValue(out var pepper);
         var passwordPhc = _hasher.Hash(passwordRaw as string, pepper);
 
         // 5) Создание сущности
@@ -187,7 +187,7 @@ internal sealed class UserService : IUserService
             return false;
 
         // 3) Достаём перец по версии, сохранённой у пользователя
-        if (!_pepperVault.TryGet(user.PasswordPepperVersion, out var pepper) || pepper is null)
+        if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
             _logger.LogError(
                 "Pepper with version {Version} not found for user {UserId}. Password validation failed.",
@@ -207,7 +207,7 @@ internal sealed class UserService : IUserService
                          || user.PasswordPepperVersion != currentVersion
                          || _hasher.NeedsRehash(user.PasswordPhc);
 
-        if (needRehash && _pepperVault.TryGetCurrentVersion(out var currentPepper) && currentPepper is not null)
+        if (needRehash && _pepperVault.TryGetCurrentValue(out var currentPepper) && currentPepper is not null)
         {
             user.PasswordPhc = _hasher.Hash(password, currentPepper);
             user.PasswordPepperVersion = currentVersion;
@@ -334,7 +334,7 @@ internal sealed class UserService : IUserService
                        .ConfigureAwait(false)
                    ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
-        if (!_pepperVault.TryGetCurrentVersion(out var pepper) || string.IsNullOrWhiteSpace(pepper))
+        if (!_pepperVault.TryGetCurrentValue(out var pepper) || string.IsNullOrWhiteSpace(pepper))
         {
             throw new InvalidOperationException("Current pepper version is not available.");
         }
