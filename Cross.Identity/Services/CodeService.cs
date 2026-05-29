@@ -41,7 +41,7 @@ internal sealed class CodeService : ICodeService
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
-                    NormalizedEmail = destination,
+                    NormalizedEmail = destination.ToLowerInvariant(),
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
