@@ -7,7 +7,7 @@ internal class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<E
         builder.ToTable(nameof(IdentityContext.EmailVerifications), IdentityContext.DefaultSchema);
 
         builder.Property(x => x.Id).HasColumnName("EmailVerificationId");
-        builder.Property(x => x.Email).IsRequired().HasMaxLength(320);
+        builder.Property(x => x.NormalizedEmail).IsRequired().HasMaxLength(320);
         builder.Property(x => x.TokenHash).IsRequired().HasColumnType("binary(32)");
         builder.Property(x => x.TokenLength).IsRequired();
         builder.Property(x => x.Attempts).IsRequired();

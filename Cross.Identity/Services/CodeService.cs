@@ -41,7 +41,7 @@ internal sealed class CodeService : ICodeService
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
-                    Email = destination,
+                    NormalizedEmail = destination,
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
@@ -104,7 +104,7 @@ internal sealed class CodeService : ICodeService
                 {
                     // Ищем код для email
                     var entity = await _context.EmailVerifications
-                        .Where(x => x.Email == normalizedIdentity && x.TokenHash == codeHash)
+                        .Where(x => x.NormalizedEmail == normalizedIdentity && x.TokenHash == codeHash)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
