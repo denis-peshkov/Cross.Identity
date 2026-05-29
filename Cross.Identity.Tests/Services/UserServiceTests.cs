@@ -22,7 +22,7 @@ public class UserServiceTests : EFTestsBase
 
         _pepperVault.Setup(p => p.CurrentVersion).Returns((short)1);
         string? pepperValue = "test-pepper";
-        _pepperVault.Setup(p => p.TryGetCurrentVersion(out It.Ref<string>.IsAny)).Returns((out string v) =>
+        _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string v) =>
         {
             v = pepperValue!;
             return true;
@@ -368,7 +368,7 @@ public class UserServiceTests : EFTestsBase
             PasswordPhc = hashed,
             PasswordPepperVersion = 1
         });
-        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
         {
             p = "test-pepper";
             return true;
@@ -392,7 +392,7 @@ public class UserServiceTests : EFTestsBase
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1
         });
-        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
         {
             p = "pepper";
             return true;
@@ -417,7 +417,7 @@ public class UserServiceTests : EFTestsBase
             PasswordPhc = "hash",
             PasswordPepperVersion = 99
         });
-        _pepperVault.Setup(p => p.TryGet((short)99, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        _pepperVault.Setup(p => p.TryGetValue((short)99, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
         {
             p = null!;
             return false;
@@ -443,13 +443,13 @@ public class UserServiceTests : EFTestsBase
             PasswordPhc = oldHash,
             PasswordPepperVersion = 1
         });
-        _pepperVault.Setup(p => p.TryGet((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
         {
             p = "pepper";
             return true;
         });
         _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
-        _pepperVault.Setup(p => p.TryGetCurrentVersion(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string p) =>
         {
             p = "new-pepper";
             return true;
@@ -495,7 +495,7 @@ public class UserServiceTests : EFTestsBase
         });
 
         _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
-        _pepperVault.Setup(p => p.TryGetCurrentVersion(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string p) =>
         {
             p = "new-pepper";
             return true;
