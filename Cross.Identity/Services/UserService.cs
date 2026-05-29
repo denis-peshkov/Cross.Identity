@@ -61,7 +61,7 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
 
         // приведение к ожидаемому имени
-        string field = selectorField.ToLowerInvariant() switch
+        var field = selectorField.ToLowerInvariant() switch
         {
             "id" => nameof(UserAccountEntity.Id), // не работает так как Guid != String
             "email" => nameof(UserAccountEntity.NormalizedEmail),
@@ -70,7 +70,7 @@ internal sealed class UserService : IUserService
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
         };
 
-        string value = selectorValue.ToLowerInvariant();
+        var value = selectorValue.ToLowerInvariant();
 
         var userAccounts = _context.UsersAccounts
             .AsNoTracking();
@@ -107,7 +107,9 @@ internal sealed class UserService : IUserService
         // 2) Нормализация
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        var normalizedPhone = _phoneNormalizer.NormalizeToE164(phoneRaw as string, _headersContextAccessor.LanguageCode);
+        var normalizedPhone = phoneRaw is string phone
+            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!)
+            : null;
 
         // 3) Уникальность
         if (normalizedUserName is not null
@@ -123,7 +125,10 @@ internal sealed class UserService : IUserService
         // 4) Хеш пароля (PHC) + текущая версия pepper
         var pepperVersion = _pepperVault.CurrentVersion;
         _pepperVault.TryGetCurrentValue(out var pepper);
-        var passwordPhc = _hasher.Hash(passwordRaw as string, pepper);
+        ArgumentNullException.ThrowIfNull(pepper);
+        var passwordPhc = passwordRaw is string password
+            ? _hasher.Hash(password, pepper)
+            : null;
 
         // 5) Создание сущности
         var user = new UserAccountEntity
@@ -249,12 +254,9 @@ internal sealed class UserService : IUserService
         switch (field)
         {
             case nameof(UserAccountEntity.NormalizedEmail):
-                var normalizedEmail = selectorValue.Trim().ToLowerInvariant();
+
                 var emailVerification = await _context.EmailVerifications
-                    .Where(x =>
-                        x.NormalizedEmail == normalizedEmail
-                        && x.UsedAt == null
-                        && x.ExpiresAt >= now)
+                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
                     .OrderByDescending(x => x.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
@@ -268,12 +270,14 @@ internal sealed class UserService : IUserService
                 {
                     user.EmailConfirmed = true;
                     emailVerification!.UsedAt = now;
+                    emailVerification!.ExpiresAt = now;
                 }
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
                 var phoneVerification = await _context.PhoneVerifications
-                    .FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken)
+                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
+                    .FirstOrDefaultAsync(cancellationToken)
                     .ConfigureAwait(false);
                 if (phoneVerification != null) phoneVerification.Attempts++;
                 isValid = phoneVerification != null
@@ -284,6 +288,7 @@ internal sealed class UserService : IUserService
                 {
                     user.PhoneConfirmed = true;
                     phoneVerification!.UsedAt = now;
+                    phoneVerification!.ExpiresAt = now;
                 }
                 break;
         }

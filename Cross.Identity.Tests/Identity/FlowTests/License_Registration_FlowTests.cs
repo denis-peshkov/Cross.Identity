@@ -30,14 +30,7 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
             headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
-        RegisterToServiceProvider<IUserService, IUserService>(
-            new UserService(
-                Context,
-                Mock.Of<ILogger<UserService>>(),
-                Mock.Of<IPepperVaultProvider>(),
-                Mock.Of<IPasswordHasher>(),
-                Mock.Of<IPhoneNormalizer>(),
-                headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
         var notificationOptions = new Mock<IOptionsSnapshot<MessagingEmailOptions>>();
         notificationOptions.Setup(o => o.Value).Returns(new MessagingEmailOptions());
         RegisterToServiceProvider<ICodeService, ICodeService>(

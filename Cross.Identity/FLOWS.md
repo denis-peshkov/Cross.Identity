@@ -27,6 +27,7 @@
     - Создаёт пользователя в системе.
     - Маппинг из результата формы (`collectForm.*`):
       - `Email`
+      - `Password`
       - `FullName`
       - `Company`
       - `AcceptGetEmails`

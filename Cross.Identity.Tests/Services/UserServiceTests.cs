@@ -250,8 +250,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
+            NormalizedEmail = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
             TokenLength = 6,
             Attempts = 0,
@@ -273,8 +272,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
+            NormalizedEmail = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
             TokenLength = 6,
             Attempts = 0,
@@ -285,8 +283,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
+            NormalizedEmail = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
             TokenLength = 6,
             Attempts = 0,
@@ -317,8 +314,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
+            NormalizedEmail = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
             TokenLength = 5,
             Attempts = 0,

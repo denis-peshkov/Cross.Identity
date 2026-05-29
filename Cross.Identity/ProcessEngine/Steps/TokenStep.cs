@@ -73,8 +73,8 @@ internal sealed class TokenStep : IStep
         }
         if (!validated)
         {
-            ctx.Set(BagKey.Qualify(Kind, IdentityConstants.IsInvalidCode), true);
-            return StepResult.Ok(Next);//new NotAuthorizedException("Invalid credentials."));
+            ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), true);
+            return StepResult.Ok(Next);
         }
 
         // 3) получаем данные юзера
@@ -108,6 +108,7 @@ internal sealed class TokenStep : IStep
         ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
         ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
         ctx.Set(BagKey.Qualify(Kind, "UserId"), id);
+        ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), false);
 
         return StepResult.Ok(Next);
     }

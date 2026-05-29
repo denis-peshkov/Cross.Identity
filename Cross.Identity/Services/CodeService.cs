@@ -41,7 +41,6 @@ internal sealed class CodeService : ICodeService
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
-                    Email = destination,
                     NormalizedEmail = destination.ToLowerInvariant(),
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
@@ -105,9 +104,7 @@ internal sealed class CodeService : ICodeService
                 {
                     // Ищем код для email
                     var entity = await _context.EmailVerifications
-                        .Where(x => x.NormalizedEmail == normalizedIdentity
-                                    && x.TokenHash == codeHash
-                                    && x.UsedAt == null)
+                        .Where(x => x.NormalizedEmail == normalizedIdentity && x.TokenHash == codeHash)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -134,8 +131,7 @@ internal sealed class CodeService : ICodeService
                 {
                     // Для телефона сначала находим последнюю запись (без проверки хеша)
                     var entity = await _context.PhoneVerifications
-                        .Where(x => x.PhoneNumber == normalizedIdentity
-                                    && x.UsedAt == null)
+                        .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);

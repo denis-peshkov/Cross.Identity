@@ -21,6 +21,7 @@
       "kind": "createUser",
       "map": {
         "Email": "collectForm.Email",
+        "Password": "collectForm.Password",
         "FullName": "collectForm.FullName",
         "Company": "collectForm.Company",
         "AcceptGetEmails": "collectForm.AcceptGetEmails",
