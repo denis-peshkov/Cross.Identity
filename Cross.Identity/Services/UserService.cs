@@ -102,12 +102,7 @@ internal sealed class UserService : IUserService
         map.TryGetValue("Email", out var emailRaw);
         map.TryGetValue("UserName", out var userNameRaw);
         map.TryGetValue("Phone", out var phoneRaw);
-        if (!map.TryGetValue("Password", out var raw)
-            || raw is not string password
-            || string.IsNullOrWhiteSpace(password))
-        {
-            throw new ArgumentException("Password is required.", nameof(map));
-        }
+        map.TryGetValue("Password", out var passwordRaw);
 
         // 2) Нормализация
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
@@ -131,7 +126,9 @@ internal sealed class UserService : IUserService
         var pepperVersion = _pepperVault.CurrentVersion;
         _pepperVault.TryGetCurrentValue(out var pepper);
         ArgumentNullException.ThrowIfNull(pepper);
-        var passwordPhc = _hasher.Hash(password, pepper);
+        var passwordPhc = passwordRaw is string password
+            ? _hasher.Hash(password, pepper)
+            : null;
 
         // 5) Создание сущности
         var user = new UserAccountEntity

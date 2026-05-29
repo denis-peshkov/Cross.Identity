@@ -97,6 +97,38 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(instance);
     }
 
+    protected UserService CreateUserService(IHeadersContextAccessor headersContextAccessor)
+    {
+        var pepperVault = new Mock<IPepperVaultProvider>();
+        pepperVault.Setup(p => p.CurrentVersion).Returns((short)1);
+        string? pepperValue = "test-pepper";
+        pepperVault
+            .Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny))
+            .Returns((out string v) =>
+            {
+                v = pepperValue!;
+                return true;
+            });
+
+        var passwordHasher = new Mock<IPasswordHasher>();
+        passwordHasher
+            .Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns("$pbkdf2-test-hash");
+
+        var phoneNormalizer = new Mock<IPhoneNormalizer>();
+        phoneNormalizer
+            .Setup(p => p.NormalizeToE164(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns<string, string>((phone, _) => phone);
+
+        return new UserService(
+            Context,
+            Mock.Of<ILogger<UserService>>(),
+            pepperVault.Object,
+            passwordHasher.Object,
+            phoneNormalizer.Object,
+            headersContextAccessor);
+    }
+
     /// <summary>
     /// Register step factories
     /// </summary>
