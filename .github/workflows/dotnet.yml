@@ -99,6 +99,11 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Update nuspec version
+        uses: denis-peshkov/update-nuspec-action@v0.2.0
+        with:
+          dir: Cross.Identity/
+
       - name: Nuget Pack
         run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}
 
