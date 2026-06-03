@@ -101,8 +101,6 @@ jobs:
 
       - name: Update nuspec version
         uses: denis-peshkov/update-nuspec-action@v1
-        with:
-          dir: Cross.Identity/
 
       - name: Nuget Pack
         run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}
