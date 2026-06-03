@@ -100,7 +100,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Update nuspec version
-        uses: denis-peshkov/update-nuspec-action@v0.2.0
+        uses: denis-peshkov/update-nuspec-action@v1
         with:
           dir: Cross.Identity/
 
