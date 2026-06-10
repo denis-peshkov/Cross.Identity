@@ -11,8 +11,10 @@ on:
       - dev
       - feature/*
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - master
+      - dev
   workflow_dispatch: # allows manual runs from the Actions tab
 
 jobs:
@@ -23,6 +25,7 @@ jobs:
     env:
       BUILD_CONFIG: 'Release'
       SOLUTION: 'Cross.Identity.slnx'
+      QUALITY_GATE_WAIT: ${{ github.event_name == 'pull_request' }}
 
     runs-on: ubuntu-22.04 # ubuntu-latest
 
@@ -95,6 +98,7 @@ jobs:
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
             -Dsonar.tests=Cross.Identity.Tests/
+            -Dsonar.qualitygate.wait=${{ env.QUALITY_GATE_WAIT }}
             -Dsonar.verbose=true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
