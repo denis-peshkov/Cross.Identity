@@ -6,6 +6,7 @@ internal class FlowExecutor : IFlowExecutor
     private readonly StepRegistry _registry;
     private readonly IProcessDefinitionProvider _definition;
     private readonly IRequestInput _requestInput;
+    private readonly IRequestInput _requestInput1;
 
     /// <summary>
     /// Создаёт обработчик.
