@@ -93,8 +93,8 @@ jobs:
         uses: sonarsource/sonarcloud-github-action@v5 # Ex: v4.0.0, See the latest version at https://github.com/marketplace/actions/sonarcloud-scan
         with:
           args: >
-            -Dsonar.organization=peshkov
-            -Dsonar.projectKey=Cross.Identity
+            -Dsonar.organization=denis-peshkov
+            -Dsonar.projectKey=denis-peshkov.Cross.Identity
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
             -Dsonar.tests=Cross.Identity.Tests/
