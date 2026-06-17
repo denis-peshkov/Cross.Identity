@@ -75,6 +75,11 @@ public interface IJwtTokenService
     Task CleanupExpiredAccessTokensAsync();
 
     /// <summary>
+    /// Удаление refresh-токенов с истёкшим абсолютным сроком цепочки (<c>AbsoluteExpiresAt</c>).
+    /// </summary>
+    Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Получить значение claim из JWT по типу(типам).
     /// </summary>
     /// <param name="token">JWT в compact-формате.</param>

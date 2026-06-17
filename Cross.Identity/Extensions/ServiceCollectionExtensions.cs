@@ -10,6 +10,7 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddHostedService<ExpiredRefreshTokenCleanupHostedService>();
 
         // var authOptions = new AuthenticationOptions();
         // configuration.GetSection("Authentication").Bind(authOptions);

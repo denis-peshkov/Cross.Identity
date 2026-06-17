@@ -245,6 +245,36 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task CleanupExpiredRefreshTokensAsync_ShouldRemoveTokensPastAbsoluteExpiresAt()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserId == userId);
+        entity.AbsoluteExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        await Context.SaveChangesAsync();
+
+        await _jwtTokenService.CleanupExpiredRefreshTokensAsync(CancellationToken.None);
+
+        var found = await Context.RefreshTokens.FirstOrDefaultAsync(x => x.Id == entity.Id);
+        found.Should().BeNull();
+    }
+
+    [Test]
+    public async Task CleanupExpiredRefreshTokensAsync_ShouldKeepTokensWithinAbsoluteLifetime()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserId == userId);
+
+        await _jwtTokenService.CleanupExpiredRefreshTokensAsync(CancellationToken.None);
+
+        var found = await Context.RefreshTokens.FirstOrDefaultAsync(x => x.Id == entity.Id);
+        found.Should().NotBeNull();
+    }
+
+    [Test]
     public async Task GetClaimValueAsync_ShouldReturnClaimValue()
     {
         var userId = Guid.NewGuid();

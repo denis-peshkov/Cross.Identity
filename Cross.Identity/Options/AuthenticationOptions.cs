@@ -9,6 +9,9 @@ public sealed class AuthenticationOptions
 
     public JwtOptions Jwt { get; set; }
 
+    /// <summary>Интервал фоновой очистки просроченных refresh-токенов.</summary>
+    public TimeSpan TokenCleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
     /// <summary>Опции выпуска JWT.</summary>
     public sealed class JwtOptions
     {

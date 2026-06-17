@@ -245,6 +245,24 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
+    public async Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var expiredQuery = _context.RefreshTokens.Where(x => x.AbsoluteExpiresAt < now);
+
+        if (_context.Database.IsInMemory())
+        {
+            var expired = await expiredQuery.ToArrayAsync(cancellationToken).ConfigureAwait(false);
+            _context.RefreshTokens.RemoveRange(expired);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        else
+        {
+            await expiredQuery.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <inheritdoc/>
     public Task<string?> GetClaimValueAsync(string token, params string[] claimTypes)
     {
         ArgumentNullException.ThrowIfNull(token);
