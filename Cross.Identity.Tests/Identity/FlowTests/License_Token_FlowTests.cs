@@ -73,7 +73,7 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
         // IJwtTokenService тоже мокаем, чтобы не ходить в БД за RefreshToken
         var jwtMock = new Mock<IJwtTokenService>();
         jwtMock
-            .SetupGet(j => j.AccessTokenExpiresInSeconds)
+            .Setup(j => j.AccessTokenExpiresInSeconds)
             .Returns(600);
         jwtMock
             .Setup(j => j.GenerateAccessTokenAsync(

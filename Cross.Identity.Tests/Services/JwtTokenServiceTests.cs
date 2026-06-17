@@ -352,8 +352,42 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
-    public void AccessTokenExpiresInSeconds_ShouldReturnPositive()
+    public void AccessTokenExpiresInSeconds_ShouldReturnConfiguredLifetime()
     {
         _jwtTokenService.AccessTokenExpiresInSeconds.Should().Be(15 * 60);
+    }
+
+    [Test]
+    public async Task GenerateRefreshTokenAsync_ShouldUseConfiguredRollingLifetime()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) };
+
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, claims);
+
+        token.Should().NotBeNullOrEmpty();
+        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
+        (entity.AbsoluteExpiresAt - entity.CreatedAt).Should().BeCloseTo(TimeSpan.FromDays(30), TimeSpan.FromSeconds(2));
+        (entity.ExpiresAt - entity.CreatedAt).Should().BeCloseTo(TimeSpan.FromMinutes(60), TimeSpan.FromSeconds(2));
+    }
+
+    [Test]
+    public async Task GenerateRefreshTokenAsync_OnRotation_ShouldPreserveChainAbsoluteExpiresAt()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var claims = new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) };
+
+        var firstToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, claims);
+        var firstHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(firstToken)));
+        var firstEntity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == firstHash);
+
+        var secondToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, claims);
+        var secondHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(secondToken)));
+        var secondEntity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == secondHash);
+
+        secondEntity.AbsoluteExpiresAt.Should().Be(firstEntity.AbsoluteExpiresAt);
     }
 }

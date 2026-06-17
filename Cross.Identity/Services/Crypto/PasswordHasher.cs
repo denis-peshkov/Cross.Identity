@@ -16,7 +16,9 @@ internal sealed class PasswordHasher : IPasswordHasher
         {
             PasswordAlgoEnum.Argon2id => HashArgon2id(password, pepper),
             PasswordAlgoEnum.PBKDF2 => HashPbkdf2(password, pepper),
+#pragma warning disable CS0618 // Type or member is obsolete
             PasswordAlgoEnum.SHA256 => HashSha256(password, pepper),
+#pragma warning restore CS0618 // Type or member is obsolete
             _ => throw new NotSupportedException()
         };
 

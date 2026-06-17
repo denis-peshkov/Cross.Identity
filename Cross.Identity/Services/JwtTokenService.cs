@@ -133,7 +133,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var createdAt = DateTime.UtcNow;
         var expiresAt = createdAt.Add(_options.Jwt.RefreshTokenExpires);
-        var absoluteExpiresAt = createdAt.Add(_options.Jwt.RefreshTokenAbsoluteExpires);
+        var absoluteExpiresAt = await ResolveRefreshTokenAbsoluteExpiresAtAsync(familyId, createdAt).ConfigureAwait(false);
 
         var descriptor = new SecurityTokenDescriptor
         {
@@ -290,6 +290,19 @@ internal class JwtTokenService : IJwtTokenService
 
     /// <inheritdoc/>
     public int AccessTokenExpiresInSeconds => (int)_options.Jwt.AccessTokenExpires.TotalSeconds;
+
+    private async Task<DateTime> ResolveRefreshTokenAbsoluteExpiresAtAsync(Guid familyId, DateTime createdAt)
+    {
+        var chainAbsolute = await _context.RefreshTokens
+            .AsNoTracking()
+            .Where(x => x.FamilyId == familyId)
+            .OrderBy(x => x.CreatedAt)
+            .Select(x => (DateTime?)x.AbsoluteExpiresAt)
+            .FirstOrDefaultAsync()
+            .ConfigureAwait(false);
+
+        return chainAbsolute ?? createdAt.Add(_options.Jwt.RefreshTokenAbsoluteExpires);
+    }
 
     /// <inheritdoc/>
     public async Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken)
