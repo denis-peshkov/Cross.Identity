@@ -1,3 +1,5 @@
+using Cross.Identity.Services.ExternalOAuth;
+
 namespace Cross.Identity.Extensions;
 
 /// <summary>
@@ -28,6 +30,7 @@ public static class ServiceCollectionExtensions
     {
         services
             .AddJwtTokenAuth(configuration)
+            .AddExternalLogin(configuration)
             .AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(configuration);
 
         services.TryAddScoped<IRequestInput, RequestInput>();
@@ -63,12 +66,24 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, SendCodeStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, TokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, VerifyCodeStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, InitiateExternalLoginStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CompleteExternalLoginStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();
 
         var rsaKey = JwtKeys.GetRsaKey();
         services.AddSingleton<RsaSecurityKey>(rsaKey);
+
+        return services;
+    }
+
+    private static IServiceCollection AddExternalLogin(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
+        services.AddMemoryCache();
+        services.AddHttpClient(nameof(ExternalLoginService));
+        services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
 
         return services;
     }

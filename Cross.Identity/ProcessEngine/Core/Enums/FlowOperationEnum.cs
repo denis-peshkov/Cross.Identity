@@ -13,4 +13,6 @@ public enum FlowOperationEnum
     ResetPassword,
     ForgotPassword,
     GetUserId,
+    ExternalLogin,
+    ExternalLoginCallback,
 }
