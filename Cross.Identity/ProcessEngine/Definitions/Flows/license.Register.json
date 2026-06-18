@@ -6,12 +6,9 @@
       "schemaDef": {
         "fields": [
           { "key": "Email", "type": "Email", "required": true },
-          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
-          { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 }
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 }
         ],
-        "validators": [
-          { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }
-        ]
+        "validators": []
       },
       "next": "createUser"
     },

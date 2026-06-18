@@ -103,7 +103,6 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         {
             ["Email"] = "test@example.com",
             ["Password"] = "P@ssw0rd!",
-            ["ConfirmPassword"] = "P@ssw0rd!",
         };
 
         // Act
@@ -137,7 +136,6 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
             ["FullName"] = "J", // слишком короткое имя
             ["Company"] = "C", // слишком короткое название
             ["Password"] = "123", // слишком короткий пароль
-            ["ConfirmPassword"] = "456", // не совпадает
             ["AcceptLicenseTerms"] = false // обязательное поле
         };
 
@@ -147,27 +145,5 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*"); // проверяем что есть сообщение об ошибке
-    }
-
-    [Test]
-    public async Task CollectForm_Should_Validate_Passwords_Equal()
-    {
-        // Arrange
-        var input = new Dictionary<string, object?>
-        {
-            ["Email"] = "test@example.com",
-            ["FullName"] = "John Tester",
-            ["Company"] = "Company Inc",
-            ["Password"] = "P@ssw0rd!",
-            ["ConfirmPassword"] = "P@ssw0rd!--", // не совпадает
-            ["AcceptGetEmails"] = true,
-            ["AcceptLicenseTerms"] = true,
-        };
-
-        // Act & Assert
-        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
-            .Should()
-            .ThrowAsync<ValidationException>()
-            .WithMessage("*Passwords do not match*");
     }
 }
