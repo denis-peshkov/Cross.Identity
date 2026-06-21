@@ -14,5 +14,11 @@ internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEn
         builder.HasKey(x => x.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}");
         builder.HasIndex(x => x.Name).IsUnique().HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Name");
         builder.HasIndex(x => x.Scheme).IsUnique().HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Scheme");
+
+        builder.HasMany(x => x.ExternalLogins)
+            .WithOne(x => x.ProviderEntity)
+            .HasForeignKey(x => x.ProviderId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersExternalLogins)}_Provider");
     }
 }
