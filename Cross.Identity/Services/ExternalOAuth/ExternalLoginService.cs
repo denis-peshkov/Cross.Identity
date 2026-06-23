@@ -106,6 +106,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         var payload = await ResolveStateAsync(state, cancellationToken).ConfigureAwait(false);
 
+        if (IsExternalLoginLinkReturnUrl(payload.ReturnUrl) && !payload.LinkUserId.HasValue)
+        {
+            throw new NotAuthorizedException("Authentication is required to link an external login.");
+        }
+
         if (!ExternalOAuth.ExternalOAuthProviders.TryGet(payload.Provider, out var definition))
         {
             throw new NotFoundException($"Provider '{payload.Provider}' is not supported.");
@@ -261,11 +266,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .Select(x => x.UserAccountId)
             .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
-        if (existingLink != Guid.Empty)
-        {
-            return existingLink;
-        }
-
         if (linkUserId.HasValue)
         {
             var accountExists = await _identityContext.UsersAccounts
@@ -277,7 +277,17 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 throw new NotFoundException("Current user account was not found.");
             }
 
+            if (existingLink != Guid.Empty && existingLink != linkUserId.Value)
+            {
+                throw new ValidationException("This external account is already linked to another user.");
+            }
+
             return linkUserId.Value;
+        }
+
+        if (existingLink != Guid.Empty)
+        {
+            return existingLink;
         }
 
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
@@ -391,6 +401,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)
+        => !string.IsNullOrWhiteSpace(returnUrl)
+           && returnUrl.Contains("external-logins", StringComparison.OrdinalIgnoreCase);
 
     private static string EncodeState(ExternalOAuth.ExternalLoginStatePayload payload)
         => Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));
