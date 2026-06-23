@@ -15,7 +15,7 @@
       "kind": "initiateExternalLogin",
       "providerKey": "collectForm.Provider",
       "returnUrlKey": "collectForm.ReturnUrl",
-      "linkUserIdKey": "LinkUserId",
+      "linkUserIdKey": "collectForm.LinkUserId",
       "next": "collectResult"
     },
     {

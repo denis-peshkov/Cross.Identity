@@ -253,7 +253,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         _memoryCache.Remove(StateCacheKeyPrefix + payload.Nonce);
-        return Task.FromResult(payload);
+        return Task.FromResult(cached);
     }
 
     private async Task<Guid> ResolveOrCreateUserAsync(

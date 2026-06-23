@@ -35,16 +35,10 @@ internal sealed class InitiateExternalLoginStep : IStep
         Guid? linkUserId = null;
         if (!string.IsNullOrWhiteSpace(LinkUserIdKey))
         {
-            if (ctx.TryGet<object?>(LinkUserIdKey, out var linkUserIdRaw) && linkUserIdRaw is not null)
+            if (!TryReadLinkUserId(ctx, LinkUserIdKey, out linkUserId)
+                && !TryReadLinkUserId(ctx, BagKey.Qualify(Kind, LinkUserIdKey), out linkUserId))
             {
-                if (linkUserIdRaw is Guid guid)
-                {
-                    linkUserId = guid;
-                }
-                else if (Guid.TryParse(linkUserIdRaw.ToString(), out var parsed))
-                {
-                    linkUserId = parsed;
-                }
+                linkUserId = null;
             }
         }
 
@@ -52,5 +46,28 @@ internal sealed class InitiateExternalLoginStep : IStep
         ctx.Set(BagKey.Qualify(Kind, "Url"), url);
 
         return StepResult.Ok(Next);
+    }
+
+    private static bool TryReadLinkUserId(Bag ctx, string key, out Guid? linkUserId)
+    {
+        linkUserId = null;
+        if (!ctx.TryGet<object?>(key, out var linkUserIdRaw) || linkUserIdRaw is null)
+        {
+            return false;
+        }
+
+        if (linkUserIdRaw is Guid guid)
+        {
+            linkUserId = guid;
+            return true;
+        }
+
+        if (Guid.TryParse(linkUserIdRaw.ToString(), out var parsed))
+        {
+            linkUserId = parsed;
+            return true;
+        }
+
+        return false;
     }
 }
