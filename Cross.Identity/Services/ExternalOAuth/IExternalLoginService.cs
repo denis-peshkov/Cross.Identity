@@ -8,7 +8,7 @@ internal interface IExternalLoginService
         Guid? linkUserId,
         CancellationToken cancellationToken);
 
-    Task<Guid> CompleteAsync(
+    Task<ExternalLoginCompletion> CompleteAsync(
         string code,
         string state,
         string? error,

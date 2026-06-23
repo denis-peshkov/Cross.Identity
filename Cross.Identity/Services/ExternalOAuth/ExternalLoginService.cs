@@ -92,7 +92,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     }
 
     /// <inheritdoc/>
-    public async Task<Guid> CompleteAsync(
+    public async Task<ExternalLoginCompletion> CompleteAsync(
         string code,
         string state,
         string? error,
@@ -105,8 +105,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         var payload = await ResolveStateAsync(state, cancellationToken).ConfigureAwait(false);
+        var isLinking = payload.LinkUserId.HasValue
+            || IsExternalLoginLinkReturnUrl(payload.ReturnUrl);
 
-        if (IsExternalLoginLinkReturnUrl(payload.ReturnUrl) && !payload.LinkUserId.HasValue)
+        if (isLinking && !payload.LinkUserId.HasValue)
         {
             throw new NotAuthorizedException("Authentication is required to link an external login.");
         }
@@ -143,7 +145,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await UpsertExternalLoginAsync(providerEntity, userId, profile, cancellationToken).ConfigureAwait(false);
 
-        return userId;
+        return new ExternalLoginCompletion(userId, isLinking);
     }
 
     private string BuildAuthorizationUrl(
@@ -404,7 +406,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)
         => !string.IsNullOrWhiteSpace(returnUrl)
-           && returnUrl.Contains("external-logins", StringComparison.OrdinalIgnoreCase);
+           && returnUrl.Contains("ExternalLogins", StringComparison.OrdinalIgnoreCase);
 
     private static string EncodeState(ExternalOAuth.ExternalLoginStatePayload payload)
         => Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));

@@ -28,7 +28,8 @@
         "refresh_token": "completeExternalLogin.RefreshToken",
         "token_type": "completeExternalLogin.TokenType",
         "expires_in": "completeExternalLogin.ExpiresIn",
-        "user_id": "completeExternalLogin.UserId"
+        "user_id": "completeExternalLogin.UserId",
+        "is_linking": "completeExternalLogin.IsLinking"
       },
       "next": null
     }
