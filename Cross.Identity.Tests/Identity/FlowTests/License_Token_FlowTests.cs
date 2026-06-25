@@ -42,7 +42,6 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
             {
                 Id = userId,
                 Email = "test@example.com",
-                NormalizedEmail = "test@example.com",
             });
         RegisterToServiceProvider<IUserService, IUserService>(userServiceMock.Object);
         var configuration = new ConfigurationBuilder()

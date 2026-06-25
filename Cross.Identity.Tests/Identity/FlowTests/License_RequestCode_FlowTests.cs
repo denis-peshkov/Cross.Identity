@@ -79,8 +79,7 @@ internal class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
-            Email = "Test@Example.Com",
-            NormalizedEmail = "test@example.com",
+            Email = "test@example.com",
         });
     }
 

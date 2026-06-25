@@ -62,8 +62,7 @@ public class UserServiceTests : EFTestsBase
         userId.Should().NotBeNullOrEmpty();
         var user = await Context.UsersAccounts.FirstOrDefaultAsync(u => u.Id == Guid.Parse(userId));
         user.Should().NotBeNull();
-        user!.Email.Should().Be(email);
-        user.NormalizedEmail.Should().Be(email.ToLowerInvariant());
+        user!.Email.Should().Be(email.ToLowerInvariant());
         user.PasswordPhc.Should().Be(hashedPassword);
     }
 
@@ -76,7 +75,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = Guid.NewGuid(),
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
         });
 
         var map = new Dictionary<string, object?>
@@ -102,7 +100,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
         });
 
         // Act
@@ -133,7 +130,6 @@ public class UserServiceTests : EFTestsBase
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
         });
 
         var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
@@ -151,7 +147,6 @@ public class UserServiceTests : EFTestsBase
             Id = userId,
             PhoneNumber = phone,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
         });
         _phoneNormalizer.Setup(p => p.NormalizeToE164(phone, "US")).Returns(phone);
 
@@ -179,7 +174,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             UserName = "testuser",
             NormalizedUserName = "testuser"
         });
@@ -201,7 +195,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
             UserName = "u",
             NormalizedUserName = "u"
         });
@@ -222,8 +215,7 @@ public class UserServiceTests : EFTestsBase
             Id = userId,
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
-            Email = "e@e.com",
-            NormalizedEmail = "e@e.com"
+            Email = "e@e.com"
         });
 
         var result = await _userService.GetUserByAsync("UserName", userName, CancellationToken.None);
@@ -246,11 +238,11 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
             TokenLength = 6,
             Attempts = 0,
@@ -268,11 +260,11 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
             TokenLength = 6,
             Attempts = 0,
@@ -283,7 +275,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
             TokenLength = 6,
             Attempts = 0,
@@ -311,11 +303,11 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email, NormalizedEmail = email.ToLowerInvariant() });
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
             TokenLength = 5,
             Attempts = 0,
@@ -361,7 +353,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             PasswordPhc = hashed,
             PasswordPepperVersion = 1
         });
@@ -385,7 +376,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1
         });
@@ -410,7 +400,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             PasswordPhc = "hash",
             PasswordPepperVersion = 99
         });
@@ -436,7 +425,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             PasswordPhc = oldHash,
             PasswordPepperVersion = 1
         });
@@ -486,7 +474,6 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            NormalizedEmail = email.ToLowerInvariant(),
             PasswordPhc = "$pbkdf2$old",
             PasswordPepperVersion = 1,
         });

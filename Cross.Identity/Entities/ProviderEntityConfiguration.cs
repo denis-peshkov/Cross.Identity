@@ -11,10 +11,14 @@ internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEn
         builder.Property(x => x.Scheme).IsRequired().HasMaxLength(100);
         builder.Property(x => x.CreatedAt).IsRequired().HasColumnType("datetime2(7)");
 
-        builder.HasKey(x => x.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}");
-        builder.HasIndex(x => x.Name).IsUnique().HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Name");
-        builder.HasIndex(x => x.Scheme).IsUnique().HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Scheme");
-
+        builder.HasKey(x => x.Id)
+            .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}");
+        builder.HasIndex(x => x.Name)
+            .IsUnique()
+            .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Name");
+        builder.HasIndex(x => x.Scheme)
+            .IsUnique()
+            .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}_Scheme");
         builder.HasMany(x => x.ExternalLogins)
             .WithOne(x => x.ProviderEntity)
             .HasForeignKey(x => x.ProviderId)

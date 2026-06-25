@@ -73,12 +73,11 @@ public class CodeServiceTests : EFTestsBase
         {
             Id = userId,
             Email = "test@example.com",
-            NormalizedEmail = "test@example.com",
         });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = "test@example.com",
+            Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
             TokenLength = 6,
             Attempts = 0,
@@ -105,11 +104,11 @@ public class CodeServiceTests : EFTestsBase
     public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeExpired()
     {
         var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com", NormalizedEmail = "test@example.com" });
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
-            NormalizedEmail = "test@example.com",
+            Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
             TokenLength = 6,
             Attempts = 0,

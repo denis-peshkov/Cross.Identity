@@ -190,7 +190,8 @@ public class SendCode_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         // Assert
-        result.Status.Should().Be(StepStatusEnum.Ok);
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<InvalidOperationException>();
         bag.ContainsKey("sendCode.LastCode").Should().BeFalse();
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),

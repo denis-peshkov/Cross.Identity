@@ -24,16 +24,10 @@ public class UserAccountEntity
     public virtual string? NormalizedUserName { get; set; }
 
     /// <summary>
-    /// Gets or sets the email address for this user.
-    /// </summary>
-    [ProtectedPersonalData]
-    public string? Email { get; set; }
-
-    /// <summary>
     /// Gets or sets the normalized email address for this user.
     /// </summary>
     [ProtectedPersonalData]
-    public string? NormalizedEmail { get; set; }
+    public string? Email { get; set; }
 
     /// <summary>
     /// Gets or sets a telephone number for the user.

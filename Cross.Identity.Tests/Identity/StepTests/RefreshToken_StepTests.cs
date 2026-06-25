@@ -42,7 +42,6 @@ public class RefreshToken_StepTests
         {
             Id = userId,
             Email = _faker.Internet.Email(),
-            NormalizedEmail = "",
             UserName = "user",
             NormalizedUserName = "user"
         };

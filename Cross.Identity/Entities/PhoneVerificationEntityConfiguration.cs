@@ -16,9 +16,13 @@ internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.UsedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
 
-        builder.HasKey(x => x.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}");
-        builder.HasIndex(x => x.UserAccountId).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_UserAccount");
-        builder.HasIndex(x => x.ExpiresAt).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_ExpiresAt");
-        builder.HasIndex(x => x.CodeHash).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_CodeHash");
+        builder.HasKey(x => x.Id)
+            .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}");
+        builder.HasIndex(x => x.UserAccountId)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_UserAccount");
+        builder.HasIndex(x => x.CodeHash)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_CodeHash");
+        builder.HasIndex(x => x.ExpiresAt)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_ExpiresAt");
     }
 }

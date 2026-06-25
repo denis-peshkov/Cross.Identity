@@ -297,7 +297,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             var userByEmail = await _identityContext.UsersAccounts
                 .AsNoTracking()
-                .Where(x => x.NormalizedEmail == normalizedEmail)
+                .Where(x => x.Email == normalizedEmail)
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
@@ -320,8 +320,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var account = new UserAccountEntity
         {
             Id = userId,
-            Email = profile.Email,
-            NormalizedEmail = normalizedEmail,
+            Email = normalizedEmail,
             UserName = userName,
             NormalizedUserName = userName.Trim().ToLowerInvariant(),
             EmailConfirmed = !string.IsNullOrWhiteSpace(normalizedEmail),

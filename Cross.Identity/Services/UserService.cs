@@ -38,7 +38,7 @@ internal sealed class UserService : IUserService
         // приведение к ожидаемому имени
         string field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -64,7 +64,7 @@ internal sealed class UserService : IUserService
         var field = selectorField.ToLowerInvariant() switch
         {
             "id" => nameof(UserAccountEntity.Id), // не работает так как Guid != String
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -116,7 +116,7 @@ internal sealed class UserService : IUserService
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("UserName already exists.");
         if (normalizedEmail is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken).ConfigureAwait(false))
+            && await _context.UsersAccounts.AnyAsync(u => u.Email == normalizedEmail, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Email already exists.");
         if (normalizedPhone is not null
             && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
@@ -134,8 +134,7 @@ internal sealed class UserService : IUserService
         var user = new UserAccountEntity
         {
             Id = Guid.NewGuid(),
-            Email = emailRaw as string,
-            NormalizedEmail = normalizedEmail,
+            Email = normalizedEmail,
             UserName = userNameRaw as string,
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
@@ -165,7 +164,7 @@ internal sealed class UserService : IUserService
         // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
         string field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -173,7 +172,7 @@ internal sealed class UserService : IUserService
 
         string? value = field switch
         {
-            nameof(UserAccountEntity.NormalizedEmail) or nameof(UserAccountEntity.NormalizedUserName)
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
                 => selectorValue.Trim().ToLowerInvariant(),
             nameof(UserAccountEntity.PhoneNumber)
                 => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
@@ -243,7 +242,7 @@ internal sealed class UserService : IUserService
         // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
         var field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -253,7 +252,7 @@ internal sealed class UserService : IUserService
         var now = DateTime.UtcNow;
         switch (field)
         {
-            case nameof(UserAccountEntity.NormalizedEmail):
+            case nameof(UserAccountEntity.Email):
                 isValid = await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
 
@@ -270,7 +269,7 @@ internal sealed class UserService : IUserService
 
             if (account != null)
             {
-                if (field == nameof(UserAccountEntity.NormalizedEmail))
+                if (field == nameof(UserAccountEntity.Email))
                     account.EmailConfirmed = true;
                 else
                     account.PhoneConfirmed = true;
@@ -298,7 +297,7 @@ internal sealed class UserService : IUserService
 
         string field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -306,7 +305,7 @@ internal sealed class UserService : IUserService
 
         string? value = field switch
         {
-            nameof(UserAccountEntity.NormalizedEmail) or nameof(UserAccountEntity.NormalizedUserName)
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
                 => selectorValue.Trim().ToLowerInvariant(),
             nameof(UserAccountEntity.PhoneNumber)
                 => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),

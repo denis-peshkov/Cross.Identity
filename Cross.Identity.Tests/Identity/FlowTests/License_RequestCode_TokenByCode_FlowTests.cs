@@ -1,4 +1,4 @@
-namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTestsBase
@@ -72,8 +72,7 @@ internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandler
         AddToDb(new UserAccountEntity
         {
             Id = _userId,
-            Email = "Test@Example.Com",
-            NormalizedEmail = "test@example.com",
+            Email = "test@example.com",
         });
     }
 
@@ -101,7 +100,7 @@ internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandler
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(lastCode),
             TokenLength = (byte)lastCode.Length,
             Attempts = 0,
@@ -160,7 +159,7 @@ internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandler
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD11111"),
             TokenLength = 8,
             Attempts = 0,
@@ -171,7 +170,7 @@ internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandler
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
-            NormalizedEmail = email,
+            Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(latestCode),
             TokenLength = (byte)latestCode.Length,
             Attempts = 0,

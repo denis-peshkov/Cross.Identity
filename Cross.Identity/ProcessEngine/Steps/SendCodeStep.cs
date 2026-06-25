@@ -108,13 +108,13 @@ internal sealed class SendCodeStep : IStep
                 // Для отладки/тестов сохраняем последний код
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: не отображается в схеме, не видно что оно есть, может отображать как коллекцию полей Output?
             }
+
+            return StepResult.Ok(Next);
         }
         catch (Exception ex)
         {
-            // delete after email setup
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
+            return StepResult.Fail(ex);
         }
-
-        return StepResult.Ok(Next);
     }
 }
