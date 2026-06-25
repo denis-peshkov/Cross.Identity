@@ -302,7 +302,8 @@ public class UserServiceTests : EFTestsBase
             .ToList();
 
         verifications[0].Attempts.Should().Be(0);
-        verifications[1].Attempts.Should().Be(1);
+        verifications[1].Attempts.Should().Be(0);
+        verifications[1].UsedAt.Should().NotBeNull();
     }
 
     [Test]

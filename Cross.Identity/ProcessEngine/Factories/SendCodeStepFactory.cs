@@ -16,6 +16,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var userService               = sp.GetRequiredService<IUserService>();
         var hostEnvironment           = sp.GetRequiredService<IHostEnvironment>();
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
+        var configuration             = sp.GetRequiredService<IConfiguration>();
 
         // ttlSeconds (опционально), по умолчанию 5 минут
         var ttl = cfg.TimeSpanSecondsOpt("ttlSeconds") ?? TimeSpan.FromMinutes(5);
@@ -44,6 +45,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             CodeService               = codeService,
             UserService               = userService,
             Environment               = hostEnvironment,
+            Configuration             = configuration,
             ProcessDefinitionProvider = processDefinitionProvider,
             Logger                    = loggerFactory.CreateLogger<SendCodeStep>(),
             ResolveBy                 = resolveBy,

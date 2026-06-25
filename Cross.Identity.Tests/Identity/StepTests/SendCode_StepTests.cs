@@ -10,6 +10,8 @@ public class SendCode_StepTests
     private Mock<IHostEnvironment> _environment = null!;
     private Mock<IProcessDefinitionProvider> _processDefinitionProvider = null!;
     private Mock<ILogger> _logger = null!;
+    private IConfiguration _defaultConfiguration = null!;
+    private IConfiguration _developerConfiguration = null!;
 
     [SetUp]
     public void SetUp()
@@ -20,6 +22,20 @@ public class SendCode_StepTests
         _environment = new Mock<IHostEnvironment>();
         _processDefinitionProvider = new Mock<IProcessDefinitionProvider>();
         _logger = new Mock<ILogger>();
+        _defaultConfiguration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
+                ["Authentication:DeveloperMode"] = "false"
+            })
+            .Build();
+        _developerConfiguration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
+                ["Authentication:DeveloperMode"] = "true"
+            })
+            .Build();
     }
 
     [Test]
@@ -53,6 +69,7 @@ public class SendCode_StepTests
             UserService = _userService.Object,
             Environment = _environment.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
             SelectorKey = "collectForm.Email",
@@ -104,6 +121,7 @@ public class SendCode_StepTests
             UserService = _userService.Object,
             Environment = _environment.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _developerConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Sms,
             SelectorKey = "collectForm.Phone",
@@ -123,6 +141,64 @@ public class SendCode_StepTests
         var code = bag.Get<string>("sendCode.LastCode");
         code.Should().NotBeNullOrEmpty();
         code.Should().MatchRegex("^[0-9]+$"); // Проверяем, что код только из цифр для SMS
+    }
+
+    [Test]
+    public async Task SendCodeStep_InDevelopment_ShouldNotSetLastCodeWhenSendFails()
+    {
+        // Arrange
+        var email = _faker.Internet.Email();
+        var userId = Guid.NewGuid().ToString();
+
+        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>Your code: {{code}}</html>");
+
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("smtp down"));
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _developerConfiguration,
+            Logger = _logger.Object,
+            Channel = ChannelEnum.Email,
+            SelectorKey = "collectForm.Email",
+            ResolveBy = new ResolveBy { Field = "Email" },
+            Ttl = TimeSpan.FromMinutes(5),
+            Next = null
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Email", email);
+
+        // Act
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        bag.Get<string>("sendCode.LastCode").Should().NotBeNullOrEmpty();
+        _codeService.Verify(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]
@@ -147,6 +223,7 @@ public class SendCode_StepTests
             UserService = _userService.Object,
             Environment = _environment.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
             SelectorKey = "collectForm.Email",

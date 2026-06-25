@@ -47,9 +47,8 @@ internal sealed class VerifyCodeStep : IStep
 
         var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken).ConfigureAwait(false);
 
-        if (!ok)
-            return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
-
-        return StepResult.Ok(Next);
+        return ok
+            ? StepResult.Ok(Next)
+            : StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
     }
 }

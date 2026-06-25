@@ -254,43 +254,27 @@ internal sealed class UserService : IUserService
         switch (field)
         {
             case nameof(UserAccountEntity.NormalizedEmail):
-
-                var emailVerification = await _context.EmailVerifications
-                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
-                    .OrderByDescending(x => x.CreatedAt)
-                    .FirstOrDefaultAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (emailVerification != null) emailVerification.Attempts++;
-                isValid = emailVerification != null
-                          && emailVerification.TokenLength == code.Length
-                          && emailVerification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
-                          && emailVerification.MaxAttempts >= emailVerification.Attempts;
-                if (isValid)
-                {
-                    user.EmailConfirmed = true;
-                    emailVerification!.UsedAt = now;
-                    emailVerification!.ExpiresAt = now;
-                }
+                isValid = await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
-                var phoneVerification = await _context.PhoneVerifications
-                    .Where(x => x.UserAccountId == user.Id && x.ExpiresAt >= now)
-                    .FirstOrDefaultAsync(cancellationToken)
-                    .ConfigureAwait(false);
-                if (phoneVerification != null) phoneVerification.Attempts++;
-                isValid = phoneVerification != null
-                          && phoneVerification.CodeLength == code.Length
-                          && phoneVerification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
-                          && phoneVerification.MaxAttempts >= phoneVerification.Attempts;
-                if (isValid)
-                {
-                    user.PhoneConfirmed = true;
-                    phoneVerification!.UsedAt = now;
-                    phoneVerification!.ExpiresAt = now;
-                }
+                isValid = await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
+        }
+
+        if (isValid)
+        {
+            var account = await _context.UsersAccounts
+                .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (account != null)
+            {
+                if (field == nameof(UserAccountEntity.NormalizedEmail))
+                    account.EmailConfirmed = true;
+                else
+                    account.PhoneConfirmed = true;
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -348,5 +332,65 @@ internal sealed class UserService : IUserService
         user.PasswordPepperVersion = _pepperVault.CurrentVersion;
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> TryValidateEmailCodeAsync(
+        Guid userId,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var verification = await _context.EmailVerifications
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (verification is null || verification.Attempts >= verification.MaxAttempts)
+            return false;
+
+        var matches = verification.TokenLength == code.Length
+                      && verification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            verification.Attempts++;
+            return false;
+        }
+
+        verification.UsedAt = now;
+        verification.ExpiresAt = now;
+        return true;
+    }
+
+    private async Task<bool> TryValidatePhoneCodeAsync(
+        Guid userId,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var verification = await _context.PhoneVerifications
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (verification is null || verification.Attempts >= verification.MaxAttempts)
+            return false;
+
+        var matches = verification.CodeLength == code.Length
+                      && verification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            verification.Attempts++;
+            return false;
+        }
+
+        verification.UsedAt = now;
+        verification.ExpiresAt = now;
+        return true;
     }
 }

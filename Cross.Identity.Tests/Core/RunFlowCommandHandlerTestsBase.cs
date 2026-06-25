@@ -79,7 +79,13 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(new LoggerFactory());
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IConfiguration)))
-            .Returns(new ConfigurationBuilder().Build());
+            .Returns(new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Authentication:ClientUrl"] = "http://localhost:4200",
+                    ["Authentication:DeveloperMode"] = "true"
+                })
+                .Build());
         var env = new HostingEnvironment
         {
             EnvironmentName = Environments.Development,

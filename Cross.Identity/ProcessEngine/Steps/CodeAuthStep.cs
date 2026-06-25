@@ -70,7 +70,9 @@ internal sealed class CodeAuthStep : IStep
         // 2) Резолв пользователя
         var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, identity, cancellationToken).ConfigureAwait(false);
         if (userId is null)
+        {
             return StepResult.Fail(new KeyNotFoundException("User not found."));
+        }
 
         // Писать: относительный ключ → "{Kind}.UserIdKey"
         ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId);

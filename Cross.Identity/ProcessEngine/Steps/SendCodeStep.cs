@@ -48,6 +48,8 @@ internal sealed class SendCodeStep : IStep
     /// <summary>Настройки поиска пользователя: по какому полю искать (например, "Email" или "Phone").</summary>
     public required ResolveBy ResolveBy { get; init; }
 
+    public IConfiguration Configuration { get; init; }
+
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
@@ -62,7 +64,9 @@ internal sealed class SendCodeStep : IStep
         var msg = NotificationMessage.For(Channel, destination)
             .WithSubject("Verification Code");
 
-        var clientUrl = "http://localhost:4000";
+        var clientUrl = Configuration["Authentication:ClientUrl"]
+            ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
+
         var year = DateTime.UtcNow.Year.ToString();
         var verificationLink = $"{clientUrl}/reset-password?code={code}";
         var helpLink = $"{clientUrl}/reset-password?code={code}";
@@ -95,10 +99,9 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
-            if (Environment.IsDevelopment())
+            var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
+            if (developerMode)
             {
-                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false); // todo: remove this row!!!
-
                 // Для отладки/тестов сохраняем последний код
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: не отображается в схеме, не видно что оно есть, может отображать как коллекцию полей Output?
             }

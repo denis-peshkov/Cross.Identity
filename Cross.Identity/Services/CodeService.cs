@@ -46,7 +46,8 @@ internal sealed class CodeService : ICodeService
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
                     MaxAttempts = 3,
-                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
+                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime,
+                    CreatedAt = DateTime.UtcNow,
                 };
                 await _context.EmailVerifications.AddAsync(emailEntity, cancellationToken).ConfigureAwait(false);
                 break;
@@ -61,7 +62,8 @@ internal sealed class CodeService : ICodeService
                     CodeLength = (byte)code.Length,
                     Attempts = 0,
                     MaxAttempts = 3,
-                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime
+                    ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime,
+                    CreatedAt = DateTime.UtcNow,
                 };
                 await _context.PhoneVerifications.AddAsync(phoneEntity, cancellationToken).ConfigureAwait(false);
                 break;

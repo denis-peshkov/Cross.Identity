@@ -13,6 +13,12 @@ public class SendCode_StepFactoryTests
         sc.AddScoped<ICodeService>(p => Mock.Of<ICodeService>());
         sc.AddScoped<IUserService>(p => Mock.Of<IUserService>());
         sc.AddSingleton<ILoggerFactory>(p => new LoggerFactory());
+        sc.AddSingleton<IConfiguration>(_ => new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:ClientUrl"] = "http://localhost:4200"
+            })
+            .Build());
         var env = new HostingEnvironment
         {
             EnvironmentName = Environments.Development,
