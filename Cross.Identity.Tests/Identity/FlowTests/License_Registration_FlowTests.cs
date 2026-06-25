@@ -31,15 +31,19 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
-        var notificationOptions = new Mock<IOptionsSnapshot<MessagingEmailOptions>>();
-        notificationOptions.Setup(o => o.Value).Returns(new MessagingEmailOptions());
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true"
+            })
+            .Build();
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
                 Mock.Of<ISmsSenderService>(),
-                notificationOptions.Object));
+                configuration));
 
         // Берём JSON как embedded /Flows/Definitions/licenses.register.json
         // AddJson("""

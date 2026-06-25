@@ -15,12 +15,13 @@ public class CodeServiceTests : EFTestsBase
         _logger = new Mock<ILogger<CodeService>>();
         _emailService = new Mock<IEmailSenderService>();
         _smsService = new Mock<ISmsSenderService>();
-        var options = new Mock<IOptionsSnapshot<MessagingEmailOptions>>();
-        options.Setup(o => o.Value).Returns(new MessagingEmailOptions
-        {
-            RecipientOverride = "dionis.peshkov@gmail.com"
-        });
-        _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object, options.Object);
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true"
+            })
+            .Build();
+        _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object, configuration);
     }
 
     [Test]

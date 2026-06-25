@@ -144,7 +144,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_InDevelopment_ShouldSetLastCodeAndStillTrySendWhenSendFails()
+    public async Task SendCodeStep_InDevelopment_ShouldNotSetLastCodeWhenSendFails()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -191,7 +191,7 @@ public class SendCode_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("sendCode.LastCode").Should().NotBeNullOrEmpty();
+        bag.ContainsKey("sendCode.LastCode").Should().BeFalse();
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
