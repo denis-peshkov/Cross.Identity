@@ -18,7 +18,7 @@ public class CodeServiceTests : EFTestsBase
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Authentication:DeveloperMode"] = "true"
+                ["Authentication:DeveloperMode"] = "false"
             })
             .Build();
         _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object, configuration);

@@ -39,7 +39,7 @@ internal sealed class CodeService : ICodeService
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
-                if (developerMode)
+                if (!developerMode)
                 {
                     await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 }
@@ -58,7 +58,7 @@ internal sealed class CodeService : ICodeService
                 break;
 
             case ChannelEnum.Sms:
-                if (developerMode)
+                if (!developerMode)
                 {
                     await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 }
