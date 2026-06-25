@@ -9,20 +9,20 @@ internal sealed class CodeService : ICodeService
     private readonly ILogger<CodeService> _logger;
     private readonly IEmailSenderService _email;
     private readonly ISmsSenderService _sms;
-    private readonly IOptionsSnapshot<MessagingEmailOptions> _options;
+    private readonly IConfiguration _configuration;
 
     public CodeService(
         IdentityContext context,
         ILogger<CodeService> logger,
         IEmailSenderService email,
         ISmsSenderService sms,
-        IOptionsSnapshot<MessagingEmailOptions> options)
+        IConfiguration configuration)
     {
         _context = context;
         _logger = logger;
         _email = email;
         _sms = sms;
-        _options = options;
+        _configuration = configuration;
     }
 
     /// <inheritdoc />
@@ -34,10 +34,15 @@ internal sealed class CodeService : ICodeService
             ? guid
             : throw new ArgumentException("Invalid user id", nameof(userId));
 
+        var developerMode = _configuration.GetValue<bool>("Authentication:DeveloperMode");
+
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
-                await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
+                if (developerMode)
+                {
+                    await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
+                }
                 var emailEntity = new EmailVerificationEntity
                 {
                     UserAccountId = id,
@@ -53,7 +58,10 @@ internal sealed class CodeService : ICodeService
                 break;
 
             case ChannelEnum.Sms:
-                await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
+                if (developerMode)
+                {
+                    await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
+                }
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     UserAccountId = id,

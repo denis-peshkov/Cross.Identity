@@ -99,16 +99,14 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
+            // Код должен быть сохранён и доступен для последующей валидации
+            await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false);
+
             var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
             if (developerMode)
             {
                 // Для отладки/тестов сохраняем последний код
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: не отображается в схеме, не видно что оно есть, может отображать как коллекцию полей Output?
-            }
-            else
-            {
-                // сохраняем/отправляем через сервис
-                await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
