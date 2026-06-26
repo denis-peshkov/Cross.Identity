@@ -143,6 +143,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
             payload.LinkUserId,
             cancellationToken).ConfigureAwait(false);
 
+        if (_userProvisioner is not null)
+        {
+            await _userProvisioner.ProvisionAsync(userId, profile, cancellationToken).ConfigureAwait(false);
+        }
+
         await UpsertExternalLoginAsync(providerEntity, userId, profile, cancellationToken).ConfigureAwait(false);
 
         return new ExternalLoginCompletion(userId, isLinking);
@@ -336,11 +341,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await _identityContext.UsersAccounts.AddAsync(account, cancellationToken).ConfigureAwait(false);
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        if (_userProvisioner is not null)
-        {
-            await _userProvisioner.ProvisionAsync(userId, profile, cancellationToken).ConfigureAwait(false);
-        }
 
         return userId;
     }
