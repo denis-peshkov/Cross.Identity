@@ -10,7 +10,7 @@
 
 ### Cursor triage scripts
 
-- `.cursor/triage/` - RTK/gh wrappers, CI runners (`collect-data.sh`, `post-pr-triage.mjs`)
+- `.cursor/triage/` - RTK/gh wrappers, CI runners (`collect-data.sh`, `post-pr-triage.mjs`), отчёты в `docs/`
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - Общие правила .NET бэкенда

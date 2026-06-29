@@ -114,4 +114,4 @@ PR_NUMBER=42 CURSOR_API_KEY=... yarn pr-triage
 
 ## Сохранение
 
-`docs/triage/prs-YYYY-MM-DD.md`
+`.cursor/triage/docs/prs-YYYY-MM-DD.md`

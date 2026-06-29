@@ -7,7 +7,7 @@ import { JsonlLocalAgentStore } from '@cursor/sdk';
  * @param {string} repoRoot repository root (cwd for the agent)
  */
 export function createLocalAgentOptions(repoRoot) {
-  const storeRoot = join(repoRoot, 'docs/triage/.data/cursor-sdk-store');
+  const storeRoot = join(repoRoot, '.cursor/triage/docs/.data/cursor-sdk-store');
   mkdirSync(storeRoot, { recursive: true });
 
   return {

@@ -3,7 +3,7 @@ name: cross-identity-triage
 description: >-
   Полный triage Cross.Identity: issue-triage + pr-triage параллельно, кросс-анализ
   (двойное покрытие, security gaps, P0 без PR, dirty CI). Сохраняет отчёт в
-  docs/triage/. Args: "en"/"ru", "no save" — без файла.
+  .cursor/triage/docs/. Args: "en"/"ru", "no save" — без файла.
 ---
 
 # Cross-Identity Triage (оркестратор)
@@ -95,7 +95,7 @@ CI dirty / CONFLICTING — причина (overlap, нужен rebase).
 
 ### Сохранение
 
-`docs/triage/Cross.Identity-YYYY-MM-DD.md` (если не `no save`).
+`.cursor/triage/docs/Cross.Identity-YYYY-MM-DD.md` (если не `no save`).
 
 Структура файла:
 
@@ -116,8 +116,8 @@ CI dirty / CONFLICTING — причина (overlap, нужен rebase).
 
 После `triage.yml` читать:
 
-- `docs/triage/.data/*.json` — сырые данные
-- `docs/triage/ci-report-YYYY-MM-DD.md` — отчёт агента CI
+- `.cursor/triage/docs/.data/*.json` — сырые данные
+- `.cursor/triage/docs/ci-report-YYYY-MM-DD.md` — отчёт агента CI
 
 Дополнить кросс-анализом вручную при необходимости.
 

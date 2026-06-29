@@ -133,8 +133,8 @@ jobs:
         with:
           name: triage-${{ github.run_id }}
           path: |
-            docs/triage/.data/
-            docs/triage/ci-report-*.md
+            .cursor/triage/docs/.data/
+            .cursor/triage/docs/ci-report-*.md
           if-no-files-found: warn
           retention-days: 30
 
@@ -144,7 +144,7 @@ jobs:
           echo "## Triage run" >> "$GITHUB_STEP_SUMMARY"
           echo "- Event: ${{ github.event_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Mode: ${TRIAGE_MODE}" >> "$GITHUB_STEP_SUMMARY"
-          REPORT=$(ls docs/triage/ci-report-*.md 2>/dev/null | head -1 || true)
+          REPORT=$(ls .cursor/triage/docs/ci-report-*.md 2>/dev/null | head -1 || true)
           if [ -n "$REPORT" ]; then
             echo "- Report: $REPORT" >> "$GITHUB_STEP_SUMMARY"
           else

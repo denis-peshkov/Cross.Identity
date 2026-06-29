@@ -156,4 +156,4 @@ REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner
 
 ## Сохранение отчёта
 
-При полном triage сохранять в `docs/triage/issues-YYYY-MM-DD.md`.
+При полном triage сохранять в `.cursor/triage/docs/issues-YYYY-MM-DD.md`.

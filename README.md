@@ -50,7 +50,7 @@ Cross.Identity.slnx
 │   └── config.nuspec
 ├── Cross.Identity.Tests/            # NUnit (unit + integration)
 ├── Sample.Api/                      # Пример минимального API (ASP.NET Core)
-├── docs/triage/                     # Отчёты automated triage
+├── .cursor/triage/docs/               # Отчёты automated triage (.data/, ci-report-*.md)
 ├── .github/workflows/               # dotnet.yml, triage.yml
 ├── RefreshToken.md
 ├── LICENSE.md

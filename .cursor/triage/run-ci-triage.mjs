@@ -11,10 +11,10 @@ import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
-const DATA = join(ROOT, 'docs/triage/.data');
+const DATA = join(ROOT, '.cursor/triage/docs/.data');
 const SKILLS = join(ROOT, '.cursor/skills/cross-identity-triage/SKILL.md');
 const DATE = new Date().toISOString().slice(0, 10);
-const OUT = join(ROOT, `docs/triage/ci-report-${DATE}.md`);
+const OUT = join(ROOT, `.cursor/triage/docs/ci-report-${DATE}.md`);
 const POST_COMMENT = process.env.TRIAGE_POST_COMMENT === 'true';
 const MODE = process.env.TRIAGE_MODE || 'audit';
 
@@ -80,7 +80,7 @@ Security focus: JWT, OAuth, refresh tokens, auth flows.
 }
 
 async function main() {
-  mkdirSync(join(ROOT, 'docs/triage'), { recursive: true });
+  mkdirSync(join(ROOT, '.cursor/triage/docs'), { recursive: true });
 
   const prompt = buildPrompt();
   console.log(`Running Cursor agent triage (${MODE})...`);

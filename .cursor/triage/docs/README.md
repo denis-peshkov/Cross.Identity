@@ -57,8 +57,8 @@ Workflow `triage.yml` → job **PR automated comment**:
 
 ### Артефакты
 
-- `docs/triage/ci-report-YYYY-MM-DD.md`
-- `docs/triage/.data/*.json` (в artifact, не в git)
+- `.cursor/triage/docs/ci-report-YYYY-MM-DD.md`
+- `.cursor/triage/docs/.data/*.json` (в artifact, не в git)
 
 ## RTK
 
