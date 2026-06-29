@@ -5,9 +5,10 @@
 > **База сравнения:** `master...dev` (merge-base `163b8a5`)  
 > **Цель:** исчерпывающий перечень нового функционала и чеклист проверки перед merge в `master`  
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
-> **Источники:** `dotnet test`, `git diff master...dev`, `gh run list` (проверено 2026-06-29)
+> **Источники:** `dotnet test`, `git diff master...dev`, `gh run list` (проверено 2026-06-29)  
+> **Поддержка:** при изменении любого чеклиста или migration-пунктов пересчитать сводку: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Сводка чеклистов:** **107** пунктов — ✅ **55** (51%) · 🟨 **23** (21%) · ⬜ **26** (24%) · ❌ **3** (3%)
+**Сводка чеклистов:** **100** пунктов — ✅ **55** (55%) · 🟨 **23** (23%) · ⬜ **22** (22%) · ❌ **0** (0%)
 
 ---
 
@@ -327,7 +328,7 @@ dotnet run --project Sample.Api
 | # | Проверка | Статус |
 |---|----------|--------|
 | CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ✅ `Sample.Api`: `Microsoft.Extensions.Http` 8.0.1 |
-| CI2 | SonarCloud quality gate wait на PR | ⬜ |
+| CI2 | SonarCloud quality gate wait на PR | ✅ PR [#5](https://github.com/denis-peshkov/Cross.Identity/pull/5#issuecomment-4834799217): QG **passed**, 88.7% coverage on new code; [`dotnet.yml`](.github/workflows/dotnet.yml) — `sonar.qualitygate.wait=true` на `pull_request` |
 | CI3 | `triage.yml` — automated PR triage | ✅ последний run ok |
 | CI4 | GitVersion: `dev` теперь **не** release branch | 🟨 конфиг изменён; поведение при merge не проверено |
 | CI5 | NuGet pack из `config.nuspec` — зависимости актуальны | ✅ синхронизирован с `.csproj` |

@@ -1,0 +1,44 @@
+---
+description: Поддержка docs/RELEASE-PLAN-dev-to-master.md и синхронизация «Сводка чеклистов»
+globs:
+  - docs/RELEASE-PLAN-dev-to-master.md
+  - docs/MIGRATION.md
+alwaysApply: false
+---
+
+# План релиза и migration guide
+
+## Файлы
+
+- `docs/RELEASE-PLAN-dev-to-master.md` — чеклисты готовности `dev` → `master`
+- `docs/MIGRATION.md` — migration guide для потребителей пакета
+
+## Обязательное правило: «Сводка чеклистов»
+
+**При любом изменении** в `RELEASE-PLAN-dev-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 миграция БД, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывай и обновляй строку **«Сводка чеклистов»** в шапке документа (сразу после легенды).
+
+То же при правках `docs/MIGRATION.md`, если они меняют статус связанных пунктов плана (например DOC6, §10.8, P1 по `collectResult`).
+
+### Как пересчитать
+
+```bash
+node docs/scripts/release-plan-summary.mjs --write
+```
+
+Без `--write` — только вывод строки для проверки.
+
+Не правь проценты и счётчики вручную, если можно запустить скрипт.
+
+## Легенда статусов
+
+⬜ open · ✅ done · 🟨 partial · ❌ blocker
+
+## Связанные пункты при миграции
+
+При работе над migration guide синхронизируй как минимум:
+
+| Область | Где в плане |
+|---------|-------------|
+| `docs/MIGRATION.md` | DOC6, §2 breaking changes, §10 п.3 и п.8, go/no-go |
+| SQL / EF migrations | §8 (M1–M4), release gate п.4 |
+| `config.nuspec` releaseNotes | DOC4 |

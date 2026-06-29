@@ -7,6 +7,7 @@
 - `001-team-workflow.mdc` - Правила командной работы
 - `002-multi-repo.mdc` - Правила работы с мульти-репозиторием
 - `003-triage.mdc` - GitHub triage (issues/PRs, skills, RTK, CI)
+- `004-release-plan.mdc` - План релиза `dev`→`master`, синхронизация «Сводка чеклистов»
 
 ### Cursor triage scripts
 

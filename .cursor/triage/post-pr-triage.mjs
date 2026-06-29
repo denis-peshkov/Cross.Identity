@@ -30,6 +30,8 @@ if (!apiKey) {
   process.exit(1);
 }
 
+const MAX_DIFF_CHARS = 48_000;
+
 function gh(args, { json = false, maxBuffer = 8 * 1024 * 1024 } = {}) {
   const out = execFileSync(GH, args, {
     cwd: ROOT,
@@ -39,9 +41,141 @@ function gh(args, { json = false, maxBuffer = 8 * 1024 * 1024 } = {}) {
   return json ? JSON.parse(out) : out;
 }
 
-function buildPrompt(pr, diff) {
+function tryGh(args, options = {}) {
+  try {
+    return { ok: true, data: gh(args, options) };
+  } catch (err) {
+    const stderr = err.stderr?.toString?.() ?? '';
+    const message = err.message ?? String(err);
+    return { ok: false, stderr, message };
+  }
+}
+
+function isPrDiffTooLarge({ stderr, message }) {
+  const text = `${stderr}\n${message}`;
+  return /too_large|PullRequest\.diff|exceeded maximum|HTTP 406/i.test(text);
+}
+
+function fetchAllPrFiles(repo, prNumber) {
+  return gh(['api', `repos/${repo}/pulls/${prNumber}/files`, '--paginate'], {
+    json: true,
+    maxBuffer: 32 * 1024 * 1024,
+  });
+}
+
+const PATCH_PRIORITY = [
+  /^Cross\.Identity\//,
+  /^Sample\.Api\//,
+  /^\.github\/workflows\//,
+  /\.cs$/,
+];
+
+function patchPriority(filename) {
+  const idx = PATCH_PRIORITY.findIndex((re) => re.test(filename));
+  return idx === -1 ? PATCH_PRIORITY.length : idx;
+}
+
+function buildDiffFromFilePatches(files, maxChars = MAX_DIFF_CHARS) {
+  const sorted = [...files].sort(
+    (a, b) => patchPriority(a.filename) - patchPriority(b.filename)
+  );
+  const parts = [];
+  let used = 0;
+
+  for (const file of sorted) {
+    if (!file.patch) {
+      continue;
+    }
+
+    const chunk = `diff --git a/${file.filename} b/${file.filename}\n${file.patch}\n`;
+    if (used + chunk.length > maxChars) {
+      break;
+    }
+
+    parts.push(chunk);
+    used += chunk.length;
+  }
+
+  const header =
+    `(GitHub \`gh pr diff\` unavailable — PR exceeds diff file limit; ` +
+    `${files.length} files total, ${parts.length} patch excerpt(s) below)\n\n`;
+
+  return header + parts.join('\n');
+}
+
+function mapApiFileStatus(status) {
+  switch (status) {
+    case 'added':
+      return 'ADDED';
+    case 'removed':
+      return 'DELETED';
+    case 'renamed':
+      return 'RENAMED';
+    default:
+      return 'MODIFIED';
+  }
+}
+
+function normalizePrFiles(files) {
+  return files.map((f) => ({
+    path: f.path ?? f.filename,
+    additions: f.additions,
+    deletions: f.deletions,
+    changeType: f.changeType ?? mapApiFileStatus(f.status),
+  }));
+}
+
+function formatFileList(files) {
+  return files
+    .map((f) => {
+      const stats =
+        f.additions != null ? ` (+${f.additions}/-${f.deletions ?? 0})` : '';
+      const kind = f.changeType ? ` [${f.changeType}]` : '';
+      return `${f.path}${kind}${stats}`;
+    })
+    .join('\n');
+}
+
+function fetchPrDiff(repo, prNumber, pr) {
+  const diffResult = tryGh(['pr', 'diff', String(prNumber)]);
+
+  if (diffResult.ok) {
+    let diff = diffResult.data;
+    if (diff.length > MAX_DIFF_CHARS) {
+      diff = `${diff.slice(0, MAX_DIFF_CHARS)}\n\n…(diff truncated for triage)`;
+    }
+
+    return { diff, files: normalizePrFiles(pr.files ?? []) };
+  }
+
+  if (!isPrDiffTooLarge(diffResult)) {
+    throw new Error(
+      `gh pr diff failed: ${diffResult.stderr || diffResult.message}`
+    );
+  }
+
+  console.warn(
+    'PR diff too large for gh pr diff — using per-file patches from GitHub API'
+  );
+
+  const apiFiles = fetchAllPrFiles(repo, prNumber);
+  const files = normalizePrFiles(apiFiles);
+  let diff = buildDiffFromFilePatches(apiFiles);
+
+  if (!apiFiles.some((f) => f.patch)) {
+    diff =
+      `(Full diff unavailable: PR exceeds GitHub diff limit (${apiFiles.length} files). ` +
+      `Triage from PR metadata and changed-file paths only.)`;
+  } else if (diff.length > MAX_DIFF_CHARS) {
+    diff = `${diff.slice(0, MAX_DIFF_CHARS)}\n\n…(patch excerpts truncated for triage)`;
+  }
+
+  return { diff, files };
+}
+
+function buildPrompt(pr, diff, files) {
   const checklist = existsSync(CHECKLIST) ? readFileSync(CHECKLIST, 'utf8') : '';
-  const files = (pr.files || []).map((f) => f.path).join('\n');
+  const fileList = formatFileList(files);
 
   return `You triage pull request #${pr.number} for Cross.Identity (NuGet identity/auth library: JWT, OAuth, process engine).
 
@@ -54,8 +188,8 @@ function buildPrompt(pr, diff) {
 ## Body
 ${pr.body || '(empty)'}
 
-## Changed files
-${files}
+## Changed files (${files.length})
+${fileList}
 
 ## Diff (may be truncated)
 ${diff}
@@ -159,16 +293,12 @@ async function main() {
     return;
   }
 
-  let diff = gh(['pr', 'diff', String(prNumber)]);
-  const maxDiff = 48_000;
-  if (diff.length > maxDiff) {
-    diff = `${diff.slice(0, maxDiff)}\n\n…(diff truncated for triage)`;
-  }
+  const { diff, files } = fetchPrDiff(repo, prNumber, pr);
 
   console.log(`Running agent triage for PR #${prNumber}...`);
 
   try {
-    const result = await Agent.prompt(buildPrompt(pr, diff), {
+    const result = await Agent.prompt(buildPrompt(pr, diff, files), {
       apiKey,
       model: { id: 'auto' },
       local: createLocalAgentOptions(ROOT),
