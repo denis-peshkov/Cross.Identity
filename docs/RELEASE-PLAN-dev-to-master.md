@@ -326,7 +326,7 @@ dotnet run --project Sample.Api
 
 | # | Проверка | Статус |
 |---|----------|--------|
-| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ❌ NU1605: `Sample.Api` → `Microsoft.Extensions.Http` 8.0.0 vs 8.0.1 |
+| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ✅ `Sample.Api`: `Microsoft.Extensions.Http` 8.0.1 |
 | CI2 | SonarCloud quality gate wait на PR | ⬜ |
 | CI3 | `triage.yml` — automated PR triage | ✅ последний run ok |
 | CI4 | GitVersion: `dev` теперь **не** release branch | 🟨 конфиг изменён; поведение при merge не проверено |
@@ -397,18 +397,18 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 Выполнять по порядку; следующий шаг — после закрытия предыдущего (или явного решения «пропустить» с записью в PR).
 
 - ✅ **1. P0-блокеры** — `license.ResetPassword.json`, `License_ResetPassword_FlowTests`, `License_ExternalOAuth_FlowTests`
-- 🟨 **2. Тесты** — `dotnet test` 292/292 ✅ локально; coverage (opencover) ⬜; CI restore ❌
+- 🟨 **2. Тесты** — `dotnet test` 300/300 ✅ локально; coverage (opencover) ⬜
 - 🟨 **3. Документация и пакет** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
 - ⬜ **4. БД** — EF migration (или SQL): `AbsoluteExpiresAt`, seed `Providers`, план rollback
 - ⬜ **5. E2E Sample.Api** — все 10 операций `license/*` через Swagger/POST
 - 🟨 **6. OAuth** — integration flow-тесты ✅ (mocked Google); реальный Google E2E ⬜
-- ❌ **7. CI** — `dotnet.yml` падает на restore (`Sample.Api` NU1605); triage ✅
+- 🟨 **7. CI** — NU1605 в `Sample.Api` исправлен локально; прогнать `dotnet.yml` на PR
 - 🟨 **8. Breaking changes** — описаны в плане; migration guide + согласование с потребителями ⬜
 - ⬜ **9. Релиз** — merge в `master`, tag, NuGet publish
 
 ### Минимальный «go/no-go» чеклист
 
-- ✅ Все 292 теста green (локально)
+- ✅ Все 300 тестов green (локально)
 - ✅ P0 исправлены (`ResetPassword` JSON + flow-тесты, External OAuth flow-тесты)
 - ⬜ 10 flow operations проверены через Sample.Api
 - 🟨 OAuth initiate+callback (integration ✅ mocked; ручной Google E2E ⬜)
@@ -417,4 +417,4 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 - ⬜ LicenseKey настроен (или осознанно soft-fail)
 - 🟨 Breaking changes — в плане; `docs/MIGRATION.md` ⬜
 - ✅ `config.nuspec` синхронизирован
-- ❌ CI green на PR (`NU1605` в `Sample.Api`)
+- 🟨 CI green на PR (NU1605 исправлен, нужен прогон workflow)
