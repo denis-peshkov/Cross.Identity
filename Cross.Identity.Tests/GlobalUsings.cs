@@ -1,4 +1,4 @@
-// Global using directives
+﻿// Global using directives
 
 global using System;
 global using System.Collections.Generic;
@@ -46,6 +46,9 @@ global using Cross.Identity.ProcessEngine.Factories;
 global using Cross.Identity.ProcessEngine.Steps;
 global using Cross.Identity.Services;
 global using Cross.Identity.Services.Crypto;
+global using Cross.Identity.Services.ExternalOAuth;
+global using Microsoft.Extensions.Caching.Memory;
+global using System.Net.Http.Headers;
 global using Cross.Identity.Tests.Common;
 global using Cross.Identity.Tests.Core;
 global using Cross.Messaging.Email.Options;
