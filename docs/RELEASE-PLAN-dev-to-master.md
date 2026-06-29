@@ -8,7 +8,7 @@
 > **Источники:** `dotnet test`, `git diff master...dev`, `gh run list` (проверено 2026-06-29)  
 > **Поддержка:** при изменении любого чеклиста или migration-пунктов пересчитать сводку: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Сводка чеклистов:** **100** пунктов — ✅ **55** (55%) · 🟨 **23** (23%) · ⬜ **22** (22%) · ❌ **0** (0%)
+**Сводка чеклистов:** **100** пунктов — ✅ **56** (56%) · 🟨 **22** (22%) · ⬜ **22** (22%) · ❌ **0** (0%)
 
 ---
 
@@ -16,10 +16,10 @@
 
 | Метрика | Значение |
 |---------|----------|
-| Коммитов | 110 |
-| Файлов | 299 |
-| Строк | +8 626 / −3 733 |
-| Тестов (`dotnet test`) | 292 total · 292 passed · 0 failed |
+| Коммитов | 114 |
+| Файлов | 306 |
+| Строк | +9 285 / −3 858 |
+| Тестов (`dotnet test`) | 300 total · 300 passed · 0 failed |
 
 | Область | Файлов | Роль в релизе |
 |---------|--------|---------------|
@@ -116,7 +116,7 @@
 
 ### B. External OAuth Login
 
-**Автотесты:** `ExternalLoginServiceTests` (~717 строк), step/factory unit-тесты. **Нет integration flow-тестов** для `license.ExternalLogin` / `ExternalLoginCallback`.
+**Автотесты:** `ExternalLoginServiceTests`, `License_ExternalOAuth_FlowTests`, step/factory unit-тесты.
 
 #### B1. Конфигурация (обязательно перед любым ручным тестом)
 
@@ -174,7 +174,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | C7 | `ExpiredRefreshTokenCleanupHostedService` удаляет просроченные | Unit | ✅ |
 | C8 | Интервал очистки `Authentication:TokenCleanupInterval` (default 1h) | Manual | ⬜ |
 | C9 | `license.RefreshToken` flow end-to-end | Integration | ✅ `License_RefreshToken_FlowTests` |
-| C10 | Reuse старого refresh после ротации → отказ | Unit | 🟨 `InvalidateRefreshTokenAsync` + invalid step; полный reuse-chain ⬜ |
+| C10 | Reuse старого refresh после ротации → отказ | Integration | 🟨 flow выдаёт новую пару (`License_RefreshToken_FlowTests`); повторный вызов со старым токеном ⬜ |
 
 **Конфиг для проверки:**
 
@@ -253,7 +253,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 
 | # | Проверка | Статус |
 |---|----------|--------|
-| H1 | `GetUserId` flow возвращает `{ user_id }` | 🟨 unit `GetUser_StepTests`; flow integration ⬜ |
+| H1 | `GetUserId` flow возвращает `{ user_id }` | ✅ `License_LicenseCheck_FlowTests` |
 | H2 | `FlowExecutor` — `collectResult` всегда объект | ✅ flow-тесты возвращают `Dictionary<string, object?>` |
 | H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | ✅ `UserServiceTests` |
 | H4 | Удаление `NormalizedEmail` — поиск по email case-insensitive | 🟨 `ToLowerInvariant` в `UserService`; explicit lookup-тест ⬜ |
@@ -291,7 +291,7 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 | ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
 | game/shop/edoctors flows | ⬜ | 🟨 | `edoctors.Register` only |
 
-**Текущий статус:** 292/292 passed.
+**Текущий статус:** 300/300 passed.
 
 ---
 
@@ -327,7 +327,7 @@ dotnet run --project Sample.Api
 
 | # | Проверка | Статус |
 |---|----------|--------|
-| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ✅ `Sample.Api`: `Microsoft.Extensions.Http` 8.0.1 |
+| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ✅ restore/build/test; последние runs на `dev` — ok |
 | CI2 | SonarCloud quality gate wait на PR | ✅ PR [#5](https://github.com/denis-peshkov/Cross.Identity/pull/5#issuecomment-4834799217): QG **passed**, 88.7% coverage on new code; [`dotnet.yml`](.github/workflows/dotnet.yml) — `sonar.qualitygate.wait=true` на `pull_request` |
 | CI3 | `triage.yml` — automated PR triage | ✅ последний run ok |
 | CI4 | GitVersion: `dev` теперь **не** release branch | 🟨 конфиг изменён; поведение при merge не проверено |
@@ -403,7 +403,7 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 - ⬜ **4. БД** — EF migration (или SQL): `AbsoluteExpiresAt`, seed `Providers`, план rollback
 - ⬜ **5. E2E Sample.Api** — все 10 операций `license/*` через Swagger/POST
 - 🟨 **6. OAuth** — integration flow-тесты ✅ (mocked Google); реальный Google E2E ⬜
-- 🟨 **7. CI** — NU1605 в `Sample.Api` исправлен локально; прогнать `dotnet.yml` на PR
+- 🟨 **7. CI** — `dotnet.yml` ✅ на `dev`; SonarCloud QG ✅ на PR #5; triage ✅
 - 🟨 **8. Breaking changes** — описаны в плане; migration guide + согласование с потребителями ⬜
 - ⬜ **9. Релиз** — merge в `master`, tag, NuGet publish
 
@@ -418,4 +418,4 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 - ⬜ LicenseKey настроен (или осознанно soft-fail)
 - 🟨 Breaking changes — в плане; `docs/MIGRATION.md` ⬜
 - ✅ `config.nuspec` синхронизирован
-- 🟨 CI green на PR (NU1605 исправлен, нужен прогон workflow)
+- 🟨 CI green на PR (`dotnet.yml` ✅ на `dev`; повторить после финального push)
