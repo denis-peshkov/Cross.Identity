@@ -31,6 +31,7 @@ global using Cross.Identity.Enums;
 global using Cross.Identity.Extensions;
 global using Cross.Identity.Helpers;
 global using Cross.Identity.Infrastructure;
+global using Cross.Identity.Licensing;
 global using Cross.Identity.Options;
 global using Cross.Identity.ProcessEngine.Core;
 global using Cross.Identity.ProcessEngine.Core.Enums;

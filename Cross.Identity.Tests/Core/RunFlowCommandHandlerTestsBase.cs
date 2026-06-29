@@ -40,6 +40,11 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new CompleteExternalLoginStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
+        var identityConfiguration = new IdentityServiceConfiguration();
+        var loggerFactory = new LoggerFactory();
+        var licenseAccessor = new LicenseAccessor(identityConfiguration, loggerFactory);
+        var licenseValidator = new LicenseValidator(loggerFactory);
+        var licenseProductInfo = new LicenseProductInfo();
 
         // Настраиваем правильную цепочку зависимостей
         _serviceScopeFactoryMock
@@ -76,7 +81,16 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(_requestInput);
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(ILoggerFactory)))
-            .Returns(new LoggerFactory());
+            .Returns(loggerFactory);
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(LicenseAccessor)))
+            .Returns(licenseAccessor);
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(LicenseValidator)))
+            .Returns(licenseValidator);
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(IEnumerable<ILicenseProductInfo>)))
+            .Returns(new ILicenseProductInfo[] { licenseProductInfo });
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IConfiguration)))
             .Returns(new ConfigurationBuilder()
@@ -164,6 +178,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
     [TearDown]
     public override void TearDown()
     {
+        LicenseCheckExtensions.ResetLicenseCheckForTests();
         (_processDefinitionProvider as IDisposable)?.Dispose();
 
         base.TearDown();

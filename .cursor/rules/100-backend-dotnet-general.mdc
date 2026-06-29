@@ -1,5 +1,11 @@
 # Общие правила .NET бэкенда
 
+## Global usings
+
+- **Только `GlobalUsings.cs`** — в `.cs` файлах не использовать file-scoped `using`; все импорты — в `GlobalUsings.cs` проекта.
+- **`ImplicitUsings`** — `disable` в `.csproj`; SDK implicit usings не включать.
+- **Новый namespace** — при добавлении типов из нового namespace дополнять `GlobalUsings.cs`, а не локальные `using` в файлах.
+
 ## Архитектура
 
 - **Модульная структура** - код организован по модулям в `Web.Api/Modules/`

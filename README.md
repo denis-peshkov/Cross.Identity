@@ -23,69 +23,38 @@
 - **Потоки** — регистрация, вход по паролю/коду, forgot password, token, refresh token, получение пользователя, запрос и проверка кодов (email/SMS).
 - **JWT** — выпуск и валидация access/refresh токенов, настраиваемые claims и время жизни.
 - **Безопасность** — хеширование паролей (Argon2), одноразовые коды, нормализация телефонов.
-- **Каналы** — email и SMS (отправка кодов через Cross.Notification).
+- **Каналы** — email и SMS (отправка кодов через Cross.Messaging).
 - **Формы** — декларативное описание полей и правил валидации (equal, requiredIf, atLeastOneRequired и др.).
+- **Лицензирование (JWT)** — проверка ключа Peshkov при первом вызове flow; без ключа в dev/test работа продолжается с предупреждением в логах.
 
 ## Требования
 
 - .NET 8.0
 
-## Структура решения
+## Структура репозитория
 
 ```
 Cross.Identity.slnx
-├── Cross.Identity               # Основная библиотека (flow, JWT, сущности, сервисы)
-├── Cross.Identity.Tests     # Тесты (NUnit, Moq, FluentAssertions)
-├── Cross.Notification           # Отправка уведомлений: Email (MailKit), SMS (net7.0/net8.0)
-├── Cross.PepperVault            # Хранение секретов (pepper и др.)
-├── Cross.PepperVault.*          # Провайдеры: Env, FileJson, AwsSecretsJson, AzureKv*, GcpSecretManagerJson, HcvKv2Json
-├── _nuget/                      # config.nuspec для публикации пакета Cross.Identity
-├── .github/workflows/           # CI (dotnet.yml)
-├── RefreshToken.md              # Рекомендации по срокам жизни и ротации refresh-токенов
+├── Cross.Identity/                  # NuGet-библиотека
+│   ├── FlowExecutor.cs, IFlowExecutor.cs
+│   ├── Entities/, Infrastructure/     # EF Core (пользователи, токены, верификации, external login)
+│   ├── Services/                    # User, Code, JwtToken; Crypto/; ExternalOAuth/
+│   ├── Licensing/                   # JWT-лицензия Peshkov (Accessor, Validator, ProductInfo)
+│   ├── Options/                     # AuthenticationOptions, IdentityServiceConfiguration
+│   ├── Extensions/, Helpers/, Dtos/, Enums/
+│   ├── ProcessEngine/
+│   │   ├── Core/                    # Bag, StepRegistry, ProcessLoader, Forms/валидация
+│   │   ├── Steps/, Factories/       # Шаги и их DI-фабрики
+│   │   └── Definitions/           # Flows/*.json, Templates/, Providers/
+│   ├── FLOWS.md                     # Описание flow и шагов
+│   └── config.nuspec
+├── Cross.Identity.Tests/            # NUnit (unit + integration)
+├── Sample.Api/                      # Пример минимального API (ASP.NET Core)
+├── docs/triage/                     # Отчёты automated triage
+├── .github/workflows/               # dotnet.yml, triage.yml
+├── RefreshToken.md
 ├── LICENSE.md
 └── README.md
-```
-
-## Структура проекта Cross.Identity
-
-```
-Cross.Identity/
-├── FlowExecutor.cs, IFlowExecutor.cs   # Точка входа: выполнение flow по (flow, operation) и входному словарю
-├── IdentityConstants.cs, ClaimConstants.cs
-├── Entities/                           # EF Core-сущности и конфигурации
-│   ├── UserAccountEntity, AccessTokenEntity, RefreshTokenEntity
-│   ├── EmailVerificationEntity, PhoneVerificationEntity
-│   ├── ProviderEntity, UserExternalLoginEntity
-│   └── *Configuration
-├── Infrastructure/
-│   └── IdentityContext.cs               # DbContext
-├── Services/                            # Доменные сервисы
-│   ├── UserService, IUserService
-│   ├── CodeService, ICodeService
-│   ├── JwtTokenService, IJwtTokenService
-│   └── Crypto/                          # PasswordHasher (Argon2), PhoneNormalizer
-├── Dtos/                                # FlowResult, ResolveBy, NotificationMessage
-├── Options/                             # AuthenticationOptions
-├── Helpers/                             # CodeGeneratorHelper, JwtKeys
-├── Extensions/                          # ServiceCollectionExtensions (AddCrossIdentity, провайдеры дефиниций)
-└── ProcessEngine/
-    ├── Core/                            # Ядро движка
-    │   ├── Bag, BagKey, BagMapExtensions
-    │   ├── IStep, IStepFactory, StepRegistry, StepResult
-    │   ├── ProcessLoader, ProcessBuilder, ProcessExecutor
-    │   ├── IRequestInput, RequestInput
-    │   ├── Enums/                       # ChannelEnum, FlowOperationEnum, StepStatusEnum
-    │   └── Forms/                       # Схемы форм и валидация
-    │       ├── FormSchema, FieldDescriptor, FieldTypeEnum
-    │       ├── ValidatorFactories/      # UnifiedFormValidatorFactory, правила (Equal, RequiredIf, AtLeastOneRequired, …)
-    │       └── Providers/               # IFormSchemaProvider, InMemoryFormSchemaProvider
-    ├── Steps/                           # Реализации шагов (CollectForm, CreateUser, SendCode, Token, …)
-    ├── Factories/                       # Фабрики шагов (CollectFormStepFactory, TokenStepFactory, …)
-    └── Definitions/
-        ├── Flows/                       # JSON-файлы сценариев (license.Register, game.Token, shop.auth, …)
-        ├── Templates/                   # Шаблоны писем (register.*.html/txt, verify.*, reset.*)
-        ├── Providers/                   # IProcessDefinitionProvider, Composite, FileSystem, EmbeddedResource
-        └── Helpers/                     # JsonHelpers
 ```
 
 ## Использование
@@ -95,8 +64,29 @@ Cross.Identity/
 ```csharp
 services.AddCrossIdentity(configuration);
 // Регистрирует: IFlowExecutor, StepRegistry, все IStepFactory, UserService, CodeService, JwtTokenService,
-// провайдер дефиниций (файлы + embedded), формы и т.д.
+// LicenseAccessor, LicenseValidator, ILicenseProductInfo, провайдер дефиниций (файлы + embedded), формы и т.д.
 ```
+
+Ключ лицензии (опционально) — секция `CrossIdentity` в конфигурации или переменная окружения `CrossIdentity__LicenseKey`:
+
+```json
+{
+  "CrossIdentity": {
+    "LicenseKey": "<license key here>"
+  }
+}
+```
+
+Проверка выполняется автоматически при **первом** вызове `IFlowExecutor.ExecuteAsync` — дополнительный код не нужен. Ключи: [peshkov.biz](https://peshkov.biz).
+
+Поведение:
+
+| Сценарий | Результат |
+|----------|-----------|
+| Ключ не задан | `LogCritical`, flow выполняется (dev/test) |
+| Невалидный JWT | `LogError`, flow выполняется |
+| Просроченный / неверный тип продукта | `LogError` + `LogCritical`, flow выполняется |
+| Валидный ключ | `LogInformation` с edition и датой истечения |
 
 2. **Выполнение сценария** — в контроллере или минимальном API передайте тело запроса как словарь и вызовите:
 
@@ -109,20 +99,20 @@ var result = await _flowExecutor.ExecuteAsync(
 // result.Data — объект с полями, заданными шагом collectResult (например access_token, refresh_token).
 ```
 
-3. **Дефиниции потоков** — JSON в `ProcessEngine/Definitions/Flows/` (и при необходимости из файловой системы). Имена файлов: `{flow}.{Operation}.json` (например `license.Token.json`, `game.Register.json`). Подробное описание всех flow и шагов — в [ProcessEngine/Definitions/Flows/README.md](Cross.Identity/ProcessEngine/Definitions/Flows/README.md).
+3. **Дефиниции потоков** — JSON в `ProcessEngine/Definitions/Flows/` (и при необходимости из файловой системы). Имена файлов: `{flow}.{Operation}.json` (например `license.Token.json`, `game.Register.json`). Подробное описание flow и шагов — в [FLOWS.md](Cross.Identity/FLOWS.md).
 
 ## Зависимости (NuGet)
 
 - Cross.ErrorHandlers
 - Cross.Headers
+- Cross.Messaging
+- Cross.PepperVault
 - Konscious.Security.Cryptography.Argon2
-- Magick.NET.Core
-- Microsoft.EntityFrameworkCore
-- Microsoft.EntityFrameworkCore.Relational
+- Microsoft.EntityFrameworkCore (+ InMemory, Relational)
+- Microsoft.Extensions.Caching.Memory
 - Microsoft.Extensions.Http
+- Microsoft.IdentityModel.JsonWebTokens
 - PhoneNumbersCore
-- System.IdentityModel.Tokens.Jwt
-- ProjectReference: Cross.Notification, Cross.PepperVault
 
 ## Сборка и тесты
 

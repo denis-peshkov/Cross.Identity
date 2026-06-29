@@ -16,6 +16,9 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <releaseNotes><![CDATA[
 Cross.Identity: identity and authentication flows, JWT, process engine.
+Licensing
+- JWT license validation (Peshkov software) on first IFlowExecutor.ExecuteAsync call.
+- Configure via CrossIdentity:LicenseKey in appsettings or CrossIdentity__LicenseKey environment variable.
 ]]></releaseNotes>
     <dependencies>
       <dependency id="Cross.ErrorHandlers" version="7.3.0" />

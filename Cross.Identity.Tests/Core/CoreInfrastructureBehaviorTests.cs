@@ -260,6 +260,8 @@ public sealed class CoreInfrastructureBehaviorTests
             services.Any(x => x.ServiceType == typeof(CompositeProcessDefinitionProvider)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(IJwtTokenService)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(RsaSecurityKey)).Should().BeTrue();
+            services.Any(x => x.ServiceType == typeof(LicenseAccessor)).Should().BeTrue();
+            services.Any(x => x.ServiceType == typeof(ILicenseProductInfo)).Should().BeTrue();
         }
         finally
         {

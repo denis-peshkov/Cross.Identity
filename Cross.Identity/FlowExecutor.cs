@@ -29,6 +29,8 @@ internal class FlowExecutor : IFlowExecutor
     /// <inheritdoc/>
     public async Task<FlowResult> ExecuteAsync(Dictionary<string, object?> input, string flow, FlowOperationEnum operation, CancellationToken cancellationToken)
     {
+        _sp.CheckLicense();
+
         // 1) Передаём входной payload в движок (шаг collectForm его считает)
         _requestInput.Set(input);
 

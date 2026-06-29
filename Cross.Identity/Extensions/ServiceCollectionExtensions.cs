@@ -1,5 +1,3 @@
-using Cross.Identity.Services.ExternalOAuth;
-
 namespace Cross.Identity.Extensions;
 
 /// <summary>
@@ -28,6 +26,13 @@ public static class ServiceCollectionExtensions
     /// <returns>Текущую коллекцию сервисов для fluent-цепочки.</returns>
     public static IServiceCollection AddCrossIdentity(this IServiceCollection services, IConfiguration configuration)
     {
+        var identityConfiguration = new IdentityServiceConfiguration();
+        configuration.GetSection(IdentityServiceConfiguration.SectionName).Bind(identityConfiguration);
+        services.AddSingleton(identityConfiguration);
+        services.AddSingleton<LicenseAccessor>();
+        services.AddSingleton<LicenseValidator>();
+        services.AddSingleton<ILicenseProductInfo, LicenseProductInfo>();
+
         services
             .AddJwtTokenAuth(configuration)
             .AddExternalLogin(configuration)

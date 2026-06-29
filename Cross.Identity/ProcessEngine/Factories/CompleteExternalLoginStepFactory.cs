@@ -1,5 +1,3 @@
-using Cross.Identity.Services.ExternalOAuth;
-
 namespace Cross.Identity.ProcessEngine.Factories;
 
 internal sealed class CompleteExternalLoginStepFactory : IStepFactory
