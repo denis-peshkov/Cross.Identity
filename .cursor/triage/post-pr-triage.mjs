@@ -115,6 +115,10 @@ function patchComment(repo, commentId, body) {
 }
 
 function upsertPrComment(repo, issueNumber, body) {
+  if (!body?.trim()) {
+    throw new Error('Generated comment body is empty');
+  }
+
   const existingId = findExistingCommentId(repo, issueNumber);
 
   if (existingId) {
@@ -123,11 +127,16 @@ function upsertPrComment(repo, issueNumber, body) {
     return;
   }
 
-  execFileSync(GH, ['pr', 'comment', String(issueNumber), '--body-file', '-'], {
-    cwd: ROOT,
-    input: body,
-    stdio: ['pipe', 'inherit', 'inherit'],
-  });
+  const tmp = join(tmpdir(), `ci-triage-pr-comment-${issueNumber}.md`);
+  writeFileSync(tmp, body, 'utf8');
+  try {
+    execFileSync(GH, ['pr', 'comment', String(issueNumber), '--body-file', tmp], {
+      cwd: ROOT,
+      stdio: 'inherit',
+    });
+  } finally {
+    unlinkSync(tmp);
+  }
   console.log(`Posted triage comment on PR #${issueNumber}`);
 }
 
