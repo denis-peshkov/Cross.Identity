@@ -66,7 +66,7 @@ internal sealed class LicenseAccessor
 
         var parms = new TokenValidationParameters
         {
-            ValidIssuer = "https://peshkov.biz",
+            ValidIssuer = "https://peshkov.biz/identity",
             ValidAudience = "Peshkov software",
             IssuerSigningKey = key,
             ValidateLifetime = false,
