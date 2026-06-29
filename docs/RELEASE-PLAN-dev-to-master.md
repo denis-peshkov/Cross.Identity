@@ -172,7 +172,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | C6 | `RefreshTokenAbsoluteExpires` в конфиге влияет на новые цепочки | Unit | ✅ `GenerateRefreshTokenAsync_ShouldUseConfiguredRollingLifetime` |
 | C7 | `ExpiredRefreshTokenCleanupHostedService` удаляет просроченные | Unit | ✅ |
 | C8 | Интервал очистки `Authentication:TokenCleanupInterval` (default 1h) | Manual | ⬜ |
-| C9 | `license.RefreshToken` flow end-to-end | Integration | 🟨 `RefreshToken_StepTests` (unit); dedicated flow test ⬜ |
+| C9 | `license.RefreshToken` flow end-to-end | Integration | ✅ `License_RefreshToken_FlowTests` |
 | C10 | Reuse старого refresh после ротации → отказ | Unit | 🟨 `InvalidateRefreshTokenAsync` + invalid step; полный reuse-chain ⬜ |
 
 **Конфиг для проверки:**
@@ -199,6 +199,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | D3 | Просроченный ключ → `LogError` + `LogCritical` | Unit | ✅ |
 | D4 | Валидный ключ → `LogInformation` с edition/expiry | Unit | ✅ |
 | D5 | Проверка только при **первом** вызове (singleton flag) | Unit | ✅ |
+| D5b | `CheckLicense` при первом `ExecuteAsync`, flow не блокируется | Integration | ✅ `License_LicenseCheck_FlowTests` |
 | D6 | `CrossIdentity:LicenseKey` из appsettings | Manual | 🟨 `LicenseAccessor` + `Sample.Api` appsettings; E2E ⬜ |
 | D7 | `CrossIdentity__LicenseKey` из env | Manual | ⬜ |
 | D8 | Неверный `ProductType` в ключе | Unit | ✅ |
@@ -282,11 +283,11 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 |---------|------|------------------|--------|
 | Registration | ✅ | ✅ | — |
 | Token / TokenByCode | ✅ | ✅ | — |
-| RefreshToken | ✅ | 🟨 | step unit ✅; dedicated flow test ⬜ |
+| RefreshToken | ✅ | ✅ | `License_RefreshToken_FlowTests` |
 | External OAuth | ✅ (service) | ✅ | `License_ExternalOAuth_FlowTests` |
 | ResetPassword | ✅ (step) | ✅ | `License_ResetPassword_FlowTests` |
-| Licensing | ✅ | 🟨 | unit only; нет license-check flow test |
-| ForgotPassword | ⬜ step | ✅ | `License_ForgotPassword_FlowTests` |
+| Licensing | ✅ | ✅ | `License_LicenseCheck_FlowTests` |
+| ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
 | game/shop/edoctors flows | ⬜ | 🟨 | `edoctors.Register` only |
 
 **Текущий статус:** 292/292 passed.
