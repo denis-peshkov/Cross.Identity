@@ -1,0 +1,128 @@
+﻿-- BEGIN TRANSACTION
+--
+--     DECLARE @AspNetUsers AS TABLE
+--     (
+--         [Id]                   NVARCHAR(36)      NOT NULL,
+--         [FirstName]            NVARCHAR(100)     NULL,
+--         [MiddleName]           NVARCHAR(250)     NULL,
+--         [LastName]             NVARCHAR(250)     NULL,
+--         [Gender]               NVARCHAR(7)       NULL,
+--         [BirthDate]            DATETIME2(7)      NULL,
+--         [LastLoginDate]        DATETIME2(7)      NULL,
+--         [IsOnline]             BIT               NOT NULL,
+--         [NewsSubscription]     BIT               NOT NULL,
+--         [UserName]             NVARCHAR(256)     NULL,
+--         [NormalizedUserName]   NVARCHAR(256)     NULL,
+--         [Email]                NVARCHAR(256)     NULL,
+--         [NormalizedEmail]      NVARCHAR(256)     NULL,
+--         [EmailConfirmed]       BIT               NOT NULL,
+--         [PasswordHash]         NVARCHAR(MAX)     NULL,
+--         [SecurityStamp]        NVARCHAR(MAX)     NULL,
+--         [ConcurrencyStamp]     NVARCHAR(MAX)     NULL,
+--         [PhoneNumber]          NVARCHAR(MAX)     NULL,
+--         [PhoneNumberConfirmed] BIT               NOT NULL,
+--         [TwoFactorEnabled]     BIT               NOT NULL,
+--         [LockoutEnd]           DATETIMEOFFSET(7) NULL,
+--         [LockoutEnabled]       BIT               NOT NULL,
+--         [AccessFailedCount]    INT               NOT NULL,
+--         [AuthNoSmsProvider]    BIT               NOT NULL,
+--         [DeletedDate]          DATETIME2(7)      NULL,
+--         [IsDeleted]            BIT               NOT NULL
+--     );
+--
+--     INSERT INTO @AspNetUsers (
+--         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate],
+--         [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
+--     )
+--     SELECT DISTINCT * FROM (VALUES
+-- -- BEGIN OF AREA FOR EDIT >>>
+--
+--          (N'72e3700e-4a35-47f2-a575-383c2c8aa8e3',1,0,1,1,0,0,0,0,0,N'DemoName',N'DemoMiddleName',N'DemoLastName',N'Male',N'1980-01-21 00:00:00.0000000',N'2023-07-20 13:23:54.2618265',N'demouser@test.com',N'DEMOUSER@TEST.COM',N'demouser@test.com',N'DEMOUSER@TEST.COM',N'AQAAAAIAAYagAAAAEK/wws1J/yb3pnD1oLweLhlcUg7XaYiI06sdy0GLinikhmLNHomRB8QjnapJ8ybP0w==',N'AZYAHJ2SPUKEYV25KDNEYYCIMNVT2I5Z',N'e40c0d00-1bde-4696-a132-1dfcb59c0650',N'+380931111111',NULL,NULL)
+--         ,(N'd6750977-9454-45e7-96b3-372d879650e9',1,0,1,1,0,0,0,1,0,N'AppleStoreUser',N'AppleStoreUserName',N'AppleStoreUserLastName',NULL,NULL,NULL,N'applestoreuser@test.com',N'APPLESTOREUSER@TEST.COM',N'applestoreuser@test.com',N'APPLESTOREUSER@TEST.COM',NULL,N'97f11f56-77d7-452a-bb35-19df83a13d7d',N'149ffe6b-ab69-4729-8896-140565e8e065',N'+380932222222',NULL,NULL)
+--         ,(N'e1768dd5-2349-487a-99f6-925b58afdc5d',1,0,1,1,0,0,0,0,0,N'AdminName',N'AdminMiddleName',N'AdminLastName',N'Male',N'1980-01-21 00:00:00.0000000',N'2023-07-20 13:23:54.2618265',N'admin@test.com',N'ADMIN@TEST.COM',N'admin@test.com',N'ADMIN@TEST.COM',N'AQAAAAIAAYagAAAAEK/wws1J/yb3pnD1oLweLhlcUg7XaYiI06sdy0GLinikhmLNHomRB8QjnapJ8ybP0w==',N'6c891045-fd6b-4abc-b029-f81cd3485bd8',N'cc3c21f0-a3d2-492e-825a-e87e93ec74a4',NULL,NULL,NULL)
+--         ,(N'82d1b360-4b58-445f-9bfc-59584de9df9a',1,0,1,1,0,0,0,0,0,N'SuperAdminName',N'SuperAdminMiddleName',N'SuperAdminLastName',N'Male',N'1980-01-21 00:00:00.0000000',N'2023-07-20 13:23:54.2618265',N'superadmin@test.com',N'SUPERADMIN@TEST.COM',N'superadmin@test.com',N'SUPERADMIN@TEST.COM',N'AQAAAAIAAYagAAAAEK/wws1J/yb3pnD1oLweLhlcUg7XaYiI06sdy0GLinikhmLNHomRB8QjnapJ8ybP0w==',N'14be60e1-e073-4021-bd64-f81e57f66ac7',N'a6218965-328a-4676-a45f-0583e24bd7de',NULL,NULL,NULL)
+--
+-- -- <<< END OF AREA FOR EDIT
+--     ) AS [src] (
+--         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
+--         [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
+--     );
+--
+--     -- upsert data
+--     MERGE [dbo].[AspNetUsers] [target]
+--     USING (SELECT DISTINCT
+--         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
+--         [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
+--     FROM @AspNetUsers) [source]
+--             ON [target].[Id] = [source].[Id]
+--         WHEN MATCHED THEN
+--             UPDATE SET [target].[IsOnline]             = [source].[IsOnline]
+--                      , [target].[NewsSubscription]     = [source].[NewsSubscription]
+--                      , [target].[EmailConfirmed]       = [source].[EmailConfirmed]
+--                      , [target].[PhoneNumberConfirmed] = [source].[PhoneNumberConfirmed]
+--                      , [target].[TwoFactorEnabled]     = [source].[TwoFactorEnabled]
+--                      , [target].[LockoutEnabled]       = [source].[LockoutEnabled]
+--                      , [target].[AccessFailedCount]    = [source].[AccessFailedCount]
+--                      , [target].[AuthNoSmsProvider]    = [source].[AuthNoSmsProvider]
+--                      , [target].[IsDeleted]            = [source].[IsDeleted]
+--                      , [target].[FirstName]            = [source].[FirstName]
+--                      , [target].[MiddleName]           = [source].[MiddleName]
+--                      , [target].[LastName]             = [source].[LastName]
+--                      , [target].[Gender]               = [source].[Gender]
+--                      , [target].[BirthDate]            = [source].[BirthDate]
+--                      , [target].[LastLoginDate]        = [source].[LastLoginDate]
+--                      , [target].[UserName]             = [source].[UserName]
+--                      , [target].[NormalizedUserName]   = [source].[NormalizedUserName]
+--                      , [target].[Email]                = [source].[Email]
+--                      , [target].[NormalizedEmail]      = [source].[NormalizedEmail]
+--                      , [target].[PasswordHash]         = [source].[PasswordHash]
+--                      , [target].[SecurityStamp]        = [source].[SecurityStamp]
+--                      , [target].[ConcurrencyStamp]     = [source].[ConcurrencyStamp]
+--                      , [target].[PhoneNumber]          = [source].[PhoneNumber]
+--                      , [target].[LockoutEnd]           = [source].[LockoutEnd]
+--                      , [target].[DeletedDate]          = [source].[DeletedDate]
+--         WHEN NOT MATCHED BY TARGET THEN
+--             INSERT (
+--                 [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--                 [AuthNoSmsProvider], [IsDeleted], [CreatedAt], [ModifiedAt], [ActivatedAt], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
+--                 [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
+--             )
+--             VALUES (
+--                 [source].[Id],
+--                 [source].[IsOnline],
+--                 [source].[NewsSubscription],
+--                 [source].[EmailConfirmed],
+--                 [source].[PhoneNumberConfirmed],
+--                 [source].[TwoFactorEnabled],
+--                 [source].[LockoutEnabled],
+--                 [source].[AccessFailedCount],
+--                 [source].[AuthNoSmsProvider],
+--                 [source].[IsDeleted],
+--                 SYSDATETIME(),
+--                 SYSDATETIME(),
+--                 SYSDATETIME(),
+--                 [source].[FirstName],
+--                 [source].[MiddleName],
+--                 [source].[LastName],
+--                 [source].[Gender],
+--                 [source].[BirthDate],
+--                 [source].[LastLoginDate],
+--                 [source].[UserName],
+--                 [source].[NormalizedUserName],
+--                 [source].[Email],
+--                 [source].[NormalizedEmail],
+--                 [source].[PasswordHash],
+--                 [source].[SecurityStamp],
+--                 [source].[ConcurrencyStamp],
+--                 [source].[PhoneNumber],
+--                 [source].[LockoutEnd],
+--                 [source].[DeletedDate]
+--             )
+--         WHEN NOT MATCHED BY SOURCE THEN
+--             DELETE;
+--
+-- COMMIT TRANSACTION
+-- GO

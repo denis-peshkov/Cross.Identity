@@ -36,23 +36,24 @@
 
 ```
 Cross.Identity.slnx
-├── Cross.Identity/                  # NuGet-библиотека
+├── Cross.Identity/                     # NuGet-библиотека
 │   ├── FlowExecutor.cs, IFlowExecutor.cs
-│   ├── Entities/, Infrastructure/     # EF Core (пользователи, токены, верификации, external login)
-│   ├── Services/                    # User, Code, JwtToken; Crypto/; ExternalOAuth/
-│   ├── Licensing/                   # JWT-лицензия Peshkov (Accessor, Validator, ProductInfo)
-│   ├── Options/                     # AuthenticationOptions, IdentityServiceConfiguration
+│   ├── Entities/, Infrastructure/      # EF Core (пользователи, токены, верификации, external login)
+│   ├── Services/                       # User, Code, JwtToken; Crypto/; ExternalOAuth/
+│   ├── Licensing/                      # JWT-лицензия Peshkov (Accessor, Validator, ProductInfo)
+│   ├── Options/                        # AuthenticationOptions, IdentityServiceConfiguration
 │   ├── Extensions/, Helpers/, Dtos/, Enums/
 │   ├── ProcessEngine/
-│   │   ├── Core/                    # Bag, StepRegistry, ProcessLoader, Forms/валидация
-│   │   ├── Steps/, Factories/       # Шаги и их DI-фабрики
-│   │   └── Definitions/           # Flows/*.json, Templates/, Providers/
-│   ├── FLOWS.md                     # Описание flow и шагов
+│   │   ├── Core/                       # Bag, StepRegistry, ProcessLoader, Forms/валидация
+│   │   ├── Steps/, Factories/          # Шаги и их DI-фабрики
+│   │   └── Definitions/                # Flows/*.json, Templates/, Providers/
+│   ├── FLOWS.md                        # Описание flow и шагов
 │   └── config.nuspec
-├── Cross.Identity.Tests/            # NUnit (unit + integration)
-├── Sample.Api/                      # Пример минимального API (ASP.NET Core)
-├── .cursor/triage/docs/               # Отчёты automated triage (.data/, ci-report-*.md)
-├── .github/workflows/               # dotnet.yml, triage.yml
+├── Cross.Identity.Tests/               # NUnit (unit + integration)
+├── Sample.Api/                         # Пример минимального API (ASP.NET Core)
+├── .cursor/triage/docs/                # Отчёты automated triage (.data/, ci-report-*.md)
+├── .github/workflows/                  # dotnet.yml, triage.yml
+├── Infrastructure/Scripts/             # Пример DbUp SQL для схемы auth (копия, см. README)
 ├── RefreshToken.md
 ├── LICENSE.md
 └── README.md
@@ -154,6 +155,7 @@ dotnet test --filter "Category=Integration"
 
 ## Дополнительно
 
+- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — пример DbUp SQL для схемы `auth`.
 - [RefreshToken.md](RefreshToken.md) — рекомендации по срокам жизни access/refresh токенов и ротации.
 - [LICENSE.md](LICENSE.md) — лицензия.
 
