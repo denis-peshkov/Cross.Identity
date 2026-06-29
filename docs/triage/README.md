@@ -21,9 +21,11 @@ Skills: `.cursor/skills/{issue-triage,pr-triage,cross-identity-triage}/`
 # Сбор данных (rtk gh если установлен)
 bash .cursor/triage/collect-data.sh
 
-# CI-агент (нужен CURSOR_API_KEY)
-cd .cursor/triage && yarn install && CURSOR_API_KEY=... yarn triage
+# CI-агент (нужен CURSOR_API_KEY, Node 20.19.4)
+cd .cursor/triage && yarn install --ignore-engines && CURSOR_API_KEY=... yarn triage
 ```
+
+На Node 20 SDK использует `JsonlLocalAgentStore` (`cursor-agent-local.mjs`), не `node:sqlite`.
 
 ## CI
 
@@ -31,7 +33,8 @@ Workflow `.github/workflows/triage.yml`:
 
 - **Расписание**: понедельник 06:00 UTC
 - **workflow_dispatch**: ручной запуск
-- **issues/pull_request opened**: сбор данных + audit (без постинга в GitHub)
+- **issues opened**: сбор данных
+- **pull_request** opened/synchronize: AI-комментарий в PR (wshm-style)
 
 ### Secrets
 

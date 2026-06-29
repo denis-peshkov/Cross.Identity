@@ -10,6 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Agent, CursorAgentError } from '@cursor/sdk';
 import { formatPrTriageComment, parseAgentJson } from './format-pr-comment.mjs';
+import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
@@ -161,7 +162,7 @@ async function main() {
     const result = await Agent.prompt(buildPrompt(pr, diff), {
       apiKey,
       model: { id: 'auto' },
-      local: { cwd: ROOT },
+      local: createLocalAgentOptions(ROOT),
     });
 
     if (result.status === 'error' || result.status === 'cancelled') {
