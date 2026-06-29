@@ -1,11 +1,13 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
+/// <summary>
+/// External OAuth: initiate/callback, обмен code на токен провайдера, provisioning пользователя.
+/// OAuth state (см. <see cref="ExternalLoginStatePayload"/>) хранится в таблице
+/// <c>auth.ExternalLoginStates</c> — см. <see cref="InitiateAsync"/>, <see cref="ResolveStateAsync"/>.
+/// </summary>
 internal sealed class ExternalLoginService : IExternalLoginService
 {
-    private const string StateCacheKeyPrefix = "identity:external-login:state:";
-
     private readonly IdentityContext _identityContext;
-    private readonly IMemoryCache _memoryCache;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
@@ -13,14 +15,12 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     public ExternalLoginService(
         IdentityContext identityContext,
-        IMemoryCache memoryCache,
         IHttpClientFactory httpClientFactory,
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;
-        _memoryCache = memoryCache;
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _logger = logger;
@@ -74,6 +74,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             }
         }
 
+        var now = DateTime.UtcNow;
         var payload = new ExternalOAuth.ExternalLoginStatePayload
         {
             Nonce = Guid.NewGuid().ToString("N"),
@@ -82,10 +83,16 @@ internal sealed class ExternalLoginService : IExternalLoginService
             LinkUserId = linkUserId,
         };
 
-        _memoryCache.Set(
-            StateCacheKeyPrefix + payload.Nonce,
-            payload,
-            _options.StateLifetime);
+        await _identityContext.ExternalLoginStates.AddAsync(new ExternalLoginStateEntity
+        {
+            Nonce = payload.Nonce,
+            Provider = payload.Provider,
+            ReturnUrl = payload.ReturnUrl,
+            LinkUserId = payload.LinkUserId,
+            CreatedAt = now,
+            ExpiresAt = now.Add(_options.StateLifetime),
+        }, cancellationToken).ConfigureAwait(false);
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         var state = EncodeState(payload);
         return BuildAuthorizationUrl(definition, providerOptions, state);
@@ -223,7 +230,9 @@ internal sealed class ExternalLoginService : IExternalLoginService
             ?? throw new InvalidOperationException("External provider returned an empty access_token.");
     }
 
-    private Task<ExternalOAuth.ExternalLoginStatePayload> ResolveStateAsync(string state, CancellationToken cancellationToken)
+    private async Task<ExternalOAuth.ExternalLoginStatePayload> ResolveStateAsync(
+        string state,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(state))
         {
@@ -250,15 +259,29 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new ValidationException("OAuth state is invalid.");
         }
 
-        if (!_memoryCache.TryGetValue<ExternalOAuth.ExternalLoginStatePayload>(StateCacheKeyPrefix + payload.Nonce, out var cached)
-            || cached is null
-            || !string.Equals(cached.Provider, payload.Provider, StringComparison.OrdinalIgnoreCase))
+        var now = DateTime.UtcNow;
+        var entity = await _identityContext.ExternalLoginStates
+            .FirstOrDefaultAsync(
+                x => x.Nonce == payload.Nonce && x.ExpiresAt > now,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null
+            || !string.Equals(entity.Provider, payload.Provider, StringComparison.OrdinalIgnoreCase))
         {
             throw new ValidationException("OAuth state has expired or was already used.");
         }
 
-        _memoryCache.Remove(StateCacheKeyPrefix + payload.Nonce);
-        return Task.FromResult(cached);
+        _identityContext.ExternalLoginStates.Remove(entity);
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        return new ExternalOAuth.ExternalLoginStatePayload
+        {
+            Nonce = entity.Nonce,
+            Provider = entity.Provider,
+            ReturnUrl = entity.ReturnUrl,
+            LinkUserId = entity.LinkUserId,
+        };
     }
 
     private async Task<Guid> ResolveOrCreateUserAsync(

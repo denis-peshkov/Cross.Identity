@@ -8,7 +8,7 @@
 > **Источники:** `dotnet test`, `git diff master...dev`, `gh run list` (проверено 2026-06-29)  
 > **Поддержка:** при изменении любого чеклиста или migration-пунктов пересчитать сводку: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Сводка чеклистов:** **100** пунктов — ✅ **56** (56%) · 🟨 **22** (22%) · ⬜ **22** (22%) · ❌ **0** (0%)
+**Сводка чеклистов:** **100** пунктов — ✅ **57** (57%) · 🟨 **22** (22%) · ⬜ **21** (21%) · ❌ **0** (0%)
 
 ---
 
@@ -155,7 +155,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | B11 | **Linking без auth** → `NotAuthorizedException` | Unit | ✅ |
 | B12 | Повторный link того же провайдера → `ValidationException` | Unit | ✅ |
 | B13 | Google / Microsoft / GitHub / Apple — профиль | Unit / Manual | 🟨 Google в flow-тестах; остальные — только unit fetch |
-| B14 | Multi-instance: state в `IMemoryCache` — не для LB без sticky | Arch review | ⬜ задокументировать ограничение |
+| B14 | Multi-instance: OAuth state в БД (`ExternalLoginStates`) | Arch review | ✅ shared DB, без sticky |
 
 ---
 
@@ -366,6 +366,20 @@ ALTER TABLE RefreshTokens ADD AbsoluteExpiresAt datetime2 NOT NULL
 INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 
 -- 4. UserExternalLogins: FK на Providers
+
+-- 5. OAuth state (CSRF / one-time), вместо in-memory cache
+CREATE TABLE auth.ExternalLoginStates (
+  ExternalLoginStateId bigint IDENTITY(1,1) NOT NULL,
+  Nonce nvarchar(32) NOT NULL,
+  Provider nvarchar(64) NOT NULL,
+  ReturnUrl nvarchar(512) NULL,
+  LinkUserId uniqueidentifier NULL,
+  ExpiresAt datetime2(7) NOT NULL,
+  CreatedAt datetime2(7) NOT NULL,
+  CONSTRAINT PK_auth_ExternalLoginStates PRIMARY KEY (ExternalLoginStateId),
+  CONSTRAINT UX_auth_ExternalLoginStates_Nonce UNIQUE (Nonce)
+);
+CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (ExpiresAt);
 ```
 
 | # | Проверка | Статус |
@@ -386,7 +400,7 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 | **P1** | `config.nuspec` — устаревшие зависимости | ✅ Синхронизирован с `.csproj` |
 | **P1** | `FLOWS.md` не соответствует коду | ✅ Обновлён |
 | **P1** | Breaking change `collectResult` (1 поле) | 🟨 задокументировать в `docs/MIGRATION.md` (файл ⬜) |
-| **P1** | OAuth state в `IMemoryCache` — не для multi-instance | ⬜ документировать / Redis |
+| **P1** | OAuth state — multi-instance | ✅ `auth.ExternalLoginStates` вместо `IMemoryCache` |
 | **P2** | Лицензия soft-fail в production | Продуктовое решение |
 | **P2** | Нет EF migrations в репо | Добавить или документировать SQL |
 | **P2** | `Sample.Api` — InMemory DB, нет OAuth config | Расширить пример |

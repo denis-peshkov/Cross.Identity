@@ -30,7 +30,6 @@ Licensing
         <dependency id="Microsoft.EntityFrameworkCore" version="8.0.8" />
         <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="8.0.8" />
         <dependency id="Microsoft.EntityFrameworkCore.Relational" version="8.0.8" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="8.0.1" />
         <dependency id="Microsoft.Extensions.Http" version="8.0.1" />
         <dependency id="PhoneNumbersCore" version="1.1.1" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
@@ -44,7 +43,6 @@ Licensing
         <dependency id="Microsoft.EntityFrameworkCore" version="9.0.9" />
         <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="9.0.9" />
         <dependency id="Microsoft.EntityFrameworkCore.Relational" version="9.0.9" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="9.0.15" />
         <dependency id="Microsoft.Extensions.Http" version="9.0.15" />
         <dependency id="PhoneNumbersCore" version="1.1.1" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
@@ -58,7 +56,6 @@ Licensing
         <dependency id="Microsoft.EntityFrameworkCore" version="10.0.9" />
         <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="10.0.9" />
         <dependency id="Microsoft.EntityFrameworkCore.Relational" version="10.0.9" />
-        <dependency id="Microsoft.Extensions.Caching.Memory" version="10.0.9" />
         <dependency id="Microsoft.Extensions.Http" version="10.0.9" />
         <dependency id="PhoneNumbersCore" version="1.1.1" />
         <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />

@@ -24,6 +24,7 @@
 - **JWT** — выпуск и валидация access/refresh токенов, настраиваемые claims и время жизни.
 - **Безопасность** — хеширование паролей (Argon2), одноразовые коды, нормализация телефонов.
 - **Каналы** — email и SMS (отправка кодов через Cross.Messaging).
+- **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state в БД (`auth.ExternalLoginStates`), multi-instance без sticky.
 - **Формы** — декларативное описание полей и правил валидации (equal, requiredIf, atLeastOneRequired и др.).
 - **Лицензирование (JWT)** — проверка ключа Peshkov при первом вызове flow; без ключа в dev/test работа продолжается с предупреждением в логах.
 
@@ -109,7 +110,6 @@ var result = await _flowExecutor.ExecuteAsync(
 - Cross.PepperVault
 - Konscious.Security.Cryptography.Argon2
 - Microsoft.EntityFrameworkCore (+ InMemory, Relational)
-- Microsoft.Extensions.Caching.Memory
 - Microsoft.Extensions.Http
 - Microsoft.IdentityModel.JsonWebTokens
 - PhoneNumbersCore

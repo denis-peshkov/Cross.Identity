@@ -7,7 +7,6 @@ internal class License_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     private const string Flow = "license";
     private const string CallbackUrl = "https://app.example/callback";
 
-    private IMemoryCache _memoryCache = null!;
     private ExternalLoginService _externalLoginService = null!;
 
     [SetUp]
@@ -17,7 +16,6 @@ internal class License_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        _memoryCache = new MemoryCache(new MemoryCacheOptions());
         SeedGoogleProvider();
 
         var headersContextAccessor = new HeadersContextAccessor
@@ -62,13 +60,6 @@ internal class License_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
             new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object));
-    }
-
-    [TearDown]
-    public override void TearDown()
-    {
-        _memoryCache.Dispose();
-        base.TearDown();
     }
 
     [Test]
@@ -178,7 +169,6 @@ internal class License_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         return new ExternalLoginService(
             Context,
-            _memoryCache,
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>());

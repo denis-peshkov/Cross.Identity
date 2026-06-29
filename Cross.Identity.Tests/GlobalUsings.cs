@@ -48,7 +48,6 @@ global using Cross.Identity.ProcessEngine.Steps;
 global using Cross.Identity.Services;
 global using Cross.Identity.Services.Crypto;
 global using Cross.Identity.Services.ExternalOAuth;
-global using Microsoft.Extensions.Caching.Memory;
 global using System.Net.Http.Headers;
 global using Cross.Identity.Tests.Common;
 global using Cross.Identity.Tests.Core;

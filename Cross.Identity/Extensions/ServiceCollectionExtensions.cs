@@ -1,4 +1,4 @@
-namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Extensions;
 
 /// <summary>
 /// DI-расширения для регистрации инфраструктуры Cross.Identity:
@@ -86,7 +86,6 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddExternalLogin(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
-        services.AddMemoryCache();
         services.AddHttpClient(nameof(ExternalLoginService));
         services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
 

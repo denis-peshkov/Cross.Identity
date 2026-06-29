@@ -5,22 +5,13 @@
 public class ExternalLoginServiceTests : EFTestsBase
 {
     private const string CallbackUrl = "https://app.example/callback";
-    private IMemoryCache _memoryCache = null!;
     private Mock<ILogger<ExternalLoginService>> _logger = null!;
 
     [SetUp]
     public override void Setup()
     {
         base.Setup();
-        _memoryCache = new MemoryCache(new MemoryCacheOptions());
         _logger = new Mock<ILogger<ExternalLoginService>>();
-    }
-
-    [TearDown]
-    public override void TearDown()
-    {
-        _memoryCache.Dispose();
-        base.TearDown();
     }
 
     [Test]
@@ -89,6 +80,20 @@ public class ExternalLoginServiceTests : EFTestsBase
         await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, userId, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>()
             .WithMessage("*already linked*");
+    }
+
+    [Test]
+    public async Task InitiateAsync_ShouldPersistState_InDatabase()
+    {
+        SeedProvider("Google");
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+
+        await sut.InitiateAsync("Google", "/home", null, CancellationToken.None);
+
+        var state = await Context.ExternalLoginStates.SingleAsync();
+        state.Provider.Should().Be("Google");
+        state.ReturnUrl.Should().Be("/home");
+        state.ExpiresAt.Should().BeAfter(DateTime.UtcNow);
     }
 
     [Test]
@@ -166,13 +171,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        _memoryCache.Dispose();
-        _memoryCache = new MemoryCache(new MemoryCacheOptions());
+        var row = await Context.ExternalLoginStates.SingleAsync();
+        row.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
+        await Context.SaveChangesAsync();
 
-        var act = () => CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()))
-            .CompleteAsync("code", state, null, null, CancellationToken.None);
-
-        await act.Should().ThrowAsync<ValidationException>()
+        await FluentActions.Invoking(() => sut.CompleteAsync("code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
             .WithMessage("*expired*");
     }
 
@@ -186,7 +190,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             ReturnUrl = "/account/ExternalLogins",
         };
         var state = EncodeState(payload);
-        _memoryCache.Set("identity:external-login:state:" + payload.Nonce, payload, TimeSpan.FromMinutes(10));
+        SeedOAuthState(payload);
 
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
@@ -666,11 +670,24 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         return new ExternalLoginService(
             Context,
-            _memoryCache,
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,
             provisioner);
+    }
+
+    private void SeedOAuthState(ExternalLoginStatePayload payload, TimeSpan? lifetime = null)
+    {
+        var now = DateTime.UtcNow;
+        AddToDb(new ExternalLoginStateEntity
+        {
+            Nonce = payload.Nonce,
+            Provider = payload.Provider,
+            ReturnUrl = payload.ReturnUrl,
+            LinkUserId = payload.LinkUserId,
+            CreatedAt = now,
+            ExpiresAt = now.Add(lifetime ?? TimeSpan.FromMinutes(10)),
+        });
     }
 
     private short SeedProvider(string name, bool isEnabled = true)

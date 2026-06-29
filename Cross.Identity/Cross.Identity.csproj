@@ -52,7 +52,6 @@
     <MicrosoftEntityFrameworkCoreVersion>8.0.8</MicrosoftEntityFrameworkCoreVersion>
     <MicrosoftEntityFrameworkCoreVersionInMemory>8.0.8</MicrosoftEntityFrameworkCoreVersionInMemory>
     <MicrosoftEntityFrameworkCoreVersionRelational>8.0.8</MicrosoftEntityFrameworkCoreVersionRelational>
-    <MicrosoftExtensionsCachingMemoryVersion>8.0.1</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftExtensionsHttpVersion>8.0.1</MicrosoftExtensionsHttpVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
@@ -66,7 +65,6 @@
     <MicrosoftEntityFrameworkCoreVersion>9.0.9</MicrosoftEntityFrameworkCoreVersion>
     <MicrosoftEntityFrameworkCoreVersionInMemory>9.0.9</MicrosoftEntityFrameworkCoreVersionInMemory>
     <MicrosoftEntityFrameworkCoreVersionRelational>9.0.9</MicrosoftEntityFrameworkCoreVersionRelational>
-    <MicrosoftExtensionsCachingMemoryVersion>9.0.15</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftExtensionsHttpVersion>9.0.15</MicrosoftExtensionsHttpVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
@@ -80,7 +78,6 @@
     <MicrosoftEntityFrameworkCoreVersion>10.0.9</MicrosoftEntityFrameworkCoreVersion>
     <MicrosoftEntityFrameworkCoreVersionInMemory>10.0.9</MicrosoftEntityFrameworkCoreVersionInMemory>
     <MicrosoftEntityFrameworkCoreVersionRelational>10.0.9</MicrosoftEntityFrameworkCoreVersionRelational>
-    <MicrosoftExtensionsCachingMemoryVersion>10.0.9</MicrosoftExtensionsCachingMemoryVersion>
     <MicrosoftExtensionsHttpVersion>10.0.9</MicrosoftExtensionsHttpVersion>
   </PropertyGroup>
 
@@ -94,7 +91,6 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(MicrosoftEntityFrameworkCoreVersionInMemory)" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCoreVersionRelational)" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="$(MicrosoftExtensionsCachingMemoryVersion)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsHttpVersion)" />
     <PackageReference Include="PhoneNumbersCore" Version="$(PhoneNumbersCoreVersion)" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />

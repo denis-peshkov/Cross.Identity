@@ -1,5 +1,13 @@
-namespace Cross.Identity.Options;
+﻿namespace Cross.Identity.Options;
 
+/// <summary>
+/// Настройки external OAuth (<c>Authentication:ExternalLogin</c>).
+/// <para>
+/// <c>StateLifetime</c> задаёт TTL строки в таблице <c>auth.ExternalLoginStates</c>
+/// (<see cref="Entities.ExternalLoginStateEntity"/>), куда пишет <c>ExternalLoginService</c>:
+/// <c>InitiateAsync</c> — insert; <c>ResolveStateAsync</c> (из <c>CompleteAsync</c>) — select и delete.
+/// </para>
+/// </summary>
 public sealed class ExternalLoginOptions
 {
     public const string SectionName = "Authentication:ExternalLogin";
@@ -10,6 +18,9 @@ public sealed class ExternalLoginOptions
     /// </summary>
     public string CallbackUrl { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Время жизни OAuth state в БД (<c>ExternalLoginStates.ExpiresAt</c>).
+    /// </summary>
     public TimeSpan StateLifetime { get; set; } = TimeSpan.FromMinutes(10);
 
     /// <summary>

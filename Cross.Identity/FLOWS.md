@@ -240,6 +240,8 @@
 | `completeExternalLogin` | completeExternalLogin | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` из `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
+> Между `ExternalLogin` и `ExternalLoginCallback` `ExternalLoginService` хранит одноразовый OAuth state в `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Настройка провайдеров и callback — `Authentication:ExternalLogin`, см. release-план §B.
+
 ---
 
 ## `shop.auth.json`
