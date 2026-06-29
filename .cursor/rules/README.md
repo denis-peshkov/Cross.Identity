@@ -6,6 +6,11 @@
 - `000-global.mdc` - Глобальные правила проекта
 - `001-team-workflow.mdc` - Правила командной работы
 - `002-multi-repo.mdc` - Правила работы с мульти-репозиторием
+- `003-triage.mdc` - GitHub triage (issues/PRs, skills, RTK, CI)
+
+### Cursor triage scripts
+
+- `.cursor/triage/` - RTK/gh wrappers, CI runners (`collect-data.sh`, `post-pr-triage.mjs`)
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - Общие правила .NET бэкенда

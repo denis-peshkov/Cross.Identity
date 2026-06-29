@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Collect GitHub issues/PRs metadata for triage (local or CI).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+GH="${ROOT}/.cursor/triage/rtk-gh.sh"
+OUT="${ROOT}/docs/triage/.data"
+DATE="$(date +%Y-%m-%d)"
+
+mkdir -p "${OUT}"
+
+echo "Collecting triage data into ${OUT} (${DATE})..."
+
+REPO="$("${GH}" repo view --json nameWithOwner -q .nameWithOwner)"
+echo "${REPO}" > "${OUT}/repo.txt"
+
+"${GH}" issue list --state open --limit 150 \
+  --json number,title,author,createdAt,updatedAt,labels,assignees,body \
+  > "${OUT}/issues-open.json"
+
+"${GH}" issue list --state closed --limit 20 \
+  --json number,title,labels,closedAt \
+  > "${OUT}/issues-closed.json"
+
+"${GH}" pr list --state open --limit 200 \
+  --json number,title,author,createdAt,updatedAt,additions,deletions,changedFiles,isDraft,mergeable,reviewDecision,statusCheckRollup,body \
+  > "${OUT}/prs-open.json"
+
+if "${GH}" api "repos/${REPO}/collaborators" --jq '.[].login' > "${OUT}/collaborators.txt" 2>/dev/null; then
+  :
+else
+  "${GH}" pr list --state merged --limit 10 --json author --jq '.[].author.login' | sort -u > "${OUT}/collaborators.txt" || true
+fi
+
+# PR files for overlap (cap at 30 PRs to limit API calls in CI)
+PR_NUMS="$("${GH}" pr list --state open --limit 30 --json number -q '.[].number')"
+: > "${OUT}/pr-files.jsonl"
+for num in ${PR_NUMS}; do
+  files="$("${GH}" pr view "${num}" --json files --jq '[.files[].path] | join(",")' 2>/dev/null || echo "")"
+  printf '{"number":%s,"files":"%s"}\n' "${num}" "${files}" >> "${OUT}/pr-files.jsonl"
+done
+
+echo "Done. Files:"
+ls -la "${OUT}"
