@@ -1,4 +1,4 @@
-namespace Cross.Identity.Dtos;
+﻿namespace Cross.Identity.Dtos;
 
 /// <summary>
 /// Универсальный результат выполнения процесса (flow).
@@ -6,8 +6,8 @@ namespace Cross.Identity.Dtos;
 public sealed class FlowResult
 {
     /// <summary>
-    /// Данные, собранные шагом <c>collectResult</c>,
-    /// либо весь <see cref="Bag"/>, если такого шага не было в процессе.
+    /// Данные шага <c>collectResult</c>: словарь <c>{ имя_поля: значение }</c> (имена из <c>map</c> в JSON flow).
+    /// Если в процессе нет шага <c>collectResult</c> или он не записал полей — <c>null</c>.
     /// </summary>
     public object? Data { get; init; }
 }

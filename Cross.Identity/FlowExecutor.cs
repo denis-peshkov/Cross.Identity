@@ -52,9 +52,8 @@ internal class FlowExecutor : IFlowExecutor
         await process.RunAsync(bag, cancellationToken).ConfigureAwait(false);
 
         // 6) политика возврата по префиксу "collectResult.":
-        //    - нет collectResult.*       -> вернуть весь Bag (как словарь)
-        //    - один collectResult.*      -> вернуть само значение (а не словарь)
-        //    - несколько collectResult.* -> вернуть словарь { <prefix-with-collectResult> : value }
+        //    - нет collectResult.* -> Data = null
+        //    - одно или несколько collectResult.* -> Dictionary { имя_поля: значение } (имена без префикса)
         const string prefix = "collectResult.";
         var all = bag.ToDictionary();
         var resultPairs = all

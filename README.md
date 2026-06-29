@@ -96,7 +96,7 @@ var result = await _flowExecutor.ExecuteAsync(
     flow: "license",           // например: license, game, shop, edoctors
     operation: FlowOperationEnum.Token,
     cancellationToken);
-// result.Data — объект с полями, заданными шагом collectResult (например access_token, refresh_token).
+// result.Data — словарь полей из шага collectResult (например access_token, refresh_token, LastCode).
 ```
 
 3. **Дефиниции потоков** — JSON в `ProcessEngine/Definitions/Flows/` (и при необходимости из файловой системы). Имена файлов: `{flow}.{Operation}.json` (например `license.Token.json`, `game.Register.json`). Подробное описание flow и шагов — в [FLOWS.md](Cross.Identity/FLOWS.md).

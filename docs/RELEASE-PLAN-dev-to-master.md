@@ -4,10 +4,10 @@
 > **Ветка:** `dev`  
 > **База сравнения:** `master...dev` (merge-base `163b8a5`)  
 > **Цель:** исчерпывающий перечень нового функционала и чеклист проверки перед merge в `master`  
-> **Легенда:** ⬜ open · ✅ done · 🟨 partial  
-> **Источники:** `dotnet test`, `git diff master...dev`, `gh run list`
+> **Легенда:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
+> **Источники:** `dotnet test`, `git diff master...dev`, `gh run list` (проверено 2026-06-29)
 
-**Сводка чеклистов (2026-06-29):** **95** пунктов — ✅ **36** (38%) · 🟨 **8** (8%) · ⬜ **51** (54%)
+**Сводка чеклистов:** **107** пунктов — ✅ **55** (51%) · 🟨 **23** (21%) · ⬜ **26** (24%) · ❌ **3** (3%)
 
 ---
 
@@ -15,10 +15,10 @@
 
 | Метрика | Значение |
 |---------|----------|
-| Коммитов | 105 |
-| Файлов | 294 |
-| Строк | +7 464 / −2 861 |
-| Тестов (`dotnet test`) | 287 total · 286 passed · 1 failed |
+| Коммитов | 110 |
+| Файлов | 299 |
+| Строк | +8 626 / −3 733 |
+| Тестов (`dotnet test`) | 292 total · 292 passed · 0 failed |
 
 | Область | Файлов | Роль в релизе |
 |---------|--------|---------------|
@@ -91,7 +91,7 @@
 | `Magick.NET.Core` | **удалён** |
 | `Cross.ErrorHandlers` 7.3 → **7.6**, `Cross.Headers` 1.0 → **1.2.1** | Обновить у потребителей при конфликтах |
 
-> **Замечание:** `config.nuspec` всё ещё ссылается на `Magick.NET.Core` и старые версии `Cross.ErrorHandlers` — нужно синхронизировать перед публикацией.
+> **Замечание:** `config.nuspec` синхронизирован с `.csproj` (TFM-группы, актуальные версии).
 
 ---
 
@@ -103,13 +103,13 @@
 
 | # | Проверка | Тип | Статус |
 |---|----------|-----|--------|
-| A1 | Регистрация с валидным email+password → `UserId` + `LastCode` в ответе | Integration | ✅ есть тест |
-| A2 | Повторная регистрация с тем же email → ошибка | Integration | ⬜ проверить вручную |
-| A3 | Валидация пароля (min 8, max 128) | Unit/Integration | ⬜ |
-| A4 | `ConfirmPassword` больше не требуется — старые клиенты не ломаются | Manual | ⬜ |
-| A5 | Код подтверждения сохраняется в `EmailVerifications` | Integration | ⬜ |
-| A6 | `edoctors.Register` — по-прежнему с `ConfirmPassword` | Integration | ⬜ проверить `EDoctors_Registration_FlowTests` |
-| A7 | `createUser` маппинг полей (`FullName`, `Company`, флаги) | Integration | ⬜ |
+| A1 | Регистрация с валидным email+password → `UserId` + `LastCode` в ответе | Integration | ✅ `License_Registration_FlowTests` |
+| A2 | Повторная регистрация с тем же email → ошибка | Integration | 🟨 unit `CreateUserAsync_ShouldThrowWhenEmailExists`; flow ⬜ |
+| A3 | Валидация пароля (min 8, max 128) | Unit/Integration | ✅ `Handle_InvalidInput_ShouldThrowValidationException` |
+| A4 | `ConfirmPassword` больше не требуется — старые клиенты не ломаются | Integration | ✅ тест без `ConfirmPassword` |
+| A5 | Код подтверждения сохраняется в `EmailVerifications` | Integration | 🟨 `CodeServiceTests`; в registration flow не проверяется БД |
+| A6 | `edoctors.Register` — по-прежнему с `ConfirmPassword` | Integration | ✅ `EDoctors_Registration_FlowTests` |
+| A7 | `createUser` маппинг полей (`FullName`, `Company`, флаги) | Integration | ⬜ нет теста на расширенный маппинг |
 
 ---
 
@@ -139,22 +139,22 @@
 
 Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogin__Providers__Google__ClientId`, и т.д.
 
-| # | Проверка | Тип |
-|---|----------|-----|
-| B1 | `CallbackUrl` задан — иначе `InvalidOperationException` | Unit ✅ |
-| B2 | Провайдер не в конфиге → `ValidationException` | Unit ✅ |
-| B3 | Провайдер не в БД (`Providers` table) / disabled → `NotFoundException` | Unit ✅ |
-| B4 | **Initiate:** `POST license/ExternalLogin` `{ Provider, ReturnUrl }` → `{ url }` с OAuth redirect | Manual/E2E ⬜ |
-| B5 | **Callback:** `POST license/ExternalLoginCallback` `{ Code, State }` → `access_token`, `refresh_token`, `user_id` | Manual/E2E ⬜ |
-| B6 | OAuth error (`Error`, `ErrorDescription`) → корректная ошибка | Unit ✅ |
-| B7 | State TTL истёк → отказ | Manual ⬜ |
-| B8 | **Новый пользователь** — auto-provision через `IExternalLoginUserProvisioner` (если зарегистрирован) | Manual ⬜ |
-| B9 | **Существующий пользователь** — логин по provider+subject | Manual ⬜ |
-| B10 | **Linking (авторизованный):** `LinkUserId` в state → `is_linking: true`, без новых токенов? | Unit + Manual ⬜ |
-| B11 | **Linking без auth** → `NotAuthorizedException` | Unit ✅ |
-| B12 | Повторный link того же провайдера → `ValidationException` | Unit ✅ |
-| B13 | Google / Microsoft / GitHub / Apple — профиль (email, subject) | Manual per provider ⬜ |
-| B14 | Multi-instance: state в `IMemoryCache` — **не работает за load balancer без sticky sessions** | Arch review ⬜ |
+| # | Проверка | Тип | Статус |
+|---|----------|-----|--------|
+| B1 | `CallbackUrl` задан — иначе `InvalidOperationException` | Unit | ✅ `ExternalLoginServiceTests` |
+| B2 | Провайдер не в конфиге → `ValidationException` | Unit | ✅ |
+| B3 | Провайдер не в БД (`Providers` table) / disabled → `NotFoundException` | Unit | ✅ |
+| B4 | **Initiate:** `POST license/ExternalLogin` → `{ url }` с OAuth redirect | Integration | ✅ `License_ExternalOAuth_FlowTests` |
+| B5 | **Callback:** `POST license/ExternalLoginCallback` → токены + `user_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
+| B6 | OAuth error (`Error`, `ErrorDescription`) → корректная ошибка | Unit + Integration | ✅ |
+| B7 | State TTL истёк → отказ | Unit | ✅ `CompleteAsync_ShouldThrow_WhenStateExpired` |
+| B8 | **Новый пользователь** — auto-provision | Integration | ✅ callback создаёт user + external login в БД |
+| B9 | **Существующий пользователь** — логин по provider+subject | Unit | ✅ `CompleteAsync_ShouldReturnExistingUser_*` |
+| B10 | **Linking:** `LinkUserId` → `is_linking: true` | Unit + Integration | 🟨 unit `CompleteAsync_ShouldLinkProviderToExistingUser`; flow ⬜ |
+| B11 | **Linking без auth** → `NotAuthorizedException` | Unit | ✅ |
+| B12 | Повторный link того же провайдера → `ValidationException` | Unit | ✅ |
+| B13 | Google / Microsoft / GitHub / Apple — профиль | Unit / Manual | 🟨 Google в flow-тестах; остальные — только unit fetch |
+| B14 | Multi-instance: state в `IMemoryCache` — не для LB без sticky | Arch review | ⬜ задокументировать ограничение |
 
 ---
 
@@ -168,12 +168,12 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | C2 | Выдача пары при `license.TokenByCode` | Integration | ✅ |
 | C3 | Ротация: старый refresh инвалидируется, новый работает | Unit | ✅ `JwtTokenServiceTests` |
 | C4 | `AbsoluteExpiresAt` сохраняется при ротации (цепочка) | Unit | ✅ |
-| C5 | Refresh после `AbsoluteExpiresAt` → отказ | Unit/Manual | ⬜ |
-| C6 | `RefreshTokenAbsoluteExpires` в конфиге влияет на новые цепочки | Manual | ⬜ |
+| C5 | Refresh после `AbsoluteExpiresAt` → отказ | Unit | 🟨 логика в `ValidateRefreshTokenAsync`; отдельного теста на expired absolute нет |
+| C6 | `RefreshTokenAbsoluteExpires` в конфиге влияет на новые цепочки | Unit | ✅ `GenerateRefreshTokenAsync_ShouldUseConfiguredRollingLifetime` |
 | C7 | `ExpiredRefreshTokenCleanupHostedService` удаляет просроченные | Unit | ✅ |
 | C8 | Интервал очистки `Authentication:TokenCleanupInterval` (default 1h) | Manual | ⬜ |
-| C9 | `license.RefreshToken` flow end-to-end | Integration | ⬜ нет dedicated flow test |
-| C10 | Reuse старого refresh после ротации → `NotAuthorizedException` | Manual | ⬜ |
+| C9 | `license.RefreshToken` flow end-to-end | Integration | 🟨 `RefreshToken_StepTests` (unit); dedicated flow test ⬜ |
+| C10 | Reuse старого refresh после ротации → отказ | Unit | 🟨 `InvalidateRefreshTokenAsync` + invalid step; полный reuse-chain ⬜ |
 
 **Конфиг для проверки:**
 
@@ -199,10 +199,10 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | D3 | Просроченный ключ → `LogError` + `LogCritical` | Unit | ✅ |
 | D4 | Валидный ключ → `LogInformation` с edition/expiry | Unit | ✅ |
 | D5 | Проверка только при **первом** вызове (singleton flag) | Unit | ✅ |
-| D6 | `CrossIdentity:LicenseKey` из appsettings | Manual | ⬜ |
+| D6 | `CrossIdentity:LicenseKey` из appsettings | Manual | 🟨 `LicenseAccessor` + `Sample.Api` appsettings; E2E ⬜ |
 | D7 | `CrossIdentity__LicenseKey` из env | Manual | ⬜ |
 | D8 | Неверный `ProductType` в ключе | Unit | ✅ |
-| D9 | **Production policy:** нужно ли hard-fail без ключа? (сейчас soft-fail) | Product decision | ⬜ |
+| D9 | **Production policy:** hard-fail без ключа? (сейчас soft-fail) | Product decision | ⬜ |
 
 ---
 
@@ -214,7 +214,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | E2 | `DeveloperMode=false` → отправка + сохранение | Unit | ✅ |
 | E3 | `LastCode` возвращается в flow-ответе (для dev) | Integration | ✅ |
 | E4 | Production: `DeveloperMode` **не задан** или `false` | Manual | ⬜ |
-| E5 | `SendCodeStep` тоже учитывает DeveloperMode | Unit | ⬜ проверить |
+| E5 | `SendCodeStep` тоже учитывает DeveloperMode | Unit | 🟨 код + flow с `DeveloperMode=true`; dedicated step-тест ⬜ |
 
 ---
 
@@ -225,10 +225,10 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | F1 | `license.Token` — пароль ИЛИ код (валидация `atLeastOneRequired`) | Integration | ✅ |
 | F2 | `license.TokenByCode` — только код | Integration | ✅ |
 | F3 | RequestCode → TokenByCode сквозной сценарий | Integration | ✅ |
-| F4 | Неверный код → `IsInvalidCode` / пустой токен | Manual | ⬜ |
-| F5 | Истёкший код (TTL) | Manual | ⬜ |
-| F6 | Превышение `MaxAttempts` (3) | Manual | ⬜ |
-| F7 | `game.Token`, `shop.*` flows — регрессия | Integration | ⬜ нет тестов |
+| F4 | Неверный код → `IsInvalidCode` / пустой токен | Integration | 🟨 валидный путь ✅; негативный сценарий ⬜ |
+| F5 | Истёкший код (TTL) | Unit | ✅ `CodeServiceTests` |
+| F6 | Превышение `MaxAttempts` (3) | Unit | ✅ `CodeServiceTests` |
+| F7 | `game.Token`, `shop.*` flows — регрессия | Integration | ⬜ только `edoctors.Register` |
 
 ---
 
@@ -239,11 +239,11 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | G1 | `license.ForgotPassword` | Integration | ✅ |
 | G2 | `ResetPasswordStep` — смена пароля + email-уведомление | Unit | ✅ |
 | G3 | Уведомление при ошибке отправки — логируется, flow не падает | Unit | ✅ |
-| G4 | **`license.ResetPassword.json` — потенциальный баг:** `passwordKey: "collectForm.Password"`, а в форме поля `NewPassword`, `OldPassword` | **Code review** | ⚠️ **блокер?** |
-| G5 | Integration flow test для `license.ResetPassword` | — | ❌ отсутствует |
+| G4 | `license.ResetPassword.json` — `passwordKey: collectForm.Password`, форма: `Email`, `Code`, `Password` | Code review | ✅ |
+| G5 | Integration flow test для `license.ResetPassword` | Integration | ✅ `License_ResetPassword_FlowTests` |
 | G6 | Старый пароль / код + новый пароль — бизнес-логика | Manual | ⬜ |
 
-> **Рекомендация:** перед релизом исправить `license.ResetPassword.json` (`passwordKey` → `collectForm.NewPassword`) и добавить flow-тест.
+> **Рекомендация:** перед релизом прогнать `license.ResetPassword` вручную через Sample.Api (смена пароля + уведомление).
 
 ---
 
@@ -251,13 +251,13 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 
 | # | Проверка | Статус |
 |---|----------|--------|
-| H1 | `GetUserId` flow возвращает `{ user_id }` | ⬜ manual |
-| H2 | `FlowExecutor` — `collectResult` всегда объект | ⬜ проверить все flows с 1 полем |
-| H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | Unit ✅ |
-| H4 | Удаление `NormalizedEmail` — поиск по email case-insensitive | Unit ⬜ |
-| H5 | `PasswordHasher` + Pepper через NuGet `Cross.PepperVault` | Manual в Sample.Api ⬜ |
-| H6 | JWT encryption (`UseEncryption`, `EncryptionKey` Base64 32 bytes) | Unit ⬜ |
-| H7 | Переход на `Microsoft.IdentityModel.JsonWebTokens` — валидация токенов downstream | Manual ⬜ |
+| H1 | `GetUserId` flow возвращает `{ user_id }` | 🟨 unit `GetUser_StepTests`; flow integration ⬜ |
+| H2 | `FlowExecutor` — `collectResult` всегда объект | ✅ flow-тесты возвращают `Dictionary<string, object?>` |
+| H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | ✅ `UserServiceTests` |
+| H4 | Удаление `NormalizedEmail` — поиск по email case-insensitive | 🟨 `ToLowerInvariant` в `UserService`; explicit lookup-тест ⬜ |
+| H5 | `PasswordHasher` + Pepper через NuGet `Cross.PepperVault` | 🟨 `PasswordHasherTests` (pepper); Sample.Api wiring ⬜ |
+| H6 | JWT encryption (`UseEncryption`, `EncryptionKey` Base64 32 bytes) | ⬜ тесты с `UseEncryption=false` |
+| H7 | Переход на `Microsoft.IdentityModel.JsonWebTokens` | 🟨 пакет подключён; downstream validation ⬜ |
 
 ---
 
@@ -282,14 +282,14 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 |---------|------|------------------|--------|
 | Registration | ✅ | ✅ | — |
 | Token / TokenByCode | ✅ | ✅ | — |
-| RefreshToken | ✅ | ⬜ | нет flow test |
-| External OAuth | ✅ (service) | ❌ | **добавить flow tests** |
-| ResetPassword | ✅ (step) | ❌ | **добавить flow test** |
-| Licensing | ✅ | ⬜ | — |
-| ForgotPassword | ⬜ | ✅ | — |
-| game/shop/edoctors flows | ⬜ | частично | регрессия |
+| RefreshToken | ✅ | 🟨 | step unit ✅; dedicated flow test ⬜ |
+| External OAuth | ✅ (service) | ✅ | `License_ExternalOAuth_FlowTests` |
+| ResetPassword | ✅ (step) | ✅ | `License_ResetPassword_FlowTests` |
+| Licensing | ✅ | 🟨 | unit only; нет license-check flow test |
+| ForgotPassword | ⬜ step | ✅ | `License_ForgotPassword_FlowTests` |
+| game/shop/edoctors flows | ⬜ | 🟨 | `edoctors.Register` only |
 
-**Текущий статус:** 287/287 passed.
+**Текущий статус:** 292/292 passed.
 
 ---
 
@@ -325,11 +325,11 @@ dotnet run --project Sample.Api
 
 | # | Проверка | Статус |
 |---|----------|--------|
-| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ⬜ прогнать на PR |
+| CI1 | `dotnet.yml` — build + test на PR в `master`/`dev` | ❌ NU1605: `Sample.Api` → `Microsoft.Extensions.Http` 8.0.0 vs 8.0.1 |
 | CI2 | SonarCloud quality gate wait на PR | ⬜ |
-| CI3 | `triage.yml` — automated PR triage | ⬜ smoke |
-| CI4 | GitVersion: `dev` теперь **не** release branch | ⬜ проверить версионирование при merge |
-| CI5 | NuGet pack из `config.nuspec` — зависимости актуальны | ⚠️ **нужно обновить** |
+| CI3 | `triage.yml` — automated PR triage | ✅ последний run ok |
+| CI4 | GitVersion: `dev` теперь **не** release branch | 🟨 конфиг изменён; поведение при merge не проверено |
+| CI5 | NuGet pack из `config.nuspec` — зависимости актуальны | ✅ синхронизирован с `.csproj` |
 
 ---
 
@@ -338,12 +338,12 @@ dotnet run --project Sample.Api
 | # | Документ | Статус | Действие |
 |---|----------|--------|----------|
 | DOC1 | `README.md` | ✅ обновлён (licensing, структура) | — |
-| DOC2 | `FLOWS.md` | ⚠️ устарел | Убрать `license.Auth`, `register1`, `GetUser`; добавить ExternalLogin, GetUserId |
+| DOC2 | `FLOWS.md` | ✅ | Актуализирован (18 flows, External OAuth) |
 | DOC3 | `RefreshToken.md` | ✅ актуален | — |
-| DOC4 | `config.nuspec` releaseNotes | частично | Добавить breaking changes, External OAuth |
-| DOC5 | `LICENSE.md` | обновлён (peshkov.biz) | — |
-| DOC6 | Migration guide для потребителей | ❌ | Создать: GetUser→GetUserId, collectResult, JWT lib, NuGet deps |
-| DOC7 | CHANGELOG / GitHub Release | ❌ | Перед релизом |
+| DOC4 | `config.nuspec` releaseNotes | 🟨 | licensing + OAuth; полный breaking list ⬜ |
+| DOC5 | `LICENSE.md` | ✅ | обновлён (peshkov.biz) |
+| DOC6 | Migration guide для потребителей | ⬜ | `docs/MIGRATION.md` не создан |
+| DOC7 | CHANGELOG / GitHub Release | ⬜ | Перед релизом |
 
 ---
 
@@ -366,12 +366,12 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 -- 4. UserExternalLogins: FK на Providers
 ```
 
-| # | Проверка |
-|---|----------|
-| M1 | EF migration создана и протестирована на staging |
-| M2 | Backfill `AbsoluteExpiresAt` для существующих refresh-токенов |
-| M3 | Seed `Providers` для OAuth |
-| M4 | Rollback-план |
+| # | Проверка | Статус |
+|---|----------|--------|
+| M1 | EF migration создана и протестирована на staging | ⬜ |
+| M2 | Backfill `AbsoluteExpiresAt` для существующих refresh-токенов | ⬜ |
+| M3 | Seed `Providers` для OAuth | ⬜ |
+| M4 | Rollback-план | ⬜ |
 
 ---
 
@@ -379,12 +379,12 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 
 | Приоритет | Проблема | Рекомендация |
 |-----------|----------|--------------|
-| **P0** | `license.ResetPassword.json` — `passwordKey` не совпадает с полями формы | Исправить + тест |
-| **P0** | Нет integration flow-тестов External OAuth | Добавить хотя бы mocked HTTP |
-| **P1** | `config.nuspec` — устаревшие зависимости | Синхронизировать с `.csproj` |
-| **P1** | `FLOWS.md` не соответствует коду | Обновить |
-| **P1** | Breaking change `collectResult` (1 поле) | Release notes + migration guide |
-| **P1** | OAuth state в `IMemoryCache` — не для multi-instance | Документировать / Redis |
+| **P0** | `license.ResetPassword.json` — `passwordKey` | ✅ Исправлено + `License_ResetPassword_FlowTests` |
+| **P0** | Нет integration flow-тестов External OAuth | ✅ `License_ExternalOAuth_FlowTests` |
+| **P1** | `config.nuspec` — устаревшие зависимости | ✅ Синхронизирован с `.csproj` |
+| **P1** | `FLOWS.md` не соответствует коду | ✅ Обновлён |
+| **P1** | Breaking change `collectResult` (1 поле) | 🟨 задокументировать в `docs/MIGRATION.md` (файл ⬜) |
+| **P1** | OAuth state в `IMemoryCache` — не для multi-instance | ⬜ документировать / Redis |
 | **P2** | Лицензия soft-fail в production | Продуктовое решение |
 | **P2** | Нет EF migrations в репо | Добавить или документировать SQL |
 | **P2** | `Sample.Api` — InMemory DB, нет OAuth config | Расширить пример |
@@ -393,27 +393,27 @@ INSERT INTO Providers (Id, Name, IsEnabled) VALUES (...);
 
 ## 10. Рекомендуемый порядок работ (release gate)
 
-```mermaid
-flowchart TD
-    A[1. Исправить P0 блокеры] --> B[2. Полный dotnet test + coverage]
-    B --> C[3. Обновить nuspec + FLOWS.md + CHANGELOG]
-    C --> D[4. EF migration + seed Providers]
-    D --> E[5. E2E через Sample.Api: все 10 operations]
-    E --> F[6. OAuth manual test: Google минимум]
-    F --> G[7. CI green на PR dev→master]
-    G --> H[8. Review breaking changes с потребителями]
-    H --> I[9. Merge + tag + NuGet publish]
-```
+Выполнять по порядку; следующий шаг — после закрытия предыдущего (или явного решения «пропустить» с записью в PR).
+
+- ✅ **1. P0-блокеры** — `license.ResetPassword.json`, `License_ResetPassword_FlowTests`, `License_ExternalOAuth_FlowTests`
+- 🟨 **2. Тесты** — `dotnet test` 292/292 ✅ локально; coverage (opencover) ⬜; CI restore ❌
+- 🟨 **3. Документация и пакет** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
+- ⬜ **4. БД** — EF migration (или SQL): `AbsoluteExpiresAt`, seed `Providers`, план rollback
+- ⬜ **5. E2E Sample.Api** — все 10 операций `license/*` через Swagger/POST
+- 🟨 **6. OAuth** — integration flow-тесты ✅ (mocked Google); реальный Google E2E ⬜
+- ❌ **7. CI** — `dotnet.yml` падает на restore (`Sample.Api` NU1605); triage ✅
+- 🟨 **8. Breaking changes** — описаны в плане; migration guide + согласование с потребителями ⬜
+- ⬜ **9. Релиз** — merge в `master`, tag, NuGet publish
 
 ### Минимальный «go/no-go» чеклист
 
-- [ ] Все 287+ тестов green
-- [ ] P0 исправлены (`ResetPassword` JSON)
-- [ ] 10 flow operations проверены через API
-- [ ] OAuth initiate+callback работает (хотя бы Google)
-- [ ] Refresh rotation + absolute expiry проверены вручную
-- [ ] DeveloperMode выключен в prod-конфиге
-- [ ] LicenseKey настроен (или осознанно soft-fail)
-- [ ] Breaking changes задокументированы
-- [ ] `config.nuspec` синхронизирован
-- [ ] CI green на PR
+- ✅ Все 292 теста green (локально)
+- ✅ P0 исправлены (`ResetPassword` JSON + flow-тесты, External OAuth flow-тесты)
+- ⬜ 10 flow operations проверены через Sample.Api
+- 🟨 OAuth initiate+callback (integration ✅ mocked; ручной Google E2E ⬜)
+- ⬜ Refresh rotation + absolute expiry проверены вручную
+- ⬜ DeveloperMode выключен в prod-конфиге
+- ⬜ LicenseKey настроен (или осознанно soft-fail)
+- 🟨 Breaking changes — в плане; `docs/MIGRATION.md` ⬜
+- ✅ `config.nuspec` синхронизирован
+- ❌ CI green на PR (`NU1605` в `Sample.Api`)
