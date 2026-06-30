@@ -6,25 +6,21 @@ internal static class LicenseCheckExtensions
 
     internal static void CheckLicense(this IServiceProvider serviceProvider)
     {
-        if (_licenseChecked)
+        if (!_licenseChecked)
         {
-            return;
+            var licenseAccessor = serviceProvider.GetRequiredService<LicenseAccessor>();
+            var licenseValidator = serviceProvider.GetRequiredService<LicenseValidator>();
+            var license = licenseAccessor.Current;
+
+            foreach (var licenseProductInfo in serviceProvider.GetServices<ILicenseProductInfo>())
+            {
+                licenseValidator.Validate(license, licenseProductInfo);
+            }
         }
 
-        _licenseChecked = true;
-
-        var licenseAccessor = serviceProvider.GetRequiredService<LicenseAccessor>();
-        var licenseValidator = serviceProvider.GetRequiredService<LicenseValidator>();
-        var license = licenseAccessor.Current;
-
-        foreach (var licenseProductInfo in serviceProvider.GetServices<ILicenseProductInfo>())
-        {
-            licenseValidator.Validate(license, licenseProductInfo);
-        }
-    }
-
-    internal static void ResetLicenseCheckForTests()
-    {
+        // if True then check will be performed only once
         _licenseChecked = false;
     }
+
+    internal static void ResetLicenseCheckForTests() => _licenseChecked = false;
 }

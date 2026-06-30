@@ -21,7 +21,7 @@
     <PackageReference Include="Cross.CQRS.EF" Version="8.4.1" />
     <PackageReference Include="Cross.ErrorHandlers" Version="7.6.0" />
     <PackageReference Include="Cross.Headers" Version="1.2.1" />
-    <PackageReference Include="Cross.PepperVault.EnvJson" Version="1.2.0" />
+    <PackageReference Include="Cross.PepperVault.Env" Version="1.2.0" />
 
     <PackageReference Include="Magick.NET.Core" Version="13.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.3.0" />

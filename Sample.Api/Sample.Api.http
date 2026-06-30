@@ -1,0 +1,125 @@
+# Sample.Api — manual E2E for Cross.Identity flows
+#
+# Prerequisites:
+#   dotnet run --project Sample.Api
+#   Swagger UI: {{host}}/swagger
+#
+# Settings (appsettings.json):
+#   Authentication:DeveloperMode=true — LastCode returned in Register/RequestCode/ForgotPassword responses
+#   InMemory DB — data is lost on restart; re-run Register before dependent calls
+#
+# OAuth (ExternalLogin / ExternalLoginCallback):
+#   Seed auth.Providers, set Google ClientId/ClientSecret, enable provider in DB + config
+#
+@host = http://localhost:5164
+@email = sample@example.com
+@password = P@ssw0rd!
+@ttl = 00:05:00
+
+###############################################################################
+# license/* — 10 FlowOperationEnum operations
+###############################################################################
+
+### 1. Register
+# @name licenseRegister
+POST {{host}}/api/identity/license/Register
+Content-Type: application/json
+
+{
+  "Email": "{{email}}",
+  "Password": "{{password}}"
+}
+
+### 2. RequestCode
+# @name licenseRequestCode
+POST {{host}}/api/identity/license/RequestCode
+Content-Type: application/json
+
+{
+  "Email": "{{email}}",
+  "Ttl": "{{ttl}}"
+}
+
+### 3. TokenByCode
+# Use LastCode from Register or RequestCode (DeveloperMode=true)
+# @name licenseTokenByCode
+POST {{host}}/api/identity/license/TokenByCode
+Content-Type: application/json
+
+{
+  "Email": "{{email}}",
+  "Code": "{{licenseRequestCode.response.body.$.LastCode}}"
+}
+
+### 4. Token (password)
+# @name licenseToken
+POST {{host}}/api/identity/license/Token
+Content-Type: application/json
+
+{
+  "Email": "{{email}}",
+  "Password": "{{password}}"
+}
+
+### 5. RefreshToken
+# @name licenseRefreshToken
+POST {{host}}/api/identity/license/RefreshToken
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{licenseToken.response.body.$.refresh_token}}"
+}
+
+### 6. GetUserId
+POST {{host}}/api/identity/license/GetUserId
+Content-Type: application/json
+
+{
+  "Email": "{{email}}"
+}
+
+### 7. ForgotPassword
+# @name licenseForgotPassword
+POST {{host}}/api/identity/license/ForgotPassword
+Content-Type: application/json
+
+{
+  "Email": "{{email}}"
+}
+
+### 8. ResetPassword
+POST {{host}}/api/identity/license/ResetPassword
+Content-Type: application/json
+
+{
+  "Email": "{{email}}",
+  "Code": "{{licenseForgotPassword.response.body.$.LastCode}}",
+  "Password": "N3wP@ssw0rd!"
+}
+
+### 9. ExternalLogin (OAuth redirect URL)
+# Requires Providers seed + configured ClientId/ClientSecret
+# @name licenseExternalLogin
+POST {{host}}/api/identity/license/ExternalLogin
+Content-Type: application/json
+
+{
+  "Provider": "Google",
+  "ReturnUrl": "http://localhost:4200/auth/callback"
+}
+
+### 10. ExternalLoginCallback (after provider redirect)
+# Replace Code and State from the provider redirect query string
+# @name licenseExternalLoginCallback
+POST {{host}}/api/identity/license/ExternalLoginCallback
+Content-Type: application/json
+
+{
+  "Code": "authorization-code-from-provider",
+  "State": "state-nonce-from-initiate-response"
+}
+
+###############################################################################
+# Suggested manual sequence (happy path)
+#   1 Register → 4 Token → 5 RefreshToken → 6 GetUserId
+###############################################################################

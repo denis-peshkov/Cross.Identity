@@ -10,9 +10,9 @@ builder.Services.AddHttpContextAccessor();
 // HeadersContextAccessor for UserService (language, region, etc.)
 builder.Services.AddScoped<IHeadersContextAccessor, HeadersContextAccessor>();
 
-// Pepper setup via Cross.PepperVault.EnvJson (options from appsettings, JSON from env)
-builder.Services.AddPepperOptions<EnvJsonProviderOptions, EnvJsonProviderOptionsValidator>(builder.Configuration);
-builder.Services.TryAddScoped<IPepperVaultProvider, EnvJsonPepperProvider>();
+// Pepper from appsettings (Sample.Api local dev — no AUTH_PEPPERS_JSON required)
+builder.Services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(builder.Configuration);
+builder.Services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();
 
 // Register Cross.Identity
 builder.Services.AddCrossIdentity(builder.Configuration);
@@ -30,8 +30,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 // Minimal API endpoint equivalent to IdentityController.RunAsync
 app.MapPost(
         "/api/identity/{flow}/{operation}",
@@ -42,7 +40,8 @@ app.MapPost(
             IFlowExecutor flowExecutor,
             CancellationToken cancellation) =>
         {
-            var result = await flowExecutor.ExecuteAsync(body, flow, operation, cancellation).ConfigureAwait(false);
+            var input = FlowInputNormalizer.Normalize(body);
+            var result = await flowExecutor.ExecuteAsync(input, flow, operation, cancellation).ConfigureAwait(false);
             return Results.Ok(result.Data);
         })
     .AllowAnonymous()
