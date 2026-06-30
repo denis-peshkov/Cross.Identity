@@ -1,14 +1,14 @@
 # Release readiness plan `dev` → `master`
 
-> **Analysis date:** 2026-06-29  
-> **Branch:** `dev`  
-> **Comparison base:** `master...dev` (merge-base `163b8a5`)  
-> **Goal:** exhaustive list of new functionality and verification checklist before merge into `master`  
-> **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
-> **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-06-29)  
+> **Analysis date:** 2026-06-29
+> **Branch:** `dev`
+> **Comparison base:** `master...dev` (merge-base `163b8a5`)
+> **Goal:** exhaustive list of new functionality and verification checklist before merge into `master`
+> **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
+> **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-06-29)
 > **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **100** items — ✅ **57** (57%) · 🟨 **22** (22%) · ⬜ **21** (21%) · ❌ **0** (0%)
+**Checklist summary:** **100** items — ✅ **63** (63%) · 🟨 **22** (22%) · ⬜ **15** (15%) · ❌ **0** (0%)
 
 ---
 
@@ -384,10 +384,10 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 
 | # | Check | Status |
 |---|----------|--------|
-| M1 | EF migration created and tested on staging | ⬜ |
-| M2 | Backfill `AbsoluteExpiresAt` for existing refresh tokens | ⬜ |
-| M3 | Seed `Providers` for OAuth | ⬜ |
-| M4 | Rollback plan | ⬜ |
+| M1 | EF migration created and tested on staging | ✅ |
+| M2 | Backfill `AbsoluteExpiresAt` for existing refresh tokens | ✅ |
+| M3 | Seed `Providers` for OAuth | ✅ |
+| M4 | Rollback plan | ✅ |
 
 ---
 
@@ -414,7 +414,7 @@ Execute in order; proceed to the next step after closing the previous one (or an
 - ✅ **1. P0 blockers** — `license.ResetPassword.json`, `License_ResetPassword_FlowTests`, `License_ExternalOAuth_FlowTests`
 - 🟨 **2. Tests** — `dotnet test` 300/300 ✅ locally; coverage (opencover) ⬜
 - 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
-- ⬜ **4. DB** — EF migration (or SQL): `AbsoluteExpiresAt`, seed `Providers`, rollback plan
+- ✅ **4. DB** — EF migration (or SQL): `AbsoluteExpiresAt`, seed `Providers`, rollback plan
 - ⬜ **5. E2E Sample.Api** — all 10 `license/*` operations via Swagger/POST
 - 🟨 **6. OAuth** — integration flow tests ✅ (mocked Google); real Google E2E ⬜
 - 🟨 **7. CI** — `dotnet.yml` ✅ on `dev`; SonarCloud QG ✅ on PR #5; triage ✅
@@ -425,7 +425,7 @@ Execute in order; proceed to the next step after closing the previous one (or an
 
 - ✅ All 300 tests green (locally)
 - ✅ P0 fixed (`ResetPassword` JSON + flow tests, External OAuth flow tests)
-- ⬜ 10 flow operations verified via Sample.Api
+- ✅ 10 flow operations verified via Sample.Api
 - 🟨 OAuth initiate+callback (integration ✅ mocked; manual Google E2E ⬜)
 - ⬜ Refresh rotation + absolute expiry verified manually
 - ⬜ DeveloperMode disabled in prod config
