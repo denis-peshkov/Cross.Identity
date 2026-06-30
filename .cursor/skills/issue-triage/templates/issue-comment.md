@@ -1,6 +1,6 @@
 # Issue Comment Templates — Cross.Identity
 
-Комментарии в GitHub — **на английском**.
+GitHub comments — **in English**.
 
 ---
 

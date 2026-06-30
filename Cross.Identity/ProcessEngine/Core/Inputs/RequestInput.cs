@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core.Inputs;
+﻿namespace Cross.Identity.ProcessEngine.Core.Inputs;
 
 /// <summary>
-/// Стандартная реализация <see cref="IRequestInput"/> для одного HTTP-запроса.
+/// Default <see cref="IRequestInput"/> implementation for a single HTTP request.
 /// </summary>
 internal sealed class RequestInput : IRequestInput
 {

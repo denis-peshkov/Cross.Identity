@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Extensions;
 
 /// <summary>
-/// Утилиты для преобразования ValidationException в ValidationProblemDetails.
+/// Utilities for converting ValidationException to ValidationProblemDetails.
 /// </summary>
 public static class ProblemDetailsFactoryExtensions
 {

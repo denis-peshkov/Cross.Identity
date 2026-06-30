@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories;
 
 /// <summary>
-/// Универсальная реализация валидатора форм, сочетающая базовую и расширенную валидацию.
+/// Unified form validator implementation combining basic and advanced validation.
 /// </summary>
 internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
 {
@@ -9,7 +9,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
     {
         var validator = new InlineValidator<IDictionary<string, object?>>();
 
-        // Валидация полей
+        // Field validation
         validator.RuleFor(x => x).Custom((dict, ctx) =>
         {
             foreach (var field in schema.Fields)
@@ -18,7 +18,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
             }
         });
 
-        // Межполевая валидация
+        // Cross-field validation
         foreach (var rule in schema.Validators)
         {
             AddCrossFieldValidation(validator, rule);
@@ -32,7 +32,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         var hasValue = dict.TryGetValue(field.Key, out var value);
         var stringValue = value?.ToString();
 
-        // Проверка обязательности
+        // Required check
         if (field.Required && (!hasValue || value is null || IsEmpty(value)))
         {
             ctx.AddFailure(field.Key, $"Field '{field.Key}' is required.");
@@ -41,7 +41,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
 
         if (!hasValue || value is null) return;
 
-        // Проверка длины
+        // Length check
         if (stringValue is not null)
         {
             if (field.Min is not null && stringValue.Length < field.Min.Value)
@@ -50,7 +50,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
                 ctx.AddFailure(field.Key, $"Field '{field.Key}' must be at most {field.Max} characters long.");
         }
 
-        // Проверка типов
+        // Type check
         switch (field.Type)
         {
             case FieldTypeEnum.Email:
@@ -79,7 +79,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
                 break;
         }
 
-        // Проверка регулярного выражения
+        // Regular expression check
         if (!string.IsNullOrWhiteSpace(field.Regex) && stringValue is not null)
             if (!Regex.IsMatch(stringValue, field.Regex))
                 ctx.AddFailure(field.Key, $"Field '{field.Key}' does not match the required format.");
@@ -124,10 +124,10 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         map.TryGetValue(left, out var lv);
         map.TryGetValue(right, out var rv);
 
-        // оба пустые — ок, не считаем ошибкой
+        // both empty — OK, not treated as an error
         if (IsEmpty(lv) && IsEmpty(rv)) return;
 
-        // null == "" → равны
+        // null == "" → equal
         var ls = lv?.ToString() ?? string.Empty;
         var rs = rv?.ToString() ?? string.Empty;
         if (!string.Equals(ls, rs, StringComparison.Ordinal))
@@ -162,17 +162,17 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         bool condition;
         if (rule.When.Value is null)
         {
-            // Режим 1: equals не задан → "обязателен, если поле НЕ пустое"
+            // Mode 1: equals not set → "required when the field is NOT empty"
             condition = !IsEmpty(ws);
         }
         else if (rule.When.Value.Length == 0)
         {
-            // Режим 2: equals == "" → "обязателен, если поле ПУСТОЕ" (null/""/whitespace/отсутствует)
+            // Mode 2: equals == "" → "required when the field is EMPTY" (null/""/whitespace/missing)
             condition = IsEmpty(ws);
         }
         else
         {
-            // Режим 3: equals == "значение" → точное сравнение строк
+            // Mode 3: equals == "value" → exact string comparison
             var expected = rule.When.Value;
             var actual   = ws ?? string.Empty;
             condition = string.Equals(actual, expected, StringComparison.Ordinal);
@@ -194,8 +194,8 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
     {
         if (string.IsNullOrWhiteSpace(s)) return false;
         var atIndex = s.IndexOf('@');
-        if (atIndex <= 0) return false; // @ должен быть не в начале
-        return s.LastIndexOf('.') > atIndex; // точка должна быть после @
+        if (atIndex <= 0) return false; // @ must not be at the start
+        return s.LastIndexOf('.') > atIndex; // dot must be after @
     }
 
     private static bool IsValidPhone(string? s)

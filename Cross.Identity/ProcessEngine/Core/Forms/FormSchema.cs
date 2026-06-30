@@ -1,19 +1,19 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms;
 
 /// <summary>
-/// Описание схемы формы (поля + inline-валидаторы).
-/// ВАЖНО: имя схемы (<see cref="Name"/>) — служебное.
-/// Префикс для Bag задаётся <b>kind шага</b>, а не именем схемы.
+/// Form schema description (fields + inline validators).
+/// IMPORTANT: the schema name (<see cref="Name"/>) is internal.
+/// The Bag prefix is set by <b>step kind</b>, not by the schema name.
 /// </summary>
 internal sealed class FormSchema
 {
-    /// <summary>Произвольное имя схемы (для отладки/логов/кэша).</summary>
+    /// <summary>Arbitrary schema name (for debugging/logs/cache).</summary>
     public string Name { get; }
 
-    /// <summary>Список полей формы.</summary>
+    /// <summary>List of form fields.</summary>
     public IReadOnlyList<FieldDescriptor> Fields { get; }
 
-    /// <summary>Inline-валидаторы схемы (например, сравнение полей).</summary>
+    /// <summary>Inline schema validators (for example, field comparison).</summary>
     public IReadOnlyList<IFormSchemaRule> Validators { get; }
 
     public FormSchema(

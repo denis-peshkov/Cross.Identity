@@ -1,14 +1,14 @@
-namespace Cross.Identity.ProcessEngine.Core.Inputs;
+﻿namespace Cross.Identity.ProcessEngine.Core.Inputs;
 
 /// <summary>
-/// Scoped-провайдер входных данных HTTP-запроса для шагов сбора формы.
-/// Контроллер/эндпойнт кладёт тело запроса, шаг <c>CollectFormStep</c> его читает.
+/// Scoped HTTP request input provider for form collection steps.
+/// The controller/endpoint stores the request body; <c>CollectFormStep</c> reads it.
 /// </summary>
 internal interface IRequestInput
 {
-    /// <summary>Получить данные запроса.</summary>
+    /// <summary>Get request data.</summary>
     Task<IDictionary<string, object?>> GetAsync(CancellationToken cancellation);
 
-    /// <summary>Установить данные запроса (обычно из контроллера).</summary>
+    /// <summary>Set request data (usually from the controller).</summary>
     void Set(IDictionary<string, object?> data);
 }

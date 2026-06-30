@@ -1,13 +1,13 @@
 ﻿namespace Cross.Identity.Dtos;
 
 /// <summary>
-/// Сообщение для отправки пользователю.
+/// Message to send to the user.
 /// </summary>
 internal sealed class NotificationMessage
 {
     public required ChannelEnum Channel { get; init; }
-    public required string Destination { get; init; }      // адрес назначения: email address | phone number
-    public required string? DestinationName { get; init; } // имя назначения: FirstName LastName | FullName
+    public required string Destination { get; init; }      // destination address: email address | phone number
+    public required string? DestinationName { get; init; } // destination name: FirstName LastName | FullName
     public string Subject { get; private set; } = string.Empty;
     public string TextBody { get; private set; } = string.Empty;
     public string HtmlBody { get; private set; } = string.Empty;

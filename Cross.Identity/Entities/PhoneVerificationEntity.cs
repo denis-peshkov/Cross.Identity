@@ -7,7 +7,7 @@ public class PhoneVerificationEntity
     public virtual UserAccountEntity UserAccount { get; set; } = null!;
 
     public string PhoneNumber { get; set; } = null!;
-    /// <summary>SHA-256 -> 32 байта</summary>
+    /// <summary>SHA-256 -> 32 bytes</summary>
     public byte[] CodeHash { get; set; } = null!;
     public byte CodeLength { get; set; }
     public byte Attempts { get; set; }

@@ -1,27 +1,27 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Реестр фабрик шагов. Позволяет создать шаг по его <c>kind</c>.
+/// Step factory registry. Creates a step by its <c>kind</c>.
 /// <para>
-/// Потокобезопасность: предполагается инициализация на старте приложения (DI),
-/// после чего только чтение. Если нужно регистрировать во время работы — оборачивайте синхронизацией.
+/// Thread safety: initialization at application startup (DI) is assumed,
+/// followed by read-only access. Wrap with synchronization if registering at runtime.
 /// </para>
 /// </summary>
 internal sealed class StepRegistry
 {
     private readonly Dictionary<string, IStepFactory> _steps = new(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Создать пустой реестр.</summary>
+    /// <summary>Create an empty registry.</summary>
     public StepRegistry() { }
 
-    /// <summary>Создать реестр и зарегистрировать набор фабрик.</summary>
+    /// <summary>Create a registry and register a set of factories.</summary>
     public StepRegistry(IEnumerable<IStepFactory> factories)
     {
         foreach (var f in factories)
             Register(f);
     }
 
-    /// <summary>Зарегистрировать фабрику. Последняя запись с тем же <c>Kind</c> перезапишет предыдущую.</summary>
+    /// <summary>Register a factory. The latest entry with the same <c>Kind</c> overwrites the previous one.</summary>
     public void Register(IStepFactory factory)
     {
         ArgumentNullException.ThrowIfNull(factory);
@@ -31,7 +31,7 @@ internal sealed class StepRegistry
         _steps[factory.Kind] = factory;
     }
 
-    /// <summary>Массовая регистрация фабрик.</summary>
+    /// <summary>Bulk factory registration.</summary>
     public void RegisterRange(IEnumerable<IStepFactory> factories)
     {
         foreach (var f in factories)
@@ -39,11 +39,11 @@ internal sealed class StepRegistry
     }
 
     /// <summary>
-    /// Создать шаг заданного типа <paramref name="kind"/>.
+    /// Create a step of the specified <paramref name="kind"/> type.
     /// <para>
-    /// Внимание: фабрика сама проставит <c>step.Kind = factory.Kind</c>.
-    /// Любое поле <c>kind</c> в JSON используется только для маршрутизации к фабрике/валидации
-    /// и не должно сетиться в шаг.
+    /// Note: the factory sets <c>step.Kind = factory.Kind</c> itself.
+    /// Any <c>kind</c> field in JSON is used only for routing to the factory/validation
+    /// and must not be assigned on the step.
     /// </para>
     /// </summary>
     public IStep Create(string kind, JsonElement cfg, IServiceProvider sp)
@@ -54,12 +54,12 @@ internal sealed class StepRegistry
         if (!_steps.TryGetValue(kind, out var factory))
             throw new InvalidOperationException($"Unknown step kind '{kind}'.");
 
-        // фабрика внутри может дополнительно валидировать, что cfg.kind (если указан) совпадает с factory.Kind
+        // the factory may additionally validate that cfg.kind (if present) matches factory.Kind
         return factory.Create(cfg, sp);
     }
 
     /// <summary>
-    /// Создать шаг напрямую из JSON-конфига шага, извлекая <c>kind</c> из <paramref name="cfg"/>.
+    /// Create a step directly from a step JSON config, extracting <c>kind</c> from <paramref name="cfg"/>.
     /// </summary>
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
@@ -71,15 +71,15 @@ internal sealed class StepRegistry
         return Create(kind, cfg, sp);
     }
 
-    /// <summary>Проверить, зарегистрирован ли фабрика для указанного <paramref name="kind"/>.</summary>
+    /// <summary>Check whether a factory is registered for the specified <paramref name="kind"/>.</summary>
     public bool Has(string kind)
         => _steps.ContainsKey(kind);
 
-    /// <summary>Список доступных <c>kind</c>.</summary>
+    /// <summary>List of available <c>kind</c> values.</summary>
     public IReadOnlyCollection<string> Kinds
         => _steps.Keys.ToArray();
 
-    /// <summary>Очистить реестр (использовать осторожно).</summary>
+    /// <summary>Clear the registry (use with caution).</summary>
     public void Clear()
         => _steps.Clear();
 }

@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
-/// External OAuth: initiate/callback, обмен code на токен провайдера, provisioning пользователя.
-/// OAuth state (см. <see cref="ExternalLoginStatePayload"/>) хранится в таблице
-/// <c>auth.ExternalLoginStates</c> — см. <see cref="InitiateAsync"/>, <see cref="ResolveStateAsync"/>.
+/// External OAuth: initiate/callback, exchange code for provider token, user provisioning.
+/// OAuth state (see <see cref="ExternalLoginStatePayload"/>) is stored in
+/// <c>auth.ExternalLoginStates</c> — see <see cref="InitiateAsync"/>, <see cref="ResolveStateAsync"/>.
 /// </summary>
 internal sealed class ExternalLoginService : IExternalLoginService
 {

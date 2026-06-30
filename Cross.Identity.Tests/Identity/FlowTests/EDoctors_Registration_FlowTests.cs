@@ -68,7 +68,7 @@ internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload.Should().ContainKey("LastCode");
         payload["LastCode"].Should().BeOfType<string>().Which.Should().HaveLength(8);
-        // проверка вызовов GetService<T>()
+        // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IRequestInput)), Times.Exactly(2));
@@ -76,7 +76,7 @@ internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         _serviceProviderMock.Verify(x => x.GetService(typeof(ICodeService)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(ILoggerFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IHostEnvironment)), Times.Once);
-        // (необязательно) проверить суммарное число обращений
+        // (optional) verify total number of invocations
         _serviceProviderMock.Invocations.Count.Should().BeGreaterOrEqualTo(9);
     }
 
@@ -87,10 +87,10 @@ internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         var input = new Dictionary<string, object?>
         {
             ["Email"] = "invalid-email",
-            ["FirstName"] = "J", // слишком короткое имя
-            ["LastName"] = "C", // слишком короткое название
-            ["Password"] = "123", // слишком короткий пароль
-            ["ConfirmPassword"] = "456", // не совпадает
+            ["FirstName"] = "J", // name too short
+            ["LastName"] = "C", // company name too short
+            ["Password"] = "123", // password too short
+            ["ConfirmPassword"] = "456", // does not match
         };
 
         // Act & Assert
@@ -98,7 +98,7 @@ internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*"); // проверяем что есть сообщение об ошибке
+            .WithMessage("*"); // verify that an error message is present
     }
 
     [Test]
@@ -111,7 +111,7 @@ internal class EDoctors_Registration_FlowTests : RunFlowCommandHandlerTestsBase
             ["FullName"] = "John Tester",
             ["Company"] = "Company Inc",
             ["Password"] = "P@ssw0rd!",
-            ["ConfirmPassword"] = "P@ssw0rd!--", // не совпадает
+            ["ConfirmPassword"] = "P@ssw0rd!--", // does not match
             ["AcceptGetEmails"] = true,
             ["AcceptLicenseTerms"] = true,
         };

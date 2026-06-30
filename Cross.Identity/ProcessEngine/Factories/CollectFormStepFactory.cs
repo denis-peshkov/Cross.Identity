@@ -1,14 +1,14 @@
 ﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="CollectFormStep"/>.
-/// Поддерживает три способа задания схемы формы:
+/// Factory for <see cref="CollectFormStep"/>.
+/// Supports three ways to define a form schema:
 /// <list type="number">
-/// <item><description><c>schema</c>: ссылка по имени через <see cref="IFormSchemaProvider"/>.</description></item>
-/// <item><description><c>schemaDef</c>: inline-схема в JSON шага.</description></item>
-/// <item><description><c>schemaPatch</c>: патч (overlay) поверх базовой схемы — секции <c>add</c>/<c>remove</c>/<c>override</c>/<c>rename</c> и опц. <c>name</c>.</description></item>
+/// <item><description><c>schema</c>: reference by name via <see cref="IFormSchemaProvider"/>.</description></item>
+/// <item><description><c>schemaDef</c>: inline schema in the step JSON.</description></item>
+/// <item><description><c>schemaPatch</c>: patch (overlay) on the base schema — sections <c>add</c>/<c>remove</c>/<c>override</c>/<c>rename</c> and optional <c>name</c>.</description></item>
 /// </list>
-/// Пример шага:
+/// Step example:
 /// <code language="json">
 /// {
 ///   "kind": "collectForm",
@@ -36,23 +36,23 @@ internal sealed class CollectFormStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        // опционально: если в JSON всё-таки пришёл "kind" — валидируем совпадение
+        // optional: if JSON still contains "kind", validate it matches
         StepFactoryJsonGuards.ValidateOptionalKind(cfg, Kind);
 
         var next = cfg.Str("next");
 
-        // 1) базовая схема: по имени или inline
+        // 1) base schema: by name or inline
         var schema = ParseSchema(cfg, sp);
 
-        // 2) опциональный патч
+        // 2) optional patch
         if (cfg.TryGetProperty("schemaPatch", out var patch) && patch.ValueKind == JsonValueKind.Object)
             schema = ApplyPatch(schema, patch);
 
-        // 3) валидатор
+        // 3) validator
         var validatorFactory = sp.GetRequiredService<IFormValidatorFactory>();
         var validator = validatorFactory.Create(schema);
 
-        // 4) источник входных данных запроса (из контроллера)
+        // 4) request input source (from the controller)
         var input = sp.GetRequiredService<IRequestInput>();
         ArgumentException.ThrowIfNullOrEmpty(nameof(input));
 
@@ -67,12 +67,12 @@ internal sealed class CollectFormStepFactory : IStepFactory
     }
 
     /// <summary>
-    /// Построить <see cref="FormSchema"/> либо по имени (<c>schema</c>), либо из inline-определения (<c>schemaDef</c>).
+    /// Build <see cref="FormSchema"/> either by name (<c>schema</c>) or from an inline definition (<c>schemaDef</c>).
     /// </summary>
-    /// <exception cref="InvalidOperationException">Если схема не задана или провайдер отсутствует.</exception>
+    /// <exception cref="InvalidOperationException">When the schema is not specified or the provider is missing.</exception>
     private FormSchema ParseSchema(JsonElement cfg, IServiceProvider sp)
     {
-        // Вариант A: schema: "name"
+        // Option A: schema: "name"
         if (cfg.TryGetProperty("schema", out var schemaNameEl) && schemaNameEl.ValueKind == JsonValueKind.String)
         {
             var schemaName = schemaNameEl.GetString()!;
@@ -81,7 +81,7 @@ internal sealed class CollectFormStepFactory : IStepFactory
             return provider.Get(schemaName);
         }
 
-        // Вариант B: schemaDef: { fields:[], [validators:[]] }
+        // Option B: schemaDef: { fields:[], [validators:[]] }
         if (cfg.TryGetProperty("schemaDef", out var defEl) && defEl.ValueKind == JsonValueKind.Object)
         {
             // fields
@@ -148,14 +148,14 @@ internal sealed class CollectFormStepFactory : IStepFactory
                                 var whenField = whenEl.GetProperty("field").GetString()!;
 
                                 // equals:
-                                // - если не задано вообще → особый режим "поле НЕ пустое"
-                                // - если задано (в т.ч. пустая строка "") → точное сравнение со строкой
+                                // - if not specified at all → special mode "field is NOT empty"
+                                // - if specified (including empty string "") → exact string comparison
                                 string? whenEquals = null;
                                 if (whenEl.TryGetProperty("equals", out var eqEl))
                                 {
                                     if (eqEl.ValueKind == JsonValueKind.String)
                                     {
-                                        // сохраняем строку как есть, включая ""
+                                        // keep the string as-is, including ""
                                         whenEquals = eqEl.GetString();
                                     }
                                     else if (eqEl.ValueKind == JsonValueKind.Null)
@@ -191,7 +191,7 @@ internal sealed class CollectFormStepFactory : IStepFactory
                 }
             }
 
-            // имя схемы — чисто служебное, префикс для Bag задаётся Kind шага
+            // schema name is internal only; Bag prefix is set by step Kind
             var schemaName = cfg.Str("kind");
             return new FormSchema(schemaName, fields, validators);
         }
@@ -200,21 +200,21 @@ internal sealed class CollectFormStepFactory : IStepFactory
     }
 
     /// <summary>
-    /// Применить <c>schemaPatch</c> к базовой схеме.
-    /// Поддерживаются секции: <c>remove</c>, <c>override</c>, <c>add</c>, <c>rename</c> и опциональное <c>name</c>.
+    /// Apply <c>schemaPatch</c> to the base schema.
+    /// Supported sections: <c>remove</c>, <c>override</c>, <c>add</c>, <c>rename</c>, and optional <c>name</c>.
     /// </summary>
     private static FormSchema ApplyPatch(FormSchema baseSchema, JsonElement patch)
     {
         var fields = baseSchema.Fields.ToList();
 
-        // remove: список ключей для удаления
+        // remove: list of keys to delete
         if (patch.TryGetProperty("remove", out var rem) && rem.ValueKind == JsonValueKind.Array)
         {
             var toRemove = rem.EnumerateArray().Select(e => e.GetString()!).ToHashSet(StringComparer.Ordinal);
             fields.RemoveAll(f => toRemove.Contains(f.Key));
         }
 
-        // override: изменить свойства существующих полей (min/max/required/regex)
+        // override: change properties of existing fields (min/max/required/regex)
         if (patch.TryGetProperty("override", out var ov) && ov.ValueKind == JsonValueKind.Array)
         {
             foreach (var o in ov.EnumerateArray())
@@ -233,7 +233,7 @@ internal sealed class CollectFormStepFactory : IStepFactory
             }
         }
 
-        // add: добавить новые поля (или заменить, если ключ совпадает)
+        // add: add new fields (or replace when the key matches)
         if (patch.TryGetProperty("add", out var add) && add.ValueKind == JsonValueKind.Array)
         {
             foreach (var f in add.EnumerateArray())
@@ -251,7 +251,7 @@ internal sealed class CollectFormStepFactory : IStepFactory
             }
         }
 
-        // rename: переименование ключей полей
+        // rename: rename field keys
         if (patch.TryGetProperty("rename", out var ren) && ren.ValueKind == JsonValueKind.Array)
         {
             foreach (var r in ren.EnumerateArray())
@@ -263,15 +263,15 @@ internal sealed class CollectFormStepFactory : IStepFactory
             }
         }
 
-        // name: опционально переименовать всю схему (НЕ влияет на префикс bag, т.к. теперь префикс = Name шага)
+        // name: optionally rename the entire schema (does NOT affect bag prefix; prefix = step Name)
         var name = patch.TryGetProperty("name", out var n) && n.ValueKind == JsonValueKind.String
             ? n.GetString()! : baseSchema.Name;
 
         return new FormSchema(name, fields);
     }
 
-    /// <summary>Разбор строкового типа поля в <see cref="FieldTypeEnum"/>.</summary>
-    /// <exception cref="ArgumentOutOfRangeException">Неизвестный тип поля.</exception>
+    /// <summary>Parse a string field type into <see cref="FieldTypeEnum"/>.</summary>
+    /// <exception cref="ArgumentOutOfRangeException">Unknown field type.</exception>
     private static FieldTypeEnum ParseFieldType(string s) => s.ToLowerInvariant() switch
     {
         "string"   => FieldTypeEnum.String,

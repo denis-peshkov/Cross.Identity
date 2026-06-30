@@ -2,130 +2,130 @@
 
 public enum RefreshTokenRevokeReason : short
 {
-    #region 1. Security-причины (критичные)
+    #region 1. Security reasons (critical)
 
     /// <summary>
-    /// Подача старого токена после ротации → попытка атаки → инвалидируем всю “семью”.
+    /// Presenting an old token after rotation → attack attempt → invalidate the entire family.
     /// </summary>
     REPLAY_DETECTED,
 
     /// <summary>
-    /// Выявлено использование с другого устройства / IP сочетания → маркер кражи.
+    /// Use from another device / IP combination detected → theft indicator.
     /// </summary>
     /// <remarks>
-    /// Обычно используется вместе с аналитикой:
-    /// • слишком много попыток с разных IP
+    /// Typically used with analytics:
+    /// • too many attempts from different IPs
     /// • fingerprint mismatch
     /// • suspicious geo-location
     /// </remarks>
     TOKEN_STOLEN,
 
     /// <summary>
-    /// Хеш устройства (DeviceFingerprint) поменялся → токен украден или подделан.
+    /// Device hash (DeviceFingerprint) changed → token stolen or forged.
     /// </summary>
     DEVICE_MISMATCH,
 
     IP_MISMATCH,
 
     /// <summary>
-    /// Некоторые системы хардкорно проверяют регион за region-lock.
+    /// Some systems strictly enforce region for region-lock.
     /// </summary>
     LOCATION_MISMATCH,
 
     /// <summary>
-    /// User-Agent сильно отличается → возможный вор.
+    /// User-Agent differs significantly → possible thief.
     /// </summary>
     USER_AGENT_MISMATCH,
 
     #endregion
 
-    #region 2. Business-Security причины (поведение пользователя). Эти причины связаны с условиями работы или ограничениями.
+    #region 2. Business-security reasons (user behavior). These reasons relate to operating conditions or restrictions.
 
     /// <summary>
-    /// Пользователь сменил пароль → ВСЕ refresh tokens ревокаются.
+    /// User changed password → ALL refresh tokens are revoked.
     /// </summary>
     PASSWORD_CHANGED,
 
     /// <summary>
-    /// Пользователь сменил/отвязал MFA → все токены становятся недействительными.
+    /// User changed/unlinked MFA → all tokens become invalid.
     /// </summary>
     MFA_RESET,
 
     /// <summary>
-    /// Аномалия: много логинов, много ошибок, аномальная активность.
+    /// Anomaly: many logins, many errors, unusual activity.
     /// </summary>
     SUSPICIOUS_ACTIVITY,
 
     /// <summary>
-    /// Сессия была валидна X дней → автоматически ревокнуть FamilyId. Например: максимум 30 дней, независимо от активности.
+    /// Session was valid for X days → automatically revoke FamilyId. E.g. max 30 days regardless of activity.
     /// </summary>
     SESSION_EXPIRED,
 
     #endregion
 
-    #region 3. User-initiated (пользователь сам)
+    #region 3. User-initiated (user action)
 
     /// <summary>
-    /// Пользователь нажал Logout → токен/семейство ревокаются.
+    /// User clicked Logout → token/family revoked.
     /// </summary>
     USER_LOGOUT,
 
     /// <summary>
-    /// Пользователь нажал “Logout from all devices”.
+    /// User clicked "Logout from all devices".
     /// </summary>
     USER_LOGOUT_ALL,
 
     /// <summary>
-    /// Пользователь открепил устройство в разделе “Мои устройства”.
+    /// User detached a device in "My devices".
     /// </summary>
     DEVICE_REMOVED_BY_USER,
 
     #endregion
 
-    #region 4. Admin / backend-initiated причины
+    #region 4. Admin / backend-initiated reasons
 
     /// <summary>
-    /// Администратор вручную отключил пользователя / устройство / токены.
+    /// Administrator manually disabled user / device / tokens.
     /// </summary>
     ADMIN_REVOKE,
 
     /// <summary>
-    /// Учетка заблокирована — revoke всех токенов.
+    /// Account locked — revoke all tokens.
     /// </summary>
     ACCOUNT_DISABLED,
 
     /// <summary>
-    /// Удалена учетная запись.
+    /// Account deleted.
     /// </summary>
     ACCOUNT_DELETED,
 
     #endregion
 
-    #region 5. Technical причины
+    #region 5. Technical reasons
 
     /// <summary>
-    /// Детектор безопасности считает токен компрометированным (AI/ML, anti-fraud).
+    /// Security detector considers the token compromised (AI/ML, anti-fraud).
     /// </summary>
     TOKEN_COMPROMISED,
 
     /// <summary>
-    /// Токен подпорчен, неправильная подпись, просрочен, неверный audience.
+    /// Token tampered, invalid signature, expired, wrong audience.
     /// </summary>
     TOKEN_FORMAT_INVALID,
 
     /// <summary>
-    /// Изменена схема токена / алгоритм / версия → старые токены невалидны.
+    /// Token scheme / algorithm / version changed → old tokens invalid.
     /// </summary>
     /// <remarks>
-    /// Например:
-    /// • переход с HS256 → RS256
-    /// • смена pepper
-    /// • смена структуры payload
+    /// For example:
+    /// • migration from HS256 → RS256
+    /// • pepper rotation
+    /// • payload structure change
     /// </remarks>
     TOKEN_UPGRADE_REQUIRED,
 
     /// <summary>
-    /// Forcing rotation (например, через флаг в БД) — иногда используется при миграциях.
+    /// Forcing rotation (e.g. via a DB flag) — sometimes used during migrations.
     /// </summary>
     ROTATION_REQUIRED,
 

@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
 /// <summary>
-/// Сквозные тесты process engine: DI, step registry, flow executor, EF.
+/// End-to-end process engine tests: DI, step registry, flow executor, EF.
 /// </summary>
 internal class RunFlowCommandHandlerTestsBase : EFTestsBase
 {
@@ -22,7 +22,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceScopeMock = new Mock<IServiceScope>();
         _serviceScopeFactoryMock = new Mock<IServiceScopeFactory>();
         _serviceProviderMock = new Mock<IServiceProvider>();
-        // Регистрируем все фабрики шагов, как в DI-расширении AddCrossIdentity
+        // Register all step factories, as in the AddCrossIdentity DI extension
         _registry = new StepRegistry();
         _registry.Register(new CodeAuthStepFactory());
         _registry.Register(new CollectFormStepFactory());
@@ -46,7 +46,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         var licenseValidator = new LicenseValidator(loggerFactory);
         var licenseProductInfo = new LicenseProductInfo();
 
-        // Настраиваем правильную цепочку зависимостей
+        // Configure the correct dependency chain
         _serviceScopeFactoryMock
             .Setup(x => x.CreateScope())
             .Returns(_serviceScopeMock.Object);
@@ -158,8 +158,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
     protected void AddRegistryStep<T>()
         where T : IStepFactory, new()
     {
-        var factory = new T();              // явное создание экземпляра
-        _registry.Register(factory);        // регистрация в реестре
+        var factory = new T();              // explicit instance creation
+        _registry.Register(factory);        // register in the registry
     }
 
     [Obsolete]

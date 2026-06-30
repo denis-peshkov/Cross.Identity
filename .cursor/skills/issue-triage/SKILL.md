@@ -1,51 +1,51 @@
 ---
 name: issue-triage
 description: >-
-  Issue triage для Cross.Identity: аудит открытых issues, категоризация,
-  дубликаты, cross-ref с PR, оценка риска (auth/JWT/security), draft-комментарии.
-  Args: "all" — deep analysis всех; номера "42 57" — фокус; "en"/"fr" — язык
-  таблиц (по умолчанию ru).
+  Issue triage for Cross.Identity: audit open issues, categorization,
+  duplicates, cross-ref with PRs, risk assessment (auth/JWT/security), draft comments.
+  Args: "all" — deep analysis of all; numbers "42 57" — focus; "ru"/"fr" — table
+  language (default en).
 ---
 
 # Issue Triage — Cross.Identity
 
-Триаж GitHub issues для репозитория **Cross.Identity** (NuGet-библиотека identity/auth: JWT, process engine, OAuth flows).
+GitHub issue triage for the **Cross.Identity** repository (NuGet identity/auth library: JWT, process engine, OAuth flows).
 
-## Когда использовать
+## When to use
 
-| Сценарий | Действие |
-|----------|----------|
-| «Разбери issues» / «issue triage» | Запустить этот skill |
-| >10 открытых issues без triage | Предложить audit |
-| Issue stale >30 дней | Включить в таблицу Stale |
+| Scenario | Action |
+|----------|--------|
+| "Triage issues" / "issue triage" | Run this skill |
+| >10 open issues without triage | Suggest audit |
+| Issue stale >30 days | Include in Stale table |
 
-Связанные skills: `pr-triage`, `cross-identity-triage`, `repo-recap` (если добавлен).
+Related skills: `pr-triage`, `cross-identity-triage`, `repo-recap` (if added).
 
-## Предусловия
+## Prerequisites
 
 ```bash
 git rev-parse --is-inside-work-tree
 gh auth status
 ```
 
-Для сжатия вывода команд использовать обёртку:
+Use the wrapper to compress command output:
 
 ```bash
 .cursor/triage/rtk-gh.sh
 ```
 
-Если `rtk` не установлен — скрипт прозрачно вызывает `gh`.
+If `rtk` is not installed — the script transparently calls `gh`.
 
-## Язык
+## Language
 
-- Таблицы и резюме: **русский** (по умолчанию), `en` — английский
-- Комментарии в GitHub: **всегда английский**
+- Tables and summary: **English** (default), `ru` — Russian
+- GitHub comments: **always English**
 
-## Workflow — 3 фазы
+## Workflow — 3 phases
 
-### Phase 1 — Audit (всегда)
+### Phase 1 — Audit (always)
 
-#### Data gathering (параллельно)
+#### Data gathering (in parallel)
 
 ```bash
 REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner)
@@ -61,99 +61,99 @@ REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner
 .cursor/triage/rtk-gh.sh api "repos/${REPO}/collaborators" --jq '.[].login'
 ```
 
-**Fallback collaborateurs** (403/404):
+**Collaborators fallback** (403/404):
 
 ```bash
 .cursor/triage/rtk-gh.sh pr list --state merged --limit 10 --json author --jq '.[].author.login' | sort -u
 ```
 
-`author` — объект `{login: "..."}`; извлекать `.author.login`.
+`author` is an object `{login: "..."}`; extract `.author.login`.
 
-#### Анализ — 6 измерений
+#### Analysis — 6 dimensions
 
-**1. Категоризация** (labels > инференс по title/body):
+**1. Categorization** (labels > inference from title/body):
 
 - **Bug**: crash, error, fail, broken, regression, token, jwt, auth
 - **Feature**: add, implement, support, new, flow, oauth
 - **Enhancement**: improve, optimize, refactor, performance
 - **Question**: how, why, help, docs, documentation
-- **Duplicate Candidate**: см. п.3
+- **Duplicate Candidate**: see item 3
 
 **2. Cross-ref PRs**:
 
-- Сканировать body PR: `fixes #N`, `closes #N`, `resolves #N`
+- Scan PR body: `fixes #N`, `closes #N`, `resolves #N`
 - Map: `issue_number → [PR numbers]`
-- PR merged + issue open → рекомендовать закрытие
+- PR merged + issue open → recommend closing
 
-**3. Дубликаты**:
+**3. Duplicates**:
 
-- Jaccard по словам заголовков >60% → кандидат
-- Overlap keywords в body >50% → усиление сигнала
-- Сравнивать с 20 последними closed
+- Jaccard on title words >60% → candidate
+- Overlap keywords in body >50% → stronger signal
+- Compare with 20 most recent closed
 
-**4. Риск** (для identity-библиотеки — приоритет security):
+**4. Risk** (for identity library — security priority):
 
-- **Красный**: CVE, vulnerability, injection, auth bypass, security, exploit, token leak, credentials, RCE, XSS, jwt bypass, refresh token
-- **Жёлтый**: breaking change, migration, deprecation, API removal, incompatible
-- **Зелёный**: остальное
+- **Red**: CVE, vulnerability, injection, auth bypass, security, exploit, token leak, credentials, RCE, XSS, jwt bypass, refresh token
+- **Yellow**: breaking change, migration, deprecation, API removal, incompatible
+- **Green**: everything else
 
 **5. Staleness**:
 
-- >30d без активности → Stale
+- >30d without activity → Stale
 - >90d → Very Stale
 
-**6. Рекомендации**:
+**6. Recommendations**:
 
 - `Accept & Prioritize`, `Label needed`, `Comment needed`, `Linked to PR`,
-  `Duplicate candidate`, `Close candidate` (не для collaborator), `PR merged → close`
+  `Duplicate candidate`, `Close candidate` (not for collaborator), `PR merged → close`
 
-#### Output — 5 таблиц
+#### Output — 5 tables
 
-См. формат в оригинальном workflow (Critiques / Linked to PR / Active / Duplicates / Stale + Résumé).
+See format in the original workflow (Critiques / Linked to PR / Active / Duplicates / Stale + Summary).
 
-0 issues → `Нет открытых issues.` и завершить.
+0 issues → `No open issues.` and finish.
 
-После таблиц — копировать в буфер (`pbcopy` / `xclip` / `wl-copy`).
+After tables — copy to clipboard (`pbcopy` / `xclip` / `wl-copy`).
 
 ### Phase 2 — Deep Analysis (opt-in)
 
-Для выбранных issues — `Task` с `subagent_type: generalPurpose` параллельно.
+For selected issues — `Task` with `subagent_type: generalPurpose` in parallel.
 
-Контекст Cross.Identity для агента:
+Cross.Identity context for the agent:
 
-- Библиотека: `Cross.Identity/` — process engine, JWT, OAuth, flows в `ProcessEngine/Definitions/Flows/`
-- Тесты: `Cross.Identity.Tests/`
-- Документация: `FLOWS.md`, `RefreshToken.md`
-- Правила: `.cursor/rules/104-backend-auth.mdc`, `105-backend-security.mdc`
+- Library: `Cross.Identity/` — process engine, JWT, OAuth, flows in `ProcessEngine/Definitions/Flows/`
+- Tests: `Cross.Identity.Tests/`
+- Documentation: `FLOWS.md`, `RefreshToken.md`
+- Rules: `.cursor/rules/104-backend-auth.mdc`, `105-backend-security.mdc`
 
-Шаблон комментария: `templates/issue-comment.md`.
+Comment template: `templates/issue-comment.md`.
 
-### Phase 3 — Actions (только с подтверждением)
+### Phase 3 — Actions (confirmation only)
 
 - `.cursor/triage/rtk-gh.sh issue comment {num} --body-file -`
 - `.cursor/triage/rtk-gh.sh issue edit {num} --add-label "{label}"`
 - `.cursor/triage/rtk-gh.sh issue close {num} --reason "not planned"`
 
-**Никогда** не постить/закрывать без `AskQuestion`.
+**Never** post/close without `AskQuestion`.
 
-## Cross.Identity — специфика в комментариях
+## Cross.Identity — specifics in comments
 
-Для bug reports запрашивать:
+For bug reports request:
 
-- Версию NuGet / commit
+- NuGet version / commit
 - Target framework (net7/net8)
-- Flow name (`license.TokenByCode`, `shop.auth`, и т.д.)
-- Шаги воспроизведения без реальных токенов/паролей
+- Flow name (`license.TokenByCode`, `shop.auth`, etc.)
+- Reproduction steps without real tokens/passwords
 
 ## Edge cases
 
-| Ситуация | Поведение |
-|----------|-----------|
-| 0 issues | Сообщить и выйти |
-| >50 comments | Резюме 5 последних |
-| Rate limit | Уменьшить `--limit`, уведомить |
-| Issue collaborator | Не предлагать close без явного запроса |
+| Situation | Behavior |
+|-----------|----------|
+| 0 issues | Report and exit |
+| >50 comments | Summarize 5 most recent |
+| Rate limit | Reduce `--limit`, notify |
+| Issue collaborator | Do not suggest close without explicit request |
 
-## Сохранение отчёта
+## Saving the report
 
-При полном triage сохранять в `.cursor/triage/docs/issues-YYYY-MM-DD.md`.
+On full triage save to `.cursor/triage/docs/issues-YYYY-MM-DD.md`.

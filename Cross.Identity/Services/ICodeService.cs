@@ -1,34 +1,34 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
-/// Сервис одноразовых кодов (OTP): отправка и проверка.
-/// Используется шагами:
+/// One-time code (OTP) service: send and verify.
+/// Used by steps:
 /// <list type="bullet">
 /// <item><description><c>SendCodeStep</c> — <see cref="SendAsync"/></description></item>
-/// <item><description><c>VerifyCodeStep</c> и <c>CodeAuthStep</c> — <see cref="VerifyAsync"/></description></item>
+/// <item><description><c>VerifyCodeStep</c> and <c>CodeAuthStep</c> — <see cref="VerifyAsync"/></description></item>
 /// </list>
 /// </summary>
 internal interface ICodeService
 {
     /// <summary>
-    /// Отправить одноразовый код на указанный канал/адрес с временем жизни.
+    /// Send a one-time code to the specified channel/destination with a TTL.
     /// </summary>
-    /// <param name="channel">Канал доставки (напр., <c>"email"</c> или <c>"phone"</c>).</param>
-    /// <param name="destination">Назначение (напр., адрес email или номер телефона).</param>
-    /// <param name="code">Текст кода (генерируется вне сервиса или самим сервисом — на усмотрение архитектуры).</param>
+    /// <param name="channel">Delivery channel (e.g. <c>"email"</c> or <c>"phone"</c>).</param>
+    /// <param name="destination">Destination (e.g. email address or phone number).</param>
+    /// <param name="code">Code text (generated outside the service or by the service — architecture choice).</param>
     /// <param name="msg"></param>
     /// <param name="userId"></param>
-    /// <param name="ttl">Время жизни кода.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <param name="ttl">Code lifetime.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task SendAsync(NotificationMessage msg, string code, string userId, TimeSpan ttl, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Проверить одноразовый код для указанного канала и идентичности.
+    /// Verify a one-time code for the specified channel and identity.
     /// </summary>
-    /// <param name="channel">Канал (напр., <c>"email"</c>/<c>"phone"</c>).</param>
-    /// <param name="identity">Идентичность (адрес email, телефон и т.п.).</param>
-    /// <param name="code">Предъявленный код.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns><c>true</c>, если код валиден и не истёк; иначе <c>false</c>.</returns>
+    /// <param name="channel">Channel (e.g. <c>"email"</c>/<c>"phone"</c>).</param>
+    /// <param name="identity">Identity (email address, phone, etc.).</param>
+    /// <param name="code">Presented code.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><c>true</c> if the code is valid and not expired; otherwise <c>false</c>.</returns>
     Task<bool> VerifyAsync(string channel, string identity, string code, CancellationToken cancellationToken);
 }

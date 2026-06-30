@@ -1,85 +1,85 @@
-### Общая идея
+### General idea
 
-Нам нужен **deploy key (SSH‑ключ только для этого репо)**, который:
-- публичной частью лежит в GitHub (`Deploy keys` у `denis-peshkov/Cross.Identity`)
-- приватной частью — в Azure DevOps, где pipeline ставит его перед `git submodule update`.
+We need a **deploy key (SSH key for this repo only)** that:
+- has its public part in GitHub (`Deploy keys` on `denis-peshkov/Cross.Identity`)
+- has its private part in Azure DevOps, where the pipeline installs it before `git submodule update`.
 
 ---
 
-### Шаг 1. Создать SSH‑ключ (deploy key)
+### Step 1. Create an SSH key (deploy key)
 
-На своей машине:
+On your machine:
 
 ```bash
 ssh-keygen -t ed25519 -C "azure-devops-deploy-key" -f ./cross-identity-deploy-key
-# passphrase можно оставить пустой для CI
+# passphrase can be left empty for CI
 ```
 
-Получите два файла:
-- `cross-identity-deploy-key` — приватный
-- `cross-identity-deploy-key.pub` — публичный
+You will get two files:
+- `cross-identity-deploy-key` — private
+- `cross-identity-deploy-key.pub` — public
 
 ---
 
-### Шаг 2. Добавить ключ в GitHub как Deploy key (read‑only)
+### Step 2. Add the key to GitHub as a Deploy key (read-only)
 
-1. Зайти в GitHub: `denis-peshkov/Cross.Identity`
+1. Go to GitHub: `denis-peshkov/Cross.Identity`
 2. `Settings` → `Deploy keys` → `Add deploy key`
 3. Title: `azure-devops-readonly`
-4. Key: содержимое `cross-identity-deploy-key.pub`
-5. **Не** ставьте галку “Allow write access” (должен быть read‑only)
-6. Сохранить.
+4. Key: contents of `cross-identity-deploy-key.pub`
+5. **Do not** check "Allow write access" (must be read-only)
+6. Save.
 
 ---
 
-### Шаг 3. Добавить приватный ключ в Azure DevOps
+### Step 3. Add the private key to Azure DevOps
 
-Вариант через Secure Files + `InstallSSHKey` (простой и явный):
+Option via Secure Files + `InstallSSHKey` (simple and explicit):
 
-1. В Azure DevOps → ваш проект → `Pipelines` → `Library` → `Secure files`
-2. `Upload` → загрузить `cross-identity-deploy-key`
-3. Назвать, например, `cross-identity-deploy-key`
+1. In Azure DevOps → your project → `Pipelines` → `Library` → `Secure files`
+2. `Upload` → upload `cross-identity-deploy-key`
+3. Name it, for example, `cross-identity-deploy-key`
 
 ---
 
-### Шаг 4. Обновить pipeline YAML
+### Step 4. Update pipeline YAML
 
-Перед `checkout: self` нужно поставить ключ и включить сабмодули.
+Before `checkout: self` you need to install the key and enable submodules.
 
 ```yaml
 steps:
-  # Устанавливаем SSH ключ
+  # Install SSH key
   - task: InstallSSHKey@0
     displayName: 'Install SSH key for Cross.Identity'
     inputs:
       knownHostsEntry: 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
-      sshPublicKey: ''                                # можно оставить пустым
-      sshKeySecureFile: 'cross-identity-deploy-key'   # имя из Secure Files
+      sshPublicKey: ''                                # can be left empty
+      sshKeySecureFile: 'cross-identity-deploy-key'   # name from Secure Files
 
-  # Клонируем репозиторий с сабмодулями
+  # Clone repository with submodules
   - checkout: self
     submodules: recursive
     persistCredentials: true
 ```
 
-`knownHostsEntry` можно взять из:
+`knownHostsEntry` can be obtained from:
 
 ```bash
 ssh-keyscan -t ed25519 github.com
 ```
 
-(вставляете строку целиком).
+(paste the entire line).
 
-Важно:
-- В `.gitmodules` уже должен быть `url = git@github.com:denis-peshkov/Cross.Identity.git` — **не меняем**.
-- В `checkout: self` обязательно `submodules: recursive`, иначе сабмодуль не подтянется.
+Important:
+- `.gitmodules` should already have `url = git@github.com:denis-peshkov/Cross.Identity.git` — **do not change**.
+- In `checkout: self` you must have `submodules: recursive`, otherwise the submodule will not be fetched.
 
 ---
 
-### Шаг 5. Проверить
+### Step 5. Verify
 
-- Запустить pipeline в Azure DevOps.
-- В логе шага `InstallSSHKey` убедиться, что ключ установлен.
-- В шаге `checkout` больше не должно быть `Permission denied (publickey)`.
+- Run the pipeline in Azure DevOps.
+- In the `InstallSSHKey` step log, verify that the key was installed.
+- In the `checkout` step there should no longer be `Permission denied (publickey)`.
 
-Если хотите, пришлите кусок актуального YAML pipeline — могу прямо в нем вставить готовый блок.
+If you want, send a snippet of the current pipeline YAML — I can insert the ready-made block directly into it.

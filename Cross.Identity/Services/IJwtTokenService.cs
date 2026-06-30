@@ -3,140 +3,140 @@
 public interface IJwtTokenService
 {
     /// <summary>
-    /// Выпустить <c>id_token</c> (OIDC-подобный токен) на основе набора claims.
+    /// Issue an <c>id_token</c> (OIDC-like token) from a set of claims.
     /// </summary>
-    /// <param name="claims">Список claims, которые должны войти в токен.</param>
-    /// <returns>Строка токена в compact-формате.</returns>
+    /// <param name="claims">Claims to include in the token.</param>
+    /// <returns>Token string in compact form.</returns>
     Task<string> GenerateIdTokenAsync(List<Claim> claims);
 
     /// <summary>
-    /// Выпустить access-токен (JWT) для авторизации API.
+    /// Issue an access token (JWT) for API authorization.
     /// </summary>
-    /// <param name="userId">ID пользователя.</param>
-    /// <param name="familyId">ID семейства/контекста.</param>
-    /// <param name="permissions">Разрешения, которые будут добавлены как claims.</param>
-    /// <param name="claims">Дополнительные claims токена.</param>
-    /// <returns>Строка access-токена в compact-формате.</returns>
+    /// <param name="userId">User ID.</param>
+    /// <param name="familyId">Family/context ID.</param>
+    /// <param name="permissions">Permissions to add as claims.</param>
+    /// <param name="claims">Additional token claims.</param>
+    /// <returns>Access token string in compact form.</returns>
     Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims);
 
     /// <summary>
-    /// Выпустить refresh-токен (JWT) для ротации сессии.
+    /// Issue a refresh token (JWT) for session rotation.
     /// </summary>
-    /// <param name="userId">ID пользователя.</param>
-    /// <param name="familyId">ID семейства/контекста.</param>
-    /// <param name="claims">Дополнительные claims refresh-токена.</param>
-    /// <returns>Строка refresh-токена.</returns>
+    /// <param name="userId">User ID.</param>
+    /// <param name="familyId">Family/context ID.</param>
+    /// <param name="claims">Additional refresh-token claims.</param>
+    /// <returns>Refresh token string.</returns>
     Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims);
 
     /// <summary>
-    /// Проверка валидности access-токена по <c>jti</c>.
-    /// Обычно применяется в контексте, где доступна исходная строка JWT и её можно безопасно распарсить.
+    /// Validate an access token by <c>jti</c>.
+    /// Typically used when the raw JWT string is available and can be parsed safely.
     /// <para>
-    /// Важно: для зашифрованных (JWE) токенов предпочтительнее использовать <see cref="ValidateAccessTokenJtiAsync"/>,
-    /// т.к. middleware уже извлекает claims из токена.
+    /// For encrypted (JWE) tokens, prefer <see cref="ValidateAccessTokenJtiAsync"/>,
+    /// because middleware has already extracted claims from the token.
     /// </para>
     /// </summary>
-    /// <param name="accessToken">Строка access-токена (JWT/JWE) в формате compact.</param>
+    /// <param name="accessToken">Access token string (JWT/JWE) in compact form.</param>
     /// <returns>
-    /// <c>true</c>, если токен считается действительным (не отозван и не истёк по данным в БД),
-    /// иначе <c>false</c>.
+    /// <c>true</c> if the token is considered valid (not revoked and not expired per DB data);
+    /// otherwise <c>false</c>.
     /// </returns>
     Task<bool> ValidateAccessTokenAsync(string accessToken);
 
     /// <summary>
-    /// Проверка валидности access-токена по <c>jti</c>, без повторного парсинга/дешифрования токена.
-    /// Используется в <c>JwtBearerEvents.OnTokenValidated</c>, когда middleware уже извлёк claims из токена.
+    /// Validate an access token by <c>jti</c> without re-parsing/decrypting the token.
+    /// Used in <c>JwtBearerEvents.OnTokenValidated</c> when middleware has already extracted claims.
     /// </summary>
-    /// <param name="jti">JTI (идентификатор access-токена), извлечённый из JWT claims.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <param name="jti">JTI (access-token identifier) extracted from JWT claims.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c>, если access-токен с данным <c>jti</c> присутствует в БД и не отозван, а также не истёк,
-    /// иначе <c>false</c>.
+    /// <c>true</c> if the access token with the given <c>jti</c> exists in the DB, is not revoked, and not expired;
+    /// otherwise <c>false</c>.
     /// </returns>
     Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Проверка валидности refresh-токена по его строке.
-    /// Ожидает, что refresh-токен уже был выдан сервером и должен существовать в таблице refresh-токенов.
+    /// Validate a refresh token by its string value.
+    /// Expects the refresh token was issued by the server and exists in the refresh-tokens table.
     /// </summary>
-    /// <param name="refreshToken">Строка refresh-токена.</param>
-    /// <returns><c>true</c>, если токен действителен (не отозван и не истёк), иначе <c>false</c>.</returns>
+    /// <param name="refreshToken">Refresh token string.</param>
+    /// <returns><c>true</c> if the token is valid (not revoked and not expired); otherwise <c>false</c>.</returns>
     Task<bool> ValidateRefreshTokenAsync(string refreshToken);
 
     /// <summary>
-    /// Отозвать access-токен по его <c>jti</c> (перевести в revoked состояние в БД).
+    /// Revoke an access token by <c>jti</c> (mark as revoked in the DB).
     /// </summary>
-    /// <param name="jti">JTI (идентификатор) access-токена.</param>
+    /// <param name="jti">JTI (identifier) of the access token.</param>
     Task RevokeAccessTokenAsync(Guid jti);
 
     /// <summary>
-    /// Очистка просроченных access-токенов из хранилища - удаление по <c>ExpiresAt</c>  (рекомендуется выполнять периодически).
+    /// Remove expired access tokens from storage by <c>ExpiresAt</c> (run periodically).
     /// </summary>
     Task CleanupExpiredAccessTokensAsync();
 
     /// <summary>
-    /// Удаление refresh-токенов с истёкшим абсолютным сроком цепочки (<c>AbsoluteExpiresAt</c>).
+    /// Delete refresh tokens whose chain absolute lifetime (<c>AbsoluteExpiresAt</c>) has expired.
     /// </summary>
     Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Получить значение claim из JWT по типу(типам).
+    /// Get a claim value from a JWT by type(s).
     /// </summary>
-    /// <param name="token">JWT в compact-формате.</param>
+    /// <param name="token">JWT in compact form.</param>
     /// <param name="claimTypes">
-    /// Типы claims, по которым выполняется поиск. Первый найденный тип возвращается как значение.
+    /// Claim types to search. The first matching type is returned as the value.
     /// </param>
-    /// <returns>Значение claim или <c>null</c>, если claim не найден.</returns>
+    /// <returns>Claim value, or <c>null</c> if not found.</returns>
     Task<string?> GetClaimValueAsync(string token, params string[] claimTypes);
 
     /// <summary>
-    /// Получить refresh-токен из хранилища по его строковому значению.
-    /// Внутри используется хэш токена, чтобы не хранить токен в открытом виде.
+    /// Get a refresh token from storage by its string value.
+    /// Uses a token hash internally so the raw token is not stored in plain text.
     /// </summary>
-    /// <param name="refreshToken">Строка refresh-токена.</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns>Сущность refresh-токена или <c>null</c>, если токен не найден.</returns>
+    /// <param name="refreshToken">Refresh token string.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Refresh token entity, or <c>null</c> if not found.</returns>
     Task<RefreshTokenEntity?> GetRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Время жизни access-токена в секундах.
+    /// Access token lifetime in seconds.
     /// </summary>
     int AccessTokenExpiresInSeconds { get; }
 
     /// <summary>
-    /// Инвалидировать (пометить как заменённый/отозванный) refresh-токен
-    /// при ротации сессии.
+    /// Invalidate (mark as replaced/revoked) a refresh token
+    /// during session rotation.
     /// </summary>
-    /// <param name="refreshToken">Текущий refresh-токен (строка), который нужно отозвать.</param>
+    /// <param name="refreshToken">Current refresh token (string) to revoke.</param>
     /// <param name="newJti">
-    /// JTI нового refresh-токена, которым заменяется старый (используется для причин и связи).
+    /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
-    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Отозвать refresh-токен при выходе пользователя (logout): пометить в БД, чтобы повторный refresh был невозможен.
+    /// Revoke a refresh token on user logout: mark in the DB so refresh cannot be reused.
     /// </summary>
-    /// <param name="refreshToken">Строка refresh-токена (например из httpOnly cookie).</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
 }
 
 // /// <summary>
-// /// Сервис выпуска JSON Web Token (JWT).
-// /// Используется шагом <c>IssueJwtStep</c>.
+// /// JWT issuance service.
+// /// Used by the <c>IssueJwtStep</c> step.
 // /// </summary>
 // public interface IJwtIssuer
 // {
 //     /// <summary>
-//     /// Выпустить JWT на основе набора клеймов и времени жизни.
+//     /// Issue a JWT from a claim set and lifetime.
 //     /// </summary>
 //     /// <param name="claims">
-//     /// Карта клеймов. Значения могут быть строкой или коллекцией строк.
-//     /// Обязательные клеймы (<c>sub</c>, <c>iat</c>, <c>exp</c>) добавляются реализацией автоматически,
-//     /// исходя из настроек и параметра <paramref name="lifetime"/>.
+//     /// Claim map. Values may be a string or a collection of strings.
+//     /// Required claims (<c>sub</c>, <c>iat</c>, <c>exp</c>) are added automatically by the implementation
+//     /// based on settings and <paramref name="lifetime"/>.
 //     /// </param>
-//     /// <param name="lifetime">Время жизни токена (TTL).</param>
-//     /// <returns>Подписанный JWT в компактной сериализации.</returns>
+//     /// <param name="lifetime">Token lifetime (TTL).</param>
+//     /// <returns>Signed JWT in compact serialization.</returns>
 //     string Issue(IDictionary<string, object> claims, TimeSpan lifetime);
 // }

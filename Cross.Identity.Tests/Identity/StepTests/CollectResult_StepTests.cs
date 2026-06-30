@@ -53,7 +53,7 @@ public class CollectResult_StepTests
 
         var bag = new Bag();
         bag.Set("createUser.UserId", "user123");
-        // LastCode отсутствует
+        // LastCode is missing
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -73,7 +73,7 @@ public class CollectResult_StepTests
             Kind = "collectResult",
             Map = new Dictionary<string, string>
             {
-                ["UserId"] = "UserId" // относительный ключ
+                ["UserId"] = "UserId" // relative key
             },
             Next = null
         };

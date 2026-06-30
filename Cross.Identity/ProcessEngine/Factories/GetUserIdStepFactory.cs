@@ -1,17 +1,17 @@
 ﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="GetUserIdStep"/>.
-/// JSON-параметры:
+/// Factory for <see cref="GetUserIdStep"/>.
+/// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>name</c> — имя шага;</description></item>
-/// <item><description><c>selectorField</c> — поле поиска ("Email" | "UserName" | "Phone" | ...);</description></item>
-/// <item><description><c>selectorKey</c> — ключ в Bag, откуда брать значение селектора:
-///   относительный (без точки) → будет прочитан как <c>"{name}.selectorKey"</c>,
-///   абсолютный (с точкой) используется как есть;</description></item>
-/// <item><description><c>userIdKey</c> — (опц.) ключ для записи результата; по умолчанию относительный <c>"UserId"</c>
-///   → будет сохранён как <c>"{name}.UserId"</c>;</description></item>
-/// <item><description><c>next</c> — (опц.) имя следующего шага, <c>null</c> — завершить.</description></item>
+/// <item><description><c>name</c> — step name;</description></item>
+/// <item><description><c>selectorField</c> — lookup field ("Email" | "UserName" | "Phone" | ...);</description></item>
+/// <item><description><c>selectorKey</c> — Bag key to read the selector value from:
+///   relative (no dot) → will be read as <c>"{name}.selectorKey"</c>,
+///   absolute (with a dot) is used as-is;</description></item>
+/// <item><description><c>userIdKey</c> — (opt.) key for storing the result; relative <c>"UserId"</c> by default
+///   → will be saved as <c>"{name}.UserId"</c>;</description></item>
+/// <item><description><c>next</c> — (opt.) next step name, <c>null</c> — finish.</description></item>
 /// </list>
 /// </summary>
 internal sealed class GetUserIdStepFactory : IStepFactory

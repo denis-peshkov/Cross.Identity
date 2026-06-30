@@ -1,34 +1,34 @@
 ---
 name: pr-triage
 description: >-
-  PR triage для Cross.Identity: аудит открытых PR, deep review, draft review
-  comments. Использует rtk gh для сжатия вывода. Args: "all", номера PR,
-  "en"/"ru" для языка таблиц.
+  PR triage for Cross.Identity: audit open PRs, deep review, draft review
+  comments. Uses rtk gh to compress output. Args: "all", PR numbers,
+  "ru"/"en" for table language (default en).
 ---
 
 # PR Triage — Cross.Identity
 
-## Когда использовать
+## When to use
 
-| Сценарий | Действие |
-|----------|----------|
-| «Разбери PRs» / «pr triage» | Запустить skill |
-| >5 открытых PR без review | Предложить audit |
-| PR stale >14 дней | Флаг в таблице |
+| Scenario | Action |
+|----------|--------|
+| "Triage PRs" / "pr triage" | Run skill |
+| >5 open PRs without review | Suggest audit |
+| PR stale >14 days | Flag in table |
 
-## Предусловия
+## Prerequisites
 
 ```bash
 git rev-parse --is-inside-work-tree
 gh auth status
 ```
 
-Команды GitHub — через `.cursor/triage/rtk-gh.sh` (RTK сжимает вывод, fallback на `gh`).
+GitHub commands — via `.cursor/triage/rtk-gh.sh` (RTK compresses output, fallback to `gh`).
 
-## Язык
+## Language
 
-- Таблицы: русский (по умолчанию), `en` — английский
-- GitHub comments: английский
+- Tables: English (default), `ru` — Russian
+- GitHub comments: English
 
 ## Phase 1 — Audit
 
@@ -43,7 +43,7 @@ REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner
 .cursor/triage/rtk-gh.sh api "repos/${REPO}/collaborators" --jq '.[].login'
 ```
 
-Для каждой PR (приоритет — кандидаты на overlap):
+For each PR (priority — overlap candidates):
 
 ```bash
 .cursor/triage/rtk-gh.sh api "repos/${REPO}/pulls/{num}/reviews" \
@@ -52,27 +52,27 @@ REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner
 .cursor/triage/rtk-gh.sh pr view {num} --json files --jq '[.files[].path] | join(",")'
 ```
 
-### Классификация
+### Classification
 
-**Размер**: XS <50, S 50–200, M 200–500, L 500–1000, XL >1000 additions.
+**Size**: XS <50, S 50–200, M 200–500, L 500–1000, XL >1000 additions.
 
-**Детекции**: overlaps >50% файлов, clusters (3+ PR от автора), stale >14d, CI clean/dirty.
+**Detections**: overlaps >50% files, clusters (3+ PRs from same author), stale >14d, CI clean/dirty.
 
-**Наши PRs**: автор в collaborators.
+**Our PRs**: author in collaborators.
 
-**Внешние — готовые**: ≤1000 additions, ≤10 files, не CONFLICTING, CI clean/unstable.
+**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, CI clean/unstable.
 
-**Внешние — проблемные**: XL, конфликт, CI dirty, overlap.
+**External — problematic**: XL, conflict, CI dirty, overlap.
 
-### Таблицы output
+### Output tables
 
-Секции: Nos PRs / Externes prêtes / Externes problématiques + Résumé.
+Sections: Our PRs / External ready / External problematic + Summary.
 
-0 PRs → завершить.
+0 PRs → finish.
 
 ### Cross.Identity file hotspots
 
-При overlap/review обращать внимание на:
+On overlap/review pay attention to:
 
 - `Cross.Identity/Services/` — JWT, OAuth, codes
 - `Cross.Identity/ProcessEngine/` — flows, steps
@@ -81,28 +81,28 @@ REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner
 
 ## Phase 2 — Deep Review (opt-in)
 
-`Task` с `subagent_type: bugbot` или `generalPurpose` параллельно.
+`Task` with `subagent_type: bugbot` or `generalPurpose` in parallel.
 
 ```bash
 .cursor/triage/rtk-gh.sh pr diff {num}
 ```
 
-Чеклист: `references/dotnet-checklist.md` + `.cursor/rules/105-backend-security.mdc`.
+Checklist: `references/dotnet-checklist.md` + `.cursor/rules/105-backend-security.mdc`.
 
-Структура ответа: Critical 🔴 / Important 🟡 / Suggestions 🟢 / What's Good ✅.
+Response structure: Critical 🔴 / Important 🟡 / Suggestions 🟢 / What's Good ✅.
 
-## Phase 3 — Comments (AskQuestion обязателен)
+## Phase 3 — Comments (AskQuestion required)
 
-Шаблон: `templates/review-comment.md` (ручной deep review).
+Template: `templates/review-comment.md` (manual deep review).
 
-### Автокомментарий в PR (CI)
+### Automated PR comment (CI)
 
-При `pull_request` opened/synchronize CI постит **wshm-style** комментарий:
+On `pull_request` opened/synchronize CI posts a **wshm-style** comment:
 
-- Скрипт: `.cursor/triage/post-pr-triage.mjs`
-- Шаблон: `.cursor/triage/templates/pr-automated-triage-comment.md`
-- Маркер: `<!-- cross-identity-triage -->` (обновление при push, не дублирование)
-- Draft PR — пропуск
+- Script: `.cursor/triage/post-pr-triage.mjs`
+- Template: `.cursor/triage/templates/pr-automated-triage-comment.md`
+- Marker: `<!-- cross-identity-triage -->` (update on push, no duplication)
+- Draft PR — skip
 
 ```bash
 PR_NUMBER=42 CURSOR_API_KEY=... yarn pr-triage
@@ -112,6 +112,6 @@ PR_NUMBER=42 CURSOR_API_KEY=... yarn pr-triage
 .cursor/triage/rtk-gh.sh pr comment {num} --body-file -
 ```
 
-## Сохранение
+## Saving
 
 `.cursor/triage/docs/prs-YYYY-MM-DD.md`

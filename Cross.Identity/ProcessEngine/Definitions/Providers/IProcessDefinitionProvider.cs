@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
-/// Источник JSON-дефиниций динамических процессов (flows).
-/// Дефиниции хранятся по ключу <c>{flow}.{operation}</c> и отдаются как строка JSON
-/// с корнем вида:
+/// Source of JSON definitions for dynamic processes (flows).
+/// Definitions are stored under key <c>{flow}.{operation}</c> and returned as a JSON string
+/// with a root like:
 /// <code>
 /// {
 ///   "start": "stepName",
@@ -14,25 +14,25 @@
 internal interface IProcessDefinitionProvider
 {
     /// <summary>
-    /// Получить JSON-дефиницию процесса по идентификаторам флоу и операции.
+    /// Get a process JSON definition by flow and operation identifiers.
     /// </summary>
-    /// <param name="flow">Идентификатор флоу (например, <c>"game"</c>, <c>"licenses"</c>, <c>"shop"</c>).</param>
+    /// <param name="flow">Flow identifier (for example, <c>"game"</c>, <c>"licenses"</c>, <c>"shop"</c>).</param>
     /// <param name="operation">
-    /// Идентификатор операции (свободный слаг, например <c>"register"</c>, <c>"auth"</c>, <c>"getuser"</c>,
-    /// <c>"request-code"</c>, <c>"reset-password"</c> и т.п.).
+    /// Operation identifier (free-form slug, for example <c>"register"</c>, <c>"auth"</c>, <c>"getuser"</c>,
+    /// <c>"request-code"</c>, <c>"reset-password"</c>, etc.).
     /// </param>
-    /// <returns>Строка JSON-дефиниции процесса.</returns>
-    /// <exception cref="KeyNotFoundException">Если дефиниция не найдена.</exception>
+    /// <returns>Process JSON definition string.</returns>
+    /// <exception cref="KeyNotFoundException">When the definition is not found.</exception>
     string GetJson(string flow, FlowOperationEnum operation);
 
     /// <summary>
-    /// Получить текстовый шаблон из embedded-ресурсов.
-    /// Конвенция имени ресурса: <c>{BaseNamespace}.Templates.{name}.{languageCode}.{format}</c>.
+    /// Get a text template from embedded resources.
+    /// Resource naming convention: <c>{BaseNamespace}.Templates.{name}.{languageCode}.{format}</c>.
     /// </summary>
-    /// <param name="name">Имя шаблона (например, "verify-code", "reset-password").</param>
-    /// <param name="languageCode">Языковой код (например, "en", "ru", "ro-RO").</param>
-    /// <param name="format">Формат ("txt" или "html").</param>
-    /// <returns>Содержимое шаблона как строка.</returns>
-    /// <exception cref="KeyNotFoundException">Если шаблон не найден.</exception>
+    /// <param name="name">Template name (for example, "verify-code", "reset-password").</param>
+    /// <param name="languageCode">Language code (for example, "en", "ru", "ro-RO").</param>
+    /// <param name="format">Format ("txt" or "html").</param>
+    /// <returns>Template contents as a string.</returns>
+    /// <exception cref="KeyNotFoundException">When the template is not found.</exception>
     string GetTemplate(string name, string languageCode, string format);
 }

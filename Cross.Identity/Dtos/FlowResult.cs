@@ -1,13 +1,13 @@
 ﻿namespace Cross.Identity.Dtos;
 
 /// <summary>
-/// Универсальный результат выполнения процесса (flow).
+/// Generic result of a process (flow) execution.
 /// </summary>
 public sealed class FlowResult
 {
     /// <summary>
-    /// Данные шага <c>collectResult</c>: словарь <c>{ имя_поля: значение }</c> (имена из <c>map</c> в JSON flow).
-    /// Если в процессе нет шага <c>collectResult</c> или он не записал полей — <c>null</c>.
+    /// <c>collectResult</c> step data: dictionary <c>{ field_name: value }</c> (names from <c>map</c> in the JSON flow).
+    /// <c>null</c> if the process has no <c>collectResult</c> step or it wrote no fields.
     /// </summary>
     public object? Data { get; init; }
 }

@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core.Enums;
+﻿namespace Cross.Identity.ProcessEngine.Core.Enums;
 
 /// <summary>
-/// Поддерживаемые операции флоу.
+/// Supported flow operations.
 /// </summary>
 public enum FlowOperationEnum
 {

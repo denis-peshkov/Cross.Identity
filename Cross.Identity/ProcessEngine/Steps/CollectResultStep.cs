@@ -1,12 +1,12 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг агрегации результата из <see cref="Bag"/> по карте полей и публикации
-/// итогового словаря в один ключ (по умолчанию — <c>"{Kind}.Result"</c>).
+/// Step that aggregates a result from <see cref="Bag"/> using a field map and publishes
+/// the resulting dictionary into a single key (by default — <c>"{Kind}.Result"</c>).
 /// <para>
-/// Никакой валидации не выполняет: отсутствующие значения просто пропускаются.
+/// Performs no validation: missing values are simply skipped.
 /// </para>
-/// Пример использования (логика см. фабрику):
+/// Usage example (see the factory for logic):
 /// <code language="json">
 /// {
 ///   "kind": "collectResult",
@@ -16,7 +16,7 @@
 ///   },
 ///   "next": null
 /// }
-/// Пример результата:
+/// Result example:
 /// "collectResult.userId", "collectResult.token".
 /// </code>
 /// </summary>
@@ -29,15 +29,15 @@ internal sealed class CollectResultStep : IStep
     public string? Next { get; init; }
 
     /// <summary>
-    /// Карта "имя поля в результате" → "ключ в <see cref="Bag"/>".
-    /// Значение-ключ может быть абсолютным (<c>"step.Field"</c>) или относительным
-    /// (тогда будет квалифицирован как <c>"{Kind}.Field"</c>).
+    /// Map of "result field name" → "key in <see cref="Bag"/>".
+    /// The value key may be absolute (<c>"step.Field"</c>) or relative
+    /// (then qualified as <c>"{Kind}.Field"</c>).
     /// </summary>
     public required IReadOnlyDictionary<string, string> Map { get; init; }
 
     /// <summary>
-    /// Если true — шаг явно указывает, что данных для возврата нет
-    /// (FlowExecutor вернёт Data = null).
+    /// When true, the step explicitly indicates there is no data to return
+    /// (FlowExecutor returns Data = null).
     /// </summary>
     public bool ReturnEmpty { get; init; }
 
@@ -52,7 +52,7 @@ internal sealed class CollectResultStep : IStep
 
         foreach (var (outField, bagKeyRaw) in Map)
         {
-            // Относительный ключ → "{Kind}.{bagKeyRaw}"
+            // Relative key → "{Kind}.{bagKeyRaw}"
             var bagKey = BagKey.Qualify(Kind, bagKeyRaw);
 
             if (ctx.TryGet<object?>(bagKey, out var value))
@@ -61,8 +61,8 @@ internal sealed class CollectResultStep : IStep
             }
             else
             {
-                // без валидации: просто пропустим отсутствующие ключи
-                // Если нужно класть null — раскомментируй:
+                // no validation: simply skip missing keys
+                // To store null instead, uncomment:
                 // output[outField] = null;
             }
         }

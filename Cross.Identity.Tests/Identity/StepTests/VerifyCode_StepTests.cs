@@ -95,8 +95,8 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             Channel = "phone",
-            IdentityKey = "Phone", // относительный ключ
-            CodeKey = "Code", // относительный ключ
+            IdentityKey = "Phone", // relative key
+            CodeKey = "Code", // relative key
             Next = null
         };
 

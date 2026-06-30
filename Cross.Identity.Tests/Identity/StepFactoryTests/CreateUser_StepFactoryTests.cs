@@ -74,7 +74,7 @@ public class CreateUser_StepFactoryTests
         var step = (CreateUserStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId"); // значение по умолчанию
+        step.UserIdKey.Should().Be("UserId"); // default value
     }
 
     [Test]

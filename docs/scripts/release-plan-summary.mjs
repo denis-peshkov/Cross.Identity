@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Пересчёт строки «Сводка чеклистов» в docs/RELEASE-PLAN-dev-to-master.md.
+ * Recalculate the "Checklist summary" line in docs/RELEASE-PLAN-dev-to-master.md.
  *
- * Учитываются:
- * - строки §3, §6, §7, §8 с ID вида A1, CI1, DOC1, M1 (статус — последний emoji в строке таблицы);
- * - маркеры §10 (release gate + go/no-go).
+ * Includes:
+ * - rows in §3, §6, §7, §8 with IDs like A1, CI1, DOC1, M1 (status — last emoji in the table row);
+ * - §10 markers (release gate + go/no-go).
  *
  * Usage:
- *   node docs/scripts/release-plan-summary.mjs           # вывести строку
- *   node docs/scripts/release-plan-summary.mjs --write   # обновить файл плана
+ *   node docs/scripts/release-plan-summary.mjs           # print the line
+ *   node docs/scripts/release-plan-summary.mjs --write   # update the plan file
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -43,7 +43,7 @@ export function collectChecklistStatuses(markdown) {
     if (ID_ROW.test(line)) {
       const status = statusFromTableRow(line);
       if (!status) {
-        throw new Error(`Не найден статус в строке чеклиста: ${line.slice(0, 120)}`);
+        throw new Error(`Status not found in checklist row: ${line.slice(0, 120)}`);
       }
       statuses.push(status);
       continue;
@@ -68,7 +68,7 @@ export function formatSummaryLine(statuses) {
   const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
 
   return (
-    `**Сводка чеклистов:** **${total}** пунктов — ` +
+    `**Checklist summary:** **${total}** items — ` +
     `✅ **${counts['✅']}** (${pct(counts['✅'])}%) · ` +
     `🟨 **${counts['🟨']}** (${pct(counts['🟨'])}%) · ` +
     `⬜ **${counts['⬜']}** (${pct(counts['⬜'])}%) · ` +
@@ -82,11 +82,11 @@ function main() {
 
   if (process.argv.includes('--write')) {
     const updated = markdown.replace(
-      /^\*\*Сводка чеклистов:\*\*.*$/m,
+      /^\*\*Checklist summary:\*\*.*$/m,
       line
     );
     if (updated === markdown) {
-      console.log('Сводка чеклистов уже актуальна');
+      console.log('Checklist summary is already up to date');
     } else {
       writeFileSync(PLAN, updated, 'utf8');
       console.log(`Updated ${PLAN}`);

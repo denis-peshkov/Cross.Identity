@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms;
 
 /// <summary>
-/// Описание одного поля формы.
+/// Description of a single form field.
 /// </summary>
 internal sealed record FieldDescriptor(
     string Key,

@@ -1,6 +1,6 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Ровно одно из перечисленных полей должно быть заполнено
+/// Exactly one of the listed fields must be filled in
 /// </summary>
 internal sealed record ExactlyOneRequiredRule(IReadOnlyList<string> Fields, string? Message = null) : IFormSchemaRule;

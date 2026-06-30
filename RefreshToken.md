@@ -1,69 +1,69 @@
 # Refresh Token
 
-Срок жизни **refresh token** напрямую зависит от архитектуры безопасности, но есть чёткие практические ориентиры, применяемые в проде:
+The lifetime of a **refresh token** depends directly on the security architecture, but there are clear practical guidelines used in production:
 
-## Практическая формула
-| Режим                      | Access Token | Refresh Token        | Пример поведения                                                                             |
-|----------------------------|--------------|----------------------|----------------------------------------------------------------------------------------------|
-| Веб-приложения (SPA + API) | 10 - 15 мин  | 7–30 дней            | Пользователь редко выходит из системы, но не навсегда. Позволяет продлить сессию без логина. |
-| Финтех/банки               | 7 - 10 мин   | 1–14 дней            | Усиленные требования к безопасности.                                                         |
-| Обычный вход               | 15 мин       | 7 дней               | пользователь автоматически выходит через неделю                                              |
-| Remember me                | 30 мин       | 60 дней              | можно не входить заново 2 месяца                                                             |
-| Сервисный клиент           | 5 мин        | 1 день               | безопасный API-интегратор                                                                    |
-| Админ-панель / банк        | 5 мин        | 1 день / без refresh | повышенная безопасность                                                                      |
+## Practical formula
+| Mode                       | Access Token | Refresh Token        | Example behavior                                                                                    |
+|----------------------------|--------------|----------------------|-----------------------------------------------------------------------------------------------------|
+| Web apps (SPA + API)       | 10 - 15 min  | 7–30 days            | User rarely logs out, but not forever. Allows extending the session without logging in again.       |
+| Fintech/banks              | 7 - 10 min   | 1–14 days            | Stricter security requirements.                                                                     |
+| Standard login             | 15 min       | 7 days               | user is automatically logged out after a week                                                         |
+| Remember me                | 30 min       | 60 days              | no need to log in again for 2 months                                                                |
+| Service client             | 5 min        | 1 day                | secure API integrator                                                                               |
+| Admin panel / bank         | 5 min        | 1 day / no refresh   | heightened security                                                                                 |
 
-## Хорошая практика — ротация refresh-токенов
-- При каждом использовании refresh-токена:
-  - выдается новый **access_token** и **новый refresh_token**,
-  - старый refresh немедленно **аннулируется** в БД.
-- Это предотвращает reuse (повторное использование украденного refresh-токена).
+## Good practice — refresh token rotation
+- On each use of a refresh token:
+  - a new **access_token** and **new refresh_token** are issued,
+  - the old refresh is immediately **revoked** in the database.
+- This prevents reuse (repeated use of a stolen refresh token).
 
-Пример конфигурации в твоём контексте (Identity/JWT):
+Example configuration in your context (Identity/JWT):
 ```cs
 _accessTokenExpiration = TimeSpan.FromMinutes(15);
 _refreshTokenExpiration = TimeSpan.FromDays(30);
 ```
 
-## Безопасные доп-механизмы
-- Проверять RefreshTokenEntity.ExpiresAt < UtcNow.
-- Добавлять поле RevokedAt (если токен вручную аннулируют).
-- Привязывать refresh-токен к:
-  - конкретному устройству,
+## Additional security mechanisms
+- Check RefreshTokenEntity.ExpiresAt < UtcNow.
+- Add a RevokedAt field (if the token is manually revoked).
+- Bind the refresh token to:
+  - a specific device,
   - IP,
-  - user-agent (по желанию),
-  - SecurityStamp (Identity-механизм — сбрасывается при смене пароля).
+  - user-agent (optional),
+  - SecurityStamp (Identity mechanism — reset on password change).
 
-## Рекомендации по безопасности
-| Механизм              | Почему важен                                                              |
-|-----------------------|---------------------------------------------------------------------------|
-| One-time use          | refresh-токен можно использовать только 1 раз, после чего он заменяется   |
-| Хранение в БД         | Id, UserId, ExpiresAt, RevokedAt, CreatedAt, CreatedByIp, ReplacedByToken |
-| Привязка к устройству | при логине сохраняй device_id или fingerprint                             |
-| Revoke chain          | при компрометации старого токена — пометь всю цепочку как Revoked         |
+## Security recommendations
+| Mechanism           | Why it matters                                                                 |
+|---------------------|--------------------------------------------------------------------------------|
+| One-time use        | refresh token can be used only once, then it is replaced                       |
+| Database storage    | Id, UserId, ExpiresAt, RevokedAt, CreatedAt, CreatedByIp, ReplacedByToken      |
+| Device binding      | on login, save device_id or fingerprint                                        |
+| Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
-## Что происходит без ротации
-1. Ты выдал пользователю:
-      o	**access_token** — живёт, скажем, 15 минут;
-      o	**refresh_token** — живёт, например, 30 дней.
-2. Клиент через 15 минут делает /token/refresh с тем же refresh-токеном.
-3. Сервер выдаёт новый access_token, но **оставляет старый refresh-токен действительным**.
-4. Этот refresh можно использовать **повторно** — хоть 1000 раз, пока не истечёт 30 дней.
+## What happens without rotation
+1. You issued the user:
+      o	**access_token** — lives, say, 15 minutes;
+      o	**refresh_token** — lives, for example, 30 days.
+2. After 15 minutes the client calls /token/refresh with the same refresh token.
+3. The server issues a new access_token, but **leaves the old refresh token valid**.
+4. This refresh can be used **repeatedly** — up to 1000 times, until the 30 days expire.
 
-❗️Если его украдут — злоумышленник сможет обновлять токен до конца его жизни → **severe security hole**.
+❗️If it is stolen — an attacker can refresh the token until it expires → **severe security hole**.
 
-## Что делает ротация refresh-токенов
+## What refresh token rotation does
 
-### При каждом обновлении:
-1. Клиент присылает refresh_token_old;
-2. Сервер:
-   - проверяет, что refresh_token_old ещё жив и не отозван;
-   - **помечает его как “использованный” / “revoked”**;
-   - **генерирует новый refresh_token_new** (новый jti, новый срок жизни);
-   - возвращает новый access_token + refresh_token_new.
+### On each refresh:
+1. The client sends refresh_token_old;
+2. The server:
+   - verifies that refresh_token_old is still alive and not revoked;
+   - **marks it as "used" / "revoked"**;
+   - **generates a new refresh_token_new** (new jti, new lifetime);
+   - returns a new access_token + refresh_token_new.
 
-👉 Старый токен становится недействительным сразу после использования.
+👉 The old token becomes invalid immediately after use.
 
-Пример в коде (flow):
+Example in code (flow):
 ```cs
 // refresh_token_step.cs
 var oldToken = await _context.RefreshTokens
@@ -72,11 +72,11 @@ var oldToken = await _context.RefreshTokens
 if (oldToken is null || oldToken.IsRevoked || oldToken.ExpiresAt < DateTime.UtcNow)
     throw new SecurityException("Invalid or expired refresh token");
 
-// помечаем старый
+// mark old as revoked
 oldToken.RevokedAt = DateTime.UtcNow;
 oldToken.RevokedByIp = request.IpAddress;
 
-// создаём новый
+// create new
 var newRefreshToken = new RefreshTokenEntity
 {
     Id = Guid.NewGuid(),
@@ -92,66 +92,66 @@ await _context.SaveChangesAsync();
 
 ```
 
-Таким образом:
-- **Access Token** → короткий (10–30 мин), меняется часто.
-- **Refresh Token** → живёт дольше (7–90 дней), но **тоже обновляется** при каждом refresh, чтобы нельзя было его reuse.
+Thus:
+- **Access Token** → short-lived (10–30 min), changes frequently.
+- **Refresh Token** → lives longer (7–90 days), but **is also renewed** on each refresh so it cannot be reused.
 
 
-Q: В случае такой ротации если заходить в приложение каждый день, ТО рефреш токен будет на клиенте вечно новый и по факту абстрактный обновляемый рефреш токен позволит заходить вечно
-A: Абсолютно правильное наблюдение — ты поймал суть всей проблемы “вечных” refresh-токенов.
-Именно поэтому **продвинутые реализации ротации refresh-токенов** используют **дополнительные ограничения**, чтобы токен нельзя было использовать бесконечно, даже если пользователь “каждый день заходит”.
+Q: With such rotation, if you open the app every day, THEN the refresh token on the client will always be new and in effect an abstract renewable refresh token will allow logging in forever
+A: Absolutely correct observation — you have captured the essence of the entire "eternal refresh token" problem.
+That is exactly why **advanced refresh token rotation implementations** use **additional constraints** so the token cannot be used indefinitely, even if the user "logs in every day".
 
-## Базовая логика ротации
+## Basic rotation logic
 
-Да, если токен каждый раз обновляется и срок жизни ставится “+30 дней от текущей даты”, то **постоянная активность клиента** → “вечный” refresh token.
+Yes, if the token is renewed each time and the lifetime is set to "+30 days from the current date", then **continuous client activity** → "eternal" refresh token.
 
-Пример:
-- refresh живёт 30 дней,
-- пользователь логинится каждый день → каждый день получает новый refresh,
-- срок жизни каждый раз “сдвигается” вперёд → **никогда не истечёт**.
+Example:
+- refresh lives 30 days,
+- user logs in every day → gets a new refresh every day,
+- lifetime is "shifted" forward each time → **never expires**.
 
-Такую схему часто называют **“rolling refresh”**.
-Она безопасна от кражи, но не даёт “естественного истечения” сессии.
+This scheme is often called **"rolling refresh"**.
+It is safe against theft, but does not provide "natural" session expiration.
 
-### Что делают в реальных системах (Google, Auth0, Okta, Microsoft, etc.)
+### What real systems do (Google, Auth0, Okta, Microsoft, etc.)
 
-#### 1. Absolute lifetime (жёсткий лимит жизни сессии)
+#### 1. Absolute lifetime (hard session lifetime limit)
 
-Даже при ротации refresh-токенов, вводится максимальный срок существования цепочки токенов — например 90 дней.
+Even with refresh token rotation, a maximum lifetime for the token chain is introduced — for example 90 days.
 
-🔸 **“Refresh tokens expire after 90 days regardless of rotation.”**
+🔸 **"Refresh tokens expire after 90 days regardless of rotation."**
 — Azure AD Docs
 
-Реализация:
-- в таблице RefreshToken добавить AbsoluteExpiresAt;
-- при каждой ротации:
+Implementation:
+- add AbsoluteExpiresAt to the RefreshToken table;
+- on each rotation:
 ```cs
 if (DateTime.UtcNow > oldToken.AbsoluteExpiresAt)
     throw new SecurityException("Session expired. Please login again.");
 ```
-- новый токен получает тот же AbsoluteExpiresAt, без сдвига.
+- the new token gets the same AbsoluteExpiresAt, without shifting.
 
-Это гарантирует, что через, скажем, 90 дней даже активный пользователь должен будет перелогиниться.
+This guarantees that after, say, 90 days even an active user must log in again.
 
 #### 2. Device binding
 
-Храним не просто refresh-токен, а привязываем его к конкретному устройству / user-agent / IP.
+Store not just a refresh token, but bind it to a specific device / user-agent / IP.
 
-Например:
+For example:
 ```cs
 public string DeviceFingerprint { get; set; } = default!;
 ```
 
-Тогда даже если токен украдут с другого устройства — он не сработает.
+Then even if the token is stolen from another device — it will not work.
 
-(В проде обычно используют библиотеку вроде FingerprintJS, которая делает это надёжнее.)
+(In production, libraries like FingerprintJS are usually used, which do this more reliably.)
 
-На выходе ты получаешь строку хеша, например:
+You end up with a hash string, for example:
 ```
 "bdb38b8f2c0a6a17884e23f9a7b05c4e"
 ```
 
-При логине клиент отправляет deviceFingerprint:
+On login the client sends deviceFingerprint:
 ```http
 POST /api/v1/auth/token
 {
@@ -161,7 +161,7 @@ POST /api/v1/auth/token
 }
 ```
 
-Сервер сохраняет этот DeviceFingerprint в RefreshTokenEntity:
+The server saves this DeviceFingerprint in RefreshTokenEntity:
 ```cs
 public class RefreshTokenEntity
 {
@@ -178,29 +178,29 @@ public class RefreshTokenEntity
 }
 ```
 
-При refresh-запросе сервер сравнивает:
+On a refresh request the server compares:
 ```cs
 if (!string.Equals(oldToken.DeviceFingerprint, request.DeviceFingerprint, StringComparison.Ordinal))
     throw new SecurityException("Device mismatch — refresh token invalid.");
 ```
 
-Для Mobile (iOS/Android)
+For Mobile (iOS/Android)
 
-Tам fingerprint обычно формируется как:
+There the fingerprint is usually formed as:
 ```js
 device_id = hash(Manufacturer + Model + OSVersion + InstallID)
 ```
 
-И хранится в Secure Storage (Keychain / Keystore).
-Хорошая практика — хранить не один, а два поля:
+And stored in Secure Storage (Keychain / Keystore).
+Good practice — store not one but two fields:
 
-| Поле              | Пример значения                                                                    | Назначение                |
-|-------------------|------------------------------------------------------------------------------------|---------------------------|
-| DeviceFingerprint | "bdb38b8f2c0a6a17884e23f9a7b05c4e"                                                 | постоянный хеш устройства |
-| UserAgent         | "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)..."                               | человекочитаемое описание |
-| IdleTimeout       | (скользящее окно) — необязательно (например, 7 дней без активности → инвалидируем) |                           |
+| Field             | Example value                                                                      | Purpose                          |
+|-------------------|------------------------------------------------------------------------------------|----------------------------------|
+| DeviceFingerprint | "bdb38b8f2c0a6a17884e23f9a7b05c4e"                                                 | persistent device hash           |
+| UserAgent         | "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)..."                               | human-readable description       |
+| IdleTimeout       | (sliding window) — optional (e.g. 7 days without activity → invalidate)          |                                  |
 
-Пример кода:
+Example code:
 ```cs
 if (oldToken.AbsoluteExpiresAt < DateTime.UtcNow)
 {
@@ -215,15 +215,15 @@ var newToken = new RefreshTokenEntity
     UserId = oldToken.UserId,
     CreatedAt = DateTime.UtcNow,
     ExpiresAt = DateTime.UtcNow.AddDays(30),
-    AbsoluteExpiresAt = oldToken.AbsoluteExpiresAt, // ← не сдвигаем
+    AbsoluteExpiresAt = oldToken.AbsoluteExpiresAt, // ← do not shift
     ReplacedByToken = oldToken.Token
 };
 ```
 
-## Итог
+## Summary
 
-“Постоянная ротация = бесконечный refresh”
-✅ Если не ввести absolute lifetime, пользователь действительно сможет быть залогинен вечно.
-🚫 Но в production-системах всегда ставят:
-- “rolling” refresh для безопасности,
-- absolute lifetime для сессий.
+"Continuous rotation = infinite refresh"
+✅ If you do not introduce absolute lifetime, the user can indeed stay logged in forever.
+🚫 But production systems always set:
+- "rolling" refresh for security,
+- absolute lifetime for sessions.

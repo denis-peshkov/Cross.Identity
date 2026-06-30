@@ -1,17 +1,17 @@
 ﻿namespace Cross.Identity.Dtos;
 
 /// <summary>
-/// Настройки поиска пользователя для <see cref="CodeAuthStep"/>.
+/// User lookup settings for <see cref="CodeAuthStep"/>.
 /// </summary>
 public sealed record ResolveBy
 {
-    /// <summary>Поле, по которому ищем пользователя (например, "Email", "Phone", "UserName", "Id").</summary>
+    /// <summary>Field to look up the user by (e.g. "Email", "Phone", "UserName", "Id").</summary>
     public required string Field { get; init; }
 
-    /// <summary>Нужно ли падать с ошибкой, если пользователь не найден.</summary>
+    /// <summary>Whether to fail if the user is not found.</summary>
     public bool Required { get; init; } = true;
 
-    /// <summary>Игнорировать ли регистр при сравнении на стороне сервиса (если применимо).</summary>
+    /// <summary>Whether to ignore case in server-side comparison (if applicable).</summary>
     public bool CaseInsensitive { get; init; } = true;
 
     public static ResolveBy FromJson(JsonElement resolveEl)

@@ -12,10 +12,10 @@ public class CollectForm_StepFactoryTests
     {
         var sc = new ServiceCollection();
 
-        // Реальный валидатор форм
+        // Real form validator
         sc.AddSingleton<IFormValidatorFactory, UnifiedFormValidatorFactory>();
 
-        // Фэйковый IRequestInput — мы будем вручную Set(...) перед исполнением шага
+        // Fake IRequestInput — we will manually Set(...) before step execution
         sc.AddScoped<IRequestInput, RequestInput>();
 
         _sp = sc.BuildServiceProvider();
@@ -59,7 +59,7 @@ public class CollectForm_StepFactoryTests
         // act
         var step = (CollectFormStep)factory.Create(cfg, _sp);
 
-        // assert: проверяем только поля (имени у схемы больше нет)
+        // assert: check fields only (schema no longer has a name)
         var keys = step.Schema.Fields.Select(f => f.Key).ToArray();
         keys.Should().Contain(new[] { "Login", "Password", "OtpCode" });
         keys.Should().NotContain("Email");
@@ -68,7 +68,7 @@ public class CollectForm_StepFactoryTests
         var pwd = step.Schema.Fields.First(f => f.Key == "Password");
         pwd.Min.Should().Be(12);
 
-        // входные данные
+        // input data
         var input = _sp.GetRequiredService<IRequestInput>();
         input.Set(new Dictionary<string, object?>
         {
@@ -84,7 +84,7 @@ public class CollectForm_StepFactoryTests
         res.Status.Should().Be(StepStatusEnum.Ok);
         res.Next.Should().Be("next-step");
 
-        // префикс — kind шага: "collectForm"
+        // prefix — step kind: "collectForm"
         bag.Get<string>("collectForm.Login").Should().NotBeNullOrEmpty();
         bag.Get<string>("collectForm.OtpCode").Should().Be("123456");
         bag.Get<string>("collectForm.Password").Should().Be("P@ssw0rd_long");
@@ -111,7 +111,7 @@ public class CollectForm_StepFactoryTests
 
         var step = (CollectFormStep)new CollectFormStepFactory().Create(json.RootElement, _sp);
 
-        // вход: пропускаем UserName
+        // input: omit UserName
         var input = _sp.GetRequiredService<IRequestInput>();
         input.Set(new Dictionary<string, object?> { ["Email"] = "user@example.com" });
 
@@ -146,7 +146,7 @@ public class CollectForm_StepFactoryTests
 
         var step = (CollectFormStep)new CollectFormStepFactory().Create(json.RootElement, _sp);
 
-        // вход: пропускаем UserName
+        // input: omit UserName
         var input = _sp.GetRequiredService<IRequestInput>();
         input.Set(new Dictionary<string, object?>
         {

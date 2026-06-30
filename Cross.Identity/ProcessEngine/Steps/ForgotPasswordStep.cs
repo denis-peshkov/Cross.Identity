@@ -1,19 +1,19 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг выпуска JWT-токена через MediatR-команду приложения
+/// Step that issues a JWT token via an application MediatR command
 /// <c>TokenCommand(string email, string password)</c>.
 /// <para>
-/// Ключи:
+/// Keys:
 /// <list type="bullet">
-///   <item><description><see cref="SelectorKey"/> и <see cref="PasswordKey"/>:
-///     если ключ относительный (без точки), читается как <c>"{Name}.{Key}"</c>;
-///     чтобы читать данные из другого шага, укажи абсолютный ключ вида <c>"other-step.Field"</c>.</description></item>
-///   <item><description><see cref="ResultKey"/> — если ключ относительный, записывается как <c>"{Name}.{ResultKey}"</c>.</description></item>
+///   <item><description><see cref="SelectorKey"/> and <see cref="PasswordKey"/>:
+///     if the key is relative (no dot), it is read as <c>"{Name}.{Key}"</c>;
+///     to read data from another step, specify an absolute key such as <c>"other-step.Field"</c>.</description></item>
+///   <item><description><see cref="ResultKey"/> — if relative, is written as <c>"{Name}.{ResultKey}"</c>.</description></item>
 /// </list>
 /// </para>
-/// Ожидается, что результат обработчика содержит строковое свойство <c>AccessToken</c>
-/// (или <c>Token</c>), либо сам является строкой. Значение будет записано в <see cref="Bag"/>.
+/// The handler result is expected to contain a string property <c>AccessToken</c>
+/// (or <c>Token</c>), or be a string itself. The value is written to <see cref="Bag"/>.
 /// </summary>
 internal sealed class ForgotPasswordStep : IStep
 {
@@ -29,16 +29,16 @@ internal sealed class ForgotPasswordStep : IStep
     public required IHostEnvironment Environment { get; init; }
     public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
 
-    /// <summary>Ключ в <see cref="Bag"/>, откуда взять e-mail/логин. Может быть относительным или абсолютным.</summary>
+    /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
     public required string SelectorKey { get; init; }
 
-    /// <summary>Ключ в <see cref="Bag"/>, откуда взять пароль. Может быть относительным или абсолютным.</summary>
+    /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
-    /// <summary>Время жизни кода. По умолчанию 5 минут.</summary>
+    /// <summary>Code lifetime. Defaults to 5 minutes.</summary>
     public TimeSpan Ttl { get; init; } = TimeSpan.FromMinutes(5);
 
-    /// <summary>Канал доставки кода (например, <c>"email"</c> или <c>"phone"</c>).</summary>
+    /// <summary>Code delivery channel (for example, <c>"email"</c> or <c>"phone"</c>).</summary>
     public required ChannelEnum Channel { get; set; }
 
     public ResolveBy ResolveBy { get; set; }
@@ -46,7 +46,7 @@ internal sealed class ForgotPasswordStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) достаём email или phoneNumber (с учётом относительных/абсолютных ключей)
+        // 1) read email or phoneNumber (respecting relative/absolute keys)
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
 
         var code = Channel == ChannelEnum.Sms
@@ -97,7 +97,7 @@ internal sealed class ForgotPasswordStep : IStep
         {
             if (!Environment.IsDevelopment())
             {
-                // сохраняем/отправляем через сервис
+                // store/send via the service
                 await CodeService.SendAsync(msg, code, "", Ttl, cancellationToken).ConfigureAwait(false);
             }
         }
@@ -107,8 +107,8 @@ internal sealed class ForgotPasswordStep : IStep
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
         }
 
-        // Для отладки/тестов сохраняем последний код
-        ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: не отображается в схеме, не видно что оно есть, может отображать как коллекцию полей Output
+        // For debugging/tests, store the last code
+        ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: not shown in the schema, not visible that it exists; maybe expose as an Output field collection
 
         return StepResult.Ok(Next);
     }

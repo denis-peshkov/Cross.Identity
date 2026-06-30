@@ -1,11 +1,11 @@
 ﻿namespace Cross.Identity.Options;
 
 /// <summary>
-/// Настройки external OAuth (<c>Authentication:ExternalLogin</c>).
+/// External OAuth settings (<c>Authentication:ExternalLogin</c>).
 /// <para>
-/// <c>StateLifetime</c> задаёт TTL строки в таблице <c>auth.ExternalLoginStates</c>
-/// (<see cref="Entities.ExternalLoginStateEntity"/>), куда пишет <c>ExternalLoginService</c>:
-/// <c>InitiateAsync</c> — insert; <c>ResolveStateAsync</c> (из <c>CompleteAsync</c>) — select и delete.
+/// <c>StateLifetime</c> sets the TTL for rows in <c>auth.ExternalLoginStates</c>
+/// (<see cref="Entities.ExternalLoginStateEntity"/>), written by <c>ExternalLoginService</c>:
+/// <c>InitiateAsync</c> — insert; <c>ResolveStateAsync</c> (from <c>CompleteAsync</c>) — select and delete.
 /// </para>
 /// </summary>
 public sealed class ExternalLoginOptions
@@ -13,19 +13,19 @@ public sealed class ExternalLoginOptions
     public const string SectionName = "Authentication:ExternalLogin";
 
     /// <summary>
-    /// Полный URL SPA-callback, зарегистрированный у OAuth-провайдера.
+    /// Full SPA callback URL registered with the OAuth provider.
     /// Env: <c>AUTH_EXTERNAL_LOGIN_CALLBACK_URL</c> → <c>Authentication__ExternalLogin__CallbackUrl</c>.
     /// </summary>
     public string CallbackUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Время жизни OAuth state в БД (<c>ExternalLoginStates.ExpiresAt</c>).
+    /// OAuth state lifetime in the DB (<c>ExternalLoginStates.ExpiresAt</c>).
     /// </summary>
     public TimeSpan StateLifetime { get; set; } = TimeSpan.FromMinutes(10);
 
     /// <summary>
-    /// Credentials провайдеров — только из env / user-secrets, не из appsettings.
-    /// Пример: <c>Authentication__ExternalLogin__Providers__Google__ClientId</c>.
+    /// Provider credentials — from env / user-secrets only, not appsettings.
+    /// Example: <c>Authentication__ExternalLogin__Providers__Google__ClientId</c>.
     /// </summary>
     public Dictionary<string, ExternalLoginProviderOptions> Providers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }

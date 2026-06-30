@@ -1,21 +1,21 @@
-## Описание flow'ов Cross.Identity ProcessEngine
+## Cross.Identity ProcessEngine flow reference
 
-Документ соответствует JSON в каталоге `Cross.Identity/ProcessEngine/Definitions/Flows/`.
+This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
-### Как устроены flow'ы
+### How flows work
 
-- Файл именуется `{flow}.{operation}.json` (например, `license.Token.json`).
-- Ключ дефиниции: `{flow}.{operation}` в нижнем регистре (`license.token`).
-- Вызов из кода: `IFlowExecutor.ExecuteAsync(input, flow, FlowOperationEnum.Operation, ct)`.
-- Степы выполняются по цепочке `next`; поле `start` указывает первый шаг.
-- В рамках одного flow каждый `kind` шага должен быть **уникален** (два `collectForm` в одном JSON не загрузятся).
-- Данные формы сохраняются в `Bag` с префиксом `collectForm.{поле}` (см. `CollectFormStep`).
-- Относительные ключи (`Email`, `selectorKey`) квалифицируются как `{kind}.{ключ}`; абсолютные — с точкой (`collectForm.Email`).
+- Files are named `{flow}.{operation}.json` (e.g. `license.Token.json`).
+- Definition key: `{flow}.{operation}` in lowercase (`license.token`).
+- Code invocation: `IFlowExecutor.ExecuteAsync(input, flow, FlowOperationEnum.Operation, ct)`.
+- Steps run in a `next` chain; `start` points to the first step.
+- Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
+- Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
+- Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
 
-### Операции (`FlowOperationEnum`)
+### Operations (`FlowOperationEnum`)
 
-| Файл (пример) | Enum |
-|---------------|------|
+| File (example) | Enum |
+|----------------|------|
 | `*.Register.json` | `Register` |
 | `*.Token.json` | `Token` |
 | `*.TokenByCode.json` | `TokenByCode` |
@@ -27,10 +27,10 @@
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 
-### Все flow-файлы (18)
+### All flow files (18)
 
-| Flow | Операция | Файл |
-|------|----------|------|
+| Flow | Operation | File |
+|------|-----------|------|
 | `edoctors` | Register | `edoctors.Register.json` |
 | `game` | auth | `game.auth.json` |
 | `game` | Register | `game.Register.json` |
@@ -54,55 +54,55 @@
 
 ## `edoctors.Register.json`
 
-**Назначение:** регистрация пользователя eDoctors по email с отправкой кода подтверждения.
+**Purpose:** eDoctors user registration by email with confirmation code delivery.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
-| `collectForm` | collectForm | Поля: `Email`, `FirstName`, `LastName`, `Password`, `ConfirmPassword`. Валидатор `equal(Password, ConfirmPassword)`. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` из `collectForm.*`; `selectorKey: collectForm.Email`. → `sendCode` |
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | Fields: `Email`, `FirstName`, `LastName`, `Password`, `ConfirmPassword`. Validator `equal(Password, ConfirmPassword)`. → `createUser` |
+| `createUser` | createUser | map: `Email`, `Password`, `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` from `collectForm.*`; `selectorKey: collectForm.Email`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
-> В форме нет полей `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` — они заданы только в `map` шага `createUser`.
+> The form has no `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` fields — they are defined only in the `createUser` step `map`.
 
 ---
 
 ## `game.auth.json`
 
-**Назначение:** вход в игру по одноразовому email-коду.
+**Purpose:** game sign-in with a one-time email code.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `UserName`, `Code` (4–8). → `codeAuth` |
 | `codeAuth` | codeAuth | `channel: email`, `identityKey: collectForm.UserName`, `codeKey: collectForm.Code`, `resolveBy.field: UserName`. → `issueJwt` |
 | `issueJwt` | issueJwt | `lifetimeSeconds: 43200`, `subKey: codeAuth.UserId`, claims: `scope=game.player`, `amr=email_code`. → `collectResult` |
-| `collectResult` | collectResult | `token = issueJwt.Token`, `email = collectForm.Email` (поля `Email` в форме нет). |
+| `collectResult` | collectResult | `token = issueJwt.Token`, `email = collectForm.Email` (no `Email` field in the form). |
 
 ---
 
 ## `game.Register.json`
 
-**Назначение:** регистрация игрока с подтверждением email-кода и выдачей JWT.
+**Purpose:** player registration with email code confirmation and JWT issuance.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email`, `UserName`, `FirstName`, `LastName`, `BirthDate`, `Gender`, `AgreeLow`, `AgreeService`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: registration.Email`. → `collectForm` |
-| `collectForm` | collectForm | вторая форма: `UserName`, `Code`. → `verifyCode` |
+| `collectForm` | collectForm | second form: `UserName`, `Code`. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `identityKey: verification.UserName`, `codeKey: verification.Code`. → `createUser` |
-| `createUser` | createUser | map из `registration.*`. → `issueJwt` |
+| `createUser` | createUser | map from `registration.*`. → `issueJwt` |
 | `issueJwt` | issueJwt | `lifetimeSeconds: 604800`, `subKey: user.Id`, claims: `scope=game.player`, `amr=email_code`. |
 
-> Два шага `collectForm` с одинаковым `kind` — flow не пройдёт загрузку в `ProcessLoader` без переименования шагов.
+> Two `collectForm` steps with the same `kind` — the flow will not load in `ProcessLoader` without renaming steps.
 
 ---
 
 ## `game.request-code.json`
 
-**Назначение:** отправка email-кода без регистрации/логина.
+**Purpose:** send an email code without registration/sign-in.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: EmailCode`. `next: null` |
 
@@ -110,22 +110,22 @@
 
 ## `game.Token.json`
 
-**Назначение:** access/refresh токены по email + пароль.
+**Purpose:** access/refresh tokens by email + password.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email` (8–128), `Password` (8–128). → `token` |
-| `token` | token | `selectorKey`, `passwordKey`, `channel: email`; ключи результата `AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`. → `collectResult` |
-| `collectResult` | collectResult | OAuth-подобный ответ: `access_token`, `refresh_token`, `token_type`, `expires_in`. `next: null` |
+| `token` | token | `selectorKey`, `passwordKey`, `channel: email`; result keys `AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`. → `collectResult` |
+| `collectResult` | collectResult | OAuth-like response: `access_token`, `refresh_token`, `token_type`, `expires_in`. `next: null` |
 
 ---
 
 ## `license.ForgotPassword.json`
 
-**Назначение:** инициировать восстановление пароля (отправка кода).
+**Purpose:** start password recovery (send code).
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email` (8–128). → `forgotPassword` |
 | `forgotPassword` | forgotPassword | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = forgotPassword.LastCode`. `next: null` |
@@ -134,10 +134,10 @@
 
 ## `license.GetUserId.json`
 
-**Назначение:** получить `user_id` по email.
+**Purpose:** get `user_id` by email.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email`. → `getUserId` |
 | `getUserId` | getUserId | `selectorField: Email`, `selectorKey: collectForm.Email`. → `collectResult` |
 | `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
@@ -146,10 +146,10 @@
 
 ## `license.RefreshToken.json`
 
-**Назначение:** обновление пары токенов по `refresh_token`.
+**Purpose:** refresh token pair using `refresh_token`.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `RefreshToken` (32–2048). → `refreshToken` |
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
@@ -158,10 +158,10 @@
 
 ## `license.Register.json`
 
-**Назначение:** регистрация по email + пароль с отправкой кода подтверждения.
+**Purpose:** registration by email + password with confirmation code delivery.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email`, `Password` (8–128). → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
@@ -171,10 +171,10 @@
 
 ## `license.RequestCode.json`
 
-**Назначение:** отправка email-кода с настраиваемым TTL.
+**Purpose:** send an email code with configurable TTL.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan). → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
@@ -183,22 +183,22 @@
 
 ## `license.ResetPassword.json`
 
-**Назначение:** смена пароля по email (опционально с кодом).
+**Purpose:** change password by email (optionally with code).
 
-| Шаг | kind | Детали |
-|-----|------|--------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (опц., 8–128), `Password` (8–128). → `resetPassword` |
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Email` (8–128), `Code` (opt., 8–128), `Password` (8–128). → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
 
 ---
 
 ## `license.Token.json`
 
-**Назначение:** токены по email и паролю **или** коду (хотя бы одно обязательно).
+**Purpose:** tokens by email and password **or** code (at least one required).
 
-| Шаг | kind | Детали |
-|-----|------|--------|
-| `collectForm` | collectForm | `Email`, `Password` (опц., 8–32), `Code` (опц., 4–32). Валидаторы: `requiredIf`, `atLeastOneRequired`. → `token` |
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32). Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
@@ -206,10 +206,10 @@
 
 ## `license.TokenByCode.json`
 
-**Назначение:** токены только по email + коду.
+**Purpose:** tokens by email + code only.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email` (8–128), `Code` (4–32). → `token` |
 | `token` | token | `selectorKey`, `codeKey`, `channel: email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
@@ -218,38 +218,38 @@
 
 ## `license.ExternalLogin.json`
 
-**Назначение:** начало OAuth (редирект на провайдера).
+**Purpose:** start OAuth (redirect to provider).
 
-| Шаг | kind | Детали |
-|-----|------|--------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (опц., до 512). → `initiateExternalLogin` |
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512). → `initiateExternalLogin` |
 | `initiateExternalLogin` | initiateExternalLogin | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
 | `collectResult` | collectResult | `url = initiateExternalLogin.Url`. `next: null` |
 
-> Поле `LinkUserId` не в схеме формы, но может передаваться во входном payload для привязки аккаунта.
+> `LinkUserId` is not in the form schema but may be passed in the input payload for account linking.
 
 ---
 
 ## `license.ExternalLoginCallback.json`
 
-**Назначение:** завершение OAuth после редиректа провайдера.
+**Purpose:** complete OAuth after provider redirect.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
-| `collectForm` | collectForm | `Code`, `State` (обяз.), `Error`, `ErrorDescription` (опц.). → `completeExternalLogin` |
-| `completeExternalLogin` | completeExternalLogin | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` из `collectForm.*`. → `collectResult` |
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Code`, `State` (required), `Error`, `ErrorDescription` (opt.). → `completeExternalLogin` |
+| `completeExternalLogin` | completeExternalLogin | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
-> Между `ExternalLogin` и `ExternalLoginCallback` `ExternalLoginService` хранит одноразовый OAuth state в `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Настройка провайдеров и callback — `Authentication:ExternalLogin`, см. release-план §B.
+> Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
 ---
 
 ## `shop.auth.json`
 
-**Назначение:** вход в магазин по телефону и SMS-коду.
+**Purpose:** shop sign-in by phone and SMS code.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Phone`, `Code` (4–8). → `codeAuth` |
 | `codeAuth` | codeAuth | `channel: phone`, `identityKey: auth.Phone`, `codeKey: auth.Code`, `resolveBy.field: Phone`. → `issueJwt` |
 | `issueJwt` | issueJwt | `lifetimeSeconds: 43200`, `subKey: user.Id`, claims: `scope=shop.customer`, `amr=sms_code`. |
@@ -258,62 +258,62 @@
 
 ## `shop.Register.json`
 
-**Назначение:** регистрация покупателя с SMS-подтверждением.
+**Purpose:** customer registration with SMS confirmation.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Email`, `UserName`, `FirstName`, `LastName`, `Phone`. → `sendCode` |
 | `sendCode` | sendCode | `channel: phone`, `selectorKey: registration.Phone`. → `collectForm` |
 | `collectForm` | collectForm | `Phone`, `Code`. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: phone`, `identityKey: verification.Phone`, `codeKey: verification.Code`. → `createUser` |
-| `createUser` | createUser | map из `registration.*`. → `issueJwt` |
+| `createUser` | createUser | map from `registration.*`. → `issueJwt` |
 | `issueJwt` | issueJwt | `lifetimeSeconds: 1209600`, `subKey: user.Id`, claims: `scope=shop.customer`, `amr=sms_code`. |
 
-> Как и в `game.Register.json`, два `collectForm` с одним `kind` несовместимы с текущим `ProcessLoader`.
+> As in `game.Register.json`, two `collectForm` steps with one `kind` are incompatible with the current `ProcessLoader`.
 
 ---
 
 ## `shop.request-code.json`
 
-**Назначение:** запрос SMS-кода на телефон.
+**Purpose:** request an SMS code for a phone number.
 
-| Шаг | kind | Детали |
-|-----|------|--------|
+| Step | kind | Details |
+|------|------|---------|
 | `collectForm` | collectForm | `Phone`. → `sendCode` |
 | `sendCode` | sendCode | `channel: phone`, `selectorKey: request.Phone`. `next: null` |
 
 ---
 
-## Справочник по `kind` (зарегистрированные фабрики)
+## `kind` reference (registered factories)
 
-| kind | Назначение |
-|------|------------|
-| `collectForm` | Сбор и валидация полей формы |
-| `collectResult` | Маппинг полей `Bag` в ответ API |
-| `createUser` | Создание пользователя |
-| `sendCode` | Отправка OTP (email/SMS) |
-| `verifyCode` | Проверка OTP |
-| `codeAuth` | Проверка OTP + аутентификация |
-| `passwordAuth` | Проверка email + пароль |
-| `forgotPassword` | Старт восстановления пароля |
-| `resetPassword` | Установка нового пароля |
-| `getUserId` | Поиск пользователя, возврат `UserId` |
-| `token` | Выдача access/refresh токенов |
-| `refreshToken` | Обновление по refresh_token |
-| `initiateExternalLogin` | URL редиректа OAuth |
-| `completeExternalLogin` | Callback OAuth, выдача токенов |
+| kind | Purpose |
+|------|---------|
+| `collectForm` | Collect and validate form fields |
+| `collectResult` | Map `Bag` fields to API response |
+| `createUser` | Create user |
+| `sendCode` | Send OTP (email/SMS) |
+| `verifyCode` | Verify OTP |
+| `codeAuth` | Verify OTP + authenticate |
+| `passwordAuth` | Verify email + password |
+| `forgotPassword` | Start password recovery |
+| `resetPassword` | Set new password |
+| `getUserId` | Find user, return `UserId` |
+| `token` | Issue access/refresh tokens |
+| `refreshToken` | Refresh using refresh_token |
+| `initiateExternalLogin` | OAuth redirect URL |
+| `completeExternalLogin` | OAuth callback, issue tokens |
 
-В JSON также встречается `issueJwt`, но отдельная фабрика `IssueJwtStepFactory` в `AddCrossIdentity` **не регистрируется** — flow'ы `game.auth`, `game.Register`, `shop.auth`, `shop.Register` с этим шагом не выполнятся, пока шаг не будет реализован и зарегистрирован.
+JSON also uses `issueJwt`, but a separate `IssueJwtStepFactory` is **not registered** in `AddCrossIdentity` — flows `game.auth`, `game.Register`, `shop.auth`, `shop.Register` with this step will not run until the step is implemented and registered.
 
-### Валидаторы форм (`schemaDef.validators`)
+### Form validators (`schemaDef.validators`)
 
-| kind | Описание |
-|------|----------|
-| `equal` | Равенство двух полей |
-| `notEqual` | Неравенство двух полей |
-| `oneOf` | Значение из списка |
-| `requiredIf` | Условная обязательность |
-| `exactlyOneRequired` | Ровно одно из полей |
-| `atLeastOneRequired` | Хотя бы одно из полей |
+| kind | Description |
+|------|-------------|
+| `equal` | Two fields must be equal |
+| `notEqual` | Two fields must not be equal |
+| `oneOf` | Value from a list |
+| `requiredIf` | Conditional required field |
+| `exactlyOneRequired` | Exactly one of the fields |
+| `atLeastOneRequired` | At least one of the fields |
 
-Схему можно задать через `schema` (имя в `IFormSchemaProvider`), `schemaDef` (inline) или `schemaPatch` (add/remove/override/rename).
+Schema can be set via `schema` (name in `IFormSchemaProvider`), `schemaDef` (inline), or `schemaPatch` (add/remove/override/rename).

@@ -1,18 +1,18 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг ротации refresh-токена:
-/// валидирует входной refresh, выпускает новую пару токенов
-/// и инвалидирует старый refresh в рамках одной транзакции.
+/// Refresh token rotation step:
+/// validates the incoming refresh token and issues a new token pair
+/// and invalidates the old refresh token within a single transaction.
 /// <para>
-/// Ключи:
+/// Keys:
 /// <list type="bullet">
 ///   <item><description><see cref="RefreshTokenKey"/>:
-///     если ключ относительный (без точки), читается как <c>"{Kind}.{Key}"</c>;
-///     чтобы читать данные из другого шага, укажи абсолютный ключ вида <c>"other-step.Field"</c>.</description></item>
-///   <item><description>Результат пишется в ключи:
+///     if the key is relative (no dot), it is read as <c>"{Kind}.{Key}"</c>;
+///     to read data from another step, specify an absolute key such as <c>"other-step.Field"</c>.</description></item>
+///   <item><description>The result is written to keys:
 ///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserId</c>
-///     (с префиксом <c>{Kind}.</c> для относительного доступа).</description></item>
+///     (with the <c>{Kind}.</c> prefix for relative access).</description></item>
 /// </list>
 /// </para>
 /// </summary>
@@ -24,28 +24,28 @@ internal sealed class RefreshTokenStep : IStep
     /// <inheritdoc/>
     public required string? Next { get; init; }
 
-    /// <summary>Ключ в <see cref="Bag"/>, откуда взять исходный refresh-токен. Может быть относительным или абсолютным.</summary>
+    /// <summary>Key in <see cref="Bag"/> to read the source refresh token from. May be relative or absolute.</summary>
     public required string RefreshTokenKey { get; init; }
 
-    /// <summary>Логгер шага.</summary>
+    /// <summary>Step logger.</summary>
     public required ILogger Logger { get; init; }
 
-    /// <summary>Сервис работы с JWT и сущностями токенов.</summary>
+    /// <summary>Service for working with JWT and token entities.</summary>
     public required IJwtTokenService JwtTokenService { get; init; }
 
-    /// <summary>Сервис чтения пользователя.</summary>
+    /// <summary>User read service.</summary>
     public required IUserService UserService { get; init; }
 
-    /// <summary>Опции аутентификации.</summary>
+    /// <summary>Authentication options.</summary>
     public required AuthenticationOptions AuthenticationOptions { get; init; }
 
-    /// <summary>Контекст БД для транзакционного refresh-flow.</summary>
+    /// <summary>DB context for transactional refresh flow.</summary>
     public IdentityContext Context { get; set; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) валидируем токен
+        // 1) validate the token
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue).ConfigureAwait(false))
             throw new NotAuthorizedException("Invalid or expired refresh token.");
@@ -63,12 +63,12 @@ internal sealed class RefreshTokenStep : IStep
 
         try
         {
-            // 3) получаем UserId из рефреш токена
+            // 3) get UserId from the refresh token
             var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
             if (oldRefreshToken is null)
                 throw new InvalidOperationException("User not found when refresh token.");
 
-            // 4) получаем данные юзера
+            // 4) get user data
             var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
             ArgumentNullException.ThrowIfNull(user);
             var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
@@ -78,7 +78,7 @@ internal sealed class RefreshTokenStep : IStep
             var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
             var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
-            // 5) генерация AccessToken
+            // 5) generate AccessToken
             var accessClaims = new List<Claim>()
                 .AddIfNotNull(JwtRegisteredClaimNames.Sub, userId.ToString())
                 .AddIfNotNull(ClaimTypes.Email, email)
@@ -87,7 +87,7 @@ internal sealed class RefreshTokenStep : IStep
             var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims).ConfigureAwait(false);
             ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
-            // 6) генерация RefreshToken
+            // 6) generate RefreshToken
             var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}).ConfigureAwait(false);
             ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
@@ -100,7 +100,7 @@ internal sealed class RefreshTokenStep : IStep
             // await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             // scope.Complete();
 
-            // 9) сохраняем токен в Bag
+            // 9) store the token in Bag
             ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
             ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
             ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");

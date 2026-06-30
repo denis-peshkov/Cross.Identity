@@ -62,7 +62,7 @@ public class GetUser_StepFactoryTests
         // Act
         var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
-        // Assert — идентификатор на выполнении пишется в "{kind}.UserId" (см. GetUserIdStep.ExecuteAsync)
+        // Assert — at execution the identifier is written to "{kind}.UserId" (see GetUserIdStep.ExecuteAsync)
         step.SelectorField.Should().Be("Email");
         step.SelectorKey.Should().Be("collectForm.Email");
         step.Next.Should().BeNull();

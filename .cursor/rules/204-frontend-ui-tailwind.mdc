@@ -12,17 +12,17 @@ globs:
 alwaysApply: false
 ---
 
-# Правила работы с UI и Tailwind CSS
+# UI and Tailwind CSS rules
 
 ## Tailwind CSS
 
-- **Использовать Tailwind классы** - предпочитать Tailwind классы вместо кастомных CSS
-- **`@apply` для повторяющихся паттернов** - использовать `@apply` в SCSS только для часто повторяющихся комбинаций классов
-- **Не использовать `@apply` для сложных градиентов** - сложные градиенты с фиксированными пикселями писать напрямую в CSS
+- **Use Tailwind classes** - prefer Tailwind classes over custom CSS
+- **`@apply` for repeated patterns** - use `@apply` in SCSS only for frequently repeated class combinations
+- **Do not use `@apply` for complex gradients** - write complex gradients with fixed pixel values directly in CSS
 
-Пример:
+Example:
 ```scss
-// ❌ Нельзя через @apply
+// ❌ Cannot use @apply
 .resume-bg {
   background: linear-gradient(
     to bottom,
@@ -32,44 +32,44 @@ alwaysApply: false
   );
 }
 
-// ✅ Можно через @apply для простых случаев
+// ✅ Can use @apply for simple cases
 .button {
   @apply px-4 py-2 rounded-lg bg-indigo-600 text-white;
 }
 ```
 
-## Структура стилей
+## Style structure
 
-- **НЕ создавать SCSS файлы по умолчанию** - НИКОГДА не создавать `.component.scss` файлы при создании нового компонента, только в крайнем случае при реальной необходимости
-- **Минимум кастомных стилей** - использовать SCSS файлы ТОЛЬКО при необходимости (сложные градиенты, повторяющиеся паттерны через `@apply`)
-- **Удалять пустые SCSS файлы** - если компонент не требует кастомных стилей, удалять `.component.scss` файл
-- **НЕ указывать `styleUrls` в декораторе** - если нет SCSS файла, не указывать `styleUrls` в `@Component` декораторе
-- **Использовать inline стили в HTML** - для простых стилей использовать классы Tailwind напрямую в шаблонах
+- **Do NOT create SCSS files by default** - NEVER create `.component.scss` files when creating a new component; only as a last resort when truly necessary
+- **Minimize custom styles** - use SCSS files ONLY when needed (complex gradients, repeated patterns via `@apply`)
+- **Remove empty SCSS files** - if a component does not need custom styles, delete the `.component.scss` file
+- **Do NOT specify `styleUrls` in the decorator** - if there is no SCSS file, do not specify `styleUrls` in the `@Component` decorator
+- **Use inline styles in HTML** - for simple styles, use Tailwind classes directly in templates
 
-## Responsive дизайн
+## Responsive design
 
-- **Mobile-first подход** - начинать с мобильных стилей, затем добавлять `md:`, `lg:` префиксы
-- **Использовать breakpoints** - `sm:`, `md:`, `lg:`, `xl:` для адаптивности
+- **Mobile-first approach** - start with mobile styles, then add `md:`, `lg:` prefixes
+- **Use breakpoints** - `sm:`, `md:`, `lg:`, `xl:` for responsiveness
 
-Пример:
+Example:
 ```html
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-  <!-- Контент -->
+  <!-- Content -->
 </div>
 ```
 
-## Компоненты UI
+## UI components
 
-- **Использовать существующие компоненты** - использовать компоненты из `libs/ui/src/components/` (пакет `@guru/ui`, например `InputTextComponent`, `InputEmailComponent`)
-- **Не дублировать компоненты** - не создавать новые компоненты, если существует аналогичный в `libs/ui/src/components/`
+- **Use existing components** - use components from `libs/ui/src/components/` (`@guru/ui` package, e.g. `InputTextComponent`, `InputEmailComponent`)
+- **Do not duplicate components** - do not create new components if an equivalent exists in `libs/ui/src/components/`
 
-## Иконки и изображения
+## Icons and images
 
-- **SVG для иконок** - использовать SVG файлы из `/assets/img/`
-- **Атрибут `loading="eager"`** - для критичных изображений использовать `loading="eager"`
-- **Атрибут `alt`** - всегда указывать `alt` для изображений
+- **SVG for icons** - use SVG files from `/assets/img/`
+- **`loading="eager"` attribute** - use `loading="eager"` for critical images
+- **`alt` attribute** - always specify `alt` for images
 
-Пример:
+Example:
 ```html
 <img
   src="/assets/img/services/vacancies/search.svg"
@@ -79,13 +79,13 @@ alwaysApply: false
 />
 ```
 
-## Форматирование HTML
+## HTML formatting
 
-- **Отступ 2 пробела** - использовать 2 пробела для отступов в HTML
-- **Закрывающие теги** - всегда закрывать теги, даже для самозакрывающихся элементов в Angular шаблонах
-- **Атрибуты на новых строках** - для длинных списков атрибутов переносить на новые строки
+- **2-space indent** - use 2 spaces for indentation in HTML
+- **Closing tags** - always close tags, even for self-closing elements in Angular templates
+- **Attributes on new lines** - for long attribute lists, wrap onto new lines
 
-Пример:
+Example:
 ```html
 <button
   type="button"
@@ -93,22 +93,22 @@ alwaysApply: false
   class="px-4 py-2 rounded-lg"
   [disabled]="isLoading"
 >
-  Нажми меня
+  Click me
 </button>
 ```
 
-## Доступность
+## Accessibility
 
-- **`sr-only` для скрытых меток** - использовать класс `sr-only` для меток, видимых только для screen readers
-- **`aria-*` атрибуты** - использовать `aria-expanded`, `aria-pressed` и другие атрибуты доступности
+- **`sr-only` for hidden labels** - use the `sr-only` class for labels visible only to screen readers
+- **`aria-*` attributes** - use `aria-expanded`, `aria-pressed`, and other accessibility attributes
 
-Пример:
+Example:
 ```html
-<label for="search" class="sr-only">Поиск</label>
+<label for="search" class="sr-only">Search</label>
 <input
   type="text"
   id="search"
   [(ngModel)]="searchQuery"
-  placeholder="Поиск"
+  placeholder="Search"
 />
 ```

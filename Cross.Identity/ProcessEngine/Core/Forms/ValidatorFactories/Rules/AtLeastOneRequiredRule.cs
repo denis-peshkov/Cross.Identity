@@ -1,6 +1,6 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Минимум одно из перечисленных полей
+/// At least one of the listed fields
 /// </summary>
 internal sealed record AtLeastOneRequiredRule(IReadOnlyList<string> Fields, string? Message = null) : IFormSchemaRule;

@@ -80,7 +80,7 @@ public class CreateUser_StepTests
             UserService = userService.Object,
             Map = new Dictionary<string, string>
             {
-                ["Email"] = "Email" // относительный ключ
+                ["Email"] = "Email" // relative key
             },
             UserIdKey = "UserId",
             SelectorKey = "Email",
@@ -121,7 +121,7 @@ public class CreateUser_StepTests
             Map = new Dictionary<string, string>
             {
                 ["Email"] = "collectForm.Email",
-                ["Password"] = "collectForm.Password" // отсутствует в Bag
+                ["Password"] = "collectForm.Password" // missing from Bag
             },
             UserIdKey = "UserId",
             SelectorKey = "collectForm.Email",
@@ -130,7 +130,7 @@ public class CreateUser_StepTests
 
         var bag = new Bag();
         bag.Set("collectForm.Email", email);
-        // Password отсутствует
+        // Password is missing
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

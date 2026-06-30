@@ -1,50 +1,50 @@
 ---
-description: Триаж GitHub issues и PR для Cross.Identity — когда запускать skills и скрипты.
+description: GitHub issue and PR triage for Cross.Identity — when to run skills and scripts.
 globs:
 alwaysApply: false
 ---
 
 # Triage — Cross.Identity
 
-## Когда применять
+## When to apply
 
-Запускай skills из `.cursor/skills/` когда пользователь просит:
+Run skills from `.cursor/skills/` when the user asks for:
 
-- triage, триаж, разобрать issues/PRs
-- backlog review, sprint planning по issues
-- «что смержить», quick wins по PR
+- triage, triage issues/PRs
+- backlog review, sprint planning for issues
+- "what to merge", quick wins for PRs
 
 ## Skills
 
-| Skill | Путь | Назначение |
-|-------|------|------------|
+| Skill | Path | Purpose |
+|-------|------|---------|
 | `issue-triage` | `.cursor/skills/issue-triage/SKILL.md` | Issues |
 | `pr-triage` | `.cursor/skills/pr-triage/SKILL.md` | PRs + review |
-| `cross-identity-triage` | `.cursor/skills/cross-identity-triage/SKILL.md` | Полный кросс-анализ |
+| `cross-identity-triage` | `.cursor/skills/cross-identity-triage/SKILL.md` | Full cross-analysis |
 
-## Команды
+## Commands
 
 ```bash
-bash .cursor/triage/collect-data.sh   # сбор JSON в .cursor/triage/docs/.data/
-.cursor/triage/rtk-gh.sh issue list   # gh через RTK (fallback: gh)
+bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.data/
+.cursor/triage/rtk-gh.sh issue list   # gh via RTK (fallback: gh)
 ```
 
-## Правила выполнения
+## Execution rules
 
-1. **RTK**: для всех `gh` команд использовать `.cursor/triage/rtk-gh.sh`
-2. **Безопасность**: не постить/закрывать issues и PR без `AskQuestion`
-3. **Контекст**: identity-библиотека — приоритет security (JWT, OAuth, tokens)
-4. **Чеклисты**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `pr-triage/references/dotnet-checklist.md`
-5. **Отчёты**: сохранять в `.cursor/triage/docs/`
-6. **Язык**: таблицы — русский; GitHub comments — английский
+1. **RTK**: use `.cursor/triage/rtk-gh.sh` for all `gh` commands
+2. **Safety**: do not post/close issues and PRs without `AskQuestion`
+3. **Context**: identity library — prioritize security (JWT, OAuth, tokens)
+4. **Checklists**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `pr-triage/references/dotnet-checklist.md`
+5. **Reports**: save to `.cursor/triage/docs/`
+6. **Language**: tables — English; GitHub comments — English
 
-## Проактивно (в чате)
+## Proactive (in chat)
 
-- >10 открытых issues → предложить `issue-triage`
-- >5 открытых PR без review → предложить `pr-triage`
-- Перед релизом NuGet → предложить `cross-identity-triage`
+- >10 open issues → suggest `issue-triage`
+- >5 open PRs without review → suggest `pr-triage`
+- Before NuGet release → suggest `cross-identity-triage`
 
 ## CI
 
-- **PR opened/updated** — job `pr-triage-comment` постит wshm-style комментарий (`post-pr-triage.mjs`)
-- **Weekly** — `.cursor/triage/docs/ci-report-*.md` и `.data/*.json` в artifact
+- **PR opened/updated** — job `pr-triage-comment` posts wshm-style comment (`post-pr-triage.mjs`)
+- **Weekly** — `.cursor/triage/docs/ci-report-*.md` and `.data/*.json` in artifact

@@ -1,14 +1,14 @@
 ﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Сборщик процесса из JSON-дефиниции: поле <c>start</c> + массив <c>steps</c>.
-/// Каждый шаг содержит <c>kind</c> и параметры; создание шага делегируется в <see cref="StepRegistry"/>.
+/// Process builder from a JSON definition: <c>start</c> field + <c>steps</c> array.
+/// Each step contains <c>kind</c> and parameters; step creation is delegated to <see cref="StepRegistry"/>.
 /// </summary>
 internal static class ProcessLoader
 {
     /// <summary>
-    /// Построить исполняемый процесс из JSON-строки.
-    /// Требования к JSON:
+    /// Build an executable process from a JSON string.
+    /// JSON requirements:
     /// <code language="json">
     /// {
     ///   "start": "collectForm",
@@ -20,12 +20,12 @@ internal static class ProcessLoader
     /// }
     /// </code>
     /// </summary>
-    /// <param name="json">JSON-дефиниция процесса.</param>
-    /// <param name="reg">Реестр фабрик шагов.</param>
-    /// <param name="sp">DI-провайдер для разрешения зависимостей шагов.</param>
+    /// <param name="json">Process JSON definition.</param>
+    /// <param name="reg">Step factory registry.</param>
+    /// <param name="sp">DI provider for resolving step dependencies.</param>
     /// <exception cref="InvalidOperationException">
-    /// Брошено, если отсутствует <c>start</c>, массив <c>steps</c>, шаги повторяют <c>kind</c>,
-    /// либо <c>start</c> не соответствует ни одному шагу.
+    /// Thrown when <c>start</c> is missing, the <c>steps</c> array is missing, steps duplicate <c>kind</c>,
+    /// or <c>start</c> does not match any step.
     /// </exception>
     public static ProcessExecutor FromJson(string json, StepRegistry reg, IServiceProvider sp)
     {
@@ -53,21 +53,21 @@ internal static class ProcessLoader
 
         foreach (var stepJson in stepsEl.EnumerateArray())
         {
-            // Делегируем создание шага реестру — он сам извлечёт kind и вызовет нужную фабрику.
+            // Delegate step creation to the registry — it extracts kind and invokes the factory.
             var step = reg.Create(stepJson, sp);
 
-            // Проверка уникальности kind в рамках одного процесса
+            // Ensure kind is unique within a single process
             if (!kinds.Add(step.Kind))
                 throw new InvalidOperationException($"Duplicate step kind '{step.Kind}' in process. Each kind must be unique within a flow.");
 
             steps.Add(step);
         }
 
-        // 3) Валидация: start должен указывать на существующий шаг
+        // 3) Validation: start must point to an existing step
         if (!kinds.Contains(start!))
             throw new InvalidOperationException($"Start refers to unknown step kind '{start}'. Ensure there is a step with this kind in 'steps'.");
 
-        // 4) Собираем исполняемый процесс
+        // 4) Build the executable process
         return new ProcessExecutor(start!, steps);
     }
 }

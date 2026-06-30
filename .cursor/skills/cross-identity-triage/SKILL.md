@@ -1,22 +1,22 @@
 ---
 name: cross-identity-triage
 description: >-
-  Полный triage Cross.Identity: issue-triage + pr-triage параллельно, кросс-анализ
-  (двойное покрытие, security gaps, P0 без PR, dirty CI). Сохраняет отчёт в
-  .cursor/triage/docs/. Args: "en"/"ru", "no save" — без файла.
+  Full Cross.Identity triage: issue-triage + pr-triage in parallel, cross-analysis
+  (double coverage, security gaps, P0 without PR, dirty CI). Saves report to
+  .cursor/triage/docs/. Args: "ru"/"en" (default en), "no save" — skip file.
 ---
 
-# Cross-Identity Triage (оркестратор)
+# Cross-Identity Triage (orchestrator)
 
-Объединяет `issue-triage` + `pr-triage` + кросс-анализ issues × PRs.
+Combines `issue-triage` + `pr-triage` + cross-analysis of issues × PRs.
 
-## Когда использовать
+## When to use
 
-- Еженедельно или перед релизом NuGet
-- Перед sprint planning
-- После CI workflow `triage.yml` — для интерпретации артефактов
+- Weekly or before NuGet release
+- Before sprint planning
+- After CI workflow `triage.yml` — to interpret artifacts
 
-## Phase 0 — Предусловия
+## Phase 0 — Prerequisites
 
 ```bash
 git rev-parse --is-inside-work-tree
@@ -24,15 +24,15 @@ gh auth status
 date +%Y-%m-%d
 ```
 
-Или запустить сбор данных:
+Or run data collection:
 
 ```bash
 .cursor/triage/collect-data.sh
 ```
 
-## Phase 1 — Data gathering (параллельно)
+## Phase 1 — Data gathering (in parallel)
 
-**Issues** (через RTK):
+**Issues** (via RTK):
 
 ```bash
 .cursor/triage/rtk-gh.sh issue list --state open --limit 150 \
@@ -49,80 +49,80 @@ date +%Y-%m-%d
   --json number,title,author,createdAt,updatedAt,additions,deletions,changedFiles,isDraft,mergeable,reviewDecision,statusCheckRollup,body
 ```
 
-Файлы PR — для overlap detection (см. `pr-triage`).
+PR files — for overlap detection (see `pr-triage`).
 
-## Phase 2 — Индивидуальный triage
+## Phase 2 — Individual triage
 
-Выполнить логику `issue-triage` и `pr-triage` (Phase 1 каждого) — таблицы issues и PRs.
+Run logic from `issue-triage` and `pr-triage` (Phase 1 of each) — issue and PR tables.
 
-## Phase 3 — Кросс-анализ
+## Phase 3 — Cross-analysis
 
-### 3.1 Двойное покрытие — 2 PR на 1 issue
+### 3.1 Double coverage — 2 PRs for 1 issue
 
 | Issue | PR1 | PR2 | Verdict |
 |-------|-----|-----|---------|
 
-Правила: меньший scope, CI clean, internal PR, overlap >80% → конфликт.
+Rules: smaller scope, CI clean, internal PR, overlap >80% → conflict.
 
 ### 3.2 Security gaps
 
-Для issues с риском «красный» — findings без PR (особенно JWT, refresh tokens, OAuth).
+For issues with "red" risk — findings without PR (especially JWT, refresh tokens, OAuth).
 
-### 3.3 P0/P1 без PR
+### 3.3 P0/P1 without PR
 
-Labels/m keywords: crash, auth, token, jwt, security.
+Labels/keywords: crash, auth, token, jwt, security.
 
-### 3.4 Наши PR dirty
+### 3.4 Our PRs dirty
 
-CI dirty / CONFLICTING — причина (overlap, нужен rebase).
+CI dirty / CONFLICTING — reason (overlap, rebase needed).
 
-### 3.5 PR без `fixes #N`
+### 3.5 PR without `fixes #N`
 
-Внутренние PR без привязки к issue.
+Internal PRs not linked to an issue.
 
 ## Phase 4 — Output
 
-Резюме:
+Summary:
 
-| Категория | Count |
-|-----------|-------|
-| PRs готовы к merge (наши) | N |
-| Quick wins (внешние) | N |
+| Category | Count |
+|----------|-------|
+| PRs ready to merge (ours) | N |
+| Quick wins (external) | N |
 | Double coverage | N |
-| P0/P1 без PR | N |
-| Security без PR | N |
+| P0/P1 without PR | N |
+| Security without PR | N |
 | Dirty PRs | N |
 
-### Сохранение
+### Saving
 
-`.cursor/triage/docs/Cross.Identity-YYYY-MM-DD.md` (если не `no save`).
+`.cursor/triage/docs/Cross.Identity-YYYY-MM-DD.md` (unless `no save`).
 
-Структура файла:
+File structure:
 
 ```markdown
 # Cross.Identity Triage — YYYY-MM-DD
 
-## Issues (таблицы)
-## PRs (таблицы)
+## Issues (tables)
+## PRs (tables)
 ## 1. Double coverage
 ## 2. Security gaps
-## 3. P0/P1 без PR
+## 3. P0/P1 without PR
 ## 4. Dirty PRs
-## 5. Actions prioritaires
-## Résumé chiffré
+## 5. Priority actions
+## Numeric summary
 ```
 
 ## CI integration
 
-После `triage.yml` читать:
+After `triage.yml` read:
 
-- `.cursor/triage/docs/.data/*.json` — сырые данные
-- `.cursor/triage/docs/ci-report-YYYY-MM-DD.md` — отчёт агента CI
+- `.cursor/triage/docs/.data/*.json` — raw data
+- `.cursor/triage/docs/ci-report-YYYY-MM-DD.md` — CI agent report
 
-Дополнить кросс-анализом вручную при необходимости.
+Supplement with cross-analysis manually if needed.
 
-## Правила
+## Rules
 
-- GitHub actions (комментарии/close) — только `AskQuestion`
-- Langue tableaux: ru (default), en по аргументу
-- RTK: всегда `.cursor/triage/rtk-gh.sh` для gh-команд
+- GitHub actions (comments/close) — only with `AskQuestion`
+- Table language: en (default), ru via argument
+- RTK: always `.cursor/triage/rtk-gh.sh` for gh commands

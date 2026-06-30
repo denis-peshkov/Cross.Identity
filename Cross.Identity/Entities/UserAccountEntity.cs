@@ -32,7 +32,7 @@ public class UserAccountEntity
     /// <summary>
     /// Gets or sets a telephone number for the user.
     /// </summary>
-    /// <remarks>хранить в E.164</remarks>
+    /// <remarks>store in E.164</remarks>
     [ProtectedPersonalData]
     public string? PhoneNumber { get; set; }
 

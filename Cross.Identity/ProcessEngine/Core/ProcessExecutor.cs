@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Исполнитель процесса: хранит карту шагов (по <c>Kind</c>) и выполняет переходы по <c>Next</c>.
+/// Process executor: holds a step map (by <c>Kind</c>) and follows transitions via <c>Next</c>.
 /// </summary>
 internal sealed class ProcessExecutor
 {
@@ -9,23 +9,23 @@ internal sealed class ProcessExecutor
     private readonly string _start;
 
     /// <summary>
-    /// Внутренний конструктор. Предполагается, что уникальность <c>Kind</c> и валидность <c>_start</c>
-    /// проверены на этапе загрузки процесса (см. <see cref="ProcessLoader.FromJson"/>).
+    /// Internal constructor. Assumes <c>Kind</c> uniqueness and <c>_start</c> validity
+    /// were verified during process loading (see <see cref="ProcessLoader.FromJson"/>).
     /// </summary>
     internal ProcessExecutor(string start, IEnumerable<IStep> steps)
     {
-        // Сопоставляем шаги по Kind без учета регистра (как делали в ProcessLoader).
+        // Map steps by Kind case-insensitively (same as ProcessLoader).
         _steps = steps.ToDictionary(s => s.Kind, StringComparer.OrdinalIgnoreCase);
         _start = start;
     }
 
     /// <summary>
-    /// Запустить выполнение процесса.
+    /// Start process execution.
     /// </summary>
-    /// <param name="ctx">Контекст данных (<see cref="Bag"/>).</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
+    /// <param name="ctx">Data context (<see cref="Bag"/>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="InvalidOperationException">
-    /// Бросается, если шаг с указанным <c>kind</c> не найден либо переход <c>Next</c> указывает на несуществующий шаг.
+    /// Thrown when a step with the specified <c>kind</c> is not found or a <c>Next</c> transition points to a missing step.
     /// </exception>
     public async Task RunAsync(Bag ctx, CancellationToken cancellationToken = default)
     {
@@ -40,13 +40,13 @@ internal sealed class ProcessExecutor
             var result = await step.ExecuteAsync(ctx, cancellationToken).ConfigureAwait(false);
 
             if (result.Status == StepStatusEnum.Fail)
-                throw result.Error!; // ошибка шага пробрасывается наверх
+                throw result.Error!; // step error is propagated upward
 
-            // null => завершить процесс
+            // null => finish the process
             if (result.Next is null)
                 return;
 
-            // Переходим к следующему шагу по его kind
+            // Move to the next step by its kind
             if (!_steps.ContainsKey(result.Next))
                 throw new InvalidOperationException(
                     $"Next step '{result.Next}' (from '{current}') not found.");

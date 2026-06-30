@@ -8,9 +8,9 @@ internal class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<Re
         builder.Property(x => x.Id).HasColumnName("RefreshTokenId");
         builder.Property(x => x.RevokeReason).HasColumnType("smallint");
         builder.Property(x => x.RowVersion)
-            .IsRowVersion()           // для SQL Server → rowversion/timestamp
-            .IsConcurrencyToken()     // говорить EF: проверяй при UPDATE
-            .HasValueGenerator<RowVersionValueGenerator>(); // для InMemory подставляем значение; для SQL Server генератор возвращает null — БД генерирует сама
+            .IsRowVersion()           // for SQL Server → rowversion/timestamp
+            .IsConcurrencyToken()     // tell EF to check on UPDATE
+            .HasValueGenerator<RowVersionValueGenerator>(); // for InMemory we supply a value; for SQL Server the generator returns null — DB generates it
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.RefreshTokens)}");

@@ -140,7 +140,7 @@ public class SendCode_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         var code = bag.Get<string>("sendCode.LastCode");
         code.Should().NotBeNullOrEmpty();
-        code.Should().MatchRegex("^[0-9]+$"); // Проверяем, что код только из цифр для SMS
+        code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits for SMS
     }
 
     [Test]

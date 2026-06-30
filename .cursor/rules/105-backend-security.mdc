@@ -1,11 +1,11 @@
-# Безопасность бэкенда
+# Backend security
 
-## Валидация входных данных
+## Input validation
 
-- **FluentValidation** - использовать FluentValidation для валидации DTOs
-- **Валидация на уровне контроллера** - проверять валидность данных перед обработкой
+- **FluentValidation** - use FluentValidation for DTO validation
+- **Controller-level validation** - validate data before processing
 
-Пример:
+Example:
 ```csharp
 if (!ModelState.IsValid)
 {
@@ -18,34 +18,34 @@ if (!ModelState.IsValid)
 }
 ```
 
-## Санитизация данных
+## Data sanitization
 
-- **Санитизация входных данных** - санитизировать все пользовательские данные перед использованием
-- **Защита от XSS** - экранировать HTML/JavaScript в пользовательском вводе
-- **Защита от SQL Injection** - использовать параметризованные запросы, не использовать строковую конкатенацию
+- **Sanitize input** - sanitize all user data before use
+- **XSS protection** - escape HTML/JavaScript in user input
+- **SQL Injection protection** - use parameterized queries; do not use string concatenation
 
-## Логирование чувствительных данных
+## Logging sensitive data
 
-- **Не логировать чувствительные данные** - не логировать пароли, токены, персональные данные
-- **Маскирование данных** - маскировать чувствительные данные в логах (например, `****` вместо пароля)
-- **Структурированное логирование** - использовать параметризованные сообщения для логирования
+- **Do not log sensitive data** - do not log passwords, tokens, or personal data
+- **Data masking** - mask sensitive data in logs (e.g. `****` instead of password)
+- **Structured logging** - use parameterized messages for logging
 
-Пример:
+Example:
 ```csharp
-// ❌ Плохо
+// ❌ Bad
 _logger.LogInformation("User login: {Username}, Password: {Password}", username, password);
 
-// ✅ Хорошо
+// ✅ Good
 _logger.LogInformation("User login attempt: {Username}", username);
 ```
 
 ## CORS
 
-- **Настройка CORS** - настраивать CORS политику для разрешенных источников
-- **Порядок middleware** - CORS должен быть настроен до middleware, которые читают заголовки
-- **AllowCredentials** - использовать `AllowCredentials()` для поддержки cookies
+- **CORS configuration** - configure CORS policy for allowed origins
+- **Middleware order** - CORS must be configured before middleware that reads headers
+- **AllowCredentials** - use `AllowCredentials()` for cookie support
 
-Пример:
+Example:
 ```csharp
 services.AddCors(o =>
 {
@@ -60,17 +60,17 @@ services.AddCors(o =>
     });
 });
 
-// В ConfigureApp - CORS должен быть до других middleware
+// In ConfigureApp - CORS must be before other middleware
 app.UseCors("ui");
 ```
 
 ## HTTPS
 
-- **HTTPS в production** - использовать HTTPS в production окружении
-- **HSTS** - использовать HTTP Strict Transport Security (HSTS) в production
-- **HTTPS Redirection** - перенаправлять HTTP на HTTPS в production
+- **HTTPS in production** - use HTTPS in production
+- **HSTS** - use HTTP Strict Transport Security (HSTS) in production
+- **HTTPS Redirection** - redirect HTTP to HTTPS in production
 
-Пример:
+Example:
 ```csharp
 if (!app.Environment.IsDevelopment())
 {
@@ -79,13 +79,13 @@ if (!app.Environment.IsDevelopment())
 }
 ```
 
-## Защита от атак
+## Attack protection
 
-- **Rate Limiting** - использовать rate limiting для защиты от DDoS атак
-- **Request Size Limits** - ограничивать размер запросов (особенно для загрузки файлов)
-- **Timeout** - устанавливать таймауты для долгих операций
+- **Rate Limiting** - use rate limiting for DDoS protection
+- **Request Size Limits** - limit request size (especially for file uploads)
+- **Timeout** - set timeouts for long operations
 
-Пример ограничения размера:
+Example size limit:
 ```csharp
 services.Configure<FormOptions>(options =>
 {
@@ -94,13 +94,13 @@ services.Configure<FormOptions>(options =>
 });
 ```
 
-## Безопасность заголовков
+## Security headers
 
-- **Security Headers** - устанавливать security headers (X-Content-Type-Options, X-Frame-Options и т.д.)
-- **Custom Headers** - использовать middleware для установки кастомных заголовков безопасности
+- **Security Headers** - set security headers (X-Content-Type-Options, X-Frame-Options, etc.)
+- **Custom Headers** - use middleware for custom security headers
 
-## Защита API
+## API protection
 
-- **API Versioning** - использовать версионирование API для контроля изменений
-- **Rate Limiting per User** - ограничивать количество запросов на пользователя
-- **IP Whitelisting** - использовать whitelist IP адресов для критичных endpoints (если необходимо)
+- **API Versioning** - use API versioning to control changes
+- **Rate Limiting per User** - limit requests per user
+- **IP Whitelisting** - use IP whitelisting for critical endpoints (if needed)

@@ -15,61 +15,62 @@
 
 # Cross.Identity
 
-Библиотека идентификации и аутентификации для .NET: настраиваемые сценарии (регистрация, вход, восстановление пароля, выдача и обновление токенов), JWT, Argon2, верификация по email/SMS, процессный движок с JSON-описанием потоков.
+A .NET identity and authentication library: configurable scenarios (registration, sign-in, password recovery, token issuance and refresh), JWT, Argon2, email/SMS verification, and a process engine with JSON-defined flows.
 
-## Возможности
+## Features
 
-- **Process Engine** — выполнение сценариев (flow) по JSON-дефинициям с последовательными шагами (steps).
-- **Потоки** — регистрация, вход по паролю/коду, forgot password, token, refresh token, получение пользователя, запрос и проверка кодов (email/SMS).
-- **JWT** — выпуск и валидация access/refresh токенов, настраиваемые claims и время жизни.
-- **Безопасность** — хеширование паролей (Argon2), одноразовые коды, нормализация телефонов.
-- **Каналы** — email и SMS (отправка кодов через Cross.Messaging).
-- **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state в БД (`auth.ExternalLoginStates`), multi-instance без sticky.
-- **Формы** — декларативное описание полей и правил валидации (equal, requiredIf, atLeastOneRequired и др.).
-- **Лицензирование (JWT)** — проверка ключа Peshkov при первом вызове flow; без ключа в dev/test работа продолжается с предупреждением в логах.
+- **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
+- **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
+- **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
+- **Security** — password hashing (Argon2), one-time codes, phone normalization.
+- **Channels** — email and SMS (code delivery via Cross.Messaging).
+- **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
+- **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
+- **Licensing (JWT)** — Peshkov license key check on the first flow call; without a key in dev/test, execution continues with a warning in logs.
 
-## Требования
+## Requirements
 
 - .NET 8.0
 
-## Структура репозитория
+## Repository structure
 
 ```
 Cross.Identity.slnx
-├── Cross.Identity/                     # NuGet-библиотека
+├── Cross.Identity/                     # NuGet library
 │   ├── FlowExecutor.cs, IFlowExecutor.cs
-│   ├── Entities/, Infrastructure/      # EF Core (пользователи, токены, верификации, external login)
+│   ├── Entities/, Infrastructure/      # EF Core (users, tokens, verifications, external login)
 │   ├── Services/                       # User, Code, JwtToken; Crypto/; ExternalOAuth/
-│   ├── Licensing/                      # JWT-лицензия Peshkov (Accessor, Validator, ProductInfo)
+│   ├── Licensing/                      # Peshkov JWT license (Accessor, Validator, ProductInfo)
 │   ├── Options/                        # AuthenticationOptions, IdentityServiceConfiguration
 │   ├── Extensions/, Helpers/, Dtos/, Enums/
 │   ├── ProcessEngine/
-│   │   ├── Core/                       # Bag, StepRegistry, ProcessLoader, Forms/валидация
-│   │   ├── Steps/, Factories/          # Шаги и их DI-фабрики
+│   │   ├── Core/                       # Bag, StepRegistry, ProcessLoader, Forms/validation
+│   │   ├── Steps/, Factories/          # Steps and their DI factories
 │   │   └── Definitions/                # Flows/*.json, Templates/, Providers/
-│   ├── FLOWS.md                        # Описание flow и шагов
+│   ├── FLOWS.md                        # Flow and step documentation
 │   └── config.nuspec
 ├── Cross.Identity.Tests/               # NUnit (unit + integration)
-├── Sample.Api/                         # Пример минимального API (ASP.NET Core)
-├── .cursor/triage/docs/                # Отчёты automated triage (.data/, ci-report-*.md)
+├── Sample.Api/                         # Minimal API example (ASP.NET Core)
+├── .cursor/triage/docs/                # Automated triage reports (.data/, ci-report-*.md)
 ├── .github/workflows/                  # dotnet.yml, triage.yml
-├── Infrastructure/Scripts/             # Пример DbUp SQL для схемы auth (копия, см. README)
+├── Infrastructure/Scripts/             # DbUp SQL example for auth schema (copy; see README)
 ├── RefreshToken.md
+├── CONTRIBUTING.md
 ├── LICENSE.md
 └── README.md
 ```
 
-## Использование
+## Usage
 
-1. **Подключение** в приложении (ASP.NET Core):
+1. **Registration** in the application (ASP.NET Core):
 
 ```csharp
 services.AddCrossIdentity(configuration);
-// Регистрирует: IFlowExecutor, StepRegistry, все IStepFactory, UserService, CodeService, JwtTokenService,
-// LicenseAccessor, LicenseValidator, ILicenseProductInfo, провайдер дефиниций (файлы + embedded), формы и т.д.
+// Registers: IFlowExecutor, StepRegistry, all IStepFactory, UserService, CodeService, JwtTokenService,
+// LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
 ```
 
-Ключ лицензии (опционально) — секция `CrossIdentity` в конфигурации или переменная окружения `CrossIdentity__LicenseKey`:
+License key (optional) — `CrossIdentity` section in configuration or the `CrossIdentity__LicenseKey` environment variable:
 
 ```json
 {
@@ -79,31 +80,31 @@ services.AddCrossIdentity(configuration);
 }
 ```
 
-Проверка выполняется автоматически при **первом** вызове `IFlowExecutor.ExecuteAsync` — дополнительный код не нужен. Ключи: [peshkov.biz](https://peshkov.biz).
+Validation runs automatically on the **first** call to `IFlowExecutor.ExecuteAsync` — no extra code required. Keys: [peshkov.biz](https://peshkov.biz).
 
-Поведение:
+Behavior:
 
-| Сценарий | Результат |
-|----------|-----------|
-| Ключ не задан | `LogCritical`, flow выполняется (dev/test) |
-| Невалидный JWT | `LogError`, flow выполняется |
-| Просроченный / неверный тип продукта | `LogError` + `LogCritical`, flow выполняется |
-| Валидный ключ | `LogInformation` с edition и датой истечения |
+| Scenario | Result |
+|----------|--------|
+| Key not set | `LogCritical`, flow runs (dev/test) |
+| Invalid JWT | `LogError`, flow runs |
+| Expired / wrong product type | `LogError` + `LogCritical`, flow runs |
+| Valid key | `LogInformation` with edition and expiration date |
 
-2. **Выполнение сценария** — в контроллере или минимальном API передайте тело запроса как словарь и вызовите:
+2. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
 
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
     input: requestBodyAsDictionary,
-    flow: "license",           // например: license, game, shop, edoctors
+    flow: "license",           // e.g. license, game, shop, edoctors
     operation: FlowOperationEnum.Token,
     cancellationToken);
-// result.Data — словарь полей из шага collectResult (например access_token, refresh_token, LastCode).
+// result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
 ```
 
-3. **Дефиниции потоков** — JSON в `ProcessEngine/Definitions/Flows/` (и при необходимости из файловой системы). Имена файлов: `{flow}.{Operation}.json` (например `license.Token.json`, `game.Register.json`). Подробное описание flow и шагов — в [FLOWS.md](Cross.Identity/FLOWS.md).
+3. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `license.Token.json`, `game.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
 
-## Зависимости (NuGet)
+## Dependencies (NuGet)
 
 - Cross.ErrorHandlers
 - Cross.Headers
@@ -115,50 +116,51 @@ var result = await _flowExecutor.ExecuteAsync(
 - Microsoft.IdentityModel.JsonWebTokens
 - PhoneNumbersCore
 
-## Сборка и тесты
+## Build and tests
 
 ```bash
 dotnet build
 dotnet test
 ```
 
-## Тесты
+## Tests
 
-### Категории (NUnit)
+### Categories (NUnit)
 
-Константы — `Cross.Identity.Tests.Common.TestCategory`, атрибуты: `[Category(TestCategory.UNIT)]`, `[Category(TestCategory.INTEGRATION)]`, `[Category(TestCategory.FUNCTIONAL)]`.
+Constants — `Cross.Identity.Tests.Common.TestCategory`, attributes: `[Category(TestCategory.UNIT)]`, `[Category(TestCategory.INTEGRATION)]`, `[Category(TestCategory.FUNCTIONAL)]`.
 
-| Категория | Назначение |
-|-----------|------------|
-| **UNIT** | Моки, один компонент, без InMemory EF |
-| **INTEGRATION** | `EFTestsBase` (InMemory EF + реальные сервисы), `RunFlowCommandHandlerTestsBase` / `Identity/FlowTests` (сквозной process engine) |
-| **FUNCTIONAL** | Зарезервировано (E2E / TestServer / внешние зависимости), пока не используется |
+| Category | Purpose |
+|----------|---------|
+| **UNIT** | Mocks, single component, no InMemory EF |
+| **INTEGRATION** | `EFTestsBase` (InMemory EF + real services), `RunFlowCommandHandlerTestsBase` / `Identity/FlowTests` (end-to-end process engine) |
+| **FUNCTIONAL** | Reserved (E2E / TestServer / external dependencies), not used yet |
 
-Примеры запуска:
+Run examples:
 
 ```bash
 dotnet test --filter "Category=Unit"
 dotnet test --filter "Category=Integration"
 ```
 
-### Именование методов
+### Method naming
 
-Соглашение **Given_When_Then**:
+**Given_When_Then** convention:
 
-- **Given** — контекст/предусловия.
-- **When** — действие.
-- **Then** — ожидаемый результат.
+- **Given** — context/preconditions.
+- **When** — action.
+- **Then** — expected result.
 
-Пример: `ExistingUser_RequestCode_SendsCodeAndReturnsLastCode`.
+Example: `ExistingUser_RequestCode_SendsCodeAndReturnsLastCode`.
 
-Структура: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests и StepFactoryTests (unit); `Services/` — unit или integration в зависимости от базового класса (`EFTestsBase` → integration).
+Layout: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests and StepFactoryTests (unit); `Services/` — unit or integration depending on the base class (`EFTestsBase` → integration).
 
-## Дополнительно
+## Additional resources
 
-- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — пример DbUp SQL для схемы `auth`.
-- [RefreshToken.md](RefreshToken.md) — рекомендации по срокам жизни access/refresh токенов и ротации.
-- [LICENSE.md](LICENSE.md) — лицензия.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute: branches, PRs, tests, code style.
+- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp SQL example for the `auth` schema.
+- [RefreshToken.md](RefreshToken.md) — access/refresh token lifetimes and rotation recommendations.
+- [LICENSE.md](LICENSE.md) — license.
 
 ## ToDo
 
-- ~~[x] Организовать переход с System.IdentityModel.Tokens.Jwt на Microsoft.IdentityModel.JsonWebTokens~~
+- ~~[x] Migrate from System.IdentityModel.Tokens.Jwt to Microsoft.IdentityModel.JsonWebTokens~~

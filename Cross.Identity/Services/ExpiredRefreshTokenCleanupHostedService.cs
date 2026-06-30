@@ -1,7 +1,7 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
-/// Периодически удаляет refresh-токены с истёкшим <see cref="RefreshTokenEntity.AbsoluteExpiresAt"/>.
+/// Periodically deletes refresh tokens whose <see cref="RefreshTokenEntity.AbsoluteExpiresAt"/> has expired.
 /// </summary>
 internal sealed class ExpiredRefreshTokenCleanupHostedService : BackgroundService
 {

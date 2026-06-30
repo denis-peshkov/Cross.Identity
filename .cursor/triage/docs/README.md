@@ -1,72 +1,72 @@
 # Automated Triage Reports
 
-Отчёты triage для репозитория Cross.Identity.
+Triage reports for the Cross.Identity repository.
 
-## Локально (Cursor Agent + skills)
+## Locally (Cursor Agent + skills)
 
 ```bash
-# Полный triage
-# В чате Cursor: «Запусти cross-identity-triage»
+# Full triage
+# In Cursor chat: "Run cross-identity-triage"
 
-# Или по частям:
-# «Запусти issue-triage»
-# «Запусти pr-triage»
+# Or in parts:
+# "Run issue-triage"
+# "Run pr-triage"
 ```
 
 Skills: `.cursor/skills/{issue-triage,pr-triage,cross-identity-triage}/`
 
-## Скрипты
+## Scripts
 
 ```bash
-# Сбор данных (rtk gh если установлен)
+# Data collection (rtk gh if installed)
 bash .cursor/triage/collect-data.sh
 
-# CI-агент (нужен CURSOR_API_KEY, Node 20.19.4)
+# CI agent (requires CURSOR_API_KEY, Node 20.19.4)
 cd .cursor/triage && yarn install --ignore-engines && CURSOR_API_KEY=... yarn triage
 ```
 
-На Node 20 SDK использует `JsonlLocalAgentStore` (`cursor-agent-local.mjs`), не `node:sqlite`.
+On Node 20 the SDK uses `JsonlLocalAgentStore` (`cursor-agent-local.mjs`), not `node:sqlite`.
 
 ## CI
 
 Workflow `.github/workflows/triage.yml`:
 
-- **Расписание**: понедельник 06:00 UTC
-- **workflow_dispatch**: ручной запуск
-- **issues opened**: сбор данных
-- **pull_request** opened/synchronize: AI-комментарий в PR (wshm-style)
+- **Schedule**: Monday 06:00 UTC
+- **workflow_dispatch**: manual run
+- **issues opened**: data collection
+- **pull_request** opened/synchronize: AI comment on PR (wshm-style)
 
 ### Secrets
 
-| Secret | Обязателен | Назначение |
-|--------|------------|------------|
-| `CURSOR_API_KEY` | Да (для AI-отчёта) | Cursor SDK в CI |
-| `GITHUB_TOKEN` | Авто | `gh` CLI |
+| Secret | Required | Purpose |
+|--------|----------|---------|
+| `CURSOR_API_KEY` | Yes (for AI report) | Cursor SDK in CI |
+| `GITHUB_TOKEN` | Auto | `gh` CLI |
 
-Создать ключ: [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations)
+Create a key: [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations)
 
 ### PR opened / updated
 
 Workflow `triage.yml` → job **PR automated comment**:
 
-- Cursor Agent анализирует diff
-- Постит комментарий в стиле wshm (category, priority, confidence, summary, files)
-- При новом push **обновляет** тот же комментарий (маркер `<!-- cross-identity-triage -->`)
+- Cursor Agent analyzes the diff
+- Posts a wshm-style comment (category, priority, confidence, summary, files)
+- On a new push **updates** the same comment (marker `<!-- cross-identity-triage -->`)
 
-Ручной тест: **Actions → Triage → Run workflow** → поле `pr_number`.
+Manual test: **Actions → Triage → Run workflow** → `pr_number` field.
 
-### Артефакты
+### Artifacts
 
 - `.cursor/triage/docs/ci-report-YYYY-MM-DD.md`
-- `.cursor/triage/docs/.data/*.json` (в artifact, не в git)
+- `.cursor/triage/docs/.data/*.json` (in artifact, not in git)
 
 ## RTK
 
-Установка (опционально, для сжатия `gh` output):
+Installation (optional, for compressing `gh` output):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-rtk gain  # проверка: Rust Token Killer, не Type Kit
+rtk gain  # verify: Rust Token Killer, not Type Kit
 ```
 
-Скрипт `.cursor/triage/rtk-gh.sh` автоматически использует `rtk gh` или fallback на `gh`.
+Script `.cursor/triage/rtk-gh.sh` automatically uses `rtk gh` or falls back to `gh`.

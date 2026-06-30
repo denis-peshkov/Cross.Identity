@@ -18,18 +18,18 @@ internal class JwtTokenService : IJwtTokenService
         _httpContextAccessor = httpContextAccessor;
         _options = options.Value;
 
-        // A256KW (алгоритм обёртки ключа) требует ровно 32 байта (256 бит) wrap-ключа.
-        // A256CBC-HS512 — это алгоритм контент-шифрования; CEK (контент-ключ) генерируется внутри и оборачивается твоим wrap-ключом.
-        // Важно только чтобы wrap-ключ соответствовал A256KW (32 байта).
-        // Нужно брать Base64:
+        // A256KW (key-wrap algorithm) requires exactly 32 bytes (256 bits) for the wrap key.
+        // A256CBC-HS512 is the content-encryption algorithm; the CEK (content key) is generated internally and wrapped with your wrap key.
+        // Only the wrap key must match A256KW (32 bytes).
+        // Must use Base64:
         var encKeyBytes = Convert.FromBase64String(_options.Jwt.EncryptionKey);
         if (encKeyBytes.Length != 32) // 32 bytes = 256-bit for A256KW
             throw new InvalidOperationException("Jwt.EncryptionKey must be 32 bytes (Base64) for A256KW.");
         _encryptionKey = new SymmetricSecurityKey(encKeyBytes);
 
-        // Подпись HMAC тоже лучше делать из Base64:
+        // HMAC signing should also use Base64:
         var signKeyBytes = Convert.FromBase64String(_options.Jwt.Key);
-        if (signKeyBytes.Length < 32) // минимум 256 бит на HMAC-SHA256
+        if (signKeyBytes.Length < 32) // minimum 256 bits for HMAC-SHA256
             throw new InvalidOperationException("Jwt.Key should be at least 32 bytes (Base64) for HMAC-SHA256.");
         _signingKey = new SymmetricSecurityKey(signKeyBytes);
     }
@@ -114,7 +114,7 @@ internal class JwtTokenService : IJwtTokenService
         // await _context.AccessTokens.Where(x => x.IsRevoked).DeleteFromQueryAsync();
         // await _context.AccessTokens.Where(x => x.UserId == userId && x.ExpiresAt < DateTime.UtcNow).DeleteFromQueryAsync();
 
-        // Сохранить jti в таблицу access-токенов (для blacklist, аудит, и отзывов)
+        // Persist jti in the access-tokens table (blacklist, audit, and revocation)
         await _context.AccessTokens.AddAsync(entity).ConfigureAwait(false);
 
         await _context.SaveChangesAsync().ConfigureAwait(false);
@@ -181,7 +181,7 @@ internal class JwtTokenService : IJwtTokenService
 
         if (!Guid.TryParse(jti, out var jtiGuid))
         {
-            return false; // невалидный токен
+            return false; // invalid token
         }
 
         var entity = await _context.AccessTokens.FindAsync(jtiGuid).ConfigureAwait(false);

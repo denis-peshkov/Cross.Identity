@@ -6,7 +6,7 @@ public class EmailVerificationEntity
     public Guid UserAccountId { get; set; }
     public virtual UserAccountEntity UserAccount { get; set; }
     public string Email { get; set; }
-    /// <summary>SHA-256 -> 32 байта</summary>
+    /// <summary>SHA-256 -> 32 bytes</summary>
     public byte[] TokenHash { get; set; } = null!;
     public byte TokenLength { get; set; }
     public byte Attempts { get; set; }

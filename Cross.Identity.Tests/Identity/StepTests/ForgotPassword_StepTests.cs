@@ -97,7 +97,7 @@ public class ForgotPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         var code = bag.Get<string>("forgotPassword.LastCode");
         code.Should().NotBeNullOrEmpty();
-        code.Should().MatchRegex("^[0-9]+$"); // Проверяем, что код только из цифр
+        code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits
     }
 
     [Test]

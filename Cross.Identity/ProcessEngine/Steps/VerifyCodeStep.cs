@@ -1,14 +1,14 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг проверки кода подтверждения (email/phone).
-/// Использует <see cref="ICodeService"/> для валидации кода.
+/// Step for verifying a confirmation code (email/phone).
+/// Uses <see cref="ICodeService"/> to validate the code.
 /// <para>
-/// Правила ключей:
+/// Key rules:
 /// <list type="bullet">
-///   <item><description><see cref="IdentityKey"/> и <see cref="CodeKey"/> — если относительные (без точки),
-///     читаются как <c>"{Name}.{Key}"</c>; чтобы читать данные из другого шага, укажи абсолютные ключи
-///     вида <c>"other-step.Field"</c>.</description></item>
+///   <item><description><see cref="IdentityKey"/> and <see cref="CodeKey"/>:
+///     if relative (no dot), are read as <c>"{Name}.{Key}"</c>;
+///     to read data from another step, specify absolute keys such as <c>"other-step.Field"</c>.</description></item>
 /// </list>
 /// </para>
 /// </summary>
@@ -20,28 +20,28 @@ internal sealed class VerifyCodeStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Канал верификации: "email" или "phone".</summary>
+    /// <summary>Verification channel: "email" or "phone".</summary>
     public required string Channel { get; init; }
 
     /// <summary>
-    /// Ключ идентификатора (email/phone/username) в <see cref="Bag"/>.
-    /// Может быть относительным (будет квалифицирован как <c>"{Kind}.IdentityKey"</c>) или абсолютным.
+    /// Key in <see cref="Bag"/> for the identifier (email/phone/username).
+    /// May be relative (qualified as <c>"{Kind}.IdentityKey"</c>) or absolute.
     /// </summary>
     public required string IdentityKey { get; init; }
 
     /// <summary>
-    /// Ключ проверочного кода в <see cref="Bag"/>.
-    /// Может быть относительным (будет квалифицирован как <c>"{Kind}.CodeKey"</c>) или абсолютным.
+    /// Key in <see cref="Bag"/> for the verification code.
+    /// May be relative (qualified as <c>"{Kind}.CodeKey"</c>) or absolute.
     /// </summary>
     public required string CodeKey { get; init; }
 
-    /// <summary>Сервис кодов.</summary>
+    /// <summary>Code service.</summary>
     public required ICodeService CodeService { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // относительные ключи → "{Kind}.{Key}"
+        // relative keys → "{Kind}.{Key}"
         var identity = ctx.Get<string>(BagKey.Qualify(Kind, IdentityKey));
         var code     = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 

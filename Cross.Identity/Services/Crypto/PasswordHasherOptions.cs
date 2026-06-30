@@ -2,10 +2,10 @@
 
 internal sealed class PasswordHasherOptions /*<TAlgorithmOptions>*/
 {
-    // Общие
-    public int SaltSizeBytes { get; set; } = 16;     // длина создаваемой соли
-    public int HashOutputBytes { get; set; } = 32;   // длина хеша
-    public PasswordAlgoEnum DefaultAlgorithm { get; set; } = PasswordAlgoEnum.Argon2id; // По умолчанию используем Argon2id
+    // General
+    public int SaltSizeBytes { get; set; } = 16;     // generated salt length
+    public int HashOutputBytes { get; set; } = 32;   // hash length
+    public PasswordAlgoEnum DefaultAlgorithm { get; set; } = PasswordAlgoEnum.Argon2id; // Argon2id by default
 
     // public required TAlgorithmOptions AlgorithmOptions { get; init; }
 

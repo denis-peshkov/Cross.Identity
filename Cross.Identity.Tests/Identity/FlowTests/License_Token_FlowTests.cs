@@ -27,7 +27,7 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
         // Configure service provider to return requested services
         RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
             headersContextAccessor);
-        // Мокаем IUserService, чтобы управляемо возвращать успешную аутентификацию
+        // Mock IUserService to controllably return successful authentication
         var userServiceMock = new Mock<IUserService>();
         var userId = Guid.NewGuid();
         userServiceMock
@@ -73,7 +73,7 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
             }
         });
-        // IJwtTokenService тоже мокаем, чтобы не ходить в БД за RefreshToken
+        // Mock IJwtTokenService too so we do not hit the database for RefreshToken
         var jwtMock = new Mock<IJwtTokenService>();
         jwtMock
             .Setup(j => j.AccessTokenExpiresInSeconds)
@@ -93,7 +93,7 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
             .ReturnsAsync("refresh-token");
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 
-        // В этом тесте база не участвует в проверке токена, поэтому данных достаточно в моках IUserService
+        // In this test the database does not participate in token validation, so mocks are sufficient
     }
 
     [Test]
@@ -113,21 +113,21 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull();
 
-        // проверяем, что collectResult вернул токены в формате OAuth2
+        // verify that collectResult returned tokens in OAuth2 format
         var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in");
         dict["access_token"].Should().NotBeNull();
         dict["refresh_token"].Should().NotBeNull();
         dict["token_type"].Should().Be("Bearer");
 
-        // проверка вызовов GetService<T>()
+        // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IRequestInput)), Times.Exactly(2));
         _serviceProviderMock.Verify(x => x.GetService(typeof(ILoggerFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IJwtTokenService)), Times.Exactly(1));
         _serviceProviderMock.Verify(x => x.GetService(typeof(IUserService)), Times.Once);
-        // (необязательно) проверить суммарное число обращений
+        // (optional) verify total number of invocations
         _serviceProviderMock.Invocations.Count.Should().BeGreaterOrEqualTo(6);
     }
 
@@ -138,7 +138,7 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
         var input = new Dictionary<string, object?>
         {
             ["Email"] = "invalid-email",
-            ["Password"] = "123", // слишком короткий пароль
+            ["Password"] = "123", // password too short
         };
 
         // Act & Assert
@@ -146,6 +146,6 @@ internal class License_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Token, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*"); // проверяем что есть сообщение об ошибке
+            .WithMessage("*"); // verify that an error message is present
     }
 }

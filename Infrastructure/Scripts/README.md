@@ -1,35 +1,35 @@
-# DbUp-скрипты Cross.Identity (пример)
+# Cross.Identity DbUp scripts (example)
 
-Копия SQL-скриптов для схемы `auth` и связанных seed-данных. Скрипты соответствуют EF-модели (`IdentityContext`, `Entities/*EntityConfiguration.cs`).
+A copy of SQL scripts for the `auth` schema and related seed data. Scripts match the EF model (`IdentityContext`, `Entities/*EntityConfiguration.cs`).
 
-> **Это справочная копия для репозитория Cross.Identity.**
-> В монорепозитории `peshkov.biz` рабочие скрипты лежат в `compose/Identity/` и подключаются в `Web.Api` через симлинки (`IdentitySymlinkToCompose.sh`). При изменении схемы обновляйте оба места или синхронизируйте копию вручную.
+> **This is a reference copy for the Cross.Identity repository.**
+> In the `peshkov.biz` monorepo, the working scripts live in `compose/Identity/` and are linked into `Web.Api` via symlinks (`IdentitySymlinkToCompose.sh`). When changing the schema, update both locations or sync this copy manually.
 
-## Структура
+## Structure
 
 ```text
 Infrastructure/Scripts/
-├── 1_PreDeployment/   # инкрементальные миграции для уже развёрнутых БД
-├── 2_Initial/         # создание схемы auth и таблиц
-├── 3_SeedLookup/      # лукап таблицы (засеивание данными иденпотентные миграции)
-├── 4_SeedData/        # начальные данные (засевание данными)
-└── 5_PostDeployment/  # обновление данных/структуры (если необходимо после основной миграции)
+├── 1_PreDeployment/   # incremental migrations for already deployed databases
+├── 2_Initial/         # create auth schema and tables
+├── 3_SeedLookup/      # lookup tables (idempotent data seeding migrations)
+├── 4_SeedData/        # initial data (data seeding)
+└── 5_PostDeployment/  # data/structure updates (if needed after main migration)
 ```
 
-Именование файлов:
+File naming:
 
 ```text
 <FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]
 ```
 
-Примеры:
+Examples:
 
 - `2_Initial/2_00_auth.sql` — `CREATE SCHEMA [auth]`
-- `2_Initial/2_01_auth_UsersAccounts.sql` — таблица учётных записей
+- `2_Initial/2_01_auth_UsersAccounts.sql` — user accounts table
 - `2_Initial/2_01_auth_ExternalLoginStates.sql` — OAuth state (multi-instance)
-- `4_SeedData/4_01_auth_Providers.sql` — seed OAuth-провайдеров
+- `4_SeedData/4_01_auth_Providers.sql` — OAuth provider seed
 
-## Порядок применения (DbUp)
+## Application order (DbUp)
 
 1. `1_PreDeployment`
 2. `2_Initial`
@@ -37,9 +37,9 @@ Infrastructure/Scripts/
 4. `4_SeedData`
 5. `5_PostDeployment`
 
-## Соответствие EF
+## EF mapping
 
-| Таблица | Скрипт | Entity |
+| Table | Script | Entity |
 |---------|--------|--------|
 | `auth.UsersAccounts` | `2_01_auth_UsersAccounts.sql` | `UserAccountEntity` |
 | `auth.Providers` | `2_01_auth_Providers.sql` | `ProviderEntity` |
@@ -50,4 +50,4 @@ Infrastructure/Scripts/
 | `auth.EmailVerifications` | `2_01_auth_EmailVerifications.sql` | `EmailVerificationEntity` |
 | `auth.PhoneVerifications` | `2_01_auth_PhoneVerifications.sql` | `PhoneVerificationEntity` |
 
-При изменении схемы обновляйте EF configuration и соответствующий SQL.
+When changing the schema, update the EF configuration and the corresponding SQL.

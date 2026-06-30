@@ -1,13 +1,13 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers.Options;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers.Options;
 
 /// <summary>
-/// Опции файлового провайдера дефиниций.
+/// File-system definition provider options.
 /// </summary>
 internal sealed class FileSystemProcessDefinitionOptions
 {
-    /// <summary>Путь к папке с файлами процессов (обязателен).</summary>
+    /// <summary>Path to the folder with process files (required).</summary>
     public string Directory { get; set; }
 
-    /// <summary>Включать ли авто-перезагрузку через FileSystemWatcher. По умолчанию true.</summary>
+    /// <summary>Whether to enable auto-reload via FileSystemWatcher. Defaults to true.</summary>
     public bool ReloadOnChange { get; set; } = true;
 }

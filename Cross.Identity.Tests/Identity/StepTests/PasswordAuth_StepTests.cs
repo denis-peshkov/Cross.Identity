@@ -105,8 +105,8 @@ public class PasswordAuth_StepTests
             Kind = "passwordAuth",
             UserService = _userService.Object,
             SelectorField = "UserName",
-            SelectorKey = "Email", // относительный ключ
-            PasswordKey = "Password", // относительный ключ
+            SelectorKey = "Email", // relative key
+            PasswordKey = "Password", // relative key
             UserIdKey = "UserId",
             Next = null
         };

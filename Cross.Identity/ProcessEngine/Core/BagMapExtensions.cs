@@ -3,13 +3,13 @@
 public static class BagMapExtensions
 {
     /// <summary>
-    /// Преобразует публичные свойства объекта в словарь вида &lt;имя, значение&gt;,
-    /// беря только простые типы. Имя ключа берётся из <see cref="JsonPropertyNameAttribute"/>, если оно задано.
-    /// Свойства с <see cref="JsonIgnoreAttribute"/> пропускаются.
+    /// Converts public object properties to a &lt;name, value&gt; dictionary,
+    /// including only simple types. The key name comes from <see cref="JsonPropertyNameAttribute"/> when set.
+    /// Properties with <see cref="JsonIgnoreAttribute"/> are skipped.
     /// </summary>
-    /// <param name="source">Объект-источник.</param>
-    /// <param name="includeNulls">Включать ли свойства со значением <c>null</c>.</param>
-    /// <param name="enumAsString">Сериализовать ли enum как строку (имя) вместо числового значения.</param>
+    /// <param name="source">Source object.</param>
+    /// <param name="includeNulls">Whether to include properties with a <c>null</c> value.</param>
+    /// <param name="enumAsString">Whether to serialize an enum as a string (name) instead of a numeric value.</param>
     public static Dictionary<string, object?> ToBag(
         this object source,
         bool includeNulls = false,
@@ -22,11 +22,11 @@ public static class BagMapExtensions
 
         foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
         {
-            // пропускаем без getter-а или indexer-ы
+            // skip properties without a getter or indexers
             if (prop.GetMethod is null || prop.GetIndexParameters().Length > 0)
                 continue;
 
-            // [JsonIgnore] — пропустить
+            // [JsonIgnore] — skip
             if (prop.IsDefined(typeof(JsonIgnoreAttribute), inherit: true))
                 continue;
 
@@ -40,17 +40,17 @@ public static class BagMapExtensions
             if (value is null && !includeNulls)
                 continue;
 
-            // Trim значения строкового типа
+            // Trim string values
             if (underlying == typeof(string))
             {
                 value = value?.ToString()?.Trim();
             }
 
-            // Ключ: JsonPropertyName или имя свойства
+            // Key: JsonPropertyName or property name
             var jsonName = prop.GetCustomAttribute<JsonPropertyNameAttribute>(inherit: true)?.Name;
             var key = string.IsNullOrWhiteSpace(jsonName) ? prop.Name : jsonName;
 
-            // enum как строка/число
+            // enum as string/number
             if (value is not null && (underlying?.IsEnum ?? propType.IsEnum))
             {
                 value = enumAsString
@@ -65,9 +65,9 @@ public static class BagMapExtensions
     }
 
     /// <summary>
-    /// Создать объект T из словаря простых значений, учитывая JsonPropertyName/JsonIgnore.
-    /// Берёт только простые типы (string/числа/bool/decimal/Guid/DateTime/…/enum/Nullable).
-    /// Ключи словаря сравниваются без учета регистра.
+    /// Create object T from a dictionary of simple values, honoring JsonPropertyName/JsonIgnore.
+    /// Only simple types are supported (string/numbers/bool/decimal/Guid/DateTime/…/enum/Nullable).
+    /// Dictionary keys are compared case-insensitively.
     /// </summary>
     public static T FromBag<T>(
         this IDictionary<string, object?> dict,
@@ -75,7 +75,7 @@ public static class BagMapExtensions
     {
         ArgumentNullException.ThrowIfNull(dict);
 
-        // делаем регистронезависимый доступ
+        // case-insensitive access
         var src = dict is Dictionary<string, object?> d && d.Comparer.Equals(StringComparer.OrdinalIgnoreCase)
             ? dict
             : new Dictionary<string, object?>(dict, StringComparer.OrdinalIgnoreCase);
@@ -102,9 +102,9 @@ public static class BagMapExtensions
     }
 
     /// <summary>
-    /// Проверяет, является ли тип "простым" для нашего маппинга.
-    /// Поддерживаются: string, числа, bool, decimal, DateTime, DateTimeOffset, TimeSpan, Guid,
-    /// DateOnly/TimeOnly (если доступны), enum и Nullable&lt;T&gt; над этими типами.
+    /// Checks whether a type is "simple" for our mapping.
+    /// Supported: string, numbers, bool, decimal, DateTime, DateTimeOffset, TimeSpan, Guid,
+    /// DateOnly/TimeOnly (when available), enum, and Nullable&lt;T&gt; over these types.
     /// </summary>
     private static (bool IsSimple, Type? Underlying) IsSimpleType(Type t)
     {
@@ -145,7 +145,7 @@ public static class BagMapExtensions
 
         if (value is null) return null;
 
-        // уже нужного типа
+        // already the target type
         if (core.IsInstanceOfType(value)) return value;
 
         // enum
@@ -154,16 +154,16 @@ public static class BagMapExtensions
             if (enumFromString && value is string s)
                 return Enum.Parse(core, s, ignoreCase: true);
 
-            // число -> enum
+            // number -> enum
             var num = Convert.ChangeType(value, Enum.GetUnderlyingType(core));
             return Enum.ToObject(core, num!);
         }
 
-        // Guid из строки
+        // Guid from string
         if (core == typeof(Guid) && value is string gs)
             return Guid.Parse(gs);
 
-        // DateTime/DateTimeOffset/TimeSpan из строки
+        // DateTime/DateTimeOffset/TimeSpan from string
         if (core == typeof(DateTime) && value is string dts)
             return DateTime.Parse(dts, null, DateTimeStyles.RoundtripKind);
         if (core == typeof(DateTimeOffset) && value is string dto)
@@ -178,10 +178,10 @@ public static class BagMapExtensions
             return TimeOnly.Parse(tos);
 #endif
 
-        // прочие простые через Convert.ChangeType
+        // other simple types via Convert.ChangeType
         var converted = Convert.ChangeType(value, core);
 
-        // оборачиваем в Nullable<T>, если нужно
+        // wrap in Nullable<T> when needed
         return underlying is null ? converted : converted;
     }
 }

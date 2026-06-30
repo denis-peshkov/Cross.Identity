@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг инициации внешнего OAuth-логина: формирует URL авторизации провайдера.
+/// Step that initiates external OAuth login: builds the provider authorization URL.
 /// </summary>
 internal sealed class InitiateExternalLoginStep : IStep
 {

@@ -20,7 +20,7 @@ public class RefreshTokenEntity
     public string? UserAgent { get; set; }
     public string? IpAddress { get; set; }
 
-    /// <summary>Concurrency token (SQL Server генерирует сам; для InMemory подставляется value generator).</summary>
+    /// <summary>Concurrency token (SQL Server generates it; value generator is used for InMemory).</summary>
     public byte[]? RowVersion { get; set; }
 }
 

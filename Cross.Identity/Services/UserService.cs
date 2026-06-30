@@ -1,8 +1,8 @@
 ﻿namespace Cross.Identity.Services;
 
 /// <summary>
-/// Базовая in-memory реализация <see cref="IUserService"/>.
-/// Поддерживает создание, поиск по Email/UserName/Phone и проверку пароля (PBKDF2).
+/// Basic in-memory implementation of <see cref="IUserService"/>.
+/// Supports creation, lookup by Email/UserName/Phone, and password verification (PBKDF2).
 /// </summary>
 internal sealed class UserService : IUserService
 {
@@ -35,7 +35,7 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // приведение к ожидаемому имени
+        // map to the expected property name
         string field = selectorField.ToLowerInvariant() switch
         {
             "email" => nameof(UserAccountEntity.Email),
@@ -60,10 +60,10 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // приведение к ожидаемому имени
+        // map to the expected property name
         var field = selectorField.ToLowerInvariant() switch
         {
-            "id" => nameof(UserAccountEntity.Id), // не работает так как Guid != String
+            "id" => nameof(UserAccountEntity.Id), // does not work because Guid != String
             "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
@@ -98,20 +98,20 @@ internal sealed class UserService : IUserService
     /// <inheritdoc/>
     public async Task<string> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
     {
-        // 1) Вытаскиваем поля
+        // 1) Extract fields
         map.TryGetValue("Email", out var emailRaw);
         map.TryGetValue("UserName", out var userNameRaw);
         map.TryGetValue("Phone", out var phoneRaw);
         map.TryGetValue("Password", out var passwordRaw);
 
-        // 2) Нормализация
+        // 2) Normalization
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedPhone = phoneRaw is string phone
             ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!)
             : null;
 
-        // 3) Уникальность
+        // 3) Uniqueness
         if (normalizedUserName is not null
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("UserName already exists.");
@@ -122,7 +122,7 @@ internal sealed class UserService : IUserService
             && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("PhoneNumber already exists.");
 
-        // 4) Хеш пароля (PHC) + текущая версия pepper
+        // 4) Password hash (PHC) + current pepper version
         var pepperVersion = _pepperVault.CurrentVersion;
         _pepperVault.TryGetCurrentValue(out var pepper);
         ArgumentNullException.ThrowIfNull(pepper);
@@ -130,7 +130,7 @@ internal sealed class UserService : IUserService
             ? _hasher.Hash(password, pepper)
             : null;
 
-        // 5) Создание сущности
+        // 5) Create entity
         var user = new UserAccountEntity
         {
             Id = Guid.NewGuid(),
@@ -161,7 +161,7 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
         ArgumentNullException.ThrowIfNull(password);
 
-        // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
+        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
         string field = selectorField.ToLowerInvariant() switch
         {
             "email" => nameof(UserAccountEntity.Email),
@@ -182,7 +182,7 @@ internal sealed class UserService : IUserService
         if (string.IsNullOrWhiteSpace(value))
             return false;
 
-        // 2) Ищем пользователя (tracked, без AsNoTracking — чтобы при необходимости обновить хеш/версию перца)
+        // 2) Find the user (tracked, without AsNoTracking — so we can update hash/pepper version if needed)
         var user = await _context.UsersAccounts
             .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
             .ConfigureAwait(false);
@@ -190,7 +190,7 @@ internal sealed class UserService : IUserService
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
             return false;
 
-        // 3) Достаём перец по версии, сохранённой у пользователя
+        // 3) Get pepper by the version stored on the user
         if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
             _logger.LogError(
@@ -200,12 +200,12 @@ internal sealed class UserService : IUserService
             return false;
         }
 
-        // 4) Проверяем пароль
+        // 4) Verify password
         var result = _hasher.Verify(password, user.PasswordPhc, pepper);
         if (result == PasswordVerificationEnum.Failed)
             return false;
 
-        // 5) При необходимости делаем re-hash с текущими параметрами/версией перца
+        // 5) Re-hash with current parameters/pepper version if needed
         var currentVersion = _pepperVault.CurrentVersion;
         var needRehash = result == PasswordVerificationEnum.SuccessRehashNeeded
                          || user.PasswordPepperVersion != currentVersion
@@ -222,7 +222,7 @@ internal sealed class UserService : IUserService
             }
             catch (Exception ex)
             {
-                // Не ломаем успешную аутентификацию из‑за проблем с re-hash, только логируем
+                // Do not fail successful authentication due to re-hash issues; log only
                 _logger.LogError(ex, "Failed to re-hash password for user {UserId}", user.Id);
             }
         }
@@ -239,7 +239,7 @@ internal sealed class UserService : IUserService
 
         var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
 
-        // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
+        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
         var field = selectorField.ToLowerInvariant() switch
         {
             "email" => nameof(UserAccountEntity.Email),

@@ -1,16 +1,16 @@
-var builder = WebApplication.CreateBuilder(args);
+﻿var builder = WebApplication.CreateBuilder(args);
 
-// DbContext для Cross.Identity (in-memory для примера)
+// DbContext for Cross.Identity (in-memory for the sample)
 builder.Services.AddDbContext<IdentityContext>(options =>
     options.UseInMemoryDatabase("CrossIdentity"));
 
-// HttpContextAccessor для JwtTokenService
+// HttpContextAccessor for JwtTokenService
 builder.Services.AddHttpContextAccessor();
 
-// HeadersContextAccessor для UserService (язык, регион и пр.)
+// HeadersContextAccessor for UserService (language, region, etc.)
 builder.Services.AddScoped<IHeadersContextAccessor, HeadersContextAccessor>();
 
-// Настройка перцев через Cross.PepperVault.EnvJson (опции из appsettings, JSON из env)
+// Pepper setup via Cross.PepperVault.EnvJson (options from appsettings, JSON from env)
 builder.Services.AddPepperOptions<EnvJsonProviderOptions, EnvJsonProviderOptionsValidator>(builder.Configuration);
 builder.Services.TryAddScoped<IPepperVaultProvider, EnvJsonPepperProvider>();
 
@@ -32,7 +32,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Minimal API endpoint, эквивалентный IdentityController.RunAsync
+// Minimal API endpoint equivalent to IdentityController.RunAsync
 app.MapPost(
         "/api/identity/{flow}/{operation}",
         async (

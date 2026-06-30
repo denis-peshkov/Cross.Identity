@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг смены пароля пользователя по селектору.
+/// Step for changing a user password by selector.
 /// </summary>
 internal sealed class ResetPasswordStep : IStep
 {
@@ -11,10 +11,10 @@ internal sealed class ResetPasswordStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Ключ в <see cref="Bag"/>, откуда взять e-mail/логин. Может быть относительным или абсолютным.</summary>
+    /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
     public required string SelectorKey { get; init; }
 
-    /// <summary>Ключ в <see cref="Bag"/>, откуда взять пароль. Может быть относительным или абсолютным.</summary>
+    /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
     public ILogger Logger { get; set; }

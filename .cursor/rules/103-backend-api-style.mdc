@@ -1,12 +1,12 @@
-# Стиль API
+# API style
 
-## Версионирование
+## Versioning
 
-- **ApiVersion атрибут** - использовать `[ApiVersion("1.0")]` для версионирования
-- **Маршрутизация** - использовать `[Route("api/v{version:apiVersion}/[controller]")]`
-- **Версии в URL** - версия указывается в URL пути
+- **ApiVersion attribute** - use `[ApiVersion("1.0")]` for versioning
+- **Routing** - use `[Route("api/v{version:apiVersion}/[controller]")]`
+- **URL versions** - version specified in the URL path
 
-Пример:
+Example:
 ```csharp
 [ApiController]
 [ApiVersion("1.0")]
@@ -16,13 +16,13 @@ public class VacanciesController : ControllerBase
 }
 ```
 
-## HTTP методы
+## HTTP methods
 
-- **POST** - для создания ресурсов и операций с side effects
-- **GET** - только для чтения данных
-- **Именование методов** - использовать суффикс `Async` для всех async методов
+- **POST** - for creating resources and operations with side effects
+- **GET** - read-only data access
+- **Method naming** - use `Async` suffix for all async methods
 
-Пример:
+Example:
 ```csharp
 [HttpPost("SubmitResume")]
 public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
@@ -33,22 +33,22 @@ public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
 }
 ```
 
-## Формат ответов
+## Response format
 
-- **ApiEnvelope<T>** - все ответы оборачивать в `ApiEnvelope<T>`
-- **Типизация** - всегда указывать тип возвращаемого значения
+- **ApiEnvelope<T>** - wrap all responses in `ApiEnvelope<T>`
+- **Typing** - always specify the return type
 
-Пример:
+Example:
 ```csharp
 return new ApiEnvelope<bool>(await _mediator.Send(command, cancellationToken));
 ```
 
-## Загрузка файлов
+## File uploads
 
-- **FromForm** - использовать `[FromForm]` для загрузки файлов
-- **RequestFormLimits** - использовать `[RequestFormLimits]` для ограничения размера файлов
+- **FromForm** - use `[FromForm]` for file uploads
+- **RequestFormLimits** - use `[RequestFormLimits]` to limit file size
 
-Пример:
+Example:
 ```csharp
 [HttpPost("SubmitResume")]
 [RequestFormLimits(MultipartBodyLengthLimit = 10485760, ValueLengthLimit = int.MaxValue)]
@@ -60,13 +60,13 @@ public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
 }
 ```
 
-## Обработка ошибок
+## Error handling
 
-- **ModelState validation** - проверять `ModelState.IsValid` в контроллерах
-- **Логирование ошибок** - логировать все ошибки валидации
-- **Единообразные ответы** - использовать `ApiEnvelope` для всех ответов, включая ошибки
+- **ModelState validation** - check `ModelState.IsValid` in controllers
+- **Error logging** - log all validation errors
+- **Consistent responses** - use `ApiEnvelope` for all responses, including errors
 
-Пример:
+Example:
 ```csharp
 if (!ModelState.IsValid)
 {
@@ -81,10 +81,10 @@ if (!ModelState.IsValid)
 
 ## CancellationToken
 
-- **Всегда принимать** - все async методы должны принимать `CancellationToken`
-- **Передавать дальше** - передавать `CancellationToken` во все async операции
+- **Always accept** - all async methods must accept `CancellationToken`
+- **Pass through** - pass `CancellationToken` to all async operations
 
-Пример:
+Example:
 ```csharp
 public async Task<ApiEnvelope<bool>> SubmitResumeAsync(
     [FromForm] SubmitResumeDto request,

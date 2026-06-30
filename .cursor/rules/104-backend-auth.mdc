@@ -1,29 +1,29 @@
-# Аутентификация и авторизация
+# Authentication and authorization
 
-## Аутентификация
+## Authentication
 
-- **OAuth Authentication** - использовать OAuth для аутентификации
-- **JWT токены** - использовать JWT токены для аутентификации
-- **Настройка** - настраивать аутентификацию через `services.AddOAuthAuthentication(configuration)`
-- **Middleware порядок** - `UseAuthentication()` должен быть вызван перед `UseAuthorization()`
+- **OAuth Authentication** - use OAuth for authentication
+- **JWT tokens** - use JWT tokens for authentication
+- **Configuration** - configure authentication via `services.AddOAuthAuthentication(configuration)`
+- **Middleware order** - `UseAuthentication()` must be called before `UseAuthorization()`
 
-Пример настройки:
+Example setup:
 ```csharp
 services.AddOAuthAuthentication(configuration);
 services.AddAuthorization();
 
-// В ConfigureApp:
-app.UseAuthentication();  // должен быть перед UseAuthorization
+// In ConfigureApp:
+app.UseAuthentication();  // must be before UseAuthorization
 app.UseAuthorization();
 ```
 
-## Авторизация
+## Authorization
 
-- **Атрибут [Authorize]** - использовать `[Authorize]` для защиты контроллеров и методов
-- **Кастомные атрибуты** - использовать кастомные атрибуты для проверки прав доступа
-- **Проверка прав** - использовать `AuthorizeFieldsPermissionsAttribute` и `AuthorizeScopesOrPermissionsAttribute` для проверки прав доступа
+- ** [Authorize] attribute** - use `[Authorize]` to protect controllers and methods
+- **Custom attributes** - use custom attributes for permission checks
+- **Permission checks** - use `AuthorizeFieldsPermissionsAttribute` and `AuthorizeScopesOrPermissionsAttribute` for access control
 
-Пример:
+Example:
 ```csharp
 [Authorize]
 [AuthorizeScopesOrPermissions("vacancies:write")]
@@ -34,47 +34,47 @@ public async Task<ApiEnvelope<bool>> SubmitResumeAsync(...)
 }
 ```
 
-## Кастомные атрибуты авторизации
+## Custom authorization attributes
 
-- **AuthorizeScopesOrPermissionsAttribute** - проверка scopes или permissions
-- **AuthorizeFieldsPermissionsAttribute** - проверка прав на поля (для PATCH запросов)
-- **Логика проверки** - атрибуты должны проверять права через `IHeadersContextAccessor`
+- **AuthorizeScopesOrPermissionsAttribute** - check scopes or permissions
+- **AuthorizeFieldsPermissionsAttribute** - check field-level permissions (for PATCH requests)
+- **Check logic** - attributes must check permissions via `IHeadersContextAccessor`
 
-Пример AuthorizeScopesOrPermissionsAttribute:
+Example AuthorizeScopesOrPermissionsAttribute:
 ```csharp
 [AuthorizeScopesOrPermissions(new[] { "vacancies:write" }, "vacancies.write")]
 [HttpPost("SubmitResume")]
 public async Task<ApiEnvelope<bool>> SubmitResumeAsync(...)
 {
-    // Проверяет наличие scope "vacancies.write" или permission "vacancies:write"
+    // Checks for scope "vacancies.write" or permission "vacancies:write"
 }
 ```
 
-Пример AuthorizeFieldsPermissionsAttribute:
+Example AuthorizeFieldsPermissionsAttribute:
 ```csharp
 [AuthorizeFieldsPermissions("vacancies", "update")]
 [HttpPatch("UpdateVacancy")]
 public async Task<ApiEnvelope<bool>> UpdateVacancyAsync(...)
 {
-    // Проверяет права на каждое поле в PATCH запросе
-    // Например: "vacancies.title.update", "vacancies.description.update"
+    // Checks permissions for each field in the PATCH request
+    // e.g. "vacancies.title.update", "vacancies.description.update"
 }
 ```
 
-## Permissions и Scopes
+## Permissions and Scopes
 
-- **Permissions** - использовать для проверки прав доступа к ресурсам
-- **Scopes** - использовать для проверки области доступа (OAuth scopes)
-- **Формат permissions** - использовать формат `resource:action` (например, `vacancies:write`)
-- **Формат field permissions** - использовать формат `resource.field.action` (например, `vacancies.title.update`)
+- **Permissions** - use for resource access control
+- **Scopes** - use for access scope checks (OAuth scopes)
+- **Permission format** - use `resource:action` (e.g. `vacancies:write`)
+- **Field permission format** - use `resource.field.action` (e.g. `vacancies.title.update`)
 
-## Получение информации о пользователе
+## Getting user information
 
-- **IHeadersContextAccessor** - использовать для получения информации о пользователе и его правах
-- **UserPermissions** - получать список прав пользователя через `headersContextAccessor.UserPermissions`
-- **Claims** - получать claims пользователя через `context.HttpContext.User.Claims`
+- **IHeadersContextAccessor** - use to get user information and permissions
+- **UserPermissions** - get user permissions via `headersContextAccessor.UserPermissions`
+- **Claims** - get user claims via `context.HttpContext.User.Claims`
 
-Пример:
+Example:
 ```csharp
 var headersContextAccessor = context.HttpContext.RequestServices
     .GetRequiredService<IHeadersContextAccessor>();
@@ -83,13 +83,13 @@ var userPermissions = headersContextAccessor.UserPermissions;
 var hasPermission = userPermissions?.Contains("vacancies:write") ?? false;
 ```
 
-## Обработка ошибок авторизации
+## Authorization error handling
 
-- **ForbiddenException** - выбрасывать `ForbiddenException` при отсутствии прав доступа
-- **401 Unauthorized** - возвращать 401 при отсутствии аутентификации
-- **403 Forbidden** - возвращать 403 при отсутствии прав доступа
+- **ForbiddenException** - throw `ForbiddenException` when access is denied
+- **401 Unauthorized** - return 401 when not authenticated
+- **403 Forbidden** - return 403 when lacking permissions
 
-Пример:
+Example:
 ```csharp
 if (!hasPermission)
 {

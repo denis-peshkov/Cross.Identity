@@ -1,17 +1,17 @@
 ﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="VerifyCodeStep"/>.
-/// JSON-параметры:
+/// Factory for <see cref="VerifyCodeStep"/>.
+/// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>name</c> — имя шага;</description></item>
-/// <item><description><c>channel</c> — канал проверки (например, "email" или "phone");</description></item>
-/// <item><description><c>identityKey</c> — ключ в Bag для идентификатора (email/phone/username);
-///     если относительный (без точки) → читается как <c>"{name}.identityKey"</c>;
-///     если абсолютный (с точкой) — используется как есть.</description></item>
-/// <item><description><c>codeKey</c> — ключ в Bag для проверочного кода;
-///     работает по тем же правилам (относительный/абсолютный).</description></item>
-/// <item><description><c>next</c> — (опц.) имя следующего шага; <c>null</c> — завершить процесс.</description></item>
+/// <item><description><c>name</c> — step name;</description></item>
+/// <item><description><c>channel</c> — verification channel (for example, "email" or "phone");</description></item>
+/// <item><description><c>identityKey</c> — Bag key for the identifier (email/phone/username);
+///     if relative (no dot) → read as <c>"{name}.identityKey"</c>;
+///     if absolute (with a dot), used as-is.</description></item>
+/// <item><description><c>codeKey</c> — Bag key for the verification code;
+///     follows the same rules (relative/absolute).</description></item>
+/// <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish the process.</description></item>
 /// </list>
 /// </summary>
 internal sealed class VerifyCodeStepFactory : IStepFactory

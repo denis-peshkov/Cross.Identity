@@ -117,7 +117,7 @@ public class SendCode_StepFactoryTests
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.Ttl.Should().Be(TimeSpan.FromMinutes(5)); // значение по умолчанию
+        step.Ttl.Should().Be(TimeSpan.FromMinutes(5)); // default value
     }
 
     [Test]

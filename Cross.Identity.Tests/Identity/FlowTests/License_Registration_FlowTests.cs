@@ -45,7 +45,7 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<ISmsSenderService>(),
                 configuration));
 
-        // Берём JSON как embedded /Flows/Definitions/licenses.register.json
+        // Load JSON as embedded /Flows/Definitions/licenses.register.json
         // AddJson("""
         //         {
         //           "start": "collectForm",
@@ -118,7 +118,7 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload.Should().ContainKey("UserId");
         payload["UserId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
-        // проверка вызовов GetService<T>()
+        // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IRequestInput)), Times.Exactly(2));
@@ -126,7 +126,7 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         _serviceProviderMock.Verify(x => x.GetService(typeof(ICodeService)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(ILoggerFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IHostEnvironment)), Times.Once);
-        // (необязательно) проверить суммарное число обращений
+        // (optional) verify total number of invocations
         _serviceProviderMock.Invocations.Count.Should().BeGreaterOrEqualTo(10);
     }
 
@@ -137,10 +137,10 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         var input = new Dictionary<string, object?>
         {
             ["Email"] = "invalid-email",
-            ["FullName"] = "J", // слишком короткое имя
-            ["Company"] = "C", // слишком короткое название
-            ["Password"] = "123", // слишком короткий пароль
-            ["AcceptLicenseTerms"] = false // обязательное поле
+            ["FullName"] = "J", // name too short
+            ["Company"] = "C", // company name too short
+            ["Password"] = "123", // password too short
+            ["AcceptLicenseTerms"] = false // required field
         };
 
         // Act & Assert
@@ -148,6 +148,6 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*"); // проверяем что есть сообщение об ошибке
+            .WithMessage("*"); // verify that an error message is present
     }
 }

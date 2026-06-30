@@ -7,21 +7,21 @@ globs:
 alwaysApply: false
 ---
 
-# Управление состоянием: Stores и Signals
+# State management: Stores and Signals
 
-## Текущий подход
+## Current approach
 
-- **RxJS и сервисы** - основной подход: использование RxJS Observable и сервисов для управления состоянием
-- **LanguageStore** - использовать `LanguageStore` для управления языком приложения
-- **BehaviorSubject** - использовать `BehaviorSubject` для хранения текущего состояния
+- **RxJS and services** - primary approach: RxJS Observable and services for state
+- **LanguageStore** - use `LanguageStore` for application language
+- **BehaviorSubject** - use `BehaviorSubject` to hold current state
 
-## LanguageStore паттерн
+## LanguageStore pattern
 
-- **Store как сервис** - использовать сервис с Observable для хранения состояния
-- **Текущее значение** - использовать `currentLanguage$` Observable для подписки на изменения
-- **Синхронное значение** - использовать `currentLanguageCode` для получения текущего значения
+- **Store as service** - service with Observable for state
+- **Current value** - use `currentLanguage$` Observable to subscribe to changes
+- **Synchronous value** - use `currentLanguageCode` to get current value
 
-Пример:
+Example:
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class LanguageStore {
@@ -41,18 +41,18 @@ export class LanguageStore {
 }
 ```
 
-## Использование в компонентах
+## Usage in components
 
-- **Подписка через pipe** - использовать `pipe(takeUntilDestroyed(this.destroyRef))` для подписки
-- **distinctUntilChanged** - использовать для предотвращения дублирующих значений
+- **Subscribe via pipe** - use `pipe(takeUntilDestroyed(this.destroyRef))` for subscription
+- **distinctUntilChanged** - prevent duplicate values
 
-Пример:
+Example:
 ```typescript
 this.languageStore.currentLanguage$
   .pipe(
     distinctUntilChanged(),
     switchMap(lang => {
-      // Реакция на изменение языка
+      // React to language change
       return this.loadResourcesForLanguage(lang);
     }),
     takeUntilDestroyed(this.destroyRef),
@@ -60,12 +60,12 @@ this.languageStore.currentLanguage$
   .subscribe();
 ```
 
-## Кэширование в сервисах
+## Caching in services
 
-- **In-memory cache** - использовать `Map` для кэширования данных в сервисах
-- **Ключ кэша** - использовать составной ключ (например, `${lang}_${resource}`)
+- **In-memory cache** - use `Map` for in-service caching
+- **Cache key** - use composite key (e.g. `${lang}_${resource}`)
 
-Пример:
+Example:
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class TranslationService {
@@ -88,13 +88,13 @@ export class TranslationService {
 }
 ```
 
-## Angular Signals (если используется)
+## Angular Signals (if used)
 
-- **signal()** - использовать `signal()` для создания реактивного состояния
-- **computed()** - использовать `computed()` для вычисляемых значений
-- **effect()** - использовать `effect()` для side effects
+- **signal()** - use `signal()` for reactive state
+- **computed()** - use `computed()` for derived values
+- **effect()** - use `effect()` for side effects
 
-Пример:
+Example:
 ```typescript
 import { signal, computed } from '@angular/core';
 
@@ -114,6 +114,6 @@ export class Component {
 }
 ```
 
-## Примечание
+## Note
 
-В проекте **основной подход - RxJS и сервисы**. Signals используются редко (только в отдельных компонентах). При создании нового функционала предпочтительно использовать паттерн с RxJS и BehaviorSubject, как в `LanguageStore`.
+The project **primarily uses RxJS and services**. Signals are used rarely (only in individual components). For new functionality, prefer the RxJS + BehaviorSubject pattern as in `LanguageStore`.

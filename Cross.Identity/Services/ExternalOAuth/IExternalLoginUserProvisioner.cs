@@ -1,7 +1,7 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
-/// Создаёт профиль пользователя в приложении после регистрации через внешний OAuth-провайдер.
+/// Creates an in-app user profile after registration via an external OAuth provider.
 /// </summary>
 public interface IExternalLoginUserProvisioner
 {

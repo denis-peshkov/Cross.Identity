@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Небольшая утилита для валидации поля <c>kind</c> в JSON-конфиге шага.
+/// Small utility for validating the <c>kind</c> field in a step JSON config.
 /// </summary>
 internal static class StepFactoryJsonGuards
 {

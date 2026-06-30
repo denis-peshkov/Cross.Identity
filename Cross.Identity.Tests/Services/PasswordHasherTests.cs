@@ -48,7 +48,7 @@ public class PasswordHasherTests
         var hash1 = _hasher.Hash(password, pepper);
         var hash2 = _hasher.Hash(password, pepper);
 
-        // Assert - разные соли должны давать разные хеши
+        // Assert - different salts should produce different hashes
         hash1.Should().NotBe(hash2);
     }
 
@@ -222,7 +222,7 @@ public class PasswordHasherTests
         }
         catch (FormatException)
         {
-            // Допустимо: при строгом разборе PHC (Parse / Base64) вместо Failed может быть исключение.
+            // Acceptable: with strict PHC parsing (Parse / Base64), an exception may be thrown instead of Failed.
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
-/// Провайдер JSON-дефиниций процессов, читающий их из папки файловой системы.
-/// Поддерживает:
+/// Process JSON definition provider that reads from a file-system folder.
+/// Supports:
 /// <list type="bullet">
-/// <item>маску имени файла: <c>{flow}.{operation}.json</c> (буквы/цифры/подчёркивание/дефис);</item>
-/// <item>кэш в памяти (ConcurrentDictionary);</item>
-/// <item>горячую перезагрузку через <see cref="FileSystemWatcher"/> (опционально).</item>
+/// <item>file name pattern: <c>{flow}.{operation}.json</c> (letters/digits/underscore/hyphen);</item>
+/// <item>in-memory cache (ConcurrentDictionary);</item>
+/// <item>hot reload via <see cref="FileSystemWatcher"/> (optional).</item>
 /// </list>
 /// </summary>
 internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionProvider, IDisposable
@@ -27,25 +27,25 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
         new(@"(?i)^(?<name>[a-z0-9_\-]+)\.(?<lang>[a-z0-9_\-]+)\.(?<fmt>txt|html)$", RegexOptions.Compiled);
 
     /// <summary>
-    /// Создаёт провайдер.
+    /// Creates the provider.
     /// </summary>
     /// <param name="opt"></param>
-    /// <exception cref="DirectoryNotFoundException">Если папка flows отсутствует.</exception>
+    /// <exception cref="DirectoryNotFoundException">When the flows folder is missing.</exception>
     public FileSystemProcessDefinitionProvider(IOptions<FileSystemProcessDefinitionOptions> opt)
     {
         _opt = opt;
 
-        // Flows root (обязательно)
+        // Flows root (required)
         _flowRoot = Path.GetFullPath(_opt.Value.Directory ?? throw new ArgumentNullException(nameof(_opt.Value.Directory)));
         if (!Directory.Exists(_flowRoot))
             throw new DirectoryNotFoundException($"Flows directory '{_flowRoot}' not found.");
 
-        // Templates root (тоже обязательно теперь)
+        // Templates root (also required now)
         _templateRoot = ResolveTemplatesRoot(_flowRoot, "Templates");
         if (!Directory.Exists(_templateRoot))
             throw new DirectoryNotFoundException($"Templates directory '{_templateRoot}' not found.");
 
-        // Индексация
+        // Indexing
         IndexFlowFiles();
         IndexTemplateFiles();
 
@@ -85,7 +85,7 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
         if (_flowCache.TryGetValue(key, out var json))
             return json;
 
-        // лениво попробуем считать с диска (если не проиндексировали ранее)
+        // lazily try reading from disk (if not indexed yet)
         var file = Path.Combine(_flowRoot, $"{flow}.{operation}.json");
         if (File.Exists(file))
         {
@@ -160,13 +160,13 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
     {
         if (!IsFlowAcceptable(e.Name)) return;
         var key = FlowKeyFromFileName(e.Name!);
-        // читаем заново (файл может быть занят редактором; добавим лёгкую ретри-логику)
+        // re-read (file may be locked by an editor; light retry logic)
         TryReloadWithRetry(e.FullPath, key, isTemplate: false);
     }
 
     private void OnFlowRenamed(object? sender, RenamedEventArgs e)
     {
-        // удалим старый ключ (если был валидным именем) и загрузим новый
+        // remove the old key (if it was a valid name) and load the new one
         if (IsFlowAcceptable(e.OldName))
         {
             var oldKey = FlowKeyFromFileName(e.OldName!);
@@ -223,11 +223,11 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
         if (Path.IsPathRooted(templatesSubfolderOrAbsolute))
             return templatesSubfolderOrAbsolute;
 
-        // 1) внутри flowRoot
+        // 1) inside flowRoot
         var candidate1 = Path.Combine(flowRoot, templatesSubfolderOrAbsolute);
         if (Directory.Exists(candidate1)) return candidate1;
 
-        // 2) соседняя папка рядом с flowRoot (../Templates)
+        // 2) sibling folder next to flowRoot (../Templates)
         var parent = Directory.GetParent(flowRoot)?.FullName;
         if (!string.IsNullOrEmpty(parent))
         {
@@ -235,7 +235,7 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
             if (Directory.Exists(candidate2)) return candidate2;
         }
 
-        // если не существует — вернём candidate1; конструктор проверит и уронит с DirectoryNotFoundException
+        // if missing, return candidate1; constructor validates and throws DirectoryNotFoundException
         return candidate1;
     }
 
@@ -282,7 +282,7 @@ internal sealed class FileSystemProcessDefinitionProvider : IProcessDefinitionPr
             }
         }
 
-        // если не удалось — инвалидируем, чтобы последующий Get... попробовал ещё раз
+        // on failure, invalidate so a subsequent Get... retries
         if (isTemplate)
             _templateCache.TryRemove(key, out _);
         else

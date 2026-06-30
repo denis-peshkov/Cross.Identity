@@ -1,22 +1,22 @@
-# Наблюдаемость бэкенда
+# Backend observability
 
-## Логирование
+## Logging
 
-- **ILogger<T>** - использовать типизированный логгер `ILogger<T>` где T - класс
-- **Уровни логирования**:
-  - `LogInformation` - для информационных сообщений
-  - `LogWarning` - для предупреждений
-  - `LogError` - для ошибок
-- **Структурированное логирование** - использовать параметризованные сообщения
+- **ILogger<T>** - use typed logger `ILogger<T>` where T is the class
+- **Log levels**:
+  - `LogInformation` - informational messages
+  - `LogWarning` - warnings
+  - `LogError` - errors
+- **Structured logging** - use parameterized messages
 
-Пример:
+Example:
 ```csharp
 _logger.LogInformation("Received SubmitResume request. ModelState.IsValid: {IsValid}", ModelState.IsValid);
 _logger.LogWarning("ModelState error for {Key}: {Errors}", error.Key, errors);
 _logger.LogError("Error processing request: {Error}", exception);
 ```
 
-## Мониторинг
+## Monitoring
 
-- **Метрики** - использовать метрики для отслеживания производительности
-- **Трассировка** - использовать трассировку для отслеживания запросов
+- **Metrics** - use metrics to track performance
+- **Tracing** - use tracing to track requests

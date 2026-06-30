@@ -1,11 +1,11 @@
 ﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Результат выполнения шага.
+/// Step execution result.
 /// </summary>
-/// <param name="Status">Статус шага.</param>
-/// <param name="Next">Имя следующего шага (null = завершить).</param>
-/// <param name="Error">Исключение, если Status = Fail.</param>
+/// <param name="Status">Step status.</param>
+/// <param name="Next">Next step name (null = finish).</param>
+/// <param name="Error">Exception when Status = Fail.</param>
 internal readonly record struct StepResult(StepStatusEnum Status, string? Next = null, Exception? Error = null)
 {
     public static StepResult Ok(string? next = null)

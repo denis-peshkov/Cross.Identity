@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms;
 
 /// <summary>
-/// Поддерживаемые типы полей динамических форм.
+/// Supported dynamic form field types.
 /// </summary>
 internal enum FieldTypeEnum
 {

@@ -102,13 +102,13 @@ internal class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload.Should().ContainKey("LastCode");
         payload["LastCode"].Should().BeOfType<string>().Which.Should().HaveLength(8);
-        // проверка вызовов GetService<T>()
+        // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IRequestInput)), Times.Exactly(2));
         _serviceProviderMock.Verify(x => x.GetService(typeof(ILoggerFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IUserService)), Times.Once);
-        // (необязательно) проверить суммарное число обращений
+        // (optional) verify total number of invocations
         _serviceProviderMock.Invocations.Count.Should().BeGreaterOrEqualTo(9);
     }
 
@@ -126,6 +126,6 @@ internal class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.ForgotPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*"); // проверяем что есть сообщение об ошибке
+            .WithMessage("*"); // verify that an error message is present
     }
 }

@@ -1,7 +1,7 @@
 namespace Cross.Identity.Tests.Core;
 
 /// <summary>
-/// База для тестов с реальным <see cref="IdentityContext"/> (InMemory) и персистентностью.
+/// Base for tests with a real <see cref="IdentityContext"/> (InMemory) and persistence.
 /// </summary>
 [Category(TestCategory.INTEGRATION)]
 [TestFixture]

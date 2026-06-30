@@ -1,8 +1,8 @@
 ﻿namespace Cross.Identity.Extensions;
 
 /// <summary>
-/// DI-расширения для регистрации инфраструктуры Cross.Identity:
-/// сервисов идентификации, process engine, шагов, валидаторов и провайдеров flow-дефиниций.
+/// DI extensions for registering Cross.Identity infrastructure:
+/// identity services, process engine, steps, validators, and flow-definition providers.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
@@ -19,11 +19,11 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Регистрирует основные сервисы Cross.Identity и их зависимости в контейнере DI.
+    /// Registers core Cross.Identity services and dependencies in the DI container.
     /// </summary>
-    /// <param name="services">Коллекция сервисов приложения.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
-    /// <returns>Текущую коллекцию сервисов для fluent-цепочки.</returns>
+    /// <param name="services">Application service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <returns>The current service collection for fluent chaining.</returns>
     public static IServiceCollection AddCrossIdentity(this IServiceCollection services, IConfiguration configuration)
     {
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -55,7 +55,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddScoped<IFlowExecutor, FlowExecutor>();
         services.TryAddScoped<StepRegistry>();
-        // регистрируем ВСЕ реализации IStepFactory
+        // register ALL IStepFactory implementations
         services.TryAddEnumerable(
             new[]
             {
@@ -93,7 +93,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Добавляет клайм только если значение не пустое (null/пустая строка игнорируются).
+    /// Adds a claim only when the value is non-empty (null/empty string ignored).
     /// </summary>
     public static List<Claim> AddIfNotNull(this List<Claim> claims, string claimType, string? value)
     {
@@ -104,8 +104,8 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Регистрирует композитный провайдер flow-дефиниций:
-    /// сначала чтение из файловой системы, затем fallback к embedded-ресурсам.
+    /// Registers a composite flow-definition provider:
+    /// filesystem first, then fallback to embedded resources.
     /// </summary>
     public static IServiceCollection AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(this IServiceCollection services, IConfiguration configuration)
     {
@@ -124,14 +124,14 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Зарегистрировать композит из произвольного набора провайдеров (в указанном порядке).
+    /// Register a composite from an arbitrary set of providers (in the given order).
     /// </summary>
     public static IServiceCollection AddFlowDefinitionsComposite(this IServiceCollection services, params ServiceDescriptor[] descriptors)
     {
         if (descriptors is null || descriptors.Length == 0)
             throw new ArgumentException("At least one provider required.", nameof(descriptors));
 
-        // регистрируем ВСЕ реализации IProcessDefinitionProvider
+        // register ALL IProcessDefinitionProvider implementations
         services.TryAddEnumerable(descriptors);
 
         services.AddSingleton<CompositeProcessDefinitionProvider>();

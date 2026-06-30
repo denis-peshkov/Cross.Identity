@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Шаг завершения внешнего OAuth-логина: обмен кода, привязка аккаунта и выпуск JWT.
+/// Step that completes external OAuth login: code exchange, account linking, and JWT issuance.
 /// </summary>
 internal sealed class CompleteExternalLoginStep : IStep
 {

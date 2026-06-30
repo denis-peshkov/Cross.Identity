@@ -1,10 +1,10 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories;
 
 /// <summary>
-/// Фабрика валидаторов FluentValidation на основе <see cref="FormSchema"/>.
+/// FluentValidation validator factory based on <see cref="FormSchema"/>.
 /// </summary>
 internal interface IFormValidatorFactory
 {
-    /// <summary>Построить FluentValidation-валидатор для данных формы (словарь field→value).</summary>
+    /// <summary>Build a FluentValidation validator for form data (field→value dictionary).</summary>
     IValidator<IDictionary<string, object?>> Create(FormSchema schema);
 }

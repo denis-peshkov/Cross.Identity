@@ -67,7 +67,7 @@ public class CodeServiceTests : EFTestsBase
     [Test]
     public async Task VerifyAsync_ShouldReturnTrue()
     {
-        // Arrange — текущая реализация проверяет запись в БД
+        // Arrange — current implementation checks the database record
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {

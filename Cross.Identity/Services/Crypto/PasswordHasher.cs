@@ -66,7 +66,7 @@ internal sealed class PasswordHasher : IPasswordHasher
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     private PasswordVerificationEnum VerifyArgon2id(string password, string phc, string pepper)
     {
-        // Пример: $argon2id$v=19$m=65536,t=3,p=4$<saltB64>$<hashB64>
+        // Example: $argon2id$v=19$m=65536,t=3,p=4$<saltB64>$<hashB64>
         var parts = phc.Split('$', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 5 || parts[0] != "argon2id")
             return PasswordVerificationEnum.Failed;
@@ -90,7 +90,7 @@ internal sealed class PasswordHasher : IPasswordHasher
         if (!ok)
             return PasswordVerificationEnum.Failed;
 
-        // Нужен ли rehash (например, повысили параметры)?
+        // Is rehash needed (e.g. parameters were increased)?
         return NeedsRehashArgon2id(phc)
             ? PasswordVerificationEnum.SuccessRehashNeeded
             : PasswordVerificationEnum.Success;
@@ -108,7 +108,7 @@ internal sealed class PasswordHasher : IPasswordHasher
             var m = dict["m"];
             var t = dict["t"];
             var p = dict["p"];
-            // если текущие параметры меньше желаемых — хотим rehash
+            // if current parameters are below desired — rehash
             return t < _options.Argon2_Iterations || m < _options.Argon2_MemoryKb || p < _options.Argon2_DegreeOfParallelism;
         }
         catch
@@ -138,7 +138,7 @@ internal sealed class PasswordHasher : IPasswordHasher
 
         var hash = Pbkdf2(ToBytes(password, pepper), salt, iter, len, alg);
 
-        // PHC-подобно: $pbkdf2-sha256$i=210000$base64(salt)$base64(hash)
+        // PHC-like: $pbkdf2-sha256$i=210000$base64(salt)$base64(hash)
         var algoTag = alg == HashAlgorithmName.SHA512
             ? "sha512"
             : alg == HashAlgorithmName.SHA384
@@ -206,7 +206,7 @@ internal sealed class PasswordHasher : IPasswordHasher
 
     private string HashSha256(string password, string pepper)
     {
-        // генерируем соль
+        // generate salt
         var saltBytes = RandomNumberGenerator.GetBytes(_options.SaltSizeBytes);
         var passwordBytes = _encoding.GetBytes(password);
 
@@ -218,7 +218,7 @@ internal sealed class PasswordHasher : IPasswordHasher
 
     private static byte[] Sha256(byte[] password, byte[] salt, int length)
     {
-        // склеиваем password+salt и считаем SHA256
+        // concatenate password+salt and compute SHA256
         var hash = SHA256.HashData(password.Concat(salt).ToArray());
 
         return hash.GetBytes(length);
@@ -251,7 +251,7 @@ internal sealed class PasswordHasher : IPasswordHasher
 
     private static byte[] ToBytes(string password, string? pepper)
     {
-        // «Перец» добавляем к паролю перед хешированием
+        // append pepper to password before hashing
         return _encoding.GetBytes(
             pepper is { Length: > 0 }
                 ? password + pepper

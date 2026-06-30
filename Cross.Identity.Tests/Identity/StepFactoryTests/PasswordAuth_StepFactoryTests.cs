@@ -68,7 +68,7 @@ public class PasswordAuth_StepFactoryTests
         var step = (PasswordAuthStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId"); // значение по умолчанию
+        step.UserIdKey.Should().Be("UserId"); // default value
     }
 
     [Test]

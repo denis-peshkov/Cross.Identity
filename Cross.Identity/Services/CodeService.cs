@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Services;
 
 /// <summary>
-/// Сервис OTP-кодов на базе EF Core для отправки email/SMS.
+/// EF Core-based OTP code service for email/SMS delivery.
 /// </summary>
 internal sealed class CodeService : ICodeService
 {
@@ -97,22 +97,22 @@ internal sealed class CodeService : ICodeService
 
         var now = DateTime.UtcNow;
 
-        // Нормализуем identity в зависимости от канала
+        // Normalize identity based on channel
         var normalizedIdentity = channel.ToLowerInvariant() switch
         {
             "email" => identity.Trim().ToLowerInvariant(),
-            "phone" => identity.Trim(), // Phone уже должен быть в E.164 формате
+            "phone" => identity.Trim(), // Phone should already be in E.164 format
             _ => identity.Trim()
         };
 
-        // Вычисляем хеш кода (SHA-256, 32 байта)
+        // Compute code hash (SHA-256, 32 bytes)
         var codeHash = SHA256.HashData(Encoding.UTF8.GetBytes(code));
 
         switch (channel.ToLowerInvariant())
         {
             case "email":
                 {
-                    // Ищем код для email
+                    // Look up email code
                     var entity = await _context.EmailVerifications
                         .Where(x => x.Email == normalizedIdentity && x.TokenHash == codeHash)
                         .OrderByDescending(x => x.CreatedAt)
@@ -131,7 +131,7 @@ internal sealed class CodeService : ICodeService
                         return false;
                     }
 
-                    // Помечаем код как использованный
+                    // Mark code as used
                     entity.UsedAt = now;
                     await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -139,7 +139,7 @@ internal sealed class CodeService : ICodeService
                 }
             case "phone":
                 {
-                    // Для телефона сначала находим последнюю запись (без проверки хеша)
+                    // For phone, find the latest record first (without hash check)
                     var entity = await _context.PhoneVerifications
                         .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash)
                         .OrderByDescending(x => x.CreatedAt)
@@ -158,26 +158,26 @@ internal sealed class CodeService : ICodeService
                         return false;
                     }
 
-                    // Проверяем количество попыток
+                    // Check attempt count
                     if (entity.Attempts >= entity.MaxAttempts)
                     {
                         _logger.LogWarning("Phone verification code max attempts exceeded for {Phone}", normalizedIdentity);
                         return false;
                     }
 
-                    // Увеличиваем счётчик попыток (даже для неверного кода)
+                    // Increment attempt counter (even for wrong code)
                     entity.Attempts++;
 
-                    // Проверяем хеш кода
+                    // Verify code hash
                     if (!entity.CodeHash.SequenceEqual(codeHash))
                     {
-                        // Код неверный, но попытка уже засчитана
+                        // Wrong code, but attempt already counted
                         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
                         _logger.LogWarning("Phone verification code mismatch for {Phone}", normalizedIdentity);
                         return false;
                     }
 
-                    // Код верный - помечаем как использованный
+                    // Correct code — mark as used
                     entity.UsedAt = now;
                     await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

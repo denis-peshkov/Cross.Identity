@@ -1,32 +1,32 @@
-# Общие правила .NET бэкенда
+# General .NET backend rules
 
 ## Global usings
 
-- **Только `GlobalUsings.cs`** — в `.cs` файлах не использовать file-scoped `using`; все импорты — в `GlobalUsings.cs` проекта.
-- **`ImplicitUsings`** — `disable` в `.csproj`; SDK implicit usings не включать.
-- **Новый namespace** — при добавлении типов из нового namespace дополнять `GlobalUsings.cs`, а не локальные `using` в файлах.
+- **`GlobalUsings.cs` only** — do not use file-scoped `using` in `.cs` files; all imports go in the project's `GlobalUsings.cs`.
+- **`ImplicitUsings`** — `disable` in `.csproj`; do not enable SDK implicit usings.
+- **New namespace** — when adding types from a new namespace, update `GlobalUsings.cs`, not local `using` in files.
 
-## Архитектура
+## Architecture
 
-- **Модульная структура** - код организован по модулям в `Web.Api/Modules/`
-- **CQRS с MediatR** - использовать паттерн CQRS с библиотекой MediatR
-- **Controllers** - контроллеры только для маршрутизации, логика в Handlers
+- **Modular structure** - code organized by modules in `Web.Api/Modules/`
+- **CQRS with MediatR** - use the CQRS pattern with MediatR
+- **Controllers** - controllers only for routing; logic in Handlers
 
-## Именование
+## Naming
 
-- **Controllers** - PascalCase с суффиксом `Controller` (например, `VacanciesController`)
-- **Handlers** - PascalCase с суффиксом `Handler` или `CommandHandler`/`QueryHandler`
-- **DTOs** - PascalCase с суффиксом `Dto` (например, `SubmitResumeDto`)
-- **Commands/Queries** - PascalCase с суффиксом `Command`/`Query` (например, `SubmitResumeCommand`)
-- **Async методы** - все async методы должны иметь суффикс `Async`
+- **Controllers** - PascalCase with `Controller` suffix (e.g. `VacanciesController`)
+- **Handlers** - PascalCase with `Handler` or `CommandHandler`/`QueryHandler` suffix
+- **DTOs** - PascalCase with `Dto` suffix (e.g. `SubmitResumeDto`)
+- **Commands/Queries** - PascalCase with `Command`/`Query` suffix (e.g. `SubmitResumeCommand`)
+- **Async methods** - all async methods must have the `Async` suffix
 
-## Контроллеры
+## Controllers
 
-- **Минимальная логика** - контроллеры должны содержать только маршрутизацию
-- **Использование MediatR** - вся бизнес-логика в Handlers через MediatR
-- **Версионирование API** - использовать `[ApiVersion("1.0")]` и `[Route("api/v{version:apiVersion}/[controller]")]`
+- **Minimal logic** - controllers should contain only routing
+- **Use MediatR** - all business logic in Handlers via MediatR
+- **API versioning** - use `[ApiVersion("1.0")]` and `[Route("api/v{version:apiVersion}/[controller]")]`
 
-Пример:
+Example:
 ```csharp
 [ApiController]
 [ApiVersion("1.0")]
@@ -57,25 +57,25 @@ public class VacanciesController : ControllerBase
 }
 ```
 
-## Логирование
+## Logging
 
-- **ILogger<T>** - использовать типизированный логгер `ILogger<T>` где T - класс контроллера/сервиса
-- **Структурированное логирование** - использовать параметризованные сообщения
-- **Уровни логирования** - использовать `LogInformation`, `LogWarning`, `LogError` соответственно
+- **ILogger<T>** - use typed logger `ILogger<T>` where T is the controller/service class
+- **Structured logging** - use parameterized messages
+- **Log levels** - use `LogInformation`, `LogWarning`, `LogError` appropriately
 
-Пример:
+Example:
 ```csharp
 _logger.LogInformation("Received SubmitResume request. ModelState.IsValid: {IsValid}", ModelState.IsValid);
 _logger.LogWarning("ModelState error for {Key}: {Errors}", error.Key, string.Join(", ", errors));
 ```
 
-## Валидация
+## Validation
 
-- **ModelState** - проверять `ModelState.IsValid` в контроллерах
-- **FluentValidation** - использовать FluentValidation для валидации DTOs
-- **Логирование ошибок** - логировать ошибки валидации
+- **ModelState** - check `ModelState.IsValid` in controllers
+- **FluentValidation** - use FluentValidation for DTO validation
+- **Error logging** - log validation errors
 
-## Ответы API
+## API responses
 
-- **ApiEnvelope<T>** - оборачивать все ответы в `ApiEnvelope<T>` для единообразного формата
-- **CancellationToken** - всегда принимать `CancellationToken` в async методах
+- **ApiEnvelope<T>** - wrap all responses in `ApiEnvelope<T>` for a consistent format
+- **CancellationToken** - always accept `CancellationToken` in async methods
