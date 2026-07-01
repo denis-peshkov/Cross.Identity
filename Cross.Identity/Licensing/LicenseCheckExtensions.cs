@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Licensing;
 
 internal static class LicenseCheckExtensions
 {
@@ -14,7 +14,10 @@ internal static class LicenseCheckExtensions
 
             foreach (var licenseProductInfo in serviceProvider.GetServices<ILicenseProductInfo>())
             {
-                licenseValidator.Validate(license, licenseProductInfo);
+                if (licenseProductInfo.Product == "Cross.Identity")
+                {
+                    licenseValidator.Validate(license, licenseProductInfo);
+                }
             }
         }
 

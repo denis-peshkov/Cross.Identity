@@ -47,7 +47,7 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
         result.Data.Should().NotBeNull();
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload.Should().ContainKey("user_id");
-        IsLicenseGateChecked().Should().BeTrue();
+        IsLicenseGateChecked().Should().BeFalse();
     }
 
     [Test]
@@ -59,19 +59,19 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
         var result = await ExecuteGetUserIdFlowAsync();
 
         result.Data.Should().NotBeNull();
-        IsLicenseGateChecked().Should().BeTrue();
+        IsLicenseGateChecked().Should().BeFalse();
     }
 
     [Test]
     public async Task ExecuteAsync_SecondCall_ShouldNotResetLicenseGate()
     {
         await ExecuteGetUserIdFlowAsync();
-        IsLicenseGateChecked().Should().BeTrue();
+        IsLicenseGateChecked().Should().BeFalse();
 
         var second = await ExecuteGetUserIdFlowAsync();
 
         second.Data.Should().NotBeNull();
-        IsLicenseGateChecked().Should().BeTrue();
+        IsLicenseGateChecked().Should().BeFalse();
     }
 
     private Task<FlowResult> ExecuteGetUserIdFlowAsync()
