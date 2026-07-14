@@ -251,3 +251,4 @@ paket-files/
 pub/
 /cross-identity-deploy-key
 /cross-identity-deploy-key.pub
+/rest-client/http-client.private.env.json
