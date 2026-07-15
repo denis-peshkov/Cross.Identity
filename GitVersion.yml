@@ -50,6 +50,24 @@ branches:
     track-merge-target: false
     tracks-release-branches: false
     is-release-branch: false
+  fix:
+    regex: ^fix(es)?[/-]
+    mode: ContinuousDelivery
+    tag: useBranchName
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false
+  chore:
+    regex: ^chore(s)?[/-]
+    mode: ContinuousDelivery
+    tag: useBranchName
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false
   pull-request:
     regex: ^(pull|pull\-requests|pr|merge)[/-]
     mode: ContinuousDelivery
@@ -60,6 +78,8 @@ branches:
       - master
       - release
       - feature
+      - fix
+      - chore
       - support
       - hotfix
     increment: None

@@ -54,7 +54,7 @@ Closes: #0000
 - [ ] I have read and followed [CONTRIBUTING.md](../CONTRIBUTING.md).
 - [ ] **PR Merge Title** above matches the squash title and lead commit message.
 - [ ] There is no other open [pull request](https://github.com/denis-peshkov/Cross.Identity/pulls) for the same fix or feature.
-- [ ] This PR targets **`dev`** (not `master`, unless agreed with a maintainer).
+- [ ] This PR targets **`dev`** (contributors must not target `master`, `release/*`, or `hotfix/*`; owner-only — see [CONTRIBUTING.md](../CONTRIBUTING.md)).
 - [ ] **One PR = one feature or one fix** — no unrelated refactors or drive-by formatting.
 
 ### CI and quality
