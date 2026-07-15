@@ -15,6 +15,10 @@ insert_final_newline = true
 # Code files
 [*.cs]
 indent_size = 4
+dotnet_diagnostic.CA2007.severity = error
+
+[*.Tests/**/*.cs]
+dotnet_diagnostic.CA2007.severity = none
 
 # Xml project files
 [*.{csproj,dcproj}]

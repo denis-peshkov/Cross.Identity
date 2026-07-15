@@ -1,6 +1,6 @@
-namespace Cross.Identity;
+﻿namespace Cross.Identity;
 
-public class FlowExecutor : IFlowExecutor
+internal class FlowExecutor : IFlowExecutor
 {
     private readonly IServiceProvider _sp;
     private readonly StepRegistry _registry;
@@ -8,11 +8,11 @@ public class FlowExecutor : IFlowExecutor
     private readonly IRequestInput _requestInput;
 
     /// <summary>
-    /// Создаёт обработчик.
+    /// Creates the executor.
     /// </summary>
-    /// <param name="sp">Корневой DI-провайдер (нужен для создания scoped-зависимостей шагов).</param>
-    /// <param name="registry">Реестр фабрик шагов процесса.</param>
-    /// <param name="definition">Провайдер JSON-дефиниций процессов.</param>
+    /// <param name="sp">Root DI provider (needed to create scoped step dependencies).</param>
+    /// <param name="registry">Process step factory registry.</param>
+    /// <param name="definition">JSON process definition provider.</param>
     /// <param name="requestInput"></param>
     public FlowExecutor(
         IServiceProvider sp,
@@ -29,30 +29,31 @@ public class FlowExecutor : IFlowExecutor
     /// <inheritdoc/>
     public async Task<FlowResult> ExecuteAsync(Dictionary<string, object?> input, string flow, FlowOperationEnum operation, CancellationToken cancellationToken)
     {
-        // 1) Передаём входной payload в движок (шаг collectForm его считает)
+        _sp.CheckLicense();
+
+        // 1) Pass input payload to the engine (collectForm step reads it)
         _requestInput.Set(input);
 
-        // 2) достаём JSON процесса
+        // 2) load process JSON
         var json = _definition.GetJson(flow, operation);
 
-        // 3) создаём scope для зависимостей шагов (IRequestInput, IUserService, ICodeService, IJwtIssuer и т.п.)
+        // 3) create scope for step dependencies (IRequestInput, IUserService, ICodeService, IJwtIssuer, etc.)
         using var scope = _sp.CreateScope();
 
-        // 3.1) Передаем данные в новый scope
+        // 3.1) Pass data into the new scope
         var scopedInput = scope.ServiceProvider.GetRequiredService<IRequestInput>();
         scopedInput.Set(input);
 
-        // 4) собираем процесс из JSON
+        // 4) build process from JSON
         var process = ProcessLoader.FromJson(json, _registry, scope.ServiceProvider);
 
-        // 5) исполняем
+        // 5) execute
         var bag = new Bag();
-        await process.RunAsync(bag, cancellationToken);
+        await process.RunAsync(bag, cancellationToken).ConfigureAwait(false);
 
-        // 6) политика возврата по префиксу "collectResult.":
-        //    - нет collectResult.*       -> вернуть весь Bag (как словарь)
-        //    - один collectResult.*      -> вернуть само значение (а не словарь)
-        //    - несколько collectResult.* -> вернуть словарь { <prefix-with-collectResult> : value }
+        // 6) return policy for "collectResult." prefix:
+        //    - no collectResult.* -> Data = null
+        //    - one or more collectResult.* -> Dictionary { field_name: value } (names without prefix)
         const string prefix = "collectResult.";
         var all = bag.ToDictionary();
         var resultPairs = all
@@ -62,23 +63,18 @@ public class FlowExecutor : IFlowExecutor
         object? data;
         switch (resultPairs.Count)
         {
-            case 0:
-                data = null;
-                break;
-            case 1:
-                // одно поле — отдаём сразу его значение, без обёртки
-                data = resultPairs[0].Value;
-                break;
-            default:
-                // несколько полей — отдаём объект { field : value }, с обрезанным префиксом
+            case > 0:
+                // multiple fields — return object { field : value } with prefix trimmed
                 var trimmed = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (k, v) in resultPairs)
                 {
-                    var name = k.Substring(prefix.Length); // "userId" из "collectResult.userId"
+                    var name = k.Substring(prefix.Length); // "userId" from "collectResult.userId"
                     trimmed[name] = v;
                 }
-
                 data = trimmed;
+                break;
+            default:
+                data = null;
                 break;
         }
 

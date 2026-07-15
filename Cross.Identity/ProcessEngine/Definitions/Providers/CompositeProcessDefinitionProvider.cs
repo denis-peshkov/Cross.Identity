@@ -1,21 +1,21 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
-/// Композитный провайдер: опрашивает цепочку <see cref="IProcessDefinitionProvider"/> по порядку.
-/// Первый, кто вернёт JSON, — побеждает. Остальные не вызываются.
+/// Composite provider: queries a chain of <see cref="IProcessDefinitionProvider"/> instances in order.
+/// The first provider that returns JSON wins. The rest are not called.
 /// <para>
-/// Умеет кэшировать найденные дефиниции (по ключу "flow.operation") до рестарта приложения.
+/// Can cache found definitions (by key "flow.operation") until application restart.
 /// </para>
 /// </summary>
-public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
+internal sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvider
 {
     private readonly IReadOnlyList<IProcessDefinitionProvider> _providers;
     private readonly ConcurrentDictionary<string, string> _flowCache = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, string> _templateCache = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Создаёт композитный провайдер из последовательности дочерних провайдеров
-    /// (их порядок = порядок fallback).
+    /// Creates a composite provider from a sequence of child providers
+    /// (their order = fallback order).
     /// </summary>
     public CompositeProcessDefinitionProvider(IEnumerable<IProcessDefinitionProvider> providers)
     {
@@ -42,13 +42,12 @@ public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvi
             }
             catch (KeyNotFoundException)
             {
-                // пробуем следующий провайдер
+                // try the next provider
             }
         }
 
         throw new KeyNotFoundException($"Process definition not found in composite for '{key}'.");
     }
-
 
     /// <inheritdoc />
     public string GetTemplate(string name, string languageCode, string format)
@@ -72,7 +71,7 @@ public sealed class CompositeProcessDefinitionProvider : IProcessDefinitionProvi
             }
             catch (KeyNotFoundException)
             {
-                // пробуем следующий провайдер
+                // try the next provider
             }
         }
 

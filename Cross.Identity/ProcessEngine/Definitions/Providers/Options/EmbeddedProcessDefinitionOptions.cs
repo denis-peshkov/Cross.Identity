@@ -1,13 +1,13 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers.Options;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers.Options;
 
 /// <summary>
-/// Опции загрузки JSON-дефиниций из embedded-ресурсов.
-/// Используются при DI-регистрации провайдера.
+/// Options for loading JSON definitions from embedded resources.
+/// Used when registering the provider in DI.
 /// </summary>
-public sealed class EmbeddedProcessDefinitionOptions
+internal sealed class EmbeddedProcessDefinitionOptions
 {
     /// <summary>
-    /// Имя сборки, из которой читаются ресурсы (например, "MyCompany.MyApp").
+    /// Assembly name to read resources from (for example, "MyCompany.MyApp").
     /// </summary>
     public string? AssemblyName
     {
@@ -18,14 +18,14 @@ public sealed class EmbeddedProcessDefinitionOptions
     }
 
     /// <summary>
-    /// Сборка, из которой читаются ресурсы.
+    /// Assembly to read resources from.
     /// </summary>
-    [JsonIgnore] // чтобы не сериализовалось обратно в JSON
+    [JsonIgnore] // prevent serialization back to JSON
     public Assembly Assembly { get; set; } = Assembly.GetExecutingAssembly();
 
     /// <summary>
-    /// Базовый namespace, под которым публикуются JSON-ресурсы.
-    /// Например: <c>"MyCompany.MyApp.Flows.Definitions"</c>.
+    /// Base namespace under which JSON resources are published.
+    /// For example: <c>"MyCompany.MyApp.Flows.Definitions"</c>.
     /// </summary>
     public string BaseNamespace { get; set; } = null!;
 }

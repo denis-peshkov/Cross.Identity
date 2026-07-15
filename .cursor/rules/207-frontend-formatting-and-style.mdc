@@ -7,75 +7,75 @@ globs:
 alwaysApply: false
 ---
 
-# Форматирование и стиль кода фронтенда
+# Frontend code formatting and style
 
-## EditorConfig правила
+## EditorConfig rules
 
-- **Отступ**: 2 пробела для всех файлов
-- **Кавычки**: одинарные для TypeScript/JavaScript (`'строка'`)
-- **Конец строки**: всегда добавлять пустую строку в конце файла (`insert_final_newline = true`)
-- **Trailing whitespace**: удалять пробелы в конце строк (`trim_trailing_whitespace = true`)
+- **Indent**: 2 spaces for all files
+- **Quotes**: single quotes for TypeScript/JavaScript (`'string'`)
+- **End of file**: always add a blank line at end of file (`insert_final_newline = true`)
+- **Trailing whitespace**: remove trailing spaces (`trim_trailing_whitespace = true`)
 
-## Пробелы в объектах
+## Whitespace in objects
 
-- **После двоеточия**: `{ a: 1 }` (пробел после `:`)
-- **После запятой**: `{ a: 1, b: 2 }` (пробел после `,`)
-- **Внутри фигурных скобок**: `{ a: 1 }` (пробелы внутри `{}`)
-- **Вокруг стрелки**: `() => {}` (пробелы вокруг `=>`)
+- **After colon**: `{ a: 1 }` (space after `:`)
+- **After comma**: `{ a: 1, b: 2 }` (space after `,`)
+- **Inside braces**: `{ a: 1 }` (spaces inside `{}`)
+- **Around arrow**: `() => {}` (spaces around `=>`)
 
-Пример:
+Example:
 ```typescript
-// ✅ Правильно
+// ✅ Correct
 const obj = { a: 1, b: 2 };
 const arr = [{ id: 'any', name: 'All locations' }];
 const fn = (x: number) => x * 2;
 
-// ❌ Неправильно
+// ❌ Incorrect
 const obj = {a:1,b:2};
 const arr = [{ id:'any', name:'All locations' }];
 const fn = (x:number)=>x*2;
 ```
 
-**Важно**: Всегда использовать пробелы после двоеточия в объектах и массивах объектов, даже в массивах констант и экспортируемых данных.
+**Important**: Always use spaces after colons in objects and object arrays, including constant arrays and exported data.
 
-## Декораторы Angular
+## Angular decorators
 
-- **Пробелы после двоеточия** - все свойства декораторов должны иметь пробелы после двоеточия
-- **Пробелы в массивах** - пробелы после открывающей скобки и перед закрывающей скобкой массива в `imports`, `styleUrls`
+- **Spaces after colon** - all decorator properties must have spaces after the colon
+- **Spaces in arrays** - spaces after the opening bracket and before the closing bracket in `imports`, `styleUrls`
 
-Пример:
+Example:
 ```typescript
-// ✅ Правильно
+// ✅ Correct
 @Component({
   selector: 'app-oil',
   standalone: true,
-  templateUrl: './oil.component.html',  // ОБЯЗАТЕЛЬНО
-  styleUrls: [ './oil.component.scss' ], // ОБЯЗАТЕЛЬНО
+  templateUrl: './oil.component.html',  // REQUIRED
+  styleUrls: [ './oil.component.scss' ], // REQUIRED
   imports: [
     CommonModule,
     FormsModule,
   ],
 })
 
-// ❌ Неправильно - отсутствует templateUrl
+// ❌ Incorrect - missing templateUrl
 @Component({
   selector: 'app-oil',
   standalone: true,
-  // templateUrl отсутствует - ОШИБКА
+  // templateUrl missing - ERROR
   styleUrls: [ './oil.component.scss' ],
   imports: [ CommonModule ],
 })
 
-// ❌ Неправильно - отсутствует styleUrls
+// ❌ Incorrect - missing styleUrls
 @Component({
   selector: 'app-oil',
   standalone: true,
   templateUrl: './oil.component.html',
-  // styleUrls отсутствует - ОШИБКА
+  // styleUrls missing - ERROR
   imports: [ CommonModule ],
 })
 
-// ❌ Неправильно - форматирование
+// ❌ Incorrect - formatting
 @Component({
   selector:'app-oil',
   standalone:true,
@@ -88,51 +88,51 @@ const fn = (x:number)=>x*2;
 })
 ```
 
-**Важно**:
-- Всегда использовать пробелы после двоеточия в декораторах (`@Component`, `@Pipe`, `@Directive`, `@Injectable` и т.д.) и пробелы внутри массивов (`[ ... ]`)
-- **Все компоненты ДОЛЖНЫ содержать template/templateUrl и styles/styleUrls**
+**Important**:
+- Always use spaces after colons in decorators (`@Component`, `@Pipe`, `@Directive`, `@Injectable`, etc.) and spaces inside arrays (`[ ... ]`)
+- **All components MUST contain template/templateUrl and styles/styleUrls**
 
-## Модификаторы доступа
+## Access modifiers
 
-- **Всегда явные** - всегда указывать модификаторы доступа (`private`, `protected`, `public`)
-- **`private readonly`** - для всех инжектированных сервисов в конструкторе
-- **`protected`** - для методов и свойств, используемых в шаблонах
-- **`readonly`** - для константных свойств
+- **Always explicit** - always specify access modifiers (`private`, `protected`, `public`)
+- **`private readonly`** - for all injected services in the constructor
+- **`protected`** - for methods and properties used in templates
+- **`readonly`** - for constant properties
 
-Пример:
+Example:
 ```typescript
 export class Component {
   private readonly service: SomeService;  // ✅
   protected readonly resource = 'path';   // ✅
   public title: string;                   // ✅
-  // someProperty: string;                // ❌ Нет модификатора
+  // someProperty: string;                // ❌ No modifier
 }
 ```
 
-## Именование
+## Naming
 
-- **Компоненты**: PascalCase с суффиксом `Component` (`VacancyComponent`)
-- **Сервисы**: PascalCase с суффиксом `Service` (`TranslationService`)
-- **Интерфейсы**: PascalCase (`Vacancy`, `ResumeSection`)
-- **Типы**: PascalCase с суффиксом `Id` или `Type` (`LocationId`)
-- **Константы**: camelCase (`vacanciesRoutes`, `vacancies`)
-- **Методы**: camelCase (`onSubmit()`, `getVacancyById()`)
-- **Свойства**: camelCase (`isResourceLoaded`, `vacancy`)
+- **Components**: PascalCase with `Component` suffix (`VacancyComponent`)
+- **Services**: PascalCase with `Service` suffix (`TranslationService`)
+- **Interfaces**: PascalCase (`Vacancy`, `ResumeSection`)
+- **Types**: PascalCase with `Id` or `Type` suffix (`LocationId`)
+- **Constants**: camelCase (`vacanciesRoutes`, `vacancies`)
+- **Methods**: camelCase (`onSubmit()`, `getVacancyById()`)
+- **Properties**: camelCase (`isResourceLoaded`, `vacancy`)
 
-## Импорты
+## Imports
 
-- **Обязательный порядок сортировки**: импорты должны быть отсортированы в следующем порядке:
-  1. `@angular/*` - все импорты из Angular (вверху)
-  2. Внешние библиотеки - все импорты из внешних npm-пакетов (jose, jwt-decode, rxjs, luxon и т.д.)
-  3. `@workspace/*` - все импорты из внутренних библиотек workspace (внизу, но не в самом низу)
-  4. Относительные импорты `from '.'` - все локальные импорты с относительными путями (в самом низу)
-- **Консолидация импортов**: все импорты из одного модуля должны быть объединены в один импорт
-- **Пустые строки**: разделять группы пустыми строками только если это улучшает читаемость
-- **Сортировка внутри группы**: импорты внутри каждой группы должны быть отсортированы по алфавиту
+- **Required sort order**: imports must be sorted in the following order:
+  1. `@angular/*` - all Angular imports (at the top)
+  2. External libraries - all imports from external npm packages (jose, jwt-decode, rxjs, luxon, etc.)
+  3. `@workspace/*` - all imports from internal workspace libraries (near the bottom, but not at the very bottom)
+  4. Relative imports `from '.'` - all local imports with relative paths (at the very bottom)
+- **Consolidate imports**: all imports from the same module must be merged into one import
+- **Blank lines**: separate groups with blank lines only when it improves readability
+- **Sort within group**: imports within each group must be sorted alphabetically
 
-Пример:
+Example:
 ```typescript
-// ✅ Правильно - консолидированные импорты
+// ✅ Correct - consolidated imports
 import { Component, DestroyRef, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -148,13 +148,13 @@ import { AUTH_CONFIG, AuthConfig } from './auth-config';
 import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 
-// ❌ Неправильно - неправильный порядок
+// ❌ Incorrect - wrong order
 import { AuthService } from './auth.service';
 import { Component } from '@angular/core';
 import { ROUTE_PATH } from '@workspace/core';
 import { Observable } from 'rxjs';
 
-// ❌ Неправильно - неконсолидированные импорты из одного модуля
+// ❌ Incorrect - non-consolidated imports from the same module
 import { Component } from '@angular/core';
 import { DestroyRef } from '@angular/core';
 import { ViewChild } from '@angular/core';
@@ -163,33 +163,33 @@ import { RouterLink } from '@angular/router';
 import { ROUTE_PATH } from '@workspace/core';
 import { RouterPaths } from '@workspace/core';
 
-// ✅ Правильно - консолидированные импорты
+// ✅ Correct - consolidated imports
 import { Component, DestroyRef, ViewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ROUTE_PATH, RouterPaths } from '@workspace/core';
 ```
 
-**Важно**: Всегда сортировать импорты в указанном порядке. Относительные импорты (`from '.'`) должны быть в самом низу списка импортов.
+**Important**: Always sort imports in the specified order. Relative imports (`from '.'`) must be at the bottom of the import list.
 
-## Комментарии
+## Comments
 
-- **На русском языке** - все комментарии должны быть на русском
-- **Объяснять "почему"** - комментарии должны объяснять причину, а не описывать очевидное
-- **Краткость** - комментарии должны быть краткими и по делу
+- **In English** - all comments must be in English
+- **Explain "why"** - comments should explain the reason, not describe the obvious
+- **Brevity** - comments should be brief and to the point
 
-Пример:
+Example:
 ```typescript
-// ❌ Плохо
-// Получаем ID из роута
+// ❌ Bad
+// Get ID from route
 const id = this.route.snapshot.paramMap.get('id');
 
-// ✅ Хорошо
-// Получаем ID из роута для поиска вакансии в массиве
+// ✅ Good
+// Get ID from route to look up vacancy in the array
 const vacancyId = this.route.snapshot.paramMap.get('id');
 ```
 
-## Структура файлов
+## File structure
 
-- **Один класс/интерфейс на файл** - каждый файл должен содержать один основной экспорт
-- **Имя файла = имя класса** - имя файла должно соответствовать имени класса (kebab-case)
-- **index.ts для реэкспорта** - использовать `index.ts` для реэкспорта из директорий
+- **One class/interface per file** - each file should contain one primary export
+- **File name = class name** - file name should match the class name (kebab-case)
+- **index.ts for re-export** - use `index.ts` for re-export from directories

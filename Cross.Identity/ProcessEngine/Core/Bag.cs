@@ -1,32 +1,32 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Простой property-bag для обмена данными между шагами процесса.
-/// Ключи рекомендуются неймспейсить: "registration.Email", "auth.Phone", "user.Id", "auth.Token".
+/// Simple property bag for exchanging data between process steps.
+/// Keys should be namespaced: "registration.Email", "auth.Phone", "user.Id", "auth.Token".
 /// </summary>
 public sealed class Bag : IReadOnlyDictionary<string, object?>
 {
     private readonly Dictionary<string, object?> _data = new(StringComparer.Ordinal);
 
-    /// <summary>Получить значение по ключу с приведением типа.</summary>
+    /// <summary>Get a value by key with type conversion.</summary>
     public T Get<T>(string key)
     {
         if (!_data.TryGetValue(key, out var v))
             throw new KeyNotFoundException($"Key '{key}' not found.");
 
-        // точное приведение, либо через Convert.ChangeType для примитивов
+        // exact cast, or Convert.ChangeType for primitives
         if (v is T t)
             return t;
 
         if (v is null)
         {
-            // допустим nullable T
+            // allow nullable T
             if (default(T) is null)
                 return default!;
             throw new InvalidCastException($"Key '{key}' is null, cannot cast to {typeof(T).Name}.");
         }
 
-        // Попытка универсального приведения (int→decimal, string→int и т.п.)
+        // Attempt generic conversion (int→decimal, string→int, etc.)
         try
         {
             return (T)System.Convert.ChangeType(v, typeof(T))!;
@@ -37,7 +37,7 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         }
     }
 
-    /// <summary>Попробовать получить значение по ключу (типобезопасно).</summary>
+    /// <summary>Try to get a value by key (type-safe).</summary>
     public bool TryGet<T>(string key, out T? value)
     {
         if (_data.TryGetValue(key, out var v))
@@ -63,23 +63,23 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         return false;
     }
 
-    /// <summary>Установить или обновить значение по ключу.</summary>
+    /// <summary>Set or update a value by key.</summary>
     public Bag Set(string key, object? value)
     {
         _data[key] = value;
         return this;
     }
 
-    /// <summary>Проверить наличие ключа.</summary>
+    /// <summary>Check whether a key exists.</summary>
     public bool Has(string key) => _data.ContainsKey(key);
 
-    /// <summary>Вернуть snapshot как словарь (копию).</summary>
+    /// <summary>Return a snapshot as a dictionary (copy).</summary>
     public IDictionary<string, object?> ToDictionary() => new Dictionary<string, object?>(_data, _data.Comparer);
 
-    /// <summary>Итерируемое представление пар (ключ, значение).</summary>
+    /// <summary>Enumerable view of (key, value) pairs.</summary>
     public IEnumerable<KeyValuePair<string, object?>> AsEnumerable() => _data;
 
-    #region IReadOnlyDictionary реализация
+    #region IReadOnlyDictionary implementation
 
     public int Count => _data.Count;
 

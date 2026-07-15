@@ -1,9 +1,8 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
 /// <summary>
 /// Represents a user in the identity system
 /// </summary>
-// public class UserAccountEntity
 public class UserAccountEntity
 {
     /// <summary>
@@ -25,21 +24,15 @@ public class UserAccountEntity
     public virtual string? NormalizedUserName { get; set; }
 
     /// <summary>
-    /// Gets or sets the email address for this user.
+    /// Gets or sets the normalized email address for this user.
     /// </summary>
     [ProtectedPersonalData]
     public string? Email { get; set; }
 
     /// <summary>
-    /// Gets or sets the normalized email address for this user.
-    /// </summary>
-    [ProtectedPersonalData]
-    public string? NormalizedEmail { get; set; }
-
-    /// <summary>
     /// Gets or sets a telephone number for the user.
     /// </summary>
-    /// <remarks>хранить в E.164</remarks>
+    /// <remarks>store in E.164</remarks>
     [ProtectedPersonalData]
     public string? PhoneNumber { get; set; }
 

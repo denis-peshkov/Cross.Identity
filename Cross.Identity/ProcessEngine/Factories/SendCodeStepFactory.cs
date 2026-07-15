@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="SendCodeStep"/>.
+/// Factory for <see cref="SendCodeStep"/>.
 /// </summary>
 internal sealed class SendCodeStepFactory : IStepFactory
 {
@@ -16,14 +16,15 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var userService               = sp.GetRequiredService<IUserService>();
         var hostEnvironment           = sp.GetRequiredService<IHostEnvironment>();
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
+        var configuration             = sp.GetRequiredService<IConfiguration>();
 
-        // ttlSeconds (опционально), по умолчанию 5 минут
+        // ttlSeconds (optional), 5 minutes by default
         var ttl = cfg.TimeSpanSecondsOpt("ttlSeconds") ?? TimeSpan.FromMinutes(5);
 
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
-        // resolveBy — объект опционален; если не задан, берём разумный дефолт от канала
+        // resolveBy is optional; if omitted, a sensible default is inferred from the channel
         ResolveBy resolveBy;
         if (cfg.TryGetProperty("resolveBy", out var resolveEl) && resolveEl.ValueKind == JsonValueKind.Object)
         {
@@ -44,6 +45,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             CodeService               = codeService,
             UserService               = userService,
             Environment               = hostEnvironment,
+            Configuration             = configuration,
             ProcessDefinitionProvider = processDefinitionProvider,
             Logger                    = loggerFactory.CreateLogger<SendCodeStep>(),
             ResolveBy                 = resolveBy,

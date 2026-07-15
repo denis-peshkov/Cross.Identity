@@ -1,86 +1,86 @@
-# Правила форматирования вывода
+# Output formatting rules
 
-## Комментарии в коде
+## Code comments
 
-- **На русском языке** - все комментарии должны быть на русском языке
-- **Объяснять "почему"** - комментарии должны объяснять причину, а не описывать очевидное
-- **Краткость** - комментарии должны быть краткими и по делу
+- **In English** - all comments should be in English
+- **Explain "why"** - comments should explain the reason, not describe the obvious
+- **Brevity** - comments should be brief and to the point
 
-Пример:
+Example:
 ```typescript
-// ❌ Плохо
-// Получаем ID из роута
+// ❌ Bad
+// Get ID from route
 const id = this.route.snapshot.paramMap.get('id');
 
-// ✅ Хорошо
-// Получаем ID из роута для поиска вакансии в массиве
+// ✅ Good
+// Get ID from route to look up vacancy in the array
 const vacancyId = this.route.snapshot.paramMap.get('id');
 ```
 
-## Сообщения об ошибках
+## Error messages
 
-- **На русском языке** - все сообщения об ошибках для пользователя должны быть на русском
-- **Использовать переводы** - получать сообщения через `TranslationService.get()`
-- **Логирование на английском** - технические логи могут быть на английском
+- **Via translations** - all user-facing error messages should use translations
+- **Use TranslationService** - get messages via `TranslationService.get()`
+- **Logs in English** - technical logs may be in English
 
-Пример:
+Example:
 ```typescript
-// Для пользователя
+// For the user
 alert(this.translationService.get('common_resume_error'));
 
-// Для разработчика
-console.error('Ошибка при отправке резюме:', error);
+// For the developer
+console.error('Error submitting resume:', error);
 ```
 
-## Документация
+## Documentation
 
-- **JSDoc комментарии** - использовать JSDoc для документирования публичных методов и свойств
-- **На русском языке** - документация должна быть на русском языке
+- **JSDoc comments** - use JSDoc for public methods and properties
+- **In English** - documentation should be in English
 
-Пример:
+Example:
 ```typescript
 /**
- * Загружает переводы для указанного ресурса
- * @param resource - путь к ресурсу переводов (например, 'vacancies/strings')
- * @returns Observable с массивом переводов
+ * Loads translations for the specified resource
+ * @param resource - path to translation resource (e.g. 'vacancies/strings')
+ * @returns Observable with array of translations
  */
 loadResource$(resource: string): Observable<Translation[]> {
   // ...
 }
 ```
 
-## Именование переменных и методов
+## Variable and method naming
 
-- **Осмысленные имена** - имена должны быть понятными и описывать назначение
-- **На английском языке** - код на английском, комментарии на русском
-- **Избегать сокращений** - использовать полные слова вместо сокращений
+- **Meaningful names** - names should be clear and describe purpose
+- **Code in English** - code in English, comments in English
+- **Avoid abbreviations** - use full words instead of abbreviations
 
-Пример:
+Example:
 ```typescript
-// ❌ Плохо
+// ❌ Bad
 const v = vacancies.find(v => v.id === id);
 
-// ✅ Хорошо
+// ✅ Good
 const vacancy = vacancies.find(v => v.id === vacancyId);
 ```
 
-## Форматирование кода
+## Code formatting
 
-- **Следовать EditorConfig** - следовать правилам из `.editorconfig`
-- **2 пробела** - использовать 2 пробела для отступов
-- **Одинарные кавычки** - использовать одинарные кавычки для строк
-- **Пробелы после двоеточия** - `{ a: 1 }` а не `{a:1}`
+- **Follow EditorConfig** - follow rules from `.editorconfig`
+- **2 spaces** - use 2 spaces for indentation
+- **Single quotes** - use single quotes for strings
+- **Space after colon** - `{ a: 1 }` not `{a:1}`
 
 ## Git commit messages
 
-- **На русском языке** - сообщения коммитов должны быть на русском языке
-- **Описательные** - сообщения должны описывать, что было изменено и почему
+- **In English** - commit messages should be in English
+- **Descriptive** - messages should describe what changed and why
 
-Пример:
+Example:
 ```
-Добавлена передача ID вакансии через роутинг
+Add vacancy ID passing via routing
 
-- Расширен интерфейс Vacancy для детальной страницы
-- Обновлен vacancy.component для получения данных по ID
-- Изменена ссылка в row16 для передачи ID через роутинг
+- Extended Vacancy interface for detail page
+- Updated vacancy.component to fetch data by ID
+- Changed link in row16 to pass ID via routing
 ```

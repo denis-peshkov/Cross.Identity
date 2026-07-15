@@ -1,12 +1,12 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="TokenStep"/> для вызова <c>TokenCommand(email, password)</c>.
-/// JSON-параметры:
+/// Factory for <see cref="TokenStep"/> that invokes <c>TokenCommand(email, password)</c>.
+/// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>name</c> — имя шага;</description></item>
-/// <item><description><c>refreshToken</c> Рефреш токен <c>"RefreshToken"</c>;</description></item>
-/// <item><description><c>next</c> — (опц.) имя следующего шага; <c>null</c> — завершить.</description></item>
+/// <item><description><c>name</c> — step name;</description></item>
+/// <item><description><c>refreshToken</c> — refresh token key <c>"RefreshToken"</c>;</description></item>
+/// <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
 /// </list>
 /// </summary>
 internal sealed class RefreshTokenStepFactory : IStepFactory
@@ -21,6 +21,7 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
         var authenticationOptions = sp.GetRequiredService<IOptionsSnapshot<AuthenticationOptions>>().Value;
+        var context = sp.GetRequiredService<IdentityContext>();
 
         return new RefreshTokenStep
         {
@@ -29,6 +30,7 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
             JwtTokenService       = jwtTokenService,
             UserService           = userService,
             AuthenticationOptions = authenticationOptions,
+            Context               = context,
             RefreshTokenKey       = cfg.Str("refreshTokenKey"),
             Next                  = cfg.StrOpt("next")
         };

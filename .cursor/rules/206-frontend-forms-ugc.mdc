@@ -7,15 +7,15 @@ globs:
 alwaysApply: false
 ---
 
-# Правила работы с формами и пользовательским контентом
+# Forms and user-generated content rules
 
 ## Reactive Forms
 
-- **Использовать Reactive Forms** - всегда использовать `ReactiveFormsModule` и `FormBuilder`
-- **Валидация** - использовать встроенные валидаторы Angular (`Validators.required`, `Validators.email`)
-- **Кастомные валидаторы** - создавать кастомные валидаторы только при необходимости
+- **Use Reactive Forms** - always use `ReactiveFormsModule` and `FormBuilder`
+- **Validation** - use built-in Angular validators (`Validators.required`, `Validators.email`)
+- **Custom validators** - create custom validators only when necessary
 
-Пример:
+Example:
 ```typescript
 this.form = this.fb.group({
   name: ['', Validators.required],
@@ -25,13 +25,13 @@ this.form = this.fb.group({
 });
 ```
 
-## Валидация телефонов
+## Phone validation
 
-- **libphonenumber-js** - использовать библиотеку `libphonenumber-js` для валидации и форматирования телефонов
-- **CountryService** - использовать `CountryService` для получения кода страны и dial code
-- **Форматирование** - форматировать телефон в международном формате перед отправкой
+- **libphonenumber-js** - use the `libphonenumber-js` library for phone validation and formatting
+- **CountryService** - use `CountryService` to get country code and dial code
+- **Formatting** - format the phone in international format before submission
 
-Пример:
+Example:
 ```typescript
 import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
@@ -48,9 +48,9 @@ const parsedPhone = parsePhoneNumber(fullPhone);
 const formattedPhone = parsedPhone.formatInternational();
 ```
 
-## Компоненты форм
+## Form components
 
-- **Использовать существующие компоненты** - использовать компоненты из `shared/components/`:
+- **Use existing components** - use components from `libs/ui/src/components/` (`@guru/ui`):
   - `InputTextComponent`
   - `InputEmailComponent`
   - `InputPhoneComponent`
@@ -59,11 +59,11 @@ const formattedPhone = parsedPhone.formatInternational();
   - `InputSelectComponent`
   - `SubmitButtonComponent`
 
-- **Передача control** - передавать `FormControl` через `[control]="form.get('fieldName')!"`
+- **Pass control** - pass `FormControl` via `[control]="form.get('fieldName')!"`
 
-- **Использование переводов** - ВСЕ `label` и `placeholder` ДОЛЖНЫ использовать ключи переводов через `{{ 'key' | translate }}`. Подробные правила см. в `205-frontend-i18n.mdc`
+- **Use translations** - ALL `label` and `placeholder` MUST use translation keys via `{{ 'key' | translate }}`. See `205-frontend-i18n.mdc` for detailed rules
 
-Пример:
+Example:
 ```html
 <app-input-text
   [control]="form.get('fullName')!"
@@ -86,13 +86,13 @@ const formattedPhone = parsedPhone.formatInternational();
 />
 ```
 
-## Обработка отправки форм
+## Form submission handling
 
-- **Проверка валидности** - проверять `form.invalid` перед отправкой
-- **`markAllAsTouched()`** - вызывать для отображения ошибок валидации
-- **Обработка ошибок** - обрабатывать ошибки отправки и показывать пользователю сообщения
+- **Check validity** - check `form.invalid` before submission
+- **`markAllAsTouched()`** - call to display validation errors
+- **Error handling** - handle submission errors and show messages to the user
 
-Пример:
+Example:
 ```typescript
 onSubmit(): void {
   if (this.form.invalid) {
@@ -100,7 +100,7 @@ onSubmit(): void {
     return;
   }
 
-  // Валидация и отправка
+  // Validation and submission
   this.isSubmitting = true;
 
   this.apiService.post$(endpoint, formData)
@@ -119,13 +119,13 @@ onSubmit(): void {
 }
 ```
 
-## Загрузка файлов
+## File upload
 
-- **FormData** - использовать `FormData` для отправки файлов
-- **Валидация размера** - проверять размер файла перед отправкой (если необходимо)
-- **Типы файлов** - проверять тип файла (если необходимо)
+- **FormData** - use `FormData` to send files
+- **Size validation** - check file size before upload (if necessary)
+- **File types** - check file type (if necessary)
 
-Пример:
+Example:
 ```typescript
 const formData = new FormData();
 formData.append('Name', this.form.get('name')?.value);
@@ -137,28 +137,28 @@ if (resumeFile) {
 }
 
 this.apiService.post$(endpoint, formData, {
-  // Опции для загрузки файлов
+  // File upload options
 })
   .pipe(takeUntilDestroyed(this.destroyRef))
   .subscribe();
 ```
 
-## Состояние загрузки
+## Loading state
 
-- **`isSubmitting`** - использовать флаг для отслеживания состояния отправки
-- **Блокировка формы** - блокировать форму во время отправки через `[disabled]="isSubmitting"`
+- **`isSubmitting`** - use a flag to track submission state
+- **Disable form** - disable the form during submission via `[disabled]="isSubmitting"`
 
-Пример:
+Example:
 ```html
 <app-submit-button [isSubmitting]="isSubmitting" />
 ```
 
-## Безопасность пользовательского контента
+## User-generated content security
 
-- **DomSanitizer** - использовать `DomSanitizer` для безопасного отображения HTML контента
-- **SafeHtml** - использовать тип `SafeHtml` для санитизированного контента
+- **DomSanitizer** - use `DomSanitizer` to safely display HTML content
+- **SafeHtml** - use the `SafeHtml` type for sanitized content
 
-Пример:
+Example:
 ```typescript
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 

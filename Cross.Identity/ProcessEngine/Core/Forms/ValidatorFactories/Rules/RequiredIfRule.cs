@@ -1,9 +1,9 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Если <c>When.Field</c> равно <c>When.Value</c>, то <c>Then.Required</c> делает поле обязательным.
+/// When <c>When.Field</c> equals <c>When.Value</c>, <c>Then.Required</c> makes the field required.
 /// </summary>
-public sealed record RequiredIfRule(
+internal sealed record RequiredIfRule(
     (string Field, string? Value) When,
     (string Name, bool Required) Then,
     string? Message = null) : IFormSchemaRule;

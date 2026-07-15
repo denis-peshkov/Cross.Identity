@@ -1,22 +1,22 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Фабрика построения шага из JSON-конфига и DI.
+/// Factory for building a step from a JSON config and DI.
 /// </summary>
-public interface IStepFactory
+internal interface IStepFactory
 {
     /// <summary>
-    /// Тип (kind) шага: "collectForm", "sendCode", "verifyCode", ...
+    /// Step type (kind): "collectForm", "sendCode", "verifyCode", ...
     /// </summary>
     string Kind { get; }
 
     /// <summary>
-    /// Дефолтное вычисление kind по имени типа: VerifyCodeStepFactory -> "verifyCode"
+    /// Default kind derived from the type name: VerifyCodeStepFactory -> "verifyCode"
     /// </summary>
     string GetKind => GetType().Name[..^"StepFactory".Length].ToCamelCase();
 
     /// <summary>
-    /// Создать экземпляр шага из JSON-узла <paramref name="cfg"/>.
+    /// Create a step instance from JSON node <paramref name="cfg"/>.
     /// </summary>
     IStep Create(JsonElement cfg, IServiceProvider sp);
 

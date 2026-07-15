@@ -1,18 +1,18 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="CollectResultStep"/>.
-/// JSON-параметры:
+/// Factory for <see cref="CollectResultStep"/>.
+/// JSON parameters:
 /// <list type="bullet">
-///   <item><description><c>kind</c> — должен быть <c>"collectResult"</c>.</description></item>
-///   <item><description><c>map</c> — объект с проекциями:
-///       <c>"поле_в_результате": "ключ_в_Bag"</c>. Примеры ключей:
-///       абсолютный <c>"issueJwt.Token"</c> или относительный <c>"Token"</c> (будет прочитан как <c>"collectResult.Token"</c>).</description></item>
-///   <item><description><c>resultKey</c> — (опц.) куда сохранить итоговый словарь; по умолчанию относительный <c>"Result"</c>
-///       → будет записан как <c>"collectResult.Result"</c>.</description></item>
-///   <item><description><c>next</c> — (опц.) имя следующего шага; <c>null</c> — завершить.</description></item>
+///   <item><description><c>kind</c> — must be <c>"collectResult"</c>.</description></item>
+///   <item><description><c>map</c> — projection object:
+///       <c>"result_field": "bag_key"</c>. Key examples:
+///       absolute <c>"issueJwt.Token"</c> or relative <c>"Token"</c> (read as <c>"collectResult.Token"</c>).</description></item>
+///   <item><description><c>resultKey</c> — (opt.) where to store the final dictionary; relative <c>"Result"</c> by default
+///       → will be written as <c>"collectResult.Result"</c>.</description></item>
+///   <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
 /// </list>
-/// Пример:
+/// Example:
 /// <code language="json">
 /// {
 ///   "kind": "collectResult",
@@ -32,15 +32,15 @@ internal sealed class CollectResultStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        // map обязателен и должен быть объектом
+        // map is required and must be an object
         if (!cfg.TryGetProperty("map", out var mapEl) || mapEl.ValueKind != JsonValueKind.Object)
             throw new InvalidOperationException("collectResult: 'map' object is required.");
 
         var map = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var p in mapEl.EnumerateObject())
         {
-            // p.Name   -> поле в результате
-            // p.Value  -> ключ в Bag (string)
+            // p.Name   -> result field
+            // p.Value  -> Bag key (string)
             if (p.Value.ValueKind != JsonValueKind.String)
                 throw new InvalidOperationException($"collectResult: map['{p.Name}'] must be a string (bag key).");
 

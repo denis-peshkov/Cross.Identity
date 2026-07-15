@@ -1,19 +1,27 @@
-namespace Cross.Identity.Options;
+﻿namespace Cross.Identity.Options;
 
 public sealed class AuthenticationOptions
 {
+    /// <summary>
+    /// Configuration section name for binding email settings.
+    /// </summary>
+    public const string SectionName = "Authentication";
+
     public JwtOptions Jwt { get; set; }
 
-    /// <summary>Опции выпуска JWT.</summary>
+    /// <summary>Background cleanup interval for expired refresh tokens.</summary>
+    public TimeSpan TokenCleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
+    /// <summary>JWT issuance options.</summary>
     public sealed class JwtOptions
     {
-        /// <summary>Issuer (iss) — издатель токена.</summary>
+        /// <summary>Issuer (iss) — token issuer.</summary>
         public string Issuer { get; set; }
 
-        /// <summary>Audience (aud) — потребитель токена.</summary>
+        /// <summary>Audience (aud) — token audience.</summary>
         public string Audience { get; set; }
 
-        /// <summary>Секретный ключ для HMAC-подписания (минимум 32 символа).</summary>
+        /// <summary>Secret key for HMAC signing (minimum 32 characters).</summary>
         public string Key { get; set; }
 
         public bool UseEncryption { get; set; }

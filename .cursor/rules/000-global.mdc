@@ -1,22 +1,22 @@
-# Глобальные правила проекта
+# Global project rules
 
-## Общие принципы
+## General principles
 
-- **Всегда отвечать на русском языке** - все комментарии, документация и общение должны быть на русском языке.
-- **Строгая типизация** - использовать строгую типизацию везде, где это возможно. Избегать `any`, использовать `unknown` при необходимости.
-- **Явные модификаторы доступа** - всегда указывать модификаторы доступа (`private`, `protected`, `public`). Не использовать неявные модификаторы.
-- **Readonly для инжектированных сервисов** - все зависимости в конструкторе должны быть помечены как `readonly`.
-- **Комментарии на русском** - все комментарии в коде должны быть на русском языке и объяснять "почему", а не "что".
+- **Always respond in English** - all comments, documentation, and communication should be in English.
+- **Strict typing** - use strict typing everywhere possible. Avoid `any`, use `unknown` when necessary.
+- **Explicit access modifiers** - always specify access modifiers (`private`, `protected`, `public`). Do not use implicit modifiers.
+- **Readonly for injected services** - all constructor dependencies must be marked `readonly`.
+- **Comments in English** - all code comments should be in English and explain "why", not "what".
 
-## Форматирование
+## Formatting
 
-- **Отступ**: 2 пробела для всех файлов
-- **Кавычки**: одинарные для TypeScript/JavaScript
-- **Конец строки**: всегда добавлять пустую строку в конце файла
-- **Пробелы**: удалять trailing whitespace
+- **Indent**: 2 spaces for all files
+- **Quotes**: single quotes for TypeScript/JavaScript
+- **End of file**: always add a blank line at the end of the file
+- **Whitespace**: remove trailing whitespace
 
-## Структура файлов
+## File structure
 
-- Один класс/интерфейс/тип на файл
-- Имя файла должно соответствовать имени экспортируемого класса/интерфейса (kebab-case)
-- Использовать `index.ts` для реэкспорта из директорий
+- One class/interface/type per file
+- File name must match the exported class/interface name (kebab-case)
+- Use `index.ts` for re-exports from directories

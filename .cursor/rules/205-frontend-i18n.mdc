@@ -9,27 +9,27 @@ globs:
 alwaysApply: false
 ---
 
-# Правила интернационализации (i18n)
+# Internationalization (i18n) rules
 
-## Структура переводов
+## Translation structure
 
-- **Организация по ресурсам** - переводы организованы по ресурсам (например, `vacancies/strings`, `home/strings`)
-- **Файлы переводов** - каждый ресурс имеет файлы для каждого языка: `strings.ru.json`, `strings.en.json`, `strings.de.json`, и т.д.
-- **Меню** - отдельные файлы для меню: `menu.ru.json`, `menu.en.json`, и т.д.
+- **Organize by resource** - translations are organized by resource (e.g. `vacancies/strings`, `home/strings`)
+- **Translation files** - each resource has files for each language: `strings.ru.json`, `strings.en.json`, `strings.de.json`, etc.
+- **Menu** - separate files for menu: `menu.ru.json`, `menu.en.json`, etc.
 
-## Синхронизация переводов
+## Translation synchronization
 
-- **`strings.ru.json` - источник истины** - файл `strings.ru.json` является основным источником для всех переводов
-- **Синхронизация всех языков** - при изменении переводов обновлять все языковые файлы (`strings.*.json`) в каждой i18n подпапке (root, `saas`, `sap`, и т.д.)
-- **Сохранение структуры** - все языковые файлы должны иметь одинаковую структуру и одинаковое количество ключей
+- **`strings.ru.json` - source of truth** - the `strings.ru.json` file is the primary source for all translations
+- **Sync all languages** - when changing translations, update all language files (`strings.*.json`) in each i18n subfolder (root, `saas`, `sap`, etc.)
+- **Preserve structure** - all language files must have the same structure and the same number of keys
 
-## Использование TranslationService
+## Using TranslationService
 
-- **Загрузка ресурсов** - использовать `TranslationService.loadResource$()` для загрузки переводов
-- **Паттерн `isResourceLoaded`** - использовать флаг `isResourceLoaded` для контроля загрузки
-- **Кэширование** - `TranslationService` автоматически кэширует загруженные переводы
+- **Load resources** - use `TranslationService.loadResource$()` to load translations
+- **`isResourceLoaded` pattern** - use the `isResourceLoaded` flag to control loading
+- **Caching** - `TranslationService` automatically caches loaded translations
 
-Пример:
+Example:
 ```typescript
 export class VacanciesComponent implements OnInit {
   isResourceLoaded = false;
@@ -56,16 +56,16 @@ export class VacanciesComponent implements OnInit {
 }
 ```
 
-## Использование TranslatePipe
+## Using TranslatePipe
 
-- **В шаблонах** - использовать `TranslatePipe` для перевода текста в шаблонах
-- **Указание ресурса** - указывать ресурс через параметр `:resource`
-- **ОБЯЗАТЕЛЬНО для всех пользовательских текстов** - ВСЕ тексты, видимые пользователю, должны использовать переводы через `translate` pipe
-- **Запрещены прямые строковые значения** - НЕ использовать прямые строковые значения для `label`, `placeholder`, заголовков, описаний и других пользовательских текстов
+- **In templates** - use `TranslatePipe` to translate text in templates
+- **Specify resource** - specify the resource via the `:resource` parameter
+- **REQUIRED for all user-facing text** - ALL user-visible text must use translations via the `translate` pipe
+- **Direct string values forbidden** - do NOT use direct string values for `label`, `placeholder`, headings, descriptions, and other user-facing text
 
-Пример:
+Example:
 ```html
-<!-- ✅ Правильно -->
+<!-- ✅ Correct -->
 <h1>{{ 'row_15_title' | translate:resource }}</h1>
 <p>{{ 'row_15_description' | translate:resource }}</p>
 <app-input-text
@@ -73,7 +73,7 @@ export class VacanciesComponent implements OnInit {
   placeholder="{{ 'common_name_placeholder' | translate }}"
 />
 
-<!-- ❌ НЕПРАВИЛЬНО -->
+<!-- ❌ INCORRECT -->
 <h1>Personal Information</h1>
 <p>Our Talent Acquisition team will contact you</p>
 <app-input-text
@@ -82,52 +82,52 @@ export class VacanciesComponent implements OnInit {
 />
 ```
 
-**КРИТИЧЕСКИ ВАЖНО**: Все тексты в формах, заголовки, описания, labels, placeholders ДОЛЖНЫ использовать ключи переводов через `{{ 'key' | translate }}`. Прямые строковые значения на английском или любом другом языке ЗАПРЕЩЕНЫ.
+**CRITICAL**: All text in forms, headings, descriptions, labels, and placeholders MUST use translation keys via `{{ 'key' | translate }}`. Direct string values in English or any other language are FORBIDDEN.
 
-## Получение переводов в компоненте
+## Getting translations in components
 
-- **`translationService.get()`** - использовать для получения переводов в TypeScript коде
-- **Указание ресурса** - всегда указывать ресурс вторым параметром
+- **`translationService.get()`** - use to get translations in TypeScript code
+- **Specify resource** - always specify the resource as the second parameter
 
-Пример:
+Example:
 ```typescript
 const title = this.translationService.get('row_17_title', this.resource);
 const description = this.translationService.get('row_17_description', this.resource);
 ```
 
-## Ключи переводов
+## Translation keys
 
-- **Именование ключей** - использовать префикс компонента/секции (например, `row_15_title`, `row_16_description`)
-- **Змеиный регистр** - использовать snake_case для ключей переводов
-- **Описательные имена** - ключи должны быть понятными и описывать контекст
+- **Key naming** - use a component/section prefix (e.g. `row_15_title`, `row_16_description`)
+- **Snake case** - use snake_case for translation keys
+- **Descriptive names** - keys should be clear and describe the context
 
-Пример структуры:
+Example structure:
 ```json
 {
-  "row_15_title": "Карьера",
-  "row_15_description": "Присоединяйтесь к нашей команде",
-  "row_16_title": "Открытые вакансии",
-  "row_17_title": "Отправить резюме"
+  "row_15_title": "Careers",
+  "row_15_description": "Join our team",
+  "row_16_title": "Open positions",
+  "row_17_title": "Submit resume"
 }
 ```
 
-## Общие ключи
+## Common keys
 
-- **`common_*`** - использовать префикс `common_` для общих переводов (например, `common_search`, `common_filter_by`)
-- **Хранить в root** - общие переводы хранить в `strings.*.json` в корне `i18n/`
+- **`common_*`** - use the `common_` prefix for shared translations (e.g. `common_search`, `common_filter_by`)
+- **Store in root** - store common translations in `strings.*.json` at the root of `i18n/`
 
-Пример:
+Example:
 ```json
 {
-  "common_search": "Поиск",
-  "common_filter_by": "Фильтровать по",
-  "common_phone_number": "Номер телефона",
-  "common_attach_resume": "Прикрепить резюме"
+  "common_search": "Search",
+  "common_filter_by": "Filter by",
+  "common_phone_number": "Phone number",
+  "common_attach_resume": "Attach resume"
 }
 ```
 
-## Форматирование JSON
+## JSON formatting
 
-- **Отступ 2 пробела** - использовать 2 пробела для отступов в JSON файлах
-- **Trailing comma** - разрешена trailing comma в JSON файлах переводов
-- **Одна строка для объектов** - объекты переводов в одну строку (если не слишком длинные)
+- **2-space indent** - use 2 spaces for indentation in JSON files
+- **Trailing comma** - trailing comma is allowed in translation JSON files
+- **Single-line objects** - translation objects on one line (if not too long)

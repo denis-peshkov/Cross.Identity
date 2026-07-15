@@ -1,0 +1,44 @@
+---
+description: Maintain docs/RELEASE-PLAN-dev-to-master.md and sync the "Checklist Summary" section
+globs:
+  - docs/RELEASE-PLAN-dev-to-master.md
+  - docs/MIGRATION.md
+alwaysApply: false
+---
+
+# Release plan and migration guide
+
+## Files
+
+- `docs/RELEASE-PLAN-dev-to-master.md` — readiness checklists for `dev` → `master`
+- `docs/MIGRATION.md` — migration guide for package consumers
+
+## Mandatory rule: "Checklist Summary"
+
+**On any change** to `RELEASE-PLAN-dev-to-master.md` (statuses ⬜/✅/🟨/❌, new items, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **always** recalculate and update the **"Checklist Summary"** line in the document header (immediately after the legend).
+
+The same applies when editing `docs/MIGRATION.md` if it changes the status of related plan items (e.g. DOC6, §10.8, P1 for `collectResult`).
+
+### How to recalculate
+
+```bash
+node docs/scripts/release-plan-summary.mjs --write
+```
+
+Without `--write` — output the line only for verification.
+
+Do not edit percentages and counts manually if the script can be run.
+
+## Status legend
+
+⬜ open · ✅ done · 🟨 partial · ❌ blocker
+
+## Related items for migration
+
+When working on the migration guide, sync at least:
+
+| Area | Where in plan |
+|------|---------------|
+| `docs/MIGRATION.md` | DOC6, §2 breaking changes, §10 items 3 and 8, go/no-go |
+| SQL / EF migrations | §8 (M1–M4), release gate item 4 |
+| `config.nuspec` releaseNotes | DOC4 |

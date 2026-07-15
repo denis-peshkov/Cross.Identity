@@ -1,11 +1,11 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Хелпер для квалификации ключей Bag:
-/// если ключ относительный (без точки) — возвращает "{stepName}.{key}",
-/// если абсолютный (с точкой) — возвращает как есть.
+/// Helper for qualifying Bag keys:
+/// if the key is relative (no dot), returns "{stepName}.{key}",
+/// if absolute (with a dot), returns it as-is.
 /// </summary>
-public static class BagKey
+internal static class BagKey
 {
     public static string Qualify(string stepName, string key)
     {

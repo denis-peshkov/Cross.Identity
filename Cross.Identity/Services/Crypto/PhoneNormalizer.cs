@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services.Crypto;
+﻿namespace Cross.Identity.Services.Crypto;
 
 internal sealed class PhoneNormalizer : IPhoneNormalizer
 {
@@ -22,7 +22,7 @@ internal sealed class PhoneNormalizer : IPhoneNormalizer
             var number = _util.Parse(raw.Trim(), defaultRegion?.ToUpperInvariant());
             if (!_util.IsValidNumber(number)) return null;
 
-            // Полезно ограничить типы (мобильный/фиксированный) по бизнес-правилам:
+            // Useful to restrict types (mobile/fixed-line) per business rules:
             // var type = _util.GetNumberType(number); // Mobile, FixedLine, Voip, etc.
 
             return _util.Format(number, PhoneNumberFormat.E164);

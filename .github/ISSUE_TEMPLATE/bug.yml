@@ -1,0 +1,113 @@
+name: Bug report
+description: Reproducible defect in Cross.Identity (library, flow, JWT/OAuth, licensing integration).
+type: Bug
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We may close this issue without comment if required fields are empty or verification boxes are not checked honestly.
+
+        **Never paste** license keys, pepper secrets, OAuth client secrets, passwords, OTP codes, or live JWT/refresh tokens. Redact or use placeholders.
+
+  - type: input
+    id: package-version
+    attributes:
+      label: Cross.Identity NuGet version
+      description: e.g. `10.2.1` from [nuget.org](https://www.nuget.org/packages/Cross.Identity/)
+      placeholder: "10.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target-framework
+    attributes:
+      label: Target framework (TFM)
+      options:
+        - net6.0
+        - net7.0
+        - net8.0
+        - net9.0
+        - net10.0
+        - Other (describe below)
+    validations:
+      required: true
+
+  - type: input
+    id: host
+    attributes:
+      label: Host / integration surface
+      description: e.g. ASP.NET Core Minimal API, MVC controller, Sample.Api, unit test only
+      placeholder: "ASP.NET Core 8 Minimal API + AddCrossIdentity"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      description: Please verify before submitting. If you cannot check these honestly, use the **Question** template instead.
+      options:
+        - label: I searched [open and closed issues](https://github.com/denis-peshkov/Cross.Identity/issues?q=is%3Aissue) and did not find a duplicate.
+          required: true
+        - label: I am on the latest **Cross.Identity** version listed on NuGet (or the issue also reproduces on the latest).
+          required: true
+        - label: I can reproduce this with a **minimal** setup (not only in a large private app), or I attached the smallest repro I can share.
+          required: true
+        - label: I removed secrets from logs, config snippets, and stack traces in this report.
+          required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: What were you trying to do (and why)?
+      description: Flow name, operation, endpoint, or API surface involved.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened?
+      description: Actual behavior, exceptions, HTTP status, log excerpts (redacted).
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Step-by-step reproduction
+      description: |
+        Include flow/operation (e.g. `license` / `Register`), request shape, relevant appsettings keys (values redacted), and commands if applicable.
+      render: shell
+      placeholder: |
+        dotnet run --project Sample.Api
+        POST /api/identity/license/Register
+        { "Email": "user@example.com", "Password": "..." }
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area (if known)
+      options:
+        - Unknown
+        - Flow / process engine / JSON definition
+        - JWT / refresh token
+        - OAuth / external login
+        - Password / OTP / email / SMS
+        - Licensing (CrossIdentity:LicenseKey)
+        - EF / UserService / entities
+        - Sample.Api / hosting / DI
+        - Documentation
+    validations:
+      required: true

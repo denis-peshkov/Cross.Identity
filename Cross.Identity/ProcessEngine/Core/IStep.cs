@@ -1,27 +1,27 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Базовый контракт шага процесса.
-/// Каждый шаг имеет уникальное имя и выполняет свою логику,
-/// оперируя <see cref="Bag"/> для передачи данных.
+/// Base contract for a process step.
+/// Each step has a unique name and runs its own logic,
+/// operating on <see cref="Bag"/> to pass data.
 /// </summary>
-public interface IStep
+internal interface IStep
 {
     /// <summary>
-    /// Уникальное имя шага в рамках процесса.
+    /// Unique step name within the process.
     /// </summary>
     string Kind { get; }
 
     /// <summary>
-    /// Имя следующего шага (null — завершить процесс).
+    /// Next step name (null — finish the process).
     /// </summary>
     string? Next { get; }
 
     /// <summary>
-    /// Выполнить шаг.
+    /// Execute the step.
     /// </summary>
-    /// <param name="ctx">Контекст процесса (<see cref="Bag"/>).</param>
-    /// <param name="cancellationToken">Токен отмены.</param>
-    /// <returns><see cref="StepResult"/> с результатом выполнения.</returns>
+    /// <param name="ctx">Process context (<see cref="Bag"/>).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><see cref="StepResult"/> with the execution result.</returns>
     ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken);
 }

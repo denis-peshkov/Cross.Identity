@@ -1,0 +1,121 @@
+namespace Cross.Identity.Tests.Identity.FlowTests;
+
+[TestFixture]
+[Category(TestCategory.INTEGRATION)]
+internal class License_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
+{
+    private const string Flow = "license";
+    private const string SignKeyBase64 = "tTPm5yP2Q+1m7UQlM3N2AVnleqk7D4HhR0YzF9o5+Xw=";
+    private const string EncKeyBase64 = "r9lZJcR8CdpqgGgxP1VbUk2OQhlnwFJSwVOrMDyk4Lc=";
+
+    private JwtTokenService _jwtTokenService = null!;
+
+    [SetUp]
+    public override void Setup()
+    {
+        base.Setup();
+
+        Initialize();
+
+        var headersContextAccessor = new HeadersContextAccessor
+        {
+            LanguageCode = "EN",
+            CurrencyCode = "USD",
+            UserAgent = "TestAgent",
+        };
+
+        AddRegistryStep<CollectFormStepFactory>();
+        AddRegistryStep<RefreshTokenStepFactory>();
+        AddRegistryStep<CollectResultStepFactory>();
+
+        RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
+        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IdentityContext, IdentityContext>(Context);
+
+        var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Jwt = new AuthenticationOptions.JwtOptions
+            {
+                Issuer = "http://localhost:5000",
+                Audience = "http://localhost:5000",
+                Key = SignKeyBase64,
+                EncryptionKey = EncKeyBase64,
+                UseEncryption = false,
+                AccessTokenExpires = TimeSpan.FromMinutes(10),
+                RefreshTokenExpires = TimeSpan.FromMinutes(10),
+                RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
+            },
+        });
+        RegisterToServiceProvider<IOptionsSnapshot<AuthenticationOptions>, IOptionsSnapshot<AuthenticationOptions>>(optionsSnapshot.Object);
+
+        var httpContextAccessor = new Mock<IHttpContextAccessor>();
+        var httpContext = new DefaultHttpContext();
+        httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
+        httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
+
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
+    }
+
+    [Test]
+    public async Task RefreshToken_WithValidToken_ShouldReturnNewTokenPair()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "refresh@example.com",
+            UserName = "refresh-user",
+            NormalizedUserName = "refresh-user",
+        });
+
+        var oldRefreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId,
+            familyId,
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
+            Flow,
+            FlowOperationEnum.RefreshToken,
+            CancellationToken.None);
+
+        result.Data.Should().NotBeNull();
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_id");
+        payload["access_token"].Should().NotBeNull();
+        payload["refresh_token"].Should().NotBeNull().And.NotBe(oldRefreshToken);
+        payload["token_type"].Should().Be("Bearer");
+        payload["user_id"].Should().Be(userId);
+    }
+
+    [Test]
+    public async Task RefreshToken_WithInvalidToken_ShouldThrowNotAuthorizedException()
+    {
+        var invalidToken = new string('x', 32);
+
+        var act = () => _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["RefreshToken"] = invalidToken },
+            Flow,
+            FlowOperationEnum.RefreshToken,
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired refresh token*");
+    }
+
+    [Test]
+    public async Task RefreshToken_WithTooShortInput_ShouldThrowValidationException()
+    {
+        var act = () => _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["RefreshToken"] = "short" },
+            Flow,
+            FlowOperationEnum.RefreshToken,
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>();
+    }
+}

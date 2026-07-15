@@ -7,20 +7,20 @@ alwaysApply: false
 ---
 
 
-# Тестирование Angular
+# Angular testing
 
-## Unit тесты
+## Unit tests
 
-- **Jasmine и Karma** - использовать Jasmine для unit тестов
-- **Именование** - использовать описательные имена для тестов
-- **Изоляция** - каждый тест должен быть изолированным
+- **Jasmine and Karma** - use Jasmine for unit tests
+- **Naming** - use descriptive test names
+- **Isolation** - each test must be isolated
 
-## Структура тестов
+## Test structure
 
-- **describe/it** - использовать `describe` для группировки тестов, `it` для отдельных тестов
-- **beforeEach** - использовать `beforeEach` для настройки перед каждым тестом
+- **describe/it** - use `describe` to group tests, `it` for individual tests
+- **beforeEach** - use `beforeEach` for setup before each test
 
-Пример:
+Example:
 ```typescript
 describe('VacancyComponent', () => {
   let component: VacancyComponent;
@@ -40,16 +40,16 @@ describe('VacancyComponent', () => {
 });
 ```
 
-## Моки и стабы
+## Mocks and stubs
 
-- **Использовать моки** - мокировать все зависимости
-- **SpyOn** - использовать `spyOn` для мокирования методов
+- **Use mocks** - mock all dependencies
+- **SpyOn** - use `spyOn` to mock methods
 
-## Типизация параметров в тестах
+## Typing parameters in tests
 
-- **Параметр `done`** - всегда типизировать параметр `done` как `DoneFn` из Jasmine, чтобы избежать ошибки TS7006
+- **`done` parameter** - always type `done` as `DoneFn` from Jasmine to avoid TS7006
 
-Пример:
+Example:
 ```typescript
 it('should handle async operation', (done: DoneFn) => {
   service.someAsyncMethod().subscribe({
@@ -62,4 +62,4 @@ it('should handle async operation', (done: DoneFn) => {
 });
 ```
 
-**Важно**: Всегда указывайте тип `DoneFn` для параметра `done` в асинхронных тестах, чтобы избежать ошибки TypeScript TS7006 (Parameter 'done' implicitly has an 'any' type).
+**Important**: Always specify type `DoneFn` for the `done` parameter in async tests to avoid TypeScript TS7006 (Parameter 'done' implicitly has an 'any' type).

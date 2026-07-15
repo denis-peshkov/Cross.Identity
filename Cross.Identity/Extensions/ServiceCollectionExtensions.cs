@@ -1,14 +1,16 @@
-namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Extensions;
 
 /// <summary>
-/// DI-расширения для регистрации провайдера JSON-дефиниций из embedded-ресурсов.
+/// DI extensions for registering Cross.Identity infrastructure:
+/// identity services, process engine, steps, validators, and flow-definition providers.
 /// </summary>
 public static class ServiceCollectionExtensions
 {
       private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
-        services.Configure<AuthenticationOptions>(configuration.GetSection("Authentication"));
+        services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddHostedService<ExpiredRefreshTokenCleanupHostedService>();
 
         // var authOptions = new AuthenticationOptions();
         // configuration.GetSection("Authentication").Bind(authOptions);
@@ -16,10 +18,24 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    /// <summary>
+    /// Registers core Cross.Identity services and dependencies in the DI container.
+    /// </summary>
+    /// <param name="services">Application service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <returns>The current service collection for fluent chaining.</returns>
     public static IServiceCollection AddCrossIdentity(this IServiceCollection services, IConfiguration configuration)
     {
+        var identityConfiguration = new IdentityServiceConfiguration();
+        configuration.GetSection(IdentityServiceConfiguration.SectionName).Bind(identityConfiguration);
+        services.AddSingleton(identityConfiguration);
+        services.AddSingleton<LicenseAccessor>();
+        services.AddSingleton<LicenseValidator>();
+        services.AddSingleton<ILicenseProductInfo, LicenseProductInfo>();
+
         services
             .AddJwtTokenAuth(configuration)
+            .AddExternalLogin(configuration)
             .AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(configuration);
 
         services.TryAddScoped<IRequestInput, RequestInput>();
@@ -39,7 +55,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddScoped<IFlowExecutor, FlowExecutor>();
         services.TryAddScoped<StepRegistry>();
-        // регистрируем ВСЕ реализации IStepFactory
+        // register ALL IStepFactory implementations
         services.TryAddEnumerable(
             new[]
             {
@@ -48,13 +64,15 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, CollectResultStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CreateUserStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ForgotPasswordStepFactory>(),
-                ServiceDescriptor.Scoped<IStepFactory, GetUserStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, GetUserIdStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, PasswordAuthStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, RefreshTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ResetPasswordStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, SendCodeStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, TokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, VerifyCodeStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, InitiateExternalLoginStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CompleteExternalLoginStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();
@@ -65,8 +83,17 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
+    private static IServiceCollection AddExternalLogin(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
+        services.AddHttpClient(nameof(ExternalLoginService));
+        services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
+
+        return services;
+    }
+
     /// <summary>
-    /// Добавляет клайм только если значение не пустое (null/пустая строка игнорируются).
+    /// Adds a claim only when the value is non-empty (null/empty string ignored).
     /// </summary>
     public static List<Claim> AddIfNotNull(this List<Claim> claims, string claimType, string? value)
     {
@@ -77,7 +104,8 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Композит: сначала файловая система, затем embedded-ресурсы библиотеки/приложения.
+    /// Registers a composite flow-definition provider:
+    /// filesystem first, then fallback to embedded resources.
     /// </summary>
     public static IServiceCollection AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(this IServiceCollection services, IConfiguration configuration)
     {
@@ -96,14 +124,14 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Зарегистрировать композит из произвольного набора провайдеров (в указанном порядке).
+    /// Register a composite from an arbitrary set of providers (in the given order).
     /// </summary>
     public static IServiceCollection AddFlowDefinitionsComposite(this IServiceCollection services, params ServiceDescriptor[] descriptors)
     {
         if (descriptors is null || descriptors.Length == 0)
             throw new ArgumentException("At least one provider required.", nameof(descriptors));
 
-        // регистрируем ВСЕ реализации IProcessDefinitionProvider
+        // register ALL IProcessDefinitionProvider implementations
         services.TryAddEnumerable(descriptors);
 
         services.AddSingleton<CompositeProcessDefinitionProvider>();

@@ -1,16 +1,16 @@
 # Entity Framework Core
 
-## Конвенции именования
+## Naming conventions
 
-- **Именование скриптов миграций** - использовать паттерн `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
+- **Migration script naming** - use pattern `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
 
-Пример:
+Example:
 ```
 1_PreDeployment/1_00_predeployment.sql
 4_SeedData/4_01_lead_providers.sql
 ```
 
-## Миграции
+## Migrations
 
-- **Версионирование** - использовать нумерацию для версионирования миграций
-- **Комментарии** - добавлять комментарии в имя файла при необходимости
+- **Versioning** - use numbering for migration versioning
+- **Comments** - add comments to the file name when needed

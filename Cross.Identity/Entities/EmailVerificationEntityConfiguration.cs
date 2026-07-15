@@ -1,6 +1,6 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
-public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
+internal class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<EmailVerificationEntity>
 {
     public void Configure(EntityTypeBuilder<EmailVerificationEntity> builder)
     {
@@ -16,9 +16,15 @@ public class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<Ema
         builder.Property(x => x.UsedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
 
-        builder.HasKey(x => x.Id).HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}");
-        builder.HasIndex(x => x.UserAccountId).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_UserAccount");
-        builder.HasIndex(x => x.ExpiresAt).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_ExpiresAt");
-        builder.HasIndex(x => x.TokenHash).HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_TokenHash");
+        builder.HasKey(x => x.Id)
+            .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}");
+        builder.HasIndex(x => x.UserAccountId)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_UserAccount");
+        builder.HasIndex(x => x.Email)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_Email");
+        builder.HasIndex(x => x.TokenHash)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_TokenHash");
+        builder.HasIndex(x => x.ExpiresAt)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_ExpiresAt");
     }
 }

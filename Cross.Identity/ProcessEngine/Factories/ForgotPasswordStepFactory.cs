@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="ForgotPasswordStep"/>.
+/// Factory for <see cref="ForgotPasswordStep"/>.
 /// </summary>
 internal sealed class ForgotPasswordStepFactory : IStepFactory
 {
@@ -20,7 +20,7 @@ internal sealed class ForgotPasswordStepFactory : IStepFactory
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
-        // resolveBy — объект опционален; если не задан, берём разумный дефолт от канала
+        // resolveBy is optional; if omitted, a sensible default is inferred from the channel
         if (!cfg.TryGetProperty("resolveBy", out var resolveEl) || resolveEl.ValueKind != JsonValueKind.Object)
             throw new InvalidOperationException("codeAuth: 'resolveBy' object is required.");
         var field = resolveEl.Str("field");

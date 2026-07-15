@@ -1,0 +1,16 @@
+{
+  "name": "@cross-identity/triage-ci",
+  "private": true,
+  "type": "module",
+  "description": "CI triage runner via Cursor SDK",
+  "scripts": {
+    "triage": "node run-ci-triage.mjs",
+    "pr-triage": "node post-pr-triage.mjs"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.22"
+  },
+  "engines": {
+    "node": "20.19.4"
+  }
+}

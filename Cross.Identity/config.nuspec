@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Cross.Identity</id>
+    <version>0.0.0</version>
+    <authors>Denis Peshkov</authors>
+    <owners>Denis Peshkov</owners>
+    <projectUrl>https://github.com/denis-peshkov/Cross.Identity</projectUrl>
+    <repository type="git" url="https://github.com/denis-peshkov/Cross.Identity.git" />
+    <icon>IdentityServer.png</icon>
+    <readme>README.md</readme>
+    <copyright>Copyright 2026 Denis Peshkov</copyright>
+    <license type="file">LICENSE.md</license>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Identity and authentication library for .NET: configurable flows (registration, login, forgot password, token, refresh), JWT, Argon2, email/SMS verification, process engine with JSON-defined flows. External OAuth.</description>
+    <tags>Identity Authentication JWT Argon2 Registration Login ForgotPassword Token RefreshToken ProcessEngine Flows Email Sms Verification License OAuth NetCore AspNetCore</tags>
+    <releaseNotes><![CDATA[
+Cross.Identity: identity and authentication flows, JWT, process engine.
+Licensing
+- JWT license validation (Peshkov software) on first IFlowExecutor.ExecuteAsync call.
+- Configure via CrossIdentity:LicenseKey in appsettings or CrossIdentity__LicenseKey environment variable.
+]]></releaseNotes>
+    <dependencies>
+      <group targetFramework="net8.0">
+        <dependency id="Cross.ErrorHandlers" version="7.6.0" />
+        <dependency id="Cross.Headers" version="1.2.1" />
+        <dependency id="Cross.Messaging" version="2.1.0" />
+        <dependency id="Cross.PepperVault" version="1.2.0" />
+        <dependency id="Konscious.Security.Cryptography.Argon2" version="1.3.1" />
+        <dependency id="Microsoft.EntityFrameworkCore" version="8.0.8" />
+        <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="8.0.8" />
+        <dependency id="Microsoft.EntityFrameworkCore.Relational" version="8.0.8" />
+        <dependency id="Microsoft.Extensions.Http" version="8.0.1" />
+        <dependency id="PhoneNumbersCore" version="1.1.1" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
+      </group>
+      <group targetFramework="net9.0">
+        <dependency id="Cross.ErrorHandlers" version="7.6.0" />
+        <dependency id="Cross.Headers" version="1.2.1" />
+        <dependency id="Cross.Messaging" version="2.1.0" />
+        <dependency id="Cross.PepperVault" version="1.2.0" />
+        <dependency id="Konscious.Security.Cryptography.Argon2" version="1.3.1" />
+        <dependency id="Microsoft.EntityFrameworkCore" version="9.0.9" />
+        <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="9.0.9" />
+        <dependency id="Microsoft.EntityFrameworkCore.Relational" version="9.0.9" />
+        <dependency id="Microsoft.Extensions.Http" version="9.0.15" />
+        <dependency id="PhoneNumbersCore" version="1.1.1" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
+      </group>
+      <group targetFramework="net10.0">
+        <dependency id="Cross.ErrorHandlers" version="7.6.0" />
+        <dependency id="Cross.Headers" version="1.2.1" />
+        <dependency id="Cross.Messaging" version="2.1.0" />
+        <dependency id="Cross.PepperVault" version="1.2.0" />
+        <dependency id="Konscious.Security.Cryptography.Argon2" version="1.3.1" />
+        <dependency id="Microsoft.EntityFrameworkCore" version="10.0.9" />
+        <dependency id="Microsoft.EntityFrameworkCore.InMemory" version="10.0.9" />
+        <dependency id="Microsoft.EntityFrameworkCore.Relational" version="10.0.9" />
+        <dependency id="Microsoft.Extensions.Http" version="10.0.9" />
+        <dependency id="PhoneNumbersCore" version="1.1.1" />
+        <dependency id="Microsoft.IdentityModel.JsonWebTokens" version="8.16.0" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Cross.Identity\bin\Release\net8.0\Cross.Identity*.*" target="lib\net8.0" />
+    <file src="..\Cross.Identity\bin\Release\net9.0\Cross.Identity*.*" target="lib\net9.0" />
+    <file src="..\Cross.Identity\bin\Release\net10.0\Cross.Identity*.*" target="lib\net10.0" />
+    <file src="..\LICENSE.md" target="LICENSE.md" />
+    <file src="..\README.md" target="" />
+    <file src="..\IdentityServer.png" target="" />
+  </files>
+</package>

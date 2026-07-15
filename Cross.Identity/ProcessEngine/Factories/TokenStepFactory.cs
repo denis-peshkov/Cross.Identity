@@ -1,14 +1,14 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="TokenStep"/> для вызова <c>TokenCommand(email, password)</c>.
-/// JSON-параметры:
+/// Factory for <see cref="TokenStep"/> that invokes <c>TokenCommand(email, password)</c>.
+/// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>name</c> — имя шага;</description></item>
-/// <item><description><c>emailKey</c> — ключ в Bag с e-mail/логином (относительный/абсолютный);</description></item>
-/// <item><description><c>passwordKey</c> — ключ в Bag с паролем (относительный/абсолютный);</description></item>
-/// <item><description><c>resultKey</c> — (опц.) ключ для записи токена; по умолчанию относительный <c>"Token"</c>;</description></item>
-/// <item><description><c>next</c> — (опц.) имя следующего шага; <c>null</c> — завершить.</description></item>
+/// <item><description><c>name</c> — step name;</description></item>
+/// <item><description><c>emailKey</c> — Bag key with e-mail/login (relative/absolute);</description></item>
+/// <item><description><c>passwordKey</c> — Bag key with password (relative/absolute);</description></item>
+/// <item><description><c>resultKey</c> — (opt.) key for storing the token; relative <c>"Token"</c> by default;</description></item>
+/// <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
 /// </list>
 /// </summary>
 internal sealed class TokenStepFactory : IStepFactory
@@ -26,7 +26,7 @@ internal sealed class TokenStepFactory : IStepFactory
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
-        // resolveBy — объект опционален; если не задан, берём разумный дефолт от канала
+        // resolveBy is optional; if omitted, a sensible default is inferred from the channel
         ResolveBy resolveBy;
         if (cfg.TryGetProperty("resolveBy", out var resolveEl) && resolveEl.ValueKind == JsonValueKind.Object)
         {

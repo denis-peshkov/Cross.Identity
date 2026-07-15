@@ -6,7 +6,7 @@
       "schemaDef": {
         "fields": [
           { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
-          { "key": "Code", "type": "String", "required": false, "min": 8, "max": 128 }
+          { "key": "Code", "type": "String", "required": true, "min": 4, "max": 32 }
         ]
       },
       "next": "token"
@@ -26,7 +26,8 @@
         "refresh_token": "token.RefreshToken",
         "token_type": "token.TokenType",
         "expires_in": "token.ExpiresIn",
-        "user_id": "token.UserId"
+        "user_id": "token.UserId",
+        "is_invalid_code": "token.IsInvalidCode"
       },
       "next": null
     }

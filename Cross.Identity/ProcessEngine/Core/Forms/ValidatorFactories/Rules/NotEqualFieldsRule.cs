@@ -1,6 +1,6 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Поле left должно отличаться от поля right.
+/// The left field must differ from the right field.
 /// </summary>
-public sealed record NotEqualFieldsRule(string Left, string Right, string? Message = null) : IFormSchemaRule;
+internal sealed record NotEqualFieldsRule(string Left, string Right, string? Message = null) : IFormSchemaRule;

@@ -1,6 +1,6 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Контракт inline-правила схемы (используется фабрикой валидаторов).
+/// Inline schema rule contract (used by the validator factory).
 /// </summary>
-public interface IFormSchemaRule { }
+internal interface IFormSchemaRule { }

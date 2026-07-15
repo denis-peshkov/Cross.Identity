@@ -1,9 +1,9 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Helpers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Helpers;
 
-/// <summary>Утилиты для удобного чтения значений из <see cref="JsonElement"/>.</summary>
+/// <summary>Utilities for reading values from <see cref="JsonElement"/>.</summary>
 public static class JsonHelpers
 {
-    /// <summary>Получить обязательное строковое свойство.</summary>
+    /// <summary>Get a required string property.</summary>
     public static string Str(this JsonElement e, string name)
         => e.GetProperty(name).GetString()!;
 
@@ -21,13 +21,13 @@ public static class JsonHelpers
             : null;
     }
 
-    /// <summary>Получить опциональное строковое свойство.</summary>
+    /// <summary>Get an optional string property.</summary>
     public static string? StrOpt(this JsonElement e, string name)
         => e.TryGetProperty(name, out var p)
             ? p.GetString()
             : null;
 
-    /// <summary>Получить опциональное время жизни в секундах и преобразовать в <see cref="TimeSpan"/>.</summary>
+    /// <summary>Get an optional lifetime in seconds and convert it to <see cref="TimeSpan"/>.</summary>
     public static TimeSpan? TimeSpanSecondsOpt(this JsonElement e, string name)
         => e.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.Number
             ? TimeSpan.FromSeconds(p.GetDouble())

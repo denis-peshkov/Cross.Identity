@@ -1,14 +1,14 @@
-namespace Cross.Identity.Extensions;
+﻿namespace Cross.Identity.Extensions;
 
 public static class StringExtensions
 {
     /// <summary>
-    /// Конвертирует PascalCase/TitleCase в camelCase.
-    /// Умно обрабатывает начальные акронимы:
+    /// Converts PascalCase/TitleCase to camelCase.
+    /// Handles leading acronyms:
     /// - "SendCodeStep"  -> "sendCodeStep"
     /// - "IPAddress"     -> "ipAddress"
     /// - "URL"           -> "url"
-    /// Если строка уже camelCase или не буква вначале — возвращает исходную.
+    /// Returns the original string if already camelCase or does not start with a letter.
     /// </summary>
     public static string ToCamelCase(this string s)
     {
@@ -20,7 +20,7 @@ public static class StringExtensions
 
         int len = s.Length;
 
-        // длина начальной серии заглавных букв (акроним)
+        // length of the initial run of uppercase letters (acronym)
         int run = 0;
         while (run < len && char.IsUpper(s[run]))
             run++;
@@ -29,9 +29,9 @@ public static class StringExtensions
             return char.ToLowerInvariant(s[0]) + s.Substring(1);
 
         if (run >= len)
-            return s.ToLowerInvariant(); // вся строка — акроним: "URL" -> "url"
+            return s.ToLowerInvariant(); // entire string is an acronym: "URL" -> "url"
 
-        // "IPAddress" -> lower первых (run-1) символов, остальное без изменений
+        // "IPAddress" -> lowercase first (run-1) chars, rest unchanged
         return s.Substring(0, run - 1).ToLowerInvariant() + s.Substring(run - 1);
     }
 

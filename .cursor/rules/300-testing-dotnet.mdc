@@ -1,11 +1,11 @@
-# Тестирование .NET
+# .NET testing
 
-## Именование тестов
+## Test naming
 
-- **Паттерн Given-When-Then** - использовать паттерн `Given[X]_When[Y]_Then[Z]` для именования тестов
-- **Описательные имена** - имена тестов должны описывать сценарий и ожидаемый результат
+- **Given-When-Then pattern** - use `Given[X]_When[Y]_Then[Z]` for test names
+- **Descriptive names** - test names should describe the scenario and expected result
 
-Пример:
+Example:
 ```csharp
 [Fact]
 public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()
@@ -16,12 +16,12 @@ public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()
 }
 ```
 
-## Структура тестов
+## Test structure
 
-- **Arrange-Act-Assert** - использовать паттерн AAA для структуры тестов
-- **Читаемость** - код тестов должен быть максимально читаемым
+- **Arrange-Act-Assert** - use the AAA pattern for test structure
+- **Readability** - test code should be as readable as possible
 
-Пример:
+Example:
 ```csharp
 [Fact]
 public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()

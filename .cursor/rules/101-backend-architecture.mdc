@@ -1,14 +1,14 @@
-# Архитектура бэкенда
+# Backend architecture
 
-## Модульная структура
+## Modular structure
 
-- **Организация по модулям** - код организован в `Web.Api/Modules/{ModuleName}/`
-- **Структура модуля**:
-  - `Controllers/` - контроллеры API
+- **Organization by modules** - code organized in `Web.Api/Modules/{ModuleName}/`
+- **Module structure**:
+  - `Controllers/` - API controllers
   - `Dtos/` - Data Transfer Objects
-  - `Handlers/` - обработчики команд и запросов (CQRS)
+  - `Handlers/` - command and query handlers (CQRS)
 
-Пример структуры:
+Example structure:
 ```
 Modules/
 └─ Vacancies/
@@ -27,13 +27,13 @@ Modules/
          └─ GetByIdQueryValidator.cs
 ```
 
-## CQRS с MediatR
+## CQRS with MediatR
 
-- **Разделение команд и запросов** - использовать отдельные классы для команд (изменение данных) и запросов (чтение данных)
-- **Handlers** - вся бизнес-логика в обработчиках, не в контроллерах
-- **Использование MediatR** - все взаимодействие через `IMediator.Send()` и `IMediator.Send<T>()`
+- **Separate commands and queries** - use separate classes for commands (data changes) and queries (reads)
+- **Handlers** - all business logic in handlers, not in controllers
+- **MediatR usage** - all interaction via `IMediator.Send()` and `IMediator.Send<T>()`
 
-Пример команды:
+Example command:
 ```csharp
 public class SubmitResumeCommand : Command<bool>
 {
@@ -44,7 +44,7 @@ public class SubmitResumeCommandHandler : CommandHandler<SubmitResumeCommand, bo
 {
     protected override async Task<bool> HandleAsync(SubmitResumeCommand command, CancellationToken cancellationToken)
     {
-        // Бизнес-логика
+        // Business logic
         return true;
     }
 }
@@ -52,11 +52,11 @@ public class SubmitResumeCommandHandler : CommandHandler<SubmitResumeCommand, bo
 
 ## DTOs
 
-- **Отдельные DTOs** - использовать отдельные классы для запросов и ответов
-- **Валидация** - использовать FluentValidation для валидации DTOs
-- **Именование** - суффикс `Dto` для всех DTOs
+- **Separate DTOs** - use separate classes for requests and responses
+- **Validation** - use FluentValidation for DTO validation
+- **Naming** - `Dto` suffix for all DTOs
 
-Пример:
+Example:
 ```csharp
 public class SubmitResumeDto
 {
@@ -69,11 +69,11 @@ public class SubmitResumeDto
 
 ## Dependency Injection
 
-- **Constructor injection** - использовать конструктор для инжекции зависимостей
-- **Интерфейсы** - использовать интерфейсы для всех зависимостей
-- **Readonly поля** - все зависимости должны быть `readonly`
+- **Constructor injection** - use constructor for dependency injection
+- **Interfaces** - use interfaces for all dependencies
+- **Readonly fields** - all dependencies must be `readonly`
 
-Пример:
+Example:
 ```csharp
 public class VacanciesController : ControllerBase
 {

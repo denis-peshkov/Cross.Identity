@@ -1,19 +1,19 @@
-# Правила командной работы
+# Team workflow rules
 
-## Работа с кодом
+## Working with code
 
-- **Всегда проверять линтер** - перед коммитом убедиться, что нет ошибок линтера.
-- **Не удалять файлы без явного указания** - если пользователь не просил удалить файл, не удалять его.
-- **Сохранять существующую структуру** - при изменении кода сохранять существующую архитектуру и паттерны.
-- **Использовать существующие сервисы** - не создавать дублирующую функциональность, использовать существующие сервисы и утилиты.
+- **Always check the linter** - before committing, ensure there are no linter errors.
+- **Do not delete files without explicit instruction** - if the user did not ask to delete a file, do not delete it.
+- **Preserve existing structure** - when changing code, preserve existing architecture and patterns.
+- **Use existing services** - do not create duplicate functionality; use existing services and utilities.
 
-## Работа с переводами
+## Working with translations
 
-- **Синхронизация i18n файлов** - файл `strings.ru.json` является источником истины. При изменении переводов обновлять все языковые файлы (`strings.*.json`) в каждой i18n подпапке (root, `saas`, `sap`, и т.д.).
-- **Структура переводов** - все переводы должны быть организованы по ресурсам (например, `vacancies/strings`, `home/strings`).
+- **i18n file sync** - `strings.ru.json` is the source of truth. When changing translations, update all language files (`strings.*.json`) in each i18n subfolder (root, `saas`, `sap`, etc.).
+- **Translation structure** - all translations must be organized by resource (e.g. `vacancies/strings`, `home/strings`).
 
-## Коммуникация
+## Communication
 
-- **Отвечать на русском** - все ответы и объяснения должны быть на русском языке.
-- **Объяснять изменения** - при внесении изменений объяснять, что было сделано и почему.
-- **Задавать уточняющие вопросы** - если задача неясна, задавать уточняющие вопросы вместо предположений.
+- **Respond in English** - all answers and explanations should be in English.
+- **Explain changes** - when making changes, explain what was done and why.
+- **Ask clarifying questions** - if the task is unclear, ask clarifying questions instead of guessing.

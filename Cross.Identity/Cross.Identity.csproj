@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <LangVersion>11</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -10,11 +10,6 @@
     <Platforms>AnyCPU</Platforms>
     <NoWarn>1701;1702;1591;CS8618;</NoWarn>
   </PropertyGroup>
-
-  <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
-    <RemoveDir Directories=".\bin" />
-    <Delete Files=".\obj\**\*.cs" />
-  </Target>
 
 <!-- strange, why doesn't work -->
 <!--  <ItemGroup>-->
@@ -46,23 +41,59 @@
     </EmbeddedResource>
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Cross.ErrorHandlers" Version="7.3.0" />
-    <PackageReference Include="Cross.Headers" Version="1.0.0" />
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
+    <CrossHeadersVersion>1.2.1</CrossHeadersVersion>
+    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
+    <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
+    <PhoneNumbersCoreVersion>1.1.1</PhoneNumbersCoreVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>8.16.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftEntityFrameworkCoreVersion>8.0.8</MicrosoftEntityFrameworkCoreVersion>
+    <MicrosoftEntityFrameworkCoreVersionInMemory>8.0.8</MicrosoftEntityFrameworkCoreVersionInMemory>
+    <MicrosoftEntityFrameworkCoreVersionRelational>8.0.8</MicrosoftEntityFrameworkCoreVersionRelational>
+    <MicrosoftExtensionsHttpVersion>8.0.1</MicrosoftExtensionsHttpVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
+    <CrossHeadersVersion>1.2.1</CrossHeadersVersion>
+    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
+    <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
+    <PhoneNumbersCoreVersion>1.1.1</PhoneNumbersCoreVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>8.16.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftEntityFrameworkCoreVersion>9.0.9</MicrosoftEntityFrameworkCoreVersion>
+    <MicrosoftEntityFrameworkCoreVersionInMemory>9.0.9</MicrosoftEntityFrameworkCoreVersionInMemory>
+    <MicrosoftEntityFrameworkCoreVersionRelational>9.0.9</MicrosoftEntityFrameworkCoreVersionRelational>
+    <MicrosoftExtensionsHttpVersion>9.0.15</MicrosoftExtensionsHttpVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
+    <CrossHeadersVersion>1.2.1</CrossHeadersVersion>
+    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
+    <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
+    <PhoneNumbersCoreVersion>1.1.1</PhoneNumbersCoreVersion>
+    <MicrosoftIdentityModelJsonWebTokensVersion>8.16.0</MicrosoftIdentityModelJsonWebTokensVersion>
+    <MicrosoftEntityFrameworkCoreVersion>10.0.9</MicrosoftEntityFrameworkCoreVersion>
+    <MicrosoftEntityFrameworkCoreVersionInMemory>10.0.9</MicrosoftEntityFrameworkCoreVersionInMemory>
+    <MicrosoftEntityFrameworkCoreVersionRelational>10.0.9</MicrosoftEntityFrameworkCoreVersionRelational>
+    <MicrosoftExtensionsHttpVersion>10.0.9</MicrosoftExtensionsHttpVersion>
+  </PropertyGroup>
 
-    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="1.3.1" />
-    <PackageReference Include="Magick.NET.Core" Version="13.6.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.8" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageReference Include="PhoneNumbersCore" Version="1.1.1" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.1.2" />
-  </ItemGroup>
-
   <ItemGroup>
-    <ProjectReference Include="..\Cross.Notification\Cross.Notification.csproj" />
-    <ProjectReference Include="..\Cross.PepperVault\Cross.PepperVault.csproj" />
+    <PackageReference Include="Cross.ErrorHandlers" Version="$(CrossErrorHandlersVersion)" />
+    <PackageReference Include="Cross.Headers" Version="$(CrossHeadersVersion)" />
+    <PackageReference Include="Cross.Messaging" Version="$(CrossMessagingVersion)" />
+    <PackageReference Include="Cross.PepperVault" Version="$(CrossPepperVaultVersion)" />
+
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="$(KonsciousSecurityCryptographyArgon2Version)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="$(MicrosoftEntityFrameworkCoreVersion)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="$(MicrosoftEntityFrameworkCoreVersionInMemory)" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="$(MicrosoftEntityFrameworkCoreVersionRelational)" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsHttpVersion)" />
+    <PackageReference Include="PhoneNumbersCore" Version="$(PhoneNumbersCoreVersion)" />
+    <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="$(MicrosoftIdentityModelJsonWebTokensVersion)" />
   </ItemGroup>
 
 </Project>

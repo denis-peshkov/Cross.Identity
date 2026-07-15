@@ -1,14 +1,14 @@
-namespace Cross.Identity.ProcessEngine.Definitions.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Definitions.Providers;
 
 /// <summary>
-/// Провайдер, читающий JSON-дефиниции процессов из <b>Embedded Resources</b> указанной сборки.
+/// Provider that reads process JSON definitions from <b>Embedded Resources</b> of the specified assembly.
 /// <para>
-/// Конвенция: каждый файл называется <c>{flow}.{operation}.json</c> и публикуется как embedded-ресурс
-/// под неймспейсом <see cref="_baseNamespace"/>. Пример полного имени ресурса:
+/// Convention: each file is named <c>{flow}.{operation}.json</c> and published as an embedded resource
+/// under namespace <see cref="_baseNamespace"/>. Example full resource name:
 /// <c>MyCompany.MyApp.Flows.Definitions.licenses.getuser.json</c>.
 /// </para>
 /// </summary>
-public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefinitionProvider
+internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefinitionProvider
 {
     private readonly IOptions<EmbeddedProcessDefinitionOptions> _opt;
 
@@ -19,23 +19,23 @@ public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefiniti
     private readonly object _lock = new();
 
     /// <summary>
-    /// Регэксп для извлечения <c>flow</c> и <c>operation</c> из хвоста имени ресурса.
-    /// Разрешены буквы/цифры/подчёркивание/дефис.
+    /// Regex to extract <c>flow</c> and <c>operation</c> from the resource name tail.
+    /// Letters/digits/underscore/hyphen are allowed.
     /// </summary>
     private static readonly Regex FlowKeyRegex =
         new(@"(?i)(?<flow>[a-z0-9_\-]+)\.(?<op>[a-z0-9_\-]+)\.json$", RegexOptions.Compiled);
 
     /// <summary>
-    /// Templates.name.lang.format  (где format: txt|html)
+    /// Templates.name.lang.format  (format: txt|html)
     /// </summary>
     private static readonly Regex TemplateKeyRegex =
         new(@"(?i)(?<name>[a-z0-9_\-]+)\.(?<lang>[a-z0-9_\-]+)\.(?<fmt>txt|html)$", RegexOptions.Compiled);
 
     /// <summary>
-    /// Создаёт провайдер.
+    /// Creates the provider.
     /// </summary>
     /// <param name="opt"></param>
-    /// <exception cref="InvalidOperationException">Если ни один JSON не найден под указанным namespace.</exception>
+    /// <exception cref="InvalidOperationException">When no JSON is found under the specified namespace.</exception>
     public EmbeddedResourceProcessDefinitionProvider(IOptions<EmbeddedProcessDefinitionOptions> opt)
     {
         _opt = opt;
@@ -48,7 +48,7 @@ public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefiniti
     {
         ArgumentException.ThrowIfNullOrEmpty(flow);
 
-        var key = $"{flow}.{operation}".ToLowerInvariant(); // пример: "licenses.getuser"
+        var key = $"{flow}.{operation}".ToLowerInvariant(); // example: "licenses.getuser"
         lock (_lock)
         {
             if (_flows.TryGetValue(key, out var json))
@@ -76,7 +76,7 @@ public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefiniti
     }
 
     /// <summary>
-    /// Индексирует embedded-ресурсы:
+    /// Indexes embedded resources:
     /// - Flows: {BaseNamespace}.{flow}.{op}.json
     /// - Templates: {BaseNamespace}.Templates.{name}.{lang}.{fmt}
     /// </summary>
@@ -90,8 +90,8 @@ public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefiniti
             if (!fullName.StartsWith(flowPrefix, StringComparison.Ordinal) && !fullName.StartsWith(tplPrefix, StringComparison.Ordinal))
                 continue;
 
-            // хвост после base namespace (без ведущей точки)
-            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "game.auth.json" или "license.Register.json"
+            // tail after base namespace (without leading dot)
+            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "game.auth.json" or "license.Register.json"
 
             // 1) Flows
             var flowMatch = FlowKeyRegex.Match(flowTail);
@@ -107,8 +107,8 @@ public sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefiniti
                 continue;
             }
 
-            // хвост после base namespace (без ведущей точки)
-            var templateTail = fullName.Substring(tplPrefix.Length).TrimStart('.'); // e.g. "register.en.html" или "verify.ru.txt"
+            // tail after base namespace (without leading dot)
+            var templateTail = fullName.Substring(tplPrefix.Length).TrimStart('.'); // e.g. "register.en.html" or "verify.ru.txt"
 
             // 2) Templates
             var tplMatch = TemplateKeyRegex.Match(templateTail);

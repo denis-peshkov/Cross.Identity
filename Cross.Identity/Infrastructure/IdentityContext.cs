@@ -1,4 +1,4 @@
-namespace Cross.Identity.Infrastructure;
+﻿namespace Cross.Identity.Infrastructure;
 
 public class IdentityContext : DbContext
 {
@@ -11,6 +11,7 @@ public class IdentityContext : DbContext
     public DbSet<PhoneVerificationEntity> PhoneVerifications  { get; set; }
     public DbSet<UserAccountEntity> UsersAccounts { get; set; }
     public DbSet<UserExternalLoginEntity> UsersExternalLogins  { get; set; }
+    public DbSet<ExternalLoginStateEntity> ExternalLoginStates { get; set; }
 
     public IdentityContext(DbContextOptions options)
         : base(options)

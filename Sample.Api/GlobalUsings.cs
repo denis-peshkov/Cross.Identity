@@ -1,3 +1,4 @@
+global using Sample.Api;
 global using System;
 global using System.Collections.Generic;
 global using System.Linq;

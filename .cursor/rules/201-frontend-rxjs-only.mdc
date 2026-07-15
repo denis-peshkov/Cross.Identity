@@ -7,21 +7,21 @@ globs:
 alwaysApply: false
 ---
 
-# Правила работы с RxJS
+# RxJS rules
 
-## Использование RxJS
+## Using RxJS
 
-- **Только RxJS** - использовать только RxJS для работы с асинхронными операциями
-- **Не использовать Promises** - избегать прямого использования Promises, оборачивать в Observable при необходимости
-- **Операторы RxJS** - использовать операторы из `rxjs/operators` и `rxjs`
+- **RxJS only** - use only RxJS for async operations
+- **Do not use Promises** - avoid direct Promise usage; wrap in Observable when needed
+- **RxJS operators** - use operators from `rxjs/operators` and `rxjs`
 
-## Управление подписками
+## Subscription management
 
-- **`takeUntilDestroyed`** - всегда использовать для автоматической отписки
-- **Не использовать `subscribe()` без отписки** - всегда использовать `takeUntilDestroyed` или другой механизм отписки
-- **`finalize`** - использовать для выполнения кода после завершения Observable (например, установка флагов загрузки)
+- **`takeUntilDestroyed`** - always use for automatic unsubscribe
+- **Do not `subscribe()` without unsubscribe** - always use `takeUntilDestroyed` or another unsubscribe mechanism
+- **`finalize`** - use to run code after Observable completes (e.g. set loading flags)
 
-Пример:
+Example:
 ```typescript
 this.translationService.loadResource$(this.resource)
   .pipe(
@@ -31,21 +31,21 @@ this.translationService.loadResource$(this.resource)
   .subscribe();
 ```
 
-## Операторы
+## Operators
 
-- **`distinctUntilChanged`** - использовать для предотвращения дублирующих значений
-- **`switchMap`** - использовать для переключения между Observable (например, при смене языка)
-- **`map`** - использовать для трансформации данных
-- **`tap`** - использовать для side effects (логирование, кэширование)
-- **`catchError`** - использовать для обработки ошибок
+- **`distinctUntilChanged`** - prevent duplicate values
+- **`switchMap`** - switch between Observables (e.g. on language change)
+- **`map`** - transform data
+- **`tap`** - side effects (logging, caching)
+- **`catchError`** - error handling
 
-Пример:
+Example:
 ```typescript
 this.languageStore.currentLanguage$
   .pipe(
     distinctUntilChanged(),
     switchMap(lang => {
-      // Загрузка ресурсов для нового языка
+      // Load resources for new language
       return this.loadResourcesForLanguage(lang);
     }),
     tap(data => console.log('Loaded:', data)),
@@ -57,25 +57,25 @@ this.languageStore.currentLanguage$
   .subscribe();
 ```
 
-## Observable в сервисах
+## Observables in services
 
-- **Возвращать Observable** - методы сервисов должны возвращать `Observable<T>`
-- **Суффикс `$`** - использовать суффикс `$` для методов, возвращающих Observable (например, `getData$()`, `loadResource$()`)
-- **Типизация** - всегда указывать тип Observable (например, `Observable<Vacancy[]>`)
+- **Return Observable** - service methods should return `Observable<T>`
+- **`$` suffix** - use `$` suffix for methods returning Observable (e.g. `getData$()`, `loadResource$()`)
+- **Typing** - always specify Observable type (e.g. `Observable<Vacancy[]>`)
 
-Пример:
+Example:
 ```typescript
 loadResource$(resource: string): Observable<Translation[]> {
   return this.http.get<Translation[]>(`/assets/i18n/${resource}.json`);
 }
 ```
 
-## Кэширование
+## Caching
 
-- **`shareReplay`** - использовать для кэширования результатов Observable
-- **In-memory cache** - использовать Map для кэширования данных в сервисах
+- **`shareReplay`** - cache Observable results
+- **In-memory cache** - use Map for in-service caching
 
-Пример:
+Example:
 ```typescript
 private readonly memoryCache = new Map<string, Translation[]>();
 

@@ -1,0 +1,137 @@
+###
+# Cross.Identity Sample.Api — manual E2E for `license/*` flows (10 FlowOperationEnum values).
+#
+# Prerequisite:
+#   dotnet run --project Sample.Api --launch-profile http
+#   Swagger: {{HOST}}/swagger
+#
+# Run (IntelliJ / Cursor HTTP Client): select environment **sample** in the request gutter.
+#   Variables: http-client.env.json + http-client.private.env.json (see .example).
+#
+# Notes:
+#   Authentication:DeveloperMode=true — Register / RequestCode / ForgotPassword return LastCode in the body.
+#   InMemory DB — data is lost on Sample.Api restart; run Register again before dependent calls.
+#   After Register or Token — copy LastCode / refresh_token into http-client.private.env.json (gitignored) if needed.
+#   OAuth (ExternalLogin / ExternalLoginCallback) — seed Providers in DB + appsettings; placeholders below.
+
+# @name license-register
+# @no-cookie-jar
+
+POST {{HOST}}/api/identity/license/Register
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Password": "{{PASSWORD}}"
+}
+
+###
+# @name license-request-code
+
+POST {{HOST}}/api/identity/license/RequestCode
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Ttl": "{{TTL}}"
+}
+
+###
+# @name license-token-password
+
+POST {{HOST}}/api/identity/license/Token
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Password": "{{PASSWORD}}"
+}
+
+###
+# @name license-token-by-code
+
+POST {{HOST}}/api/identity/license/TokenByCode
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Code": "{{LAST_CODE}}"
+}
+
+###
+# @name license-token-password-or-code
+
+POST {{HOST}}/api/identity/license/Token
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Password": "",
+  "Code": "{{LAST_CODE}}"
+}
+
+###
+# @name license-refresh-token
+
+POST {{HOST}}/api/identity/license/RefreshToken
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{REFRESH_TOKEN}}"
+}
+
+###
+# @name license-get-user-id
+
+POST {{HOST}}/api/identity/license/GetUserId
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}"
+}
+
+###
+# @name license-forgot-password
+
+POST {{HOST}}/api/identity/license/ForgotPassword
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}"
+}
+
+###
+# @name license-reset-password
+
+POST {{HOST}}/api/identity/license/ResetPassword
+Content-Type: application/json
+
+{
+  "Email": "{{EMAIL}}",
+  "Code": "{{LAST_CODE}}",
+  "Password": "{{PASSWORD}}"
+}
+
+###
+# @name license-external-login
+
+POST {{HOST}}/api/identity/license/ExternalLogin
+Content-Type: application/json
+
+{
+  "Provider": "Google",
+  "ReturnUrl": "{{HOST}}/swagger"
+}
+
+###
+# @name license-external-login-callback
+
+POST {{HOST}}/api/identity/license/ExternalLoginCallback
+Content-Type: application/json
+
+{
+  "Code": "<oauth-authorization-code>",
+  "State": "<oauth-state-from-initiate>",
+  "Error": "",
+  "ErrorDescription": ""
+}

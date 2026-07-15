@@ -1,11 +1,11 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.Providers;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.Providers;
 
 /// <summary>
-/// Опциональный провайдер именованных схем форм (используется только при наличии свойства <c>schema</c> в шаге).
-/// Если работаешь только с inline-схемами (<c>schemaDef</c>), регистрировать не обязательно.
+/// Optional named form schema provider (used only when a step has a <c>schema</c> property).
+/// Registration is optional if you use only inline schemas (<c>schemaDef</c>).
 /// </summary>
-public interface IFormSchemaProvider
+internal interface IFormSchemaProvider
 {
-    /// <summary>Получить схему формы по имени.</summary>
+    /// <summary>Get a form schema by name.</summary>
     FormSchema Get(string name);
 }

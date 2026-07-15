@@ -1,25 +1,25 @@
-# Правила работы с мульти-репозиторием
+# Multi-repository workflow rules
 
-## Структура проектов
+## Project structure
 
-Проект состоит из двух основных репозиториев:
+The project consists of two main repositories:
 
-- **gurusolutions.co** - фронтенд (Angular) в директории `client/`
-- **gurusolutions.co.api** - бэкенд (.NET) в директории `server/`
+- **gurusolutions.co** - frontend (Angular) in the `client/` directory
+- **gurusolutions.co.api** - backend (.NET) in the `server/` directory
 
-## Работа с путями
+## Working with paths
 
-- При работе с фронтендом использовать пути относительно `client/`
-- При работе с бэкендом использовать пути относительно `server/`
-- Указывать полные пути при необходимости
+- When working on the frontend, use paths relative to `client/`
+- When working on the backend, use paths relative to `server/`
+- Specify full paths when necessary
 
-## Согласованность API
+## API consistency
 
-- При изменении API на бэкенде обновлять соответствующие интерфейсы и сервисы на фронтенде
-- Использовать константы из `API_ENDPOINTS` для всех запросов к API
-- Следить за версионированием API (`api/v{version:apiVersion}`)
+- When changing the API on the backend, update corresponding interfaces and services on the frontend
+- Use constants from `API_ENDPOINTS` for all API requests
+- Follow API versioning (`api/v{version:apiVersion}`)
 
-## Общие ресурсы
+## Shared resources
 
-- Переводы находятся в `client/src/assets/i18n/`
-- Общие типы и интерфейсы должны быть согласованы между фронтендом и бэкендом
+- Translations are in `client/src/assets/i18n/`
+- Shared types and interfaces must be consistent between frontend and backend

@@ -1,8 +1,8 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
-/// Базовая in-memory реализация <see cref="IUserService"/>.
-/// Поддерживает создание, поиск по Email/UserName/Phone и проверку пароля (PBKDF2).
+/// Basic in-memory implementation of <see cref="IUserService"/>.
+/// Supports creation, lookup by Email/UserName/Phone, and password verification (PBKDF2).
 /// </summary>
 internal sealed class UserService : IUserService
 {
@@ -35,10 +35,10 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // приведение к ожидаемому имени
+        // map to the expected property name
         string field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -51,6 +51,7 @@ internal sealed class UserService : IUserService
                    .Where(u => EF.Property<string>(u, field) == value)
                    .Select(u => u.Id.ToString())
                    .FirstOrDefaultAsync(cancellationToken)
+                   .ConfigureAwait(false)
                ?? throw new NotFoundException($"User with given {field} '{value}' not found");
     }
 
@@ -59,17 +60,17 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // приведение к ожидаемому имени
-        string field = selectorField.ToLowerInvariant() switch
+        // map to the expected property name
+        var field = selectorField.ToLowerInvariant() switch
         {
-            "id" => nameof(UserAccountEntity.Id), // не работает так как Guid != String
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "id" => nameof(UserAccountEntity.Id), // does not work because Guid != String
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
         };
 
-        string value = selectorValue.ToLowerInvariant();
+        var value = selectorValue.ToLowerInvariant();
 
         var userAccounts = _context.UsersAccounts
             .AsNoTracking();
@@ -85,8 +86,10 @@ internal sealed class UserService : IUserService
             userAccountsFiltered = userAccounts
                 .Where(u => EF.Property<string>(u, field) == value);
         }
+
         var result = await userAccountsFiltered
                          .FirstOrDefaultAsync(cancellationToken)
+                         .ConfigureAwait(false)
                      ?? throw new NotFoundException($"User with given {field} '{value}' not found");
 
         return result;
@@ -95,39 +98,43 @@ internal sealed class UserService : IUserService
     /// <inheritdoc/>
     public async Task<string> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
     {
-        // 1) Вытаскиваем поля
+        // 1) Extract fields
         map.TryGetValue("Email", out var emailRaw);
         map.TryGetValue("UserName", out var userNameRaw);
         map.TryGetValue("Phone", out var phoneRaw);
         map.TryGetValue("Password", out var passwordRaw);
 
-        // 2) Нормализация
+        // 2) Normalization
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        var normalizedPhone = _phoneNormalizer.NormalizeToE164(phoneRaw as string, _headersContextAccessor.LanguageCode);
+        var normalizedPhone = phoneRaw is string phone
+            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!)
+            : null;
 
-        // 3) Уникальность
+        // 3) Uniqueness
         if (normalizedUserName is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("UserName already exists.");
         if (normalizedEmail is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.NormalizedEmail == normalizedEmail, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.Email == normalizedEmail, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Email already exists.");
         if (normalizedPhone is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken))
+            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("PhoneNumber already exists.");
 
-        // 4) Хеш пароля (PHC) + текущая версия pepper
+        // 4) Password hash (PHC) + current pepper version
         var pepperVersion = _pepperVault.CurrentVersion;
-        _pepperVault.TryGetCurrentVersion(out var pepper);
-        var passwordPhc = _hasher.Hash(passwordRaw as string, pepper);
+        _pepperVault.TryGetCurrentValue(out var pepper);
+        ArgumentNullException.ThrowIfNull(pepper);
+        var passwordPhc = passwordRaw is string password
+            ? _hasher.Hash(password, pepper)
+            : null;
 
-        // 5) Создание сущности
+        // 5) Create entity
         var user = new UserAccountEntity
         {
             Id = Guid.NewGuid(),
-            Email = emailRaw as string,
-            NormalizedEmail = normalizedEmail,
+            Email = normalizedEmail,
             UserName = userNameRaw as string,
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
@@ -141,9 +148,9 @@ internal sealed class UserService : IUserService
             ConcurrencyStamp = Guid.NewGuid(),
         };
 
-        _context.UsersAccounts.Add(user);
+        await _context.UsersAccounts.AddAsync(user).ConfigureAwait(false);
 
-        await _context.SaveChangesAsync(cancellationToken);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return user.Id.ToString();
     }
@@ -154,10 +161,10 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
         ArgumentNullException.ThrowIfNull(password);
 
-        // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
+        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
         string field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
@@ -165,7 +172,7 @@ internal sealed class UserService : IUserService
 
         string? value = field switch
         {
-            nameof(UserAccountEntity.NormalizedEmail) or nameof(UserAccountEntity.NormalizedUserName)
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
                 => selectorValue.Trim().ToLowerInvariant(),
             nameof(UserAccountEntity.PhoneNumber)
                 => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
@@ -175,15 +182,16 @@ internal sealed class UserService : IUserService
         if (string.IsNullOrWhiteSpace(value))
             return false;
 
-        // 2) Ищем пользователя (tracked, без AsNoTracking — чтобы при необходимости обновить хеш/версию перца)
+        // 2) Find the user (tracked, without AsNoTracking — so we can update hash/pepper version if needed)
         var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken);
+            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+            .ConfigureAwait(false);
 
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
             return false;
 
-        // 3) Достаём перец по версии, сохранённой у пользователя
-        if (!_pepperVault.TryGet(user.PasswordPepperVersion, out var pepper) || pepper is null)
+        // 3) Get pepper by the version stored on the user
+        if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
             _logger.LogError(
                 "Pepper with version {Version} not found for user {UserId}. Password validation failed.",
@@ -192,29 +200,29 @@ internal sealed class UserService : IUserService
             return false;
         }
 
-        // 4) Проверяем пароль
+        // 4) Verify password
         var result = _hasher.Verify(password, user.PasswordPhc, pepper);
         if (result == PasswordVerificationEnum.Failed)
             return false;
 
-        // 5) При необходимости делаем re-hash с текущими параметрами/версией перца
+        // 5) Re-hash with current parameters/pepper version if needed
         var currentVersion = _pepperVault.CurrentVersion;
         var needRehash = result == PasswordVerificationEnum.SuccessRehashNeeded
                          || user.PasswordPepperVersion != currentVersion
                          || _hasher.NeedsRehash(user.PasswordPhc);
 
-        if (needRehash && _pepperVault.TryGetCurrentVersion(out var currentPepper) && currentPepper is not null)
+        if (needRehash && _pepperVault.TryGetCurrentValue(out var currentPepper) && currentPepper is not null)
         {
             user.PasswordPhc = _hasher.Hash(password, currentPepper);
             user.PasswordPepperVersion = currentVersion;
 
             try
             {
-                await _context.SaveChangesAsync(cancellationToken);
+                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
             catch (Exception ex)
             {
-                // Не ломаем успешную аутентификацию из‑за проблем с re-hash, только логируем
+                // Do not fail successful authentication due to re-hash issues; log only
                 _logger.LogError(ex, "Failed to re-hash password for user {UserId}", user.Id);
             }
         }
@@ -224,43 +232,51 @@ internal sealed class UserService : IUserService
 
     public async Task<bool> ValidateCodeAsync(string selectorField, string selectorValue, string code, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(selectorField);
-        ArgumentNullException.ThrowIfNull(selectorValue);
-        ArgumentNullException.ThrowIfNull(code);
+        ArgumentException.ThrowIfNullOrWhiteSpace(selectorField);
+        ArgumentException.ThrowIfNullOrWhiteSpace(selectorValue);
+        ArgumentException.ThrowIfNullOrWhiteSpace(code);
+        code = code.Trim();
 
-        var user = await GetUserByAsync(selectorField, selectorValue, cancellationToken);
+        var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
 
-        // 1) Определяем поле в БД и нормализуем значение селектора так же, как при создании пользователя
+        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
         var field = selectorField.ToLowerInvariant() switch
         {
-            "email" => nameof(UserAccountEntity.NormalizedEmail),
+            "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
             _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
         };
 
         var isValid = false;
+        var now = DateTime.UtcNow;
         switch (field)
         {
-            case nameof(UserAccountEntity.NormalizedEmail):
-                var emailVerification = await _context.EmailVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
-                if (emailVerification != null) emailVerification.Attempts++;
-                isValid = emailVerification != null
-                          && emailVerification.TokenLength == code.Length
-                          && emailVerification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
-                          && emailVerification.MaxAttempts >= emailVerification.Attempts;
+            case nameof(UserAccountEntity.Email):
+                isValid = await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
 
             case nameof(UserAccountEntity.PhoneNumber):
-                var phoneVerification = await _context.PhoneVerifications.FirstOrDefaultAsync(x => x.UserAccountId == user.Id, cancellationToken);
-                if (phoneVerification != null) phoneVerification.Attempts++;
-                isValid = phoneVerification != null
-                          && phoneVerification.CodeLength == code.Length
-                          && phoneVerification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code))
-                          && phoneVerification.MaxAttempts >= phoneVerification.Attempts;
+                isValid = await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
         }
-        await _context.SaveChangesAsync(cancellationToken);
+
+        if (isValid)
+        {
+            var account = await _context.UsersAccounts
+                .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (account != null)
+            {
+                if (field == nameof(UserAccountEntity.Email))
+                    account.EmailConfirmed = true;
+                else
+                    account.PhoneConfirmed = true;
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         if (!isValid)
         {
@@ -273,8 +289,107 @@ internal sealed class UserService : IUserService
         return isValid;
     }
 
-    public Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
+    public async Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(selectorField);
+        ArgumentNullException.ThrowIfNull(selectorValue);
+        ArgumentNullException.ThrowIfNull(newPassword);
+
+        string field = selectorField.ToLowerInvariant() switch
+        {
+            "email" => nameof(UserAccountEntity.Email),
+            "username" => nameof(UserAccountEntity.NormalizedUserName),
+            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
+            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
+        };
+
+        string? value = field switch
+        {
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
+                => selectorValue.Trim().ToLowerInvariant(),
+            nameof(UserAccountEntity.PhoneNumber)
+                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
+            _ => selectorValue
+        };
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ValidationException("Selector value is invalid.");
+        }
+
+        var user = await _context.UsersAccounts
+                       .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
+                       .ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+
+        if (!_pepperVault.TryGetCurrentValue(out var pepper) || string.IsNullOrWhiteSpace(pepper))
+        {
+            throw new InvalidOperationException("Current pepper version is not available.");
+        }
+
+        user.PasswordPhc = _hasher.Hash(newPassword, pepper);
+        user.PasswordPepperVersion = _pepperVault.CurrentVersion;
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> TryValidateEmailCodeAsync(
+        Guid userId,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var verification = await _context.EmailVerifications
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (verification is null || verification.Attempts >= verification.MaxAttempts)
+            return false;
+
+        var matches = verification.TokenLength == code.Length
+                      && verification.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            verification.Attempts++;
+            return false;
+        }
+
+        verification.UsedAt = now;
+        verification.ExpiresAt = now;
+        return true;
+    }
+
+    private async Task<bool> TryValidatePhoneCodeAsync(
+        Guid userId,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var verification = await _context.PhoneVerifications
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (verification is null || verification.Attempts >= verification.MaxAttempts)
+            return false;
+
+        var matches = verification.CodeLength == code.Length
+                      && verification.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            verification.Attempts++;
+            return false;
+        }
+
+        verification.UsedAt = now;
+        verification.ExpiresAt = now;
+        return true;
     }
 }

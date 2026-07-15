@@ -1,7 +1,7 @@
-namespace Cross.Identity.Entities;
+﻿namespace Cross.Identity.Entities;
 
 /// <summary>
-/// Модель для хранения access-токенов
+/// Model for storing access tokens
 /// </summary>
 public class AccessTokenEntity
 {

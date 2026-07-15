@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose new behavior, flow, step, or public API for Cross.Identity.
+type: Feature
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests help shape the library. Flow JSON and `collectResult` shapes are **public API** — breaking changes need a migration path.
+
+        For small doc fixes or typos, a pull request is often faster than an issue.
+
+  - type: checkboxes
+    id: verification
+    attributes:
+      label: Verification
+      options:
+        - label: I searched [existing issues](https://github.com/denis-peshkov/Cross.Identity/issues?q=is%3Aissue) and did not find this request already open.
+          required: true
+        - label: I read [FLOWS.md](https://github.com/denis-peshkov/Cross.Identity/blob/dev/Cross.Identity/FLOWS.md) and this is not already supported by an existing flow/step.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What problem does this solve for NuGet consumers?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: API shape, new step `kind`, flow name, configuration option, etc.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds, custom steps in the host app, or different designs.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: breaking
+    attributes:
+      label: Would this require a breaking change for existing consumers?
+      options:
+        - "No"
+        - "Maybe — needs discussion"
+        - "Yes — needs MIGRATION.md entry"
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Links, diagrams, related PRs, Sample.Api scenarios.
+    validations:
+      required: false

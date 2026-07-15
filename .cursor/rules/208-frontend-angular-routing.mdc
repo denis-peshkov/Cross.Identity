@@ -7,14 +7,14 @@ globs:
 alwaysApply: false
 ---
 
-# Роутинг в Angular
+# Angular routing
 
-## Структура роутов
+## Route structure
 
-- **Константы путей** - использовать `ROUTE_PATH` из `core/constants/route.path.ts` для всех путей
-- **Экспорт константы** - роуты должны экспортироваться как константа (например, `export const vacanciesRoutes: Routes = [...]`)
+- **Path constants** - use `ROUTE_PATH` from `core/constants/route.path.ts` for all paths
+- **Export constant** - routes must be exported as a constant (e.g. `export const vacanciesRoutes: Routes = [...]`)
 
-Пример:
+Example:
 ```typescript
 import { Routes } from '@angular/router';
 import { ROUTE_PATH } from './core/constants';
@@ -28,13 +28,13 @@ export const routes: Routes = [
 ];
 ```
 
-## Lazy Loading
+## Lazy loading
 
-- **Всегда использовать lazy loading** - все компоненты должны загружаться лениво через `loadComponent` или `loadChildren`
-- **Динамический импорт** - использовать `import()` для динамической загрузки компонентов
-- **Экспорт константы** - для дочерних роутов экспортировать константу с роутами
+- **Always use lazy loading** - all components must be loaded lazily via `loadComponent` or `loadChildren`
+- **Dynamic import** - use `import()` for dynamic component loading
+- **Export constant** - for child routes, export a constant with routes
 
-Пример компонента:
+Component example:
 ```typescript
 {
   path: ROUTE_PATH.COMPANY_VACANCIES,
@@ -43,7 +43,7 @@ export const routes: Routes = [
 }
 ```
 
-Пример дочерних роутов:
+Child routes example:
 ```typescript
 // vacancies.routes.ts
 export const vacanciesRoutes: Routes = [
@@ -68,13 +68,13 @@ export const vacanciesRoutes: Routes = [
 }
 ```
 
-## Параметры роутов
+## Route parameters
 
-- **Получение параметров** - использовать `ActivatedRoute.snapshot.paramMap.get('id')` для получения параметров
-- **Типизация** - проверять наличие параметра перед использованием
-- **Редирект при отсутствии** - если параметр обязателен и отсутствует, выполнять редирект
+- **Getting parameters** - use `ActivatedRoute.snapshot.paramMap.get('id')` to get parameters
+- **Typing** - check parameter presence before use
+- **Redirect when missing** - if a parameter is required and missing, perform a redirect
 
-Пример:
+Example:
 ```typescript
 ngOnInit(): void {
   const vacancyId = this.route.snapshot.paramMap.get('id');
@@ -93,48 +93,48 @@ ngOnInit(): void {
 }
 ```
 
-## Навигация
+## Navigation
 
-- **RouterLink** - использовать `[routerLink]` для навигации в шаблонах
-- **Относительные пути** - использовать относительные пути `['./', id]` для дочерних роутов
-- **Router.navigate()** - использовать `router.navigate()` для программной навигации
+- **RouterLink** - use `[routerLink]` for navigation in templates
+- **Relative paths** - use relative paths `['./', id]` for child routes
+- **Router.navigate()** - use `router.navigate()` for programmatic navigation
 
-Пример в шаблоне:
+Template example:
 ```html
 <a [routerLink]="['./', vacancy.id]">
   {{ vacancy.title }}
 </a>
 ```
 
-Пример в компоненте:
+Component example:
 ```typescript
 this.router.navigate(['../'], { relativeTo: this.route });
 ```
 
 ## Guards
 
-- **CanMatchFn** - использовать функциональные guards (`CanMatchFn`) вместо классов
-- **inject()** - использовать `inject()` для получения зависимостей в функциональных guards
-- **Применение** - применять guards через `canMatch: [guardName]` в конфигурации роутов
+- **CanMatchFn** - use functional guards (`CanMatchFn`) instead of classes
+- **inject()** - use `inject()` to get dependencies in functional guards
+- **Application** - apply guards via `canMatch: [guardName]` in route configuration
 
-Пример:
+Example:
 ```typescript
 export const langValidateGuard: CanMatchFn = (route, segments) => {
   const router = inject(Router);
   const languageStore = inject(LanguageStore);
 
-  // Логика guard
-  return true; // или router.createUrlTree([...])
+  // Guard logic
+  return true; // or router.createUrlTree([...])
 };
 ```
 
-## Версионирование и языковые префиксы
+## Versioning and language prefixes
 
-- **Языковой префикс** - использовать `:lang` в первом сегменте роута
-- **Guard для языка** - использовать `langValidateGuard` для проверки и добавления языкового префикса
-- **Константы путей** - пути без языкового префикса, префикс добавляется автоматически
+- **Language prefix** - use `:lang` in the first route segment
+- **Language guard** - use `langValidateGuard` to validate and add the language prefix
+- **Path constants** - paths without language prefix; prefix is added automatically
 
-Пример:
+Example:
 ```typescript
 {
   path: ':lang',

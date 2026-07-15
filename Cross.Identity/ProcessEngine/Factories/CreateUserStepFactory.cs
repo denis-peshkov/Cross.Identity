@@ -1,7 +1,7 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Фабрика шага <see cref="CreateUserStep"/>.
+/// Factory for <see cref="CreateUserStep"/>.
 /// </summary>
 internal sealed class CreateUserStepFactory : IStepFactory
 {
@@ -13,7 +13,7 @@ internal sealed class CreateUserStepFactory : IStepFactory
     {
         var userService = sp.GetRequiredService<IUserService>();
 
-        // карта "поле пользователя" -> "ключ в Bag" (может быть абсолютным или относительным)
+        // map of "user field" -> "Bag key" (may be absolute or relative)
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in cfg.GetProperty("map").EnumerateObject())
             map[p.Name] = p.Value.GetString()!;
@@ -24,7 +24,7 @@ internal sealed class CreateUserStepFactory : IStepFactory
             UserService = userService,
             Map         = map,
             SelectorKey = cfg.Str("selectorKey"),
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId", // относительный по умолчанию
+            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId", // relative by default
             Next        = cfg.StrOpt("next")
         };
     }

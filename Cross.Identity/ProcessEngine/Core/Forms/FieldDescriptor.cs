@@ -1,9 +1,9 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms;
 
 /// <summary>
-/// Описание одного поля формы.
+/// Description of a single form field.
 /// </summary>
-public sealed record FieldDescriptor(
+internal sealed record FieldDescriptor(
     string Key,
     FieldTypeEnum Type,
     bool Required = true,

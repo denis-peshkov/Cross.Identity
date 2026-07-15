@@ -1,13 +1,13 @@
-namespace Cross.Identity.ProcessEngine.Core.Enums;
+﻿namespace Cross.Identity.ProcessEngine.Core.Enums;
 
 /// <summary>
-/// Статус выполнения шага.
+/// Step execution status.
 /// </summary>
 public enum StepStatusEnum
 {
-    /// <summary>Успешно.</summary>
+    /// <summary>Success.</summary>
     Ok,
 
-    /// <summary>Ошибка, выполнение процесса прерывается.</summary>
+    /// <summary>Error; process execution is aborted.</summary>
     Fail,
 }

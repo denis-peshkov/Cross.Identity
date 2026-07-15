@@ -1,17 +1,17 @@
-namespace Cross.Identity.ProcessEngine.Core;
+﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// Удобный билдер для декларативной сборки процесса кодом (альтернатива JSON-определениям).
-/// Требование: в одном процессе каждый <c>Kind</c> шага уникален (без учёта регистра).
+/// Convenience builder for declaratively assembling a process in code (alternative to JSON definitions).
+/// Requirement: each step <c>Kind</c> is unique within a process (case-insensitive).
 /// </summary>
-public sealed class ProcessBuilder
+internal sealed class ProcessBuilder
 {
     private readonly List<IStep> _steps = new();
     private readonly HashSet<string> _kinds = new(StringComparer.OrdinalIgnoreCase);
     private string? _start;
 
     /// <summary>
-    /// Задать стартовый шаг и добавить его в процесс.
+    /// Set the start step and add it to the process.
     /// </summary>
     public ProcessBuilder StartWith(IStep step)
     {
@@ -21,8 +21,8 @@ public sealed class ProcessBuilder
     }
 
     /// <summary>
-    /// Добавить следующий шаг (порядок важен только для читаемости;
-    /// фактические переходы определяются самими шагами через их <c>Next</c>).
+    /// Add the next step (order matters only for readability;
+    /// actual transitions are defined by the steps via their <c>Next</c>).
     /// </summary>
     public ProcessBuilder Then(IStep step)
     {
@@ -32,8 +32,8 @@ public sealed class ProcessBuilder
     }
 
     /// <summary>
-    /// Собрать процесс. Бросает исключение, если старт не задан
-    /// или список шагов пуст.
+    /// Build the process. Throws if start is not set
+    /// or the step list is empty.
     /// </summary>
     public ProcessExecutor Build()
     {
@@ -42,7 +42,7 @@ public sealed class ProcessBuilder
         if (_steps.Count == 0)
             throw new InvalidOperationException("No steps added to the process.");
 
-        // Дополнительные проверки «на всякий случай»
+        // Extra sanity checks
         if (!_kinds.Contains(_start))
             throw new InvalidOperationException($"Start refers to unknown step kind '{_start}'.");
 

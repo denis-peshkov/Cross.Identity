@@ -1,6 +1,6 @@
-namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
+﻿namespace Cross.Identity.ProcessEngine.Core.Forms.ValidatorFactories.Rules;
 
 /// <summary>
-/// Поле name должно иметь одно из значений <see cref="Allowed"/> (сравнение строковое).
+/// The name field must have one of the <see cref="Allowed"/> values (string comparison).
 /// </summary>
-public sealed record OneOfRule(string Name, string[] Allowed, string? Message = null) : IFormSchemaRule;
+internal sealed record OneOfRule(string Name, string[] Allowed, string? Message = null) : IFormSchemaRule;

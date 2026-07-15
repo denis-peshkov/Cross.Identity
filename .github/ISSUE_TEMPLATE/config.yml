@@ -1,0 +1,18 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Read CONTRIBUTING.md
+    url: https://github.com/denis-peshkov/Cross.Identity/blob/dev/CONTRIBUTING.md
+    about: Branching, tests, PR process, security notes, and scope for Cross.Identity.
+  - name: Flow documentation (FLOWS.md)
+    url: https://github.com/denis-peshkov/Cross.Identity/blob/dev/Cross.Identity/FLOWS.md
+    about: JSON flows, step kinds, OAuth, and public flow contracts.
+  - name: Open a pull request
+    url: https://github.com/denis-peshkov/Cross.Identity/compare/dev...dev?expand=1
+    about: Ready to contribute a fix or feature? Target branch is dev — see CONTRIBUTING.md.
+  - name: NuGet package
+    url: https://www.nuget.org/packages/Cross.Identity/
+    about: Check the latest published version before reporting a regression.
+  - name: Commercial license (Peshkov)
+    url: https://peshkov.biz/license
+    about: Licensing questions for production use — not for posting secrets in public issues.
