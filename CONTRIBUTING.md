@@ -99,8 +99,8 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 
 ```
 feature/* ──PR──► dev ──merge──► master ──► NuGet + git tag
-                  ▲
-         release/* / hotfix/*
+                                    ▲
+                          release/* / hotfix/*
 ```
 
 | Branch | Purpose |
