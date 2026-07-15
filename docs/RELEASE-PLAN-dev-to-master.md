@@ -1,14 +1,14 @@
 # Release readiness plan `dev` → `master`
 
-> **Analysis date:** 2026-06-29
-> **Branch:** `dev`
-> **Comparison base:** `master...dev` (merge-base `163b8a5`)
-> **Goal:** exhaustive list of new functionality and verification checklist before merge into `master`
-> **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-06-29)
+> **Analysis date:** 2026-07-15  
+> **Branch:** `dev`  
+> **Comparison base:** `master...dev` (merge-base `163b8a5`)  
+> **Goal:** exhaustive list of new functionality and verification checklist before merge into `master`  
+> **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
+> **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-07-15)
 > **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **100** items — ✅ **63** (63%) · 🟨 **22** (22%) · ⬜ **15** (15%) · ❌ **0** (0%)
+**Checklist summary:** **100** items — ✅ **59** (59%) · 🟨 **27** (27%) · ⬜ **14** (14%) · ❌ **0** (0%)
 
 ---
 
@@ -16,10 +16,10 @@
 
 | Metric | Value |
 |---------|----------|
-| Commits | 114 |
-| Files | 306 |
-| Lines | +9 285 / −3 858 |
-| Tests (`dotnet test`) | 300 total · 300 passed · 0 failed |
+| Commits | 124 |
+| Files | 374 |
+| Lines | +12 559 / −5 721 |
+| Tests (`dotnet test`) | 301 total · 301 passed · 0 failed |
 
 | Area | Files | Role in release |
 |---------|--------|---------------|
@@ -28,7 +28,7 @@
 | Sample.Api | 4 | Minimal API, smoke via Swagger |
 | .github/workflows | 2 | CI/CD (`dotnet.yml`, `triage.yml`) |
 | .cursor (rules + triage) | 21 | Conventions, automated triage (not runtime) |
-| docs | 2 | Triage reports, this plan |
+| docs + Infrastructure/Scripts | 17+ | SQL schema, release plan, E2E `.http` |
 | Removed in-repo packages | ~65 | `Cross.Notification`, `Cross.PepperVault.*` → NuGet |
 
 ---
@@ -257,7 +257,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | H2 | `FlowExecutor` — `collectResult` always an object | ✅ flow tests return `Dictionary<string, object?>` |
 | H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | ✅ `UserServiceTests` |
 | H4 | Removal of `NormalizedEmail` — case-insensitive email lookup | 🟨 `ToLowerInvariant` in `UserService`; explicit lookup test ⬜ |
-| H5 | `PasswordHasher` + Pepper via NuGet `Cross.PepperVault` | 🟨 `PasswordHasherTests` (pepper); Sample.Api wiring ⬜ |
+| H5 | `PasswordHasher` + Pepper via NuGet `Cross.PepperVault` | 🟨 `PasswordHasherTests` + `Sample.Api` Pepper in appsettings |
 | H6 | JWT encryption (`UseEncryption`, `EncryptionKey` Base64 32 bytes) | ⬜ tests with `UseEncryption=false` |
 | H7 | Migration to `Microsoft.IdentityModel.JsonWebTokens` | 🟨 package referenced; downstream validation ⬜ |
 
@@ -291,7 +291,7 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 | ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
 | game/shop/edoctors flows | ⬜ | 🟨 | `edoctors.Register` only |
 
-**Current status:** 300/300 passed.
+**Current status:** 301/301 passed.
 
 ---
 
@@ -300,6 +300,7 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 ```bash
 dotnet run --project Sample.Api
 # Swagger: POST /api/identity/{flow}/{operation}
+# Or: rest-client/Sample.Api.http (10 license/* operations)
 ```
 
 | Scenario | Endpoint | Body (example) |
@@ -384,10 +385,10 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 
 | # | Check | Status |
 |---|----------|--------|
-| M1 | EF migration created and tested on staging | ✅ |
-| M2 | Backfill `AbsoluteExpiresAt` for existing refresh tokens | ✅ |
-| M3 | Seed `Providers` for OAuth | ✅ |
-| M4 | Rollback plan | ✅ |
+| M1 | EF migration / SQL scripts created and tested on staging | ✅ `Infrastructure/Scripts/2_Initial/*` |
+| M2 | Backfill `AbsoluteExpiresAt` for existing refresh tokens | 🟨 column in initial schema; no `1_PreDeployment` upgrade script |
+| M3 | Seed `Providers` for OAuth | ✅ `4_SeedData/4_01_auth_Providers.sql` |
+| M4 | Rollback plan | 🟨 SQL scripts documented; explicit rollback runbook ⬜ |
 
 ---
 
@@ -402,8 +403,8 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 | **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/MIGRATION.md` (file ⬜) |
 | **P1** | OAuth state — multi-instance | ✅ `auth.ExternalLoginStates` instead of `IMemoryCache` |
 | **P2** | License soft-fail in production | Product decision |
-| **P2** | No EF migrations in repo | Add or document SQL |
-| **P2** | `Sample.Api` — InMemory DB, no OAuth config | Extend example |
+| **P2** | No EF migrations in repo | 🟨 SQL scripts in `Infrastructure/Scripts/` (reference copy); no EF `Migrations/` |
+| **P2** | `Sample.Api` — InMemory DB, OAuth placeholders | 🟨 `rest-client/Sample.Api.http` + `Authentication:ExternalLogin` skeleton; Google disabled |
 
 ---
 
@@ -412,10 +413,10 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 Execute in order; proceed to the next step after closing the previous one (or an explicit "skip" decision recorded in the PR).
 
 - ✅ **1. P0 blockers** — `license.ResetPassword.json`, `License_ResetPassword_FlowTests`, `License_ExternalOAuth_FlowTests`
-- 🟨 **2. Tests** — `dotnet test` 300/300 ✅ locally; coverage (opencover) ⬜
+- 🟨 **2. Tests** — `dotnet test` 301/301 ✅ locally; coverage (opencover) ⬜
 - 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
-- ✅ **4. DB** — EF migration (or SQL): `AbsoluteExpiresAt`, seed `Providers`, rollback plan
-- ⬜ **5. E2E Sample.Api** — all 10 `license/*` operations via Swagger/POST
+- 🟨 **4. DB** — SQL scripts ✅; staging apply + backfill/rollback runbook ⬜
+- 🟨 **5. E2E Sample.Api** — `rest-client/Sample.Api.http` prepared (10 ops); manual run ⬜
 - 🟨 **6. OAuth** — integration flow tests ✅ (mocked Google); real Google E2E ⬜
 - 🟨 **7. CI** — `dotnet.yml` ✅ on `dev`; SonarCloud QG ✅ on PR #5; triage ✅
 - 🟨 **8. Breaking changes** — described in plan; migration guide + consumer alignment ⬜
@@ -423,9 +424,9 @@ Execute in order; proceed to the next step after closing the previous one (or an
 
 ### Minimum go/no-go checklist
 
-- ✅ All 300 tests green (locally)
+- ✅ All 301 tests green (locally)
 - ✅ P0 fixed (`ResetPassword` JSON + flow tests, External OAuth flow tests)
-- ✅ 10 flow operations verified via Sample.Api
+- 🟨 10 flow operations — `rest-client/Sample.Api.http` ready; manual run ⬜
 - 🟨 OAuth initiate+callback (integration ✅ mocked; manual Google E2E ⬜)
 - ⬜ Refresh rotation + absolute expiry verified manually
 - ⬜ DeveloperMode disabled in prod config
