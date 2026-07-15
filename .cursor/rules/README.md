@@ -4,7 +4,7 @@
 
 ### 000-099: Global rules
 - `000-global.mdc` - Global project rules
-- `001-team-workflow.mdc` - Team workflow rules
+- `001-team-workflow.mdc` - Branches, PR targets (`dev` vs owner-only `master` / `release/*` / `hotfix/*`)
 - `002-multi-repo.mdc` - Multi-repository workflow rules
 - `003-triage.mdc` - GitHub triage (issues/PRs, skills, CI)
 - `004-release-plan.mdc` - `dev`→`master` release plan, "Checklist Summary" sync

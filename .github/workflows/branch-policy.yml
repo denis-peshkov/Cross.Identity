@@ -1,0 +1,58 @@
+# Branch and pull request policy
+
+name: Branch policy
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+  push:
+    branches:
+      - master
+      - release/*
+      - hotfix/*
+
+jobs:
+  enforce:
+    name: Owner-only branches
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Enforce repository branch policy
+        env:
+          REPO_OWNER: ${{ github.repository_owner }}
+          ACTOR: ${{ github.actor }}
+          EVENT: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "$ACTOR" = "$REPO_OWNER" ]; then
+            echo "Repository owner ($REPO_OWNER) — branch policy satisfied."
+            exit 0
+          fi
+
+          if [ "$EVENT" = "pull_request" ]; then
+            case "$BASE_REF" in
+              master|release/*|hotfix/*)
+                echo "::error::Only the repository owner ($REPO_OWNER) may open pull requests targeting $BASE_REF."
+                echo "Contributors: open PRs against dev from feature/*, fix/*, or chore/*."
+                exit 1
+                ;;
+            esac
+          fi
+
+          if [ "$EVENT" = "push" ]; then
+            case "$HEAD_REF" in
+              master|release/*|hotfix/*)
+                echo "::error::Only the repository owner ($REPO_OWNER) may push to master, release/*, or hotfix/*."
+                echo "Contributors: use feature/*, fix/*, or chore/* and merge via PR into dev."
+                exit 1
+                ;;
+            esac
+          fi
+
+          echo "Branch policy satisfied for $EVENT on $HEAD_REF."

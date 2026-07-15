@@ -10,11 +10,15 @@ on:
       - hotfix/*
       - dev
       - feature/*
+      - fix/*
+      - chore/*
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
       - master
       - dev
+      - release/*
+      - hotfix/*
   workflow_dispatch: # allows manual runs from the Actions tab
 
 jobs:
@@ -104,7 +108,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Update nuspec version
-        uses: denis-peshkov/update-nuspec-action@v1
+        uses: denis-peshkov/update-nuspec-action@v2
 
       - name: Nuget Pack
         run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}

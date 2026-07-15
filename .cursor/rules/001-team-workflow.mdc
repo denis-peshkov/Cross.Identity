@@ -1,19 +1,24 @@
-# Team workflow rules
+# Team workflow — Cross.Identity
+
+## Branches and pull requests
+
+| Who | Create branch | Open PR into |
+|-----|---------------|--------------|
+| **Contributors** | `feature/*`, `fix/*`, `chore/*` | **`dev` only** |
+| **Repository owner** | any, including `release/*`, `hotfix/*` | `dev`, `master`, release/hotfix as needed |
+
+- Never suggest contributors target **`master`**, **`release/*`**, or **`hotfix/*`**.
+- CI enforces owner-only rules: `.github/workflows/branch-policy.yml`.
+- Full policy: `CONTRIBUTING.md` → **Branches and releases**.
 
 ## Working with code
 
-- **Always check the linter** - before committing, ensure there are no linter errors.
-- **Do not delete files without explicit instruction** - if the user did not ask to delete a file, do not delete it.
-- **Preserve existing structure** - when changing code, preserve existing architecture and patterns.
-- **Use existing services** - do not create duplicate functionality; use existing services and utilities.
-
-## Working with translations
-
-- **i18n file sync** - `strings.ru.json` is the source of truth. When changing translations, update all language files (`strings.*.json`) in each i18n subfolder (root, `saas`, `sap`, etc.).
-- **Translation structure** - all translations must be organized by resource (e.g. `vacancies/strings`, `home/strings`).
+- **Always check the linter** before finishing changes.
+- **Do not delete files** without explicit user instruction.
+- **Preserve existing structure** — match architecture and patterns in the touched area.
+- **Minimal diff** — no unrelated refactors or drive-by formatting.
 
 ## Communication
 
-- **Respond in English** - all answers and explanations should be in English.
-- **Explain changes** - when making changes, explain what was done and why.
-- **Ask clarifying questions** - if the task is unclear, ask clarifying questions instead of guessing.
+- **Respond in Russian** when talking to the user (project user rule).
+- **GitHub-facing text** (issues, PRs, commit messages) — **English** per `CONTRIBUTING.md`.

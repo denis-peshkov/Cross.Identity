@@ -98,17 +98,28 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 ## Branches and releases
 
 ```
-feature/* ──PR──► dev ──merge──► master ──► NuGet + git tag
-                  ▲
-         release/* / hotfix/*
+feature/* ──┐
+fix/*     ──┼── PR ──► dev ── merge ──► master ──► NuGet + git tag
+chore/*   ──┘                              ▲
+                                 release/* / hotfix/* (owner only)
 ```
 
-| Branch | Purpose |
-|--------|---------|
-| `dev` | Feature integration; **target branch for PRs** |
-| `master` | Stable release; GitVersion, tag, NuGet push |
-| `feature/*` | New work |
-| `release/*`, `hotfix/*` | Release prep / urgent patches |
+| Branch | Purpose | Who |
+|--------|---------|-----|
+| `dev` | Feature integration | **Default PR target** for all contributors |
+| `master` | Stable release; GitVersion, tag, NuGet push | **Owner only** — direct push and PRs |
+| `feature/*` | New functionality | Contributors |
+| `fix/*` | Bug fixes | Contributors |
+| `chore/*` | CI, deps, docs-only, maintenance | Contributors |
+| `release/*` | Release preparation | **Owner only** — branch creation and push |
+| `hotfix/*` | Urgent production patches | **Owner only** — branch creation and push |
+
+**Access rules (enforced in CI via `.github/workflows/branch-policy.yml`):**
+
+- Contributors open PRs **only into `dev`** from `feature/*`, `fix/*`, or `chore/*`.
+- PRs targeting **`master`** — repository owner only (`denis-peshkov`).
+- Pushing to **`master`**, **`release/*`**, or **`hotfix/*`** — owner only.
+- Release merge `dev` → `master`, tags, and NuGet publish — maintainer step after release checklist.
 
 Versioning: **GitVersion** (`GitVersion.yml`). `dev` is pre-release (`-dev.N`), not a release branch.
 
@@ -172,7 +183,8 @@ See [Testing](#testing).
 
 ### 4. Open PR
 
-- **Base branch:** `dev`
+- **Base branch:** `dev` (required for contributors)
+- **Do not** open PRs into `master`, `release/*`, or `hotfix/*` unless you are the repository owner
 - Description: what, why, how to verify (in **English** — for GitHub history and the triage bot)
 - For auth/security — explicitly note risks
 
@@ -181,6 +193,7 @@ See [Testing](#testing).
 Must pass:
 
 - `dotnet build` + `dotnet test` (`.NET` workflow)
+- Branch policy (`.github/workflows/branch-policy.yml`) — contributors cannot PR to `master` or push `release/*` / `hotfix/*`
 - SonarCloud quality gate (on PR — `sonar.qualitygate.wait=true`)
 - If triage changed — `PR automated comment` job (must not fail on large diffs)
 

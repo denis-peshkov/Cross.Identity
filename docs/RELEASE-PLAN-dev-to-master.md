@@ -328,7 +328,7 @@ dotnet run --project Sample.Api
 
 | # | Check | Status |
 |---|----------|--------|
-| CI1 | `dotnet.yml` — build + test on PR to `master`/`dev` | ✅ restore/build/test; latest runs on `dev` — ok |
+| CI1 | `dotnet.yml` — build + test on PR to `dev`/`master`/`release/*`/`hotfix/*`; push on `feature/*`/`fix/*`/`chore/*` | ✅ restore/build/test; `branch-policy.yml` enforces owner-only `master`/`release/*`/`hotfix/*` |
 | CI2 | SonarCloud quality gate wait on PR | ✅ PR [#5](https://github.com/denis-peshkov/Cross.Identity/pull/5#issuecomment-4834799217): QG **passed**, 88.7% coverage on new code; [`dotnet.yml`](.github/workflows/dotnet.yml) — `sonar.qualitygate.wait=true` on `pull_request` |
 | CI3 | `triage.yml` — automated PR triage | ✅ latest run ok |
 | CI4 | GitVersion: `dev` is now **not** a release branch | 🟨 config changed; merge behavior not verified |

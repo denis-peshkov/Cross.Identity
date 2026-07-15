@@ -39,12 +39,46 @@ branches:
     prevent-increment-of-merged-branch-version: false
     track-merge-target: true
     tracks-release-branches: true
-    is-release-branch: false
+    is-release-branch: true
     pre-release-weight: 30000
   feature:
     regex: ^feature(s)?[/-]
     mode: ContinuousDelivery
     tag: useBranchName
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false
+  fix:
+    regex: ^fix(es)?[/-]
+    mode: ContinuousDelivery
+    tag: useBranchName
+    source-branches:
+      - dev
+      - master
+      - release
+      - feature
+      - fix
+      - chore
+      - hotfix
+    increment: Inherit
+    prevent-increment-of-merged-branch-version: false
+    track-merge-target: false
+    tracks-release-branches: false
+    is-release-branch: false
+  chore:
+    regex: ^chore(s)?[/-]
+    mode: ContinuousDelivery
+    tag: useBranchName
+    source-branches:
+      - dev
+      - master
+      - release
+      - feature
+      - fix
+      - chore
+      - hotfix
     increment: Inherit
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
@@ -57,10 +91,10 @@ branches:
     tag-number-pattern: '[/-](?<number>\d+)[-/]'
     source-branches:
       - dev
-      - master
       - release
       - feature
-      - support
+      - fix
+      - chore
       - hotfix
     increment: None
     prevent-increment-of-merged-branch-version: false
