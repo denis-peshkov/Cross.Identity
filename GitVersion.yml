@@ -54,6 +54,14 @@ branches:
     regex: ^fix(es)?[/-]
     mode: ContinuousDelivery
     tag: useBranchName
+    source-branches:
+      - dev
+      - master
+      - release
+      - feature
+      - fix
+      - chore
+      - hotfix
     increment: Inherit
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
@@ -63,6 +71,14 @@ branches:
     regex: ^chore(s)?[/-]
     mode: ContinuousDelivery
     tag: useBranchName
+    source-branches:
+      - dev
+      - master
+      - release
+      - feature
+      - fix
+      - chore
+      - hotfix
     increment: Inherit
     prevent-increment-of-merged-branch-version: false
     track-merge-target: false
