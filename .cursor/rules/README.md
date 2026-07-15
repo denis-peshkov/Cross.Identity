@@ -6,12 +6,12 @@
 - `000-global.mdc` - Global project rules
 - `001-team-workflow.mdc` - Team workflow rules
 - `002-multi-repo.mdc` - Multi-repository workflow rules
-- `003-triage.mdc` - GitHub triage (issues/PRs, skills, RTK, CI)
+- `003-triage.mdc` - GitHub triage (issues/PRs, skills, CI)
 - `004-release-plan.mdc` - `dev`→`master` release plan, "Checklist Summary" sync
 
 ### Cursor triage scripts
 
-- `.cursor/triage/` - RTK/gh wrappers, CI runners (`collect-data.sh`, `post-pr-triage.mjs`), reports in `docs/`
+- `.cursor/triage/` - `gh` wrapper, CI runners (`collect-data.sh`, `post-pr-triage.mjs`), reports in `docs/`
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules

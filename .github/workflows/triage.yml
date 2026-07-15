@@ -50,12 +50,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install RTK (Rust Token Killer)
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          rtk --version
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -87,13 +81,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install RTK (Rust Token Killer)
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-          rtk --version
-          rtk gain || echo "RTK gain check skipped"
 
       - name: Verify gh CLI
         env:

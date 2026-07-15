@@ -3,7 +3,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-GH="${ROOT}/.cursor/triage/rtk-gh.sh"
+GH="${ROOT}/.cursor/triage/gh-wrapper.sh"
 OUT="${ROOT}/.cursor/triage/docs/.data"
 DATE="$(date +%Y-%m-%d)"
 

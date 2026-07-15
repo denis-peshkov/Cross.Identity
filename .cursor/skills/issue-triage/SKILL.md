@@ -28,13 +28,11 @@ git rev-parse --is-inside-work-tree
 gh auth status
 ```
 
-Use the wrapper to compress command output:
+Use the GitHub CLI wrapper (same entry point in local scripts and CI):
 
 ```bash
-.cursor/triage/rtk-gh.sh
+.cursor/triage/gh-wrapper.sh
 ```
-
-If `rtk` is not installed — the script transparently calls `gh`.
 
 ## Language
 
@@ -48,23 +46,23 @@ If `rtk` is not installed — the script transparently calls `gh`.
 #### Data gathering (in parallel)
 
 ```bash
-REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner)
+REPO=$(.cursor/triage/gh-wrapper.sh repo view --json nameWithOwner -q .nameWithOwner)
 
-.cursor/triage/rtk-gh.sh issue list --state open --limit 100 \
+.cursor/triage/gh-wrapper.sh issue list --state open --limit 100 \
   --json number,title,author,createdAt,updatedAt,labels,assignees,body,comments
 
-.cursor/triage/rtk-gh.sh pr list --state open --limit 50 --json number,title,body
+.cursor/triage/gh-wrapper.sh pr list --state open --limit 50 --json number,title,body
 
-.cursor/triage/rtk-gh.sh issue list --state closed --limit 20 \
+.cursor/triage/gh-wrapper.sh issue list --state closed --limit 20 \
   --json number,title,labels,closedAt
 
-.cursor/triage/rtk-gh.sh api "repos/${REPO}/collaborators" --jq '.[].login'
+.cursor/triage/gh-wrapper.sh api "repos/${REPO}/collaborators" --jq '.[].login'
 ```
 
 **Collaborators fallback** (403/404):
 
 ```bash
-.cursor/triage/rtk-gh.sh pr list --state merged --limit 10 --json author --jq '.[].author.login' | sort -u
+.cursor/triage/gh-wrapper.sh pr list --state merged --limit 10 --json author --jq '.[].author.login' | sort -u
 ```
 
 `author` is an object `{login: "..."}`; extract `.author.login`.
@@ -130,9 +128,9 @@ Comment template: `templates/issue-comment.md`.
 
 ### Phase 3 — Actions (confirmation only)
 
-- `.cursor/triage/rtk-gh.sh issue comment {num} --body-file -`
-- `.cursor/triage/rtk-gh.sh issue edit {num} --add-label "{label}"`
-- `.cursor/triage/rtk-gh.sh issue close {num} --reason "not planned"`
+- `.cursor/triage/gh-wrapper.sh issue comment {num} --body-file -`
+- `.cursor/triage/gh-wrapper.sh issue edit {num} --add-label "{label}"`
+- `.cursor/triage/gh-wrapper.sh issue close {num} --reason "not planned"`
 
 **Never** post/close without `AskQuestion`.
 

@@ -116,7 +116,7 @@ async function main() {
 
 async function postTriageIssueComment(report) {
   const { execSync } = await import('node:child_process');
-  const gh = join(ROOT, '.cursor/triage/rtk-gh.sh');
+  const gh = join(ROOT, '.cursor/triage/gh-wrapper.sh');
   const title = `CI Triage Report ${DATE}`;
   const body = report.length > 60000 ? report.slice(0, 60000) + '\n\n…(truncated)' : report;
 
