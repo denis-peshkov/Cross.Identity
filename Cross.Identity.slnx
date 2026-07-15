@@ -30,5 +30,5 @@
   </Folder>
   <Project Path="Cross.Identity.Tests\Cross.Identity.Tests.csproj" />
   <Project Path="Cross.Identity\Cross.Identity.csproj" />
-  <Project Path="Sample.Api/Sample.Api.csproj" />
+  <Project Path="Sample.Api\Sample.Api.csproj" />
 </Solution>
