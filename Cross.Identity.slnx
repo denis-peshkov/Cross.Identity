@@ -10,6 +10,7 @@
     <File Path=".github\ISSUE_TEMPLATE\question.yml" />
   </Folder>
   <Folder Name="/.github/workflows/">
+    <File Path=".github\workflows\branch-policy.yml" />
     <File Path=".github\workflows\dotnet.yml" />
     <File Path=".github\workflows\triage.yml" />
   </Folder>
