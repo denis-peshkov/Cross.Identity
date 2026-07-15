@@ -1,4 +1,4 @@
-<!-- PR body: narrative (RTK-style) + checklist (Homebrew-style). English — for GitHub history and triage bot. -->
+<!-- PR body: narrative sections + checklist (Homebrew-style). English — for GitHub history and triage bot. -->
 
 ## PR Merge Title
 

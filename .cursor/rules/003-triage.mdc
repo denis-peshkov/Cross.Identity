@@ -26,12 +26,12 @@ Run skills from `.cursor/skills/` when the user asks for:
 
 ```bash
 bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.data/
-.cursor/triage/rtk-gh.sh issue list   # gh via RTK (fallback: gh)
+.cursor/triage/gh-wrapper.sh issue list   # GitHub CLI wrapper
 ```
 
 ## Execution rules
 
-1. **RTK**: use `.cursor/triage/rtk-gh.sh` for all `gh` commands
+1. **gh**: use `.cursor/triage/gh-wrapper.sh` for all `gh` commands
 2. **Safety**: do not post/close issues and PRs without `AskQuestion`
 3. **Context**: identity library — prioritize security (JWT, OAuth, tokens)
 4. **Checklists**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `pr-triage/references/dotnet-checklist.md`

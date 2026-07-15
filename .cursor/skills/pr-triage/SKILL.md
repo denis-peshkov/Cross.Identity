@@ -2,7 +2,7 @@
 name: pr-triage
 description: >-
   PR triage for Cross.Identity: audit open PRs, deep review, draft review
-  comments. Uses rtk gh to compress output. Args: "all", PR numbers,
+  comments. Args: "all", PR numbers,
   "ru"/"en" for table language (default en).
 ---
 
@@ -23,7 +23,7 @@ git rev-parse --is-inside-work-tree
 gh auth status
 ```
 
-GitHub commands — via `.cursor/triage/rtk-gh.sh` (RTK compresses output, fallback to `gh`).
+GitHub commands — via `.cursor/triage/gh-wrapper.sh`.
 
 ## Language
 
@@ -35,21 +35,21 @@ GitHub commands — via `.cursor/triage/rtk-gh.sh` (RTK compresses output, fallb
 ### Data gathering
 
 ```bash
-REPO=$(.cursor/triage/rtk-gh.sh repo view --json nameWithOwner -q .nameWithOwner)
+REPO=$(.cursor/triage/gh-wrapper.sh repo view --json nameWithOwner -q .nameWithOwner)
 
-.cursor/triage/rtk-gh.sh pr list --state open --limit 50 \
+.cursor/triage/gh-wrapper.sh pr list --state open --limit 50 \
   --json number,title,author,createdAt,updatedAt,additions,deletions,changedFiles,isDraft,mergeable,reviewDecision,statusCheckRollup,body
 
-.cursor/triage/rtk-gh.sh api "repos/${REPO}/collaborators" --jq '.[].login'
+.cursor/triage/gh-wrapper.sh api "repos/${REPO}/collaborators" --jq '.[].login'
 ```
 
 For each PR (priority — overlap candidates):
 
 ```bash
-.cursor/triage/rtk-gh.sh api "repos/${REPO}/pulls/{num}/reviews" \
+.cursor/triage/gh-wrapper.sh api "repos/${REPO}/pulls/{num}/reviews" \
   --jq '[.[] | .user.login + ":" + .state] | join(", ")'
 
-.cursor/triage/rtk-gh.sh pr view {num} --json files --jq '[.files[].path] | join(",")'
+.cursor/triage/gh-wrapper.sh pr view {num} --json files --jq '[.files[].path] | join(",")'
 ```
 
 ### Classification
@@ -84,7 +84,7 @@ On overlap/review pay attention to:
 `Task` with `subagent_type: bugbot` or `generalPurpose` in parallel.
 
 ```bash
-.cursor/triage/rtk-gh.sh pr diff {num}
+.cursor/triage/gh-wrapper.sh pr diff {num}
 ```
 
 Checklist: `references/dotnet-checklist.md` + `.cursor/rules/105-backend-security.mdc`.
@@ -109,7 +109,7 @@ PR_NUMBER=42 CURSOR_API_KEY=... yarn pr-triage
 ```
 
 ```bash
-.cursor/triage/rtk-gh.sh pr comment {num} --body-file -
+.cursor/triage/gh-wrapper.sh pr comment {num} --body-file -
 ```
 
 ## Saving

@@ -84,7 +84,7 @@ ${filesList}
 </details>
 ${securityBlock}
 ---
-*Triaged automatically by [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) · [Cursor](https://cursor.com) + [RTK](https://github.com/rtk-ai/rtk)* · This is an automated analysis, not a human review.
+*Triaged automatically by [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
 ${TRIAGE_MARKER}
 `;
 }

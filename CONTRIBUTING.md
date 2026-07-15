@@ -116,7 +116,7 @@ Versioning: **GitVersion** (`GitVersion.yml`). `dev` is pre-release (`-dev.N`), 
 
 ## Branch naming
 
-Same as RTK — prefix + kebab-case description:
+Prefix + kebab-case description:
 
 | Prefix | When |
 |--------|------|
@@ -271,7 +271,7 @@ There is no separate CLA — merging a PR means agreement with the repository li
 ## For maintainers (internal)
 
 - Triage: `.cursor/skills/`, `bash .cursor/triage/collect-data.sh`
-- RTK to compress `gh` output: `.cursor/triage/rtk-gh.sh`
+- GitHub CLI wrapper for triage: `.cursor/triage/gh-wrapper.sh`
 - Release gate: `docs/RELEASE-PLAN-dev-to-master.md`
 - Deploy key (`cross-identity-deploy-key*`) — Azure DevOps submodule only, **not** for license key
 

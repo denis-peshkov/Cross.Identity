@@ -18,7 +18,7 @@ Skills: `.cursor/skills/{issue-triage,pr-triage,cross-identity-triage}/`
 ## Scripts
 
 ```bash
-# Data collection (rtk gh if installed)
+# Data collection
 bash .cursor/triage/collect-data.sh
 
 # CI agent (requires CURSOR_API_KEY, Node 20.19.4)
@@ -60,13 +60,6 @@ Manual test: **Actions → Triage → Run workflow** → `pr_number` field.
 - `.cursor/triage/docs/ci-report-YYYY-MM-DD.md`
 - `.cursor/triage/docs/.data/*.json` (in artifact, not in git)
 
-## RTK
+### GitHub CLI
 
-Installation (optional, for compressing `gh` output):
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/master/install.sh | sh
-rtk gain  # verify: Rust Token Killer, not Type Kit
-```
-
-Script `.cursor/triage/rtk-gh.sh` automatically uses `rtk gh` or falls back to `gh`.
+Triage scripts call `.cursor/triage/gh-wrapper.sh`, which delegates to `gh` (preinstalled on GitHub Actions runners; install locally via `gh auth login`).

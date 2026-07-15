@@ -32,20 +32,20 @@ Or run data collection:
 
 ## Phase 1 — Data gathering (in parallel)
 
-**Issues** (via RTK):
+**Issues** (via `gh-wrapper.sh`):
 
 ```bash
-.cursor/triage/rtk-gh.sh issue list --state open --limit 150 \
+.cursor/triage/gh-wrapper.sh issue list --state open --limit 150 \
   --json number,title,author,createdAt,updatedAt,labels,assignees,body
 
-.cursor/triage/rtk-gh.sh issue list --state closed --limit 20 \
+.cursor/triage/gh-wrapper.sh issue list --state closed --limit 20 \
   --json number,title,labels,closedAt
 ```
 
 **PRs**:
 
 ```bash
-.cursor/triage/rtk-gh.sh pr list --state open --limit 200 \
+.cursor/triage/gh-wrapper.sh pr list --state open --limit 200 \
   --json number,title,author,createdAt,updatedAt,additions,deletions,changedFiles,isDraft,mergeable,reviewDecision,statusCheckRollup,body
 ```
 
@@ -125,4 +125,4 @@ Supplement with cross-analysis manually if needed.
 
 - GitHub actions (comments/close) — only with `AskQuestion`
 - Table language: en (default), ru via argument
-- RTK: always `.cursor/triage/rtk-gh.sh` for gh commands
+- Always use `.cursor/triage/gh-wrapper.sh` for `gh` commands
