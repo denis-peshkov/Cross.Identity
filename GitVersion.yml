@@ -91,12 +91,10 @@ branches:
     tag-number-pattern: '[/-](?<number>\d+)[-/]'
     source-branches:
       - dev
-      - master
       - release
       - feature
       - fix
       - chore
-      - support
       - hotfix
     increment: None
     prevent-increment-of-merged-branch-version: false
