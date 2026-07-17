@@ -1,8 +1,8 @@
-[![License](https://img.shields.io/github/license/denis-peshkov/Cross.Identity)](LICENSE)
+[![License](https://img.shields.io/badge/license-RPL%201.5-blue)](LICENSE.md)
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/Cross.Identity?label=released)](https://github.com/denis-peshkov/Cross.Identity/releases)
 [![NuGetVersion](https://img.shields.io/nuget/v/Cross.Identity.svg)](https://nuget.org/packages/Cross.Identity/)
 [![NugetDownloads](https://img.shields.io/nuget/dt/Cross.Identity.svg)](https://nuget.org/packages/Cross.Identity/)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Cross.Identity&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Cross.Identity)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=denis-peshkov.Cross.Identity&metric=coverage)](https://sonarcloud.io/summary/new_code?id=denis-peshkov.Cross.Identity)
 [![issues](https://img.shields.io/github/issues/denis-peshkov/Cross.Identity)](https://github.com/denis-peshkov/Cross.Identity/issues)
 [![.NET PR](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml/badge.svg?event=pull_request)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml)
 

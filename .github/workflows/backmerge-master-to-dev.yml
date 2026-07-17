@@ -3,8 +3,9 @@
 # No PR, no build gate — keeps `dev` in sync after hotfixes/releases on `master`.
 # On merge conflicts the job fails (resolve locally / open a manual PR).
 #
-# Repo Settings → Actions → General → Workflow permissions: Read and write
-# (GITHUB_TOKEN must be able to push to `dev`).
+# Uses TAGTOKEN (owner/admin PAT) so push can bypass "Protect dev" ruleset.
+# GITHUB_TOKEN (github-actions[bot]) cannot be added as Integration bypass on personal repos.
+# Repo Settings → Actions → General → Workflow permissions: Read and write (optional with PAT).
 
 name: Back-merge master to dev
 
@@ -30,11 +31,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TAGTOKEN }}
 
       - name: Merge master into dev and push
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.TAGTOKEN }}
         run: |
           set -euo pipefail
 

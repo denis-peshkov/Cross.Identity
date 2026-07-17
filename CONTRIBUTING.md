@@ -8,7 +8,7 @@ Thank you for your interest in the project.
 - [Open PRs](https://github.com/denis-peshkov/Cross.Identity/pulls)
 - [CI (.NET)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml)
 - [CI (back-merge master → dev)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/backmerge-master-to-dev.yml)
-- [SonarCloud](https://sonarcloud.io/summary/new_code?id=Cross.Identity)
+- [SonarCloud](https://sonarcloud.io/summary/new_code?id=denis-peshkov.Cross.Identity)
 - [NuGet](https://www.nuget.org/packages/Cross.Identity/)
 - Flow documentation: [`Cross.Identity/FLOWS.md`](Cross.Identity/FLOWS.md)
 - Release plan: [`docs/RELEASE-PLAN-dev-to-master.md`](docs/RELEASE-PLAN-dev-to-master.md)
