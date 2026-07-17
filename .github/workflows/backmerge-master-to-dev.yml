@@ -3,10 +3,8 @@
 # No PR, no build gate — keeps `dev` in sync after hotfixes/releases on `master`.
 # On merge conflicts the job fails (resolve locally / open a manual PR).
 #
-# Push uses TAGTOKEN (owner/admin PAT) to bypass "Protect dev" ruleset.
-# Do not pass TAGTOKEN into actions/checkout `token:` — an empty secret becomes
-# an empty string and checkout fails with "Input required and not supplied: token".
-# GITHUB_TOKEN (github-actions[bot]) cannot be added as Integration bypass on personal repos.
+# Repo Settings → Actions → General → Workflow permissions: Read and write
+# (GITHUB_TOKEN must be able to push to `dev`).
 
 name: Back-merge master to dev
 
@@ -32,17 +30,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Merge master into dev and push
         env:
-          TAGTOKEN: ${{ secrets.TAGTOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-
-          if [ -z "${TAGTOKEN}" ]; then
-            echo "::error::Repository secret TAGTOKEN is missing or empty. Back-merge needs an owner PAT (repo scope) to push past the protect-dev ruleset. See .github/rulesets/README.md"
-            exit 1
-          fi
 
           git fetch origin master dev
 
@@ -64,7 +58,6 @@ jobs:
             exit 1
           fi
 
-          git remote set-url origin "https://x-access-token:${TAGTOKEN}@github.com/${{ github.repository }}.git"
           git push origin dev
 
           echo "Back-merged master (${SHORT_SHA}) into dev and pushed."
