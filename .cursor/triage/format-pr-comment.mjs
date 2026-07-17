@@ -8,7 +8,7 @@ const DEFAULT_REPO = 'denis-peshkov/Cross.Identity';
 
 const PRIORITY_EMOJI = {
   critical: '🔴',
-  high: '🔴',
+  high: '🟠',
   medium: '🟡',
   low: '🟢',
 };

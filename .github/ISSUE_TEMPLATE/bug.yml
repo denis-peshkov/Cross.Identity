@@ -1,6 +1,5 @@
 name: Bug report
 description: Reproducible defect in Cross.Identity (library, flow, JWT/OAuth, licensing integration).
-type: Bug
 labels:
   - bug
 body:

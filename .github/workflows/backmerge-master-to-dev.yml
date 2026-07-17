@@ -1,0 +1,63 @@
+# Direct back-merge: merge `master` into `dev` and push.
+#
+# No PR, no build gate — keeps `dev` in sync after hotfixes/releases on `master`.
+# On merge conflicts the job fails (resolve locally / open a manual PR).
+#
+# Repo Settings → Actions → General → Workflow permissions: Read and write
+# (GITHUB_TOKEN must be able to push to `dev`).
+
+name: Back-merge master to dev
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backmerge-master-to-dev
+  cancel-in-progress: false
+
+jobs:
+  back-merge:
+    name: Merge master into dev
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge master into dev and push
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          git fetch origin master dev
+
+          if git merge-base --is-ancestor origin/master origin/dev; then
+            echo "dev already contains master — nothing to back-merge."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B dev origin/dev
+
+          SHORT_SHA="$(git rev-parse --short origin/master)"
+
+          if ! git merge --no-ff --no-edit -m "chore: back-merge master (${SHORT_SHA}) into dev" origin/master; then
+            git merge --abort || true
+            echo "::error::Back-merge master → dev has conflicts. Resolve locally and push to dev, or open a manual PR."
+            exit 1
+          fi
+
+          git push origin dev
+
+          echo "Back-merged master (${SHORT_SHA}) into dev and pushed."

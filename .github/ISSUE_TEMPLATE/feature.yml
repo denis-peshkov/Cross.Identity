@@ -1,6 +1,5 @@
 name: Feature request
 description: Propose new behavior, flow, step, or public API for Cross.Identity.
-type: Feature
 labels:
   - enhancement
 body:
