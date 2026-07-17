@@ -123,7 +123,7 @@ chore/*   ──┘                              ▲
 - PRs targeting **`master`** — repository owner only (`denis-peshkov`).
 - Pushing to **`master`**, **`release/*`**, or **`hotfix/*`** — owner only.
 - Release merge `dev` → `master`, tags, and NuGet publish — maintainer step after release checklist.
-- After changes land on **`master`**, CI (`.github/workflows/backmerge-master-to-dev.yml`) **merges `master` into `dev` and pushes** (no PR, no build wait). If there are conflicts, the job fails — resolve locally and push to `dev`.
+- After changes land on **`master`**, CI (`.github/workflows/backmerge-master-to-dev.yml`) **merges `master` into `dev` and pushes** (no PR, no build wait) using the owner PAT secret **`TAGTOKEN`** — required to bypass Protect-dev (PR + `build`). Plain `GITHUB_TOKEN` is rejected (`GH013`). If there are conflicts, the job fails — resolve locally and push to `dev`.
 
 Versioning: **GitVersion** (`GitVersion.yml`). `dev` is pre-release (`-dev.N`), not a release branch.
 

@@ -32,7 +32,7 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 | File | Target | Purpose |
 |------|--------|---------|
 | [`01-protect-master.json`](01-protect-master.json) | `master` | No force-push/delete; PR + CI required; admin bypass for releases |
-| [`02-protect-dev.json`](02-protect-dev.json) | `dev` | No force-push/delete; PR + CI; admin bypass (owner). Back-merge CI uses `GITHUB_TOKEN` — ensure Actions can push to `dev` (Workflow permissions Read and write; or add Integration bypass if import allows) |
+| [`02-protect-dev.json`](02-protect-dev.json) | `dev` | No force-push/delete; PR + required `build`; admin bypass. Back-merge CI pushes with `TAGTOKEN` |
 | [`03-protect-release-hotfix.json`](03-protect-release-hotfix.json) | `release/*`, `hotfix/*` | Create/update/delete only via admin bypass |
 | [`04-protect-release-tags.json`](04-protect-release-tags.json) | tags `v*` | Protect NuGet/GitVersion tags; create via admin / `TAGTOKEN` CI |
 | [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Not available** on personal repos (org-owned private/internal only) |
@@ -49,14 +49,15 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 Error importing ruleset: The ruleset you are importing contains an invalid actor
 ```
 
-Back-merge CI (`.github/workflows/backmerge-master-to-dev.yml`) uses `secrets.GITHUB_TOKEN`, not `TAGTOKEN`. Tag push in `dotnet.yml` still uses `TAGTOKEN`.
+Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev (`GH013`: PR required + check `build`).
 
 ## After import
 
 1. Open a test PR into `dev` — required check `build` must appear.
 2. Confirm non-admin cannot push to `master` / create `release/foo`.
-3. Run **Back-merge master to dev** once — must push to `dev` with `GITHUB_TOKEN`.
-4. Optionally keep `branch-policy.yml` as a secondary signal, then remove push checks later.
+3. Ensure Actions secret **`TAGTOKEN`** is set (owner PAT, `repo` scope) — same secret as `dotnet.yml` tag push.
+4. Run **Back-merge master to dev** once — must push to `dev` via `TAGTOKEN` (admin bypass; no PR, no build wait).
+5. Optionally keep `branch-policy.yml` as a secondary signal.
 
 ## Not encoded in rulesets
 

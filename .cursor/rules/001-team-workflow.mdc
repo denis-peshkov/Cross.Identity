@@ -9,7 +9,7 @@
 
 - Never suggest contributors target **`master`**, **`release/*`**, or **`hotfix/*`**.
 - CI enforces owner-only rules: `.github/workflows/branch-policy.yml`.
-- After push to **`master`**, CI merges **`master` → `dev`** and pushes (no PR): `.github/workflows/backmerge-master-to-dev.yml` (noop if `dev` already contains `master`; fails on conflicts).
+- After push to **`master`**, CI merges **`master` → `dev`** and pushes (no PR) via **`TAGTOKEN`** (admin bypass of Protect-dev): `.github/workflows/backmerge-master-to-dev.yml` (noop if `dev` already contains `master`; fails on conflicts).
 - Full policy: `CONTRIBUTING.md` → **Branches and releases**.
 
 ## Working with code
