@@ -51,6 +51,8 @@ Error importing ruleset: The ruleset you are importing contains an invalid actor
 
 Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev (`GH013`: PR required + check `build`).
 
+**Back-merge checkout gotcha:** `actions/checkout` can persist `GITHUB_TOKEN` as `http.https://github.com/.extraheader`. That header overrides a later `git remote set-url` with `TAGTOKEN`. `backmerge-master-to-dev.yml` sets `persist-credentials: false` and unsets that header before push.
+
 ## After import
 
 1. Open a test PR into `dev` — required check `build` must appear.
