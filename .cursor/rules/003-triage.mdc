@@ -11,6 +11,7 @@ alwaysApply: false
 Run skills from `.cursor/skills/` when the user asks for:
 
 - triage, triage issues/PRs
+- triage local branch / named branch vs master or dev (no PR)
 - backlog review, sprint planning for issues
 - "what to merge", quick wins for PRs
 
@@ -19,7 +20,7 @@ Run skills from `.cursor/skills/` when the user asks for:
 | Skill | Path | Purpose |
 |-------|------|---------|
 | `issue-triage` | `.cursor/skills/issue-triage/SKILL.md` | Issues |
-| `pr-triage` | `.cursor/skills/pr-triage/SKILL.md` | PRs + review |
+| `pr-triage` | `.cursor/skills/pr-triage/SKILL.md` | PRs + review; local/branch vs master\|dev |
 | `cross-identity-triage` | `.cursor/skills/cross-identity-triage/SKILL.md` | Full cross-analysis |
 
 ## Commands

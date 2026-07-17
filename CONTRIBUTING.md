@@ -7,6 +7,7 @@ Thank you for your interest in the project.
 - [Report an issue](https://github.com/denis-peshkov/Cross.Identity/issues/new)
 - [Open PRs](https://github.com/denis-peshkov/Cross.Identity/pulls)
 - [CI (.NET)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml)
+- [CI (back-merge master → dev)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/backmerge-master-to-dev.yml)
 - [SonarCloud](https://sonarcloud.io/summary/new_code?id=Cross.Identity)
 - [NuGet](https://www.nuget.org/packages/Cross.Identity/)
 - Flow documentation: [`Cross.Identity/FLOWS.md`](Cross.Identity/FLOWS.md)
@@ -76,7 +77,7 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 - `Cross.Identity.Tests/` — unit + integration (flow, OAuth, JWT);
 - `Sample.Api/` — smoke/E2E host example;
 - `Cross.Identity/FLOWS.md`, `docs/MIGRATION.md`, `config.nuspec`;
-- CI: `.github/workflows/dotnet.yml`, `triage.yml`.
+- CI: `.github/workflows/dotnet.yml`, `triage.yml`, `backmerge-master-to-dev.yml`.
 
 ### Out of scope (without maintainer discussion)
 
@@ -98,9 +99,11 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 ## Branches and releases
 
 ```
-feature/* ──┐
-fix/*     ──┼── PR ──► dev ── merge ──► master ──► NuGet + git tag
+                        ┌──── CI merge ─────────┐     (master → dev, no PR)
+feature/* ──┐           ▼                       │
+fix/*     ──┼── PR ──► dev ── merge ──► master ─┴─► NuGet + git tag
 chore/*   ──┘                              ▲
+                                           │
                                  release/* / hotfix/* (owner only)
 ```
 
@@ -120,6 +123,7 @@ chore/*   ──┘                              ▲
 - PRs targeting **`master`** — repository owner only (`denis-peshkov`).
 - Pushing to **`master`**, **`release/*`**, or **`hotfix/*`** — owner only.
 - Release merge `dev` → `master`, tags, and NuGet publish — maintainer step after release checklist.
+- After changes land on **`master`**, CI (`.github/workflows/backmerge-master-to-dev.yml`) **merges `master` into `dev` and pushes** (no PR, no build wait). If there are conflicts, the job fails — resolve locally and push to `dev`.
 
 Versioning: **GitVersion** (`GitVersion.yml`). `dev` is pre-release (`-dev.N`), not a release branch.
 

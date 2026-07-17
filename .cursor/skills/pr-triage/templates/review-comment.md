@@ -17,13 +17,13 @@ Comments in **English**.
 
 {If none: "None found."}
 
-### Important Issues 🟡
+### Important Issues 🟠
 
 {Significant issues with file:line citations.}
 
 {If none: "None found."}
 
-### Suggestions 🟢
+### Suggestions 🟡
 
 {Nice-to-haves. Omit section if none.}
 
@@ -38,8 +38,8 @@ Comments in **English**.
 ## Severity
 
 - 🔴 Critical: security (token leak, auth bypass), data loss, broken auth flow, missing tests for security fix
-- 🟡 Important: error handling gaps, breaking public API without docs, missing flow tests
-- 🟢 Suggestion: naming, DRY, documentation
+- 🟠 Important: error handling gaps, breaking public API without docs, missing flow tests
+- 🟡 Suggestion: naming, DRY, documentation
 
 ## Cross.Identity checks (mention when relevant)
 
