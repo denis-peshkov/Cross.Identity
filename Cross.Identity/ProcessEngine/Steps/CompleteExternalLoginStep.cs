@@ -28,7 +28,8 @@ internal sealed class CompleteExternalLoginStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
+        // Code may be absent when the provider returned Error (OAuth error redirect).
+        ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out string? code);
         var state = ctx.Get<string>(BagKey.Qualify(Kind, StateKey));
         string? error = null;
         string? errorDescription = null;
@@ -42,7 +43,7 @@ internal sealed class CompleteExternalLoginStep : IStep
             ctx.TryGet(BagKey.Qualify(Kind, ErrorDescriptionKey), out errorDescription);
         }
 
-        var userId = await ExternalLoginService.CompleteAsync(code, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
+        var userId = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "UserId"), userId.UserId);
         ctx.Set(BagKey.Qualify(Kind, "IsLinking"), userId.IsLinking);

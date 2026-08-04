@@ -160,7 +160,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Code`, `State` (required), `Error`, `ErrorDescription` (opt.). → `completeExternalLogin` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.). → `completeExternalLogin` |
 | `completeExternalLogin` | completeExternalLogin | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 

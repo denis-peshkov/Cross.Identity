@@ -169,6 +169,27 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("User denied access");
     }
 
+    [Test]
+    public async Task ExternalLoginCallback_WithStateAndError_WithoutCode_ShouldPassValidationAndProcessError()
+    {
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
+        var state = ExtractState(authorizationUrl);
+
+        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
+                new Dictionary<string, object?>
+                {
+                    ["State"] = state,
+                    ["Error"] = "access_denied",
+                    ["ErrorDescription"] = "User denied access",
+                },
+                Flow,
+                FlowOperationEnum.ExternalLoginCallback,
+                CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("User denied access");
+    }
+
     private void SeedGoogleProvider()
     {
         AddToDb(new ProviderEntity

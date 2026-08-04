@@ -5,10 +5,15 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "Code", "type": "String", "required": true, "min": 1, "max": 2048 },
+          { "key": "Code", "type": "String", "required": false, "min": 1, "max": 2048 },
           { "key": "State", "type": "String", "required": true, "min": 1, "max": 4096 },
           { "key": "Error", "type": "String", "required": false, "max": 256 },
           { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 }
+        ],
+        "validators": [
+          { "kind": "requiredIf", "when": { "field": "Error", "equals": "" }, "then": { "name": "Code", "required": true }, "message": "Provide an authorization code or an OAuth error." },
+          { "kind": "requiredIf", "when": { "field": "Code", "equals": "" }, "then": { "name": "Error", "required": true }, "message": "Provide an authorization code or an OAuth error." },
+          { "kind": "atLeastOneRequired", "fields": ["Code", "Error"], "message": "Provide an authorization code or an OAuth error." }
         ]
       },
       "next": "completeExternalLogin"
