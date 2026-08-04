@@ -5,6 +5,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
     private const string Email = "test@example.com";
+    private const string ValidCode = "ABCD1234";
     private const string Password = "P@ssw0rd!";
 
     private Mock<IUserService> _userServiceMock = null!;
@@ -17,6 +18,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         Initialize();
 
         AddRegistryStep<CollectFormStepFactory>();
+        AddRegistryStep<VerifyCodeStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
         var headersContextAccessor = new HeadersContextAccessor
@@ -37,6 +39,20 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         RegisterToServiceProvider<IEmailSenderService, IEmailSenderService>(Mock.Of<IEmailSenderService>());
         RegisterToServiceProvider<ISmsSenderService, ISmsSenderService>(Mock.Of<ISmsSenderService>());
 
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true",
+            })
+            .Build();
+        RegisterToServiceProvider<ICodeService, ICodeService>(
+            new CodeService(
+                Context,
+                Mock.Of<ILogger<CodeService>>(),
+                Mock.Of<IEmailSenderService>(),
+                Mock.Of<ISmsSenderService>(),
+                configuration));
+
         var httpContextAccessor = new Mock<IHttpContextAccessor>();
         var context = new DefaultHttpContext();
         context.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
@@ -46,11 +62,14 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithPassword_ShouldPassPasswordToUserService()
+    public async Task ResetPassword_WithValidCode_ShouldPassPasswordToUserService()
     {
+        SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
+
         var input = new Dictionary<string, object?>
         {
             ["Email"] = Email,
+            ["Code"] = ValidCode,
             ["Password"] = Password,
         };
 
@@ -62,25 +81,107 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ResetPassword_WithoutCode_ShouldThrowValidationException()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = Email,
+            ["Password"] = Password,
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>();
+
+        _userServiceMock.Verify(
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ResetPassword_WithInvalidCode_ShouldRejectBeforePasswordChange()
+    {
+        SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
+
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = Email,
+            ["Code"] = "WRONGCOD",
+            ["Password"] = Password,
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired verification code*");
+
+        _userServiceMock.Verify(
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ResetPassword_WithExpiredCode_ShouldRejectBeforePasswordChange()
+    {
+        SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(-5));
+
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = Email,
+            ["Code"] = ValidCode,
+            ["Password"] = Password,
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired verification code*");
+
+        _userServiceMock.Verify(
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
     [Category(TestCategory.UNIT)]
-    public void ResetPassword_EmbeddedDefinition_PasswordKeyShouldMatchCollectFormField()
+    public void ResetPassword_EmbeddedDefinition_ShouldRequireCodeVerificationBeforeReset()
     {
         var json = _processDefinitionProvider.GetJson(Flow, FlowOperationEnum.ResetPassword);
         using var doc = JsonDocument.Parse(json);
         var steps = doc.RootElement.GetProperty("steps");
 
         string? passwordKey = null;
+        string? collectNext = null;
+        string? verifyNext = null;
         var formFieldKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var codeRequired = false;
+        var hasVerifyCode = false;
 
         foreach (var step in steps.EnumerateArray())
         {
             var kind = step.GetProperty("kind").GetString();
             if (string.Equals(kind, "collectForm", StringComparison.OrdinalIgnoreCase))
             {
+                collectNext = step.GetProperty("next").GetString();
                 foreach (var field in step.GetProperty("schemaDef").GetProperty("fields").EnumerateArray())
                 {
-                    formFieldKeys.Add(field.GetProperty("key").GetString()!);
+                    var key = field.GetProperty("key").GetString()!;
+                    formFieldKeys.Add(key);
+                    if (string.Equals(key, "Code", StringComparison.OrdinalIgnoreCase))
+                        codeRequired = field.GetProperty("required").GetBoolean();
                 }
+            }
+
+            if (string.Equals(kind, "verifyCode", StringComparison.OrdinalIgnoreCase))
+            {
+                hasVerifyCode = true;
+                verifyNext = step.GetProperty("next").GetString();
             }
 
             if (string.Equals(kind, "resetPassword", StringComparison.OrdinalIgnoreCase))
@@ -89,10 +190,29 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             }
         }
 
-        passwordKey.Should().NotBeNullOrWhiteSpace();
-        passwordKey!.Should().Be("collectForm.Password");
+        passwordKey.Should().Be("collectForm.Password");
         formFieldKeys.Should().Contain("Password");
+        formFieldKeys.Should().Contain("Code");
         formFieldKeys.Should().NotContain("NewPassword");
         formFieldKeys.Should().NotContain("OldPassword");
+        codeRequired.Should().BeTrue();
+        hasVerifyCode.Should().BeTrue();
+        collectNext.Should().Be("verifyCode");
+        verifyNext.Should().Be("resetPassword");
+    }
+
+    private void SeedEmailCode(string code, DateTime expiresAt)
+    {
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = Guid.NewGuid(),
+            Email = Email.ToLowerInvariant(),
+            TokenHash = CodeGeneratorHelper.GenerateHash(code),
+            TokenLength = (byte)code.Length,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-1),
+        });
     }
 }

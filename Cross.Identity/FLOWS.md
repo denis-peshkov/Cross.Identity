@@ -109,12 +109,15 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.ResetPassword.json`
 
-**Purpose:** change password by email (optionally with code).
+**Purpose:** change password by email after verifying the recovery code.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (opt., 8–128), `Password` (8–128). → `resetPassword` |
+| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128). → `verifyCode` |
+| `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
+
+> Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
 ---
 
