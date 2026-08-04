@@ -78,6 +78,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
+> **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
+
 ---
 
 ## `main.Register.json`
@@ -183,7 +185,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `resetPassword` | Set new password |
 | `getUserId` | Find user, return `UserId` |
 | `token` | Issue access/refresh tokens |
-| `refreshToken` | Refresh using refresh_token |
+| `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
 | `initiateExternalLogin` | OAuth redirect URL |
 | `completeExternalLogin` | OAuth callback, issue tokens |
 

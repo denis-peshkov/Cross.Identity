@@ -13,13 +13,6 @@ public class RefreshToken_StepFactoryTests
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         sc.AddScoped<IJwtTokenService>(_ => Mock.Of<IJwtTokenService>());
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
-        sc.AddScoped(_ =>
-        {
-            var options = new DbContextOptionsBuilder<IdentityContext>()
-                .UseInMemoryDatabase($"refresh-token-factory-{Guid.NewGuid()}")
-                .Options;
-            return new IdentityContext(options);
-        });
         sc.AddSingleton<IOptionsSnapshot<AuthenticationOptions>>(_ =>
         {
             var mock = new Mock<IOptionsSnapshot<AuthenticationOptions>>();

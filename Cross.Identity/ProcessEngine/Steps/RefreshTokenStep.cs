@@ -2,8 +2,12 @@
 
 /// <summary>
 /// Refresh token rotation step:
-/// validates the incoming refresh token and issues a new token pair
-/// and invalidates the old refresh token within a single transaction.
+/// validates the incoming refresh token, issues a new token pair, and invalidates the old refresh token.
+/// <para>
+/// This step does not open a database transaction. The host should wrap the refresh flow
+/// (same scoped <see cref="IdentityContext"/>) in an external transaction so validation,
+/// new-token persistence, and old-token invalidation commit together.
+/// </para>
 /// <para>
 /// Keys:
 /// <list type="bullet">
@@ -39,9 +43,6 @@ internal sealed class RefreshTokenStep : IStep
     /// <summary>Authentication options.</summary>
     public required AuthenticationOptions AuthenticationOptions { get; init; }
 
-    /// <summary>DB context for transactional refresh flow.</summary>
-    public IdentityContext Context { get; set; }
-
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
@@ -50,69 +51,46 @@ internal sealed class RefreshTokenStep : IStep
         if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue).ConfigureAwait(false))
             throw new NotAuthorizedException("Invalid or expired refresh token.");
 
-        // 2) open Transaction
-        // var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        // await using var _ = transaction.ConfigureAwait(false);
-        // or
-        // var transactionOptions = new TransactionOptions
-        // {
-        //     IsolationLevel = IsolationLevel.ReadCommitted,
-        //     Timeout = TimeSpan.FromSeconds(60)
-        // };
-        // using var scope = new TransactionScope(TransactionScopeOption.Required, transactionOptions, TransactionScopeAsyncFlowOption.Enabled);
+        // 2) get UserId from the refresh token
+        var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
+        if (oldRefreshToken is null)
+            throw new InvalidOperationException("User not found when refresh token.");
 
-        try
-        {
-            // 3) get UserId from the refresh token
-            var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
-            if (oldRefreshToken is null)
-                throw new InvalidOperationException("User not found when refresh token.");
+        // 3) get user data
+        var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
+        ArgumentNullException.ThrowIfNull(user);
+        var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
+        if (userId == Guid.Empty)
+            throw new InvalidOperationException("Invalid user ID when refresh token.");
+        var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
+        var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
+        var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
-            // 4) get user data
-            var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
-            ArgumentNullException.ThrowIfNull(user);
-            var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
-            if (userId == Guid.Empty)
-                throw new InvalidOperationException("Invalid user ID when refresh token.");
-            var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-            var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
-            var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        // 4) generate AccessToken
+        var accessClaims = new List<Claim>()
+            .AddIfNotNull(JwtRegisteredClaimNames.Sub, userId.ToString())
+            .AddIfNotNull(ClaimTypes.Email, email)
+            .AddIfNotNull(ClaimTypes.MobilePhone, phone)
+            .AddIfNotNull(ClaimConstants.Username, username);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims).ConfigureAwait(false);
+        ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
-            // 5) generate AccessToken
-            var accessClaims = new List<Claim>()
-                .AddIfNotNull(JwtRegisteredClaimNames.Sub, userId.ToString())
-                .AddIfNotNull(ClaimTypes.Email, email)
-                .AddIfNotNull(ClaimTypes.MobilePhone, phone)
-                .AddIfNotNull(ClaimConstants.Username, username);
-            var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims).ConfigureAwait(false);
-            ArgumentException.ThrowIfNullOrEmpty(accessToken);
+        // 5) generate RefreshToken
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}).ConfigureAwait(false);
+        ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
-            // 6) generate RefreshToken
-            var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}).ConfigureAwait(false);
-            ArgumentException.ThrowIfNullOrEmpty(refreshToken);
+        // 6) Invalidate old RefreshToken
+        var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti).ConfigureAwait(false);
+        ArgumentException.ThrowIfNullOrEmpty(newJti);
+        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
 
-            // 7) Invalidate old RefreshToken
-            var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti).ConfigureAwait(false);
-            ArgumentException.ThrowIfNullOrEmpty(newJti);
-            await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
+        // 7) store the token in Bag
+        ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
+        ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
+        ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
+        ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
 
-            // 8) Complete Transaction
-            // await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-            // scope.Complete();
-
-            // 9) store the token in Bag
-            ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
-            ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
-            ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
-            ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
-            ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
-
-            return StepResult.Ok(Next);
-        }
-        catch (Exception)
-        {
-            // await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-            throw;
-        }
+        return StepResult.Ok(Next);
     }
 }
