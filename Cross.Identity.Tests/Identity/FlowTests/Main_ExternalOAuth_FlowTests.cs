@@ -8,6 +8,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     private const string CallbackUrl = "https://app.example/callback";
 
     private ExternalLoginService _externalLoginService = null!;
+    private HttpContextAccessor _httpContextAccessor = null!;
 
     [SetUp]
     public override void Setup()
@@ -17,6 +18,11 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         Initialize();
 
         SeedGoogleProvider();
+
+        _httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
 
         var headersContextAccessor = new HeadersContextAccessor
         {
@@ -53,13 +59,16 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
         });
 
-        var httpContextAccessor = new Mock<IHttpContextAccessor>();
-        var httpContext = new DefaultHttpContext();
-        httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
-        httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
-
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object));
+            new JwtTokenService(Context, optionsSnapshot.Object, _httpContextAccessor));
+    }
+
+    private void SetAuthenticatedUser(Guid userId)
+    {
+        var identity = new ClaimsIdentity(
+            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
+            authenticationType: "Test");
+        _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
     }
 
     [Test]
@@ -83,9 +92,21 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLogin_WithLinkUserId_ShouldAcceptOptionalGuid()
+    public async Task ExternalLogin_WithLinkUserId_ShouldAcceptWhenMatchesAuthenticatedUser()
     {
         var linkUserId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = linkUserId,
+            Email = "link@example.com",
+            UserName = "link",
+            NormalizedUserName = "link",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SetAuthenticatedUser(linkUserId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
@@ -100,6 +121,28 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
+    }
+
+    [Test]
+    public async Task ExternalLogin_WithLinkUserIdForAnotherUser_ShouldReject()
+    {
+        var authenticatedUserId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        SetAuthenticatedUser(authenticatedUserId);
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(
+                    new Dictionary<string, object?>
+                    {
+                        ["Provider"] = "Google",
+                        ["LinkUserId"] = otherUserId.ToString(),
+                    },
+                    Flow,
+                    FlowOperationEnum.ExternalLogin,
+                    CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*does not match the authenticated user*");
     }
 
     [Test]
@@ -229,7 +272,8 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             Context,
             httpClientFactory.Object,
             optionsMock.Object,
-            Mock.Of<ILogger<ExternalLoginService>>());
+            Mock.Of<ILogger<ExternalLoginService>>(),
+            _httpContextAccessor);
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

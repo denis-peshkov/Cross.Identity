@@ -155,7 +155,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `initiateExternalLogin` | initiateExternalLogin | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
 | `collectResult` | collectResult | `url = initiateExternalLogin.Url`. `next: null` |
 
-> `LinkUserId` enables account linking when present; omit for normal sign-in / sign-up.
+> `LinkUserId` enables account linking when present and must match the authenticated principal (`sub` / NameIdentifier); omit for normal sign-in / sign-up.
 
 ---
 

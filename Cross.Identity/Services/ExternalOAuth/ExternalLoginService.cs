@@ -11,6 +11,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
     public ExternalLoginService(
@@ -18,12 +19,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
         IHttpClientFactory httpClientFactory,
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
+        IHttpContextAccessor httpContextAccessor,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
         _userProvisioner = userProvisioner;
     }
 
@@ -63,6 +66,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         if (linkUserId.HasValue)
         {
+            EnsureLinkUserIdMatchesAuthenticatedPrincipal(linkUserId.Value);
+
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
                 .AnyAsync(x => x.UserAccountId == linkUserId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
@@ -118,6 +123,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
         if (isLinking && !payload.LinkUserId.HasValue)
         {
             throw new NotAuthorizedException("Authentication is required to link an external login.");
+        }
+
+        if (payload.LinkUserId.HasValue)
+        {
+            EnsureLinkUserIdMatchesAuthenticatedPrincipal(payload.LinkUserId.Value);
         }
 
         if (!ExternalOAuth.ExternalOAuthProviders.TryGet(payload.Provider, out var definition))
@@ -429,6 +439,35 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)
         => !string.IsNullOrWhiteSpace(returnUrl)
            && returnUrl.Contains("ExternalLogins", StringComparison.OrdinalIgnoreCase);
+
+    private void EnsureLinkUserIdMatchesAuthenticatedPrincipal(Guid linkUserId)
+    {
+        var authenticatedUserId = TryGetAuthenticatedUserId();
+        if (authenticatedUserId is null)
+        {
+            throw new NotAuthorizedException("Authentication is required to link an external login.");
+        }
+
+        if (authenticatedUserId.Value != linkUserId)
+        {
+            throw new NotAuthorizedException("LinkUserId does not match the authenticated user.");
+        }
+    }
+
+    private Guid? TryGetAuthenticatedUserId()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        var raw =
+            user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        return Guid.TryParse(raw, out var userId) ? userId : null;
+    }
 
     private static string EncodeState(ExternalOAuth.ExternalLoginStatePayload payload)
         => Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));

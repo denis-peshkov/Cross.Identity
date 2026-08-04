@@ -6,12 +6,30 @@ public class ExternalLoginServiceTests : EFTestsBase
 {
     private const string CallbackUrl = "https://app.example/callback";
     private Mock<ILogger<ExternalLoginService>> _logger = null!;
+    private HttpContextAccessor _httpContextAccessor = null!;
 
     [SetUp]
     public override void Setup()
     {
         base.Setup();
         _logger = new Mock<ILogger<ExternalLoginService>>();
+        _httpContextAccessor = new HttpContextAccessor
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+    }
+
+    private void SetAuthenticatedUser(Guid userId)
+    {
+        var identity = new ClaimsIdentity(
+            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
+            authenticationType: "Test");
+        _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
+    }
+
+    private void ClearAuthenticatedUser()
+    {
+        _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity());
     }
 
     [Test]
@@ -76,10 +94,35 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+        SetAuthenticatedUser(userId);
 
         await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, userId, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>()
             .WithMessage("*already linked*");
+    }
+
+    [Test]
+    public async Task InitiateAsync_ShouldThrow_WhenLinkUserIdWithoutAuthentication()
+    {
+        SeedProvider("Google");
+        ClearAuthenticatedUser();
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, Guid.NewGuid(), CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Authentication is required*");
+    }
+
+    [Test]
+    public async Task InitiateAsync_ShouldThrow_WhenLinkUserIdDoesNotMatchAuthenticatedUser()
+    {
+        SeedProvider("Google");
+        SetAuthenticatedUser(Guid.NewGuid());
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, Guid.NewGuid(), CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*does not match the authenticated user*");
     }
 
     [Test]
@@ -307,6 +350,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
+        SetAuthenticatedUser(userId);
         var url = await sut.InitiateAsync("Google", null, userId, CancellationToken.None);
         var state = ExtractState(url);
 
@@ -317,11 +361,42 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task CompleteAsync_ShouldThrow_WhenLinkUserIdDoesNotMatchAuthenticatedUser()
+    {
+        var ownerUserId = Guid.NewGuid();
+        var attackerUserId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = ownerUserId,
+            Email = "owner@example.com",
+            UserName = "owner",
+            NormalizedUserName = "owner",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var sut = CreateService(GoogleSuccessHandler());
+        SetAuthenticatedUser(ownerUserId);
+        var url = await sut.InitiateAsync("Google", null, ownerUserId, CancellationToken.None);
+        var state = ExtractState(url);
+
+        SetAuthenticatedUser(attackerUserId);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*does not match the authenticated user*");
+    }
+
+    [Test]
     public async Task CompleteAsync_ShouldThrow_WhenLinkTargetUserMissing()
     {
         var missingUserId = Guid.NewGuid();
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
+        SetAuthenticatedUser(missingUserId);
         var url = await sut.InitiateAsync("Google", null, missingUserId, CancellationToken.None);
         var state = ExtractState(url);
 
@@ -370,6 +445,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
+        SetAuthenticatedUser(currentUserId);
         var url = await sut.InitiateAsync("Google", null, currentUserId, CancellationToken.None);
         var state = ExtractState(url);
 
@@ -673,6 +749,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,
+            _httpContextAccessor,
             provisioner);
     }
 
