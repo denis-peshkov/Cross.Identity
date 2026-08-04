@@ -16,11 +16,8 @@ internal interface IProcessDefinitionProvider
     /// <summary>
     /// Get a process JSON definition by flow and operation identifiers.
     /// </summary>
-    /// <param name="flow">Flow identifier (for example, <c>"game"</c>, <c>"licenses"</c>, <c>"shop"</c>).</param>
-    /// <param name="operation">
-    /// Operation identifier (free-form slug, for example <c>"register"</c>, <c>"auth"</c>, <c>"getuser"</c>,
-    /// <c>"request-code"</c>, <c>"reset-password"</c>, etc.).
-    /// </param>
+    /// <param name="flow">Flow identifier (for example, <c>"license"</c>).</param>
+    /// <param name="operation">Operation from <see cref="FlowOperationEnum"/> (for example <c>Register</c>, <c>Token</c>).</param>
     /// <returns>Process JSON definition string.</returns>
     /// <exception cref="KeyNotFoundException">When the definition is not found.</exception>
     string GetJson(string flow, FlowOperationEnum operation);

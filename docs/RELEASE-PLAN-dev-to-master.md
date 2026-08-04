@@ -229,7 +229,6 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
 | F6 | `MaxAttempts` exceeded (3) | Unit | ✅ `CodeServiceTests` |
-| F7 | `game.Token`, `shop.*` flows — regression | Integration | ⬜ |
 
 ---
 
@@ -288,7 +287,6 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 | ResetPassword | ✅ (step) | ✅ | `License_ResetPassword_FlowTests` |
 | Licensing | ✅ | ✅ | `License_LicenseCheck_FlowTests` |
 | ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
-| game/shop flows | ⬜ | ⬜ | — |
 
 **Current status:** 301/301 passed.
 

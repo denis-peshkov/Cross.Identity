@@ -91,7 +91,7 @@ internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefini
                 continue;
 
             // tail after base namespace (without leading dot)
-            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "game.auth.json" or "license.Register.json"
+            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "license.Register.json"
 
             // 1) Flows
             var flowMatch = FlowKeyRegex.Match(flowTail);

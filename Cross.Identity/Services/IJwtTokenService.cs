@@ -124,7 +124,6 @@ public interface IJwtTokenService
 
 // /// <summary>
 // /// JWT issuance service.
-// /// Used by the <c>IssueJwtStep</c> step.
 // /// </summary>
 // public interface IJwtIssuer
 // {

@@ -27,14 +27,10 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 
-### All flow files (17)
+### All flow files (10)
 
 | Flow | Operation | File |
 |------|-----------|------|
-| `game` | Auth | `game.Auth.json` |
-| `game` | Register | `game.Register.json` |
-| `game` | RequestCode | `game.RequestCode.json` |
-| `game` | Token | `game.Token.json` |
 | `license` | ForgotPassword | `license.ForgotPassword.json` |
 | `license` | GetUserId | `license.GetUserId.json` |
 | `license` | RefreshToken | `license.RefreshToken.json` |
@@ -45,62 +41,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `license` | TokenByCode | `license.TokenByCode.json` |
 | `license` | ExternalLogin | `license.ExternalLogin.json` |
 | `license` | ExternalLoginCallback | `license.ExternalLoginCallback.json` |
-| `shop` | Auth | `shop.Auth.json` |
-| `shop` | Register | `shop.Register.json` |
-| `shop` | RequestCode | `shop.RequestCode.json` |
-
----
-
-## `game.Auth.json`
-
-**Purpose:** game sign-in with a one-time email code.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `UserName`, `Code` (4–8). → `codeAuth` |
-| `codeAuth` | codeAuth | `channel: email`, `identityKey: collectForm.UserName`, `codeKey: collectForm.Code`, `resolveBy.field: UserName`. → `issueJwt` |
-| `issueJwt` | issueJwt | `lifetimeSeconds: 43200`, `subKey: codeAuth.UserId`, claims: `scope=game.player`, `amr=email_code`. → `collectResult` |
-| `collectResult` | collectResult | `token = issueJwt.Token`, `email = collectForm.Email` (no `Email` field in the form). |
-
----
-
-## `game.Register.json`
-
-**Purpose:** player registration with email code confirmation and JWT issuance.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Email`, `UserName`, `FirstName`, `LastName`, `BirthDate`, `Gender`, `AgreeLow`, `AgreeService`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: registration.Email`. → `collectForm` |
-| `collectForm` | collectForm | second form: `UserName`, `Code`. → `verifyCode` |
-| `verifyCode` | verifyCode | `channel: email`, `identityKey: verification.UserName`, `codeKey: verification.Code`. → `createUser` |
-| `createUser` | createUser | map from `registration.*`. → `issueJwt` |
-| `issueJwt` | issueJwt | `lifetimeSeconds: 604800`, `subKey: user.Id`, claims: `scope=game.player`, `amr=email_code`. |
-
-> Two `collectForm` steps with the same `kind` — the flow will not load in `ProcessLoader` without renaming steps.
-
----
-
-## `game.RequestCode.json`
-
-**Purpose:** send an email code without registration/sign-in.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Email`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: EmailCode`. `next: null` |
-
----
-
-## `game.Token.json`
-
-**Purpose:** access/refresh tokens by email + password.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Password` (8–128). → `token` |
-| `token` | token | `selectorKey`, `passwordKey`, `channel: email`; result keys `AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`. → `collectResult` |
-| `collectResult` | collectResult | OAuth-like response: `access_token`, `refresh_token`, `token_type`, `expires_in`. `next: null` |
 
 ---
 
@@ -228,46 +168,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `shop.Auth.json`
-
-**Purpose:** shop sign-in by phone and SMS code.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Phone`, `Code` (4–8). → `codeAuth` |
-| `codeAuth` | codeAuth | `channel: phone`, `identityKey: auth.Phone`, `codeKey: auth.Code`, `resolveBy.field: Phone`. → `issueJwt` |
-| `issueJwt` | issueJwt | `lifetimeSeconds: 43200`, `subKey: user.Id`, claims: `scope=shop.customer`, `amr=sms_code`. |
-
----
-
-## `shop.Register.json`
-
-**Purpose:** customer registration with SMS confirmation.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Email`, `UserName`, `FirstName`, `LastName`, `Phone`. → `sendCode` |
-| `sendCode` | sendCode | `channel: phone`, `selectorKey: registration.Phone`. → `collectForm` |
-| `collectForm` | collectForm | `Phone`, `Code`. → `verifyCode` |
-| `verifyCode` | verifyCode | `channel: phone`, `identityKey: verification.Phone`, `codeKey: verification.Code`. → `createUser` |
-| `createUser` | createUser | map from `registration.*`. → `issueJwt` |
-| `issueJwt` | issueJwt | `lifetimeSeconds: 1209600`, `subKey: user.Id`, claims: `scope=shop.customer`, `amr=sms_code`. |
-
-> As in `game.Register.json`, two `collectForm` steps with one `kind` are incompatible with the current `ProcessLoader`.
-
----
-
-## `shop.RequestCode.json`
-
-**Purpose:** request an SMS code for a phone number.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Phone`. → `sendCode` |
-| `sendCode` | sendCode | `channel: phone`, `selectorKey: request.Phone`. `next: null` |
-
----
-
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
@@ -286,8 +186,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `refreshToken` | Refresh using refresh_token |
 | `initiateExternalLogin` | OAuth redirect URL |
 | `completeExternalLogin` | OAuth callback, issue tokens |
-
-JSON also uses `issueJwt`, but a separate `IssueJwtStepFactory` is **not registered** in `AddCrossIdentity` — flows `game.Auth`, `game.Register`, `shop.Auth`, `shop.Register` with this step will not run until the step is implemented and registered.
 
 ### Form validators (`schemaDef.validators`)
 

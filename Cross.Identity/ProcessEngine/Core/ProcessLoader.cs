@@ -14,8 +14,8 @@ internal static class ProcessLoader
     ///   "start": "collectForm",
     ///   "steps": [
     ///     { "kind": "collectForm", ... },
-    ///     { "kind": "passwordAuth", ... },
-    ///     { "kind": "issueJwt", ... }
+    ///     { "kind": "token", ... },
+    ///     { "kind": "collectResult", ... }
     ///   ]
     /// }
     /// </code>
