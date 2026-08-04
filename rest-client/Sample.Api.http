@@ -113,6 +113,8 @@ Content-Type: application/json
   "Provider": "Google",
   "ReturnUrl": "{{HOST}}/swagger"
 }
+# Optional account-link: "LinkUserId": "<user-guid>"
+
 
 ###
 # @name main-external-login-callback

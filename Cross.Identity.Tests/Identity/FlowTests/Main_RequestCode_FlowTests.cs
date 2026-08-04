@@ -84,7 +84,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_LicenseRegistration_SuccessfulExecution()
+    public async Task Handle_RequestCode_SuccessfulExecution()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -123,7 +123,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
 
         // Act & Assert
         await FluentActions.Invoking(() =>
-                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.ForgotPassword, CancellationToken.None))
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.RequestCode, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*"); // verify that an error message is present

@@ -100,7 +100,7 @@
 
 ### A. Registration (`main.Register`)
 
-**Automated tests:** `Main_Registration_FlowTests`, `LicenseRegisterFlowTests`, `CreateUser_StepTests`
+**Automated tests:** `Main_Registration_FlowTests`, `CreateUser_StepTests`
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|

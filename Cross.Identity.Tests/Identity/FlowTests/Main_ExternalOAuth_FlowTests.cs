@@ -83,6 +83,43 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    public async Task ExternalLogin_WithLinkUserId_ShouldAcceptOptionalGuid()
+    {
+        var linkUserId = Guid.NewGuid();
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["Provider"] = "Google",
+                ["ReturnUrl"] = "/home",
+                ["LinkUserId"] = linkUserId.ToString(),
+            },
+            Flow,
+            FlowOperationEnum.ExternalLogin,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
+    }
+
+    [Test]
+    public async Task ExternalLogin_WithInvalidLinkUserId_ShouldThrowValidationException()
+    {
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(
+                    new Dictionary<string, object?>
+                    {
+                        ["Provider"] = "Google",
+                        ["LinkUserId"] = "not-a-guid",
+                    },
+                    Flow,
+                    FlowOperationEnum.ExternalLogin,
+                    CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>();
+    }
+
+    [Test]
     public async Task ExternalLoginCallback_ShouldReturnTokens_WhenGoogleOAuthSucceeds()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, CancellationToken.None);

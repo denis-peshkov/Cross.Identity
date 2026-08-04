@@ -22,7 +22,6 @@ BREAKING: built-in flow rename license → main
 - Definitions: main.{Operation}.json (was license.{Operation}.json).
 - Sample/API path segment: /api/identity/main/{Operation} (was .../license/...).
 - Removed demo flows: game.*, shop.*, edoctors.*.
-- See docs/MIGRATION.md for consumer steps.
 
 Other breaking (same line)
 - GetUser → GetUserId (enum, files, routes).

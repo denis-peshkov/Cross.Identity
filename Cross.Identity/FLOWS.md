@@ -146,11 +146,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512). → `initiateExternalLogin` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `LinkUserId` (opt. Guid string). → `initiateExternalLogin` |
 | `initiateExternalLogin` | initiateExternalLogin | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
 | `collectResult` | collectResult | `url = initiateExternalLogin.Url`. `next: null` |
 
-> `LinkUserId` is not in the form schema but may be passed in the input payload for account linking.
+> `LinkUserId` enables account linking when present; omit for normal sign-in / sign-up.
 
 ---
 

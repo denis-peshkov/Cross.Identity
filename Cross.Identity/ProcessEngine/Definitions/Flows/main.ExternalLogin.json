@@ -6,7 +6,8 @@
       "schemaDef": {
         "fields": [
           { "key": "Provider", "type": "String", "required": true, "min": 2, "max": 32 },
-          { "key": "ReturnUrl", "type": "String", "required": false, "max": 512 }
+          { "key": "ReturnUrl", "type": "String", "required": false, "max": 512 },
+          { "key": "LinkUserId", "type": "String", "required": false, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" }
         ]
       },
       "next": "initiateExternalLogin"
