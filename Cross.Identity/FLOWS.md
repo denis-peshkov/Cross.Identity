@@ -102,7 +102,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan). → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
+| `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---

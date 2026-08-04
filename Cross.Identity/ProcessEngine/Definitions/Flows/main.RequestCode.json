@@ -15,6 +15,7 @@
       "kind": "sendCode",
       "channel": "email",
       "selectorKey": "collectForm.Email",
+      "ttlKey": "collectForm.Ttl",
       "resolveBy": { "field": "Email" },
       "next": "collectResult"
     },

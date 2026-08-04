@@ -74,7 +74,6 @@ public class SendCode_StepTests
             Channel = ChannelEnum.Email,
             SelectorKey = "collectForm.Email",
             ResolveBy = new ResolveBy { Field = "Email" },
-            Ttl = TimeSpan.FromMinutes(5),
             Next = "verifyCode"
         };
 
@@ -93,7 +92,113 @@ public class SendCode_StepTests
                     m.Destination == email),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
+                TimeSpan.FromMinutes(5),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task SendCodeStep_WithTtlKey_ShouldUseBagTtl()
+    {
+        var email = _faker.Internet.Email();
+        var userId = Guid.NewGuid().ToString();
+        var ttl = TimeSpan.FromMinutes(17);
+
+        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>Your code: {{code}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
                 It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            Channel = ChannelEnum.Email,
+            SelectorKey = "collectForm.Email",
+            TtlKey = "collectForm.Ttl",
+            ResolveBy = new ResolveBy { Field = "Email" },
+            Next = "verifyCode"
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Ttl", ttl);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                ttl,
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task SendCodeStep_WithTtlKeyMissingInBag_ShouldUseDefaultTtl()
+    {
+        var email = _faker.Internet.Email();
+        var userId = Guid.NewGuid().ToString();
+
+        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>Your code: {{code}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            Channel = ChannelEnum.Email,
+            SelectorKey = "collectForm.Email",
+            TtlKey = "collectForm.Ttl",
+            ResolveBy = new ResolveBy { Field = "Email" },
+            Next = "verifyCode"
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Email", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -126,7 +231,6 @@ public class SendCode_StepTests
             Channel = ChannelEnum.Sms,
             SelectorKey = "collectForm.Phone",
             ResolveBy = new ResolveBy { Field = "Phone" },
-            Ttl = TimeSpan.FromMinutes(5),
             Next = null
         };
 
@@ -179,7 +283,6 @@ public class SendCode_StepTests
             Channel = ChannelEnum.Email,
             SelectorKey = "collectForm.Email",
             ResolveBy = new ResolveBy { Field = "Email" },
-            Ttl = TimeSpan.FromMinutes(5),
             Next = null
         };
 
@@ -197,7 +300,7 @@ public class SendCode_StepTests
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
-                It.IsAny<TimeSpan>(),
+                TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

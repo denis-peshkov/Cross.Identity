@@ -39,9 +39,11 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Authentication:DeveloperMode"] = "true"
+                ["Authentication:DeveloperMode"] = "true",
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
             })
             .Build();
+        RegisterToServiceProvider<IConfiguration, IConfiguration>(configuration);
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,
@@ -110,6 +112,31 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         _serviceProviderMock.Verify(x => x.GetService(typeof(IUserService)), Times.Once);
         // (optional) verify total number of invocations
         _serviceProviderMock.Invocations.Count.Should().BeGreaterOrEqualTo(9);
+    }
+
+    [Test]
+    public async Task Handle_RequestCode_ShouldPersistExpiresAtMatchingSubmittedTtl()
+    {
+        var ttl = TimeSpan.FromMinutes(17);
+        var before = DateTime.UtcNow;
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["Email"] = "test@example.com",
+                ["Ttl"] = ttl,
+            },
+            FLOW,
+            FlowOperationEnum.RequestCode,
+            CancellationToken.None);
+
+        var after = DateTime.UtcNow;
+        result.Data.Should().NotBeNull();
+
+        var entity = await Context.EmailVerifications.SingleAsync();
+        entity.ExpiresAt.Should().BeOnOrAfter(before.Add(ttl).AddSeconds(-1));
+        entity.ExpiresAt.Should().BeOnOrBefore(after.Add(ttl).AddSeconds(1));
+        entity.ExpiresAt.Should().BeCloseTo(entity.CreatedAt.Add(ttl), TimeSpan.FromSeconds(2));
     }
 
     [Test]

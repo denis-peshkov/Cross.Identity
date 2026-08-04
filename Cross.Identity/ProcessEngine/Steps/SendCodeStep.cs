@@ -42,8 +42,11 @@ internal sealed class SendCodeStep : IStep
     /// </summary>
     public required string SelectorKey { get; init; }
 
-    /// <summary>Code lifetime. Defaults to 5 minutes.</summary>
-    public TimeSpan Ttl { get; init; } = TimeSpan.FromMinutes(5);
+    /// <summary>
+    /// Optional key in <see cref="Bag"/> for a per-request TTL (for example, <c>"collectForm.Ttl"</c>).
+    /// When set and present, overrides the default 5-minute lifetime.
+    /// </summary>
+    public string? TtlKey { get; init; }
 
     /// <summary>User lookup settings: which field to search by (for example, "Email" or "Phone").</summary>
     public required ResolveBy ResolveBy { get; init; }
@@ -54,6 +57,7 @@ internal sealed class SendCodeStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var destination = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        var ttl = ResolveTtl(ctx);
 
         var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, destination, cancellationToken).ConfigureAwait(false);
 
@@ -82,7 +86,7 @@ internal sealed class SendCodeStep : IStep
             .Replace("{{logoWidth}}", $"34")
             .Replace("{{logoHeight}}", $"34")
             .Replace("{{fullName}}", "Denis Peshkov")
-            .Replace("{{expires}}", Ttl.ToHumanString())
+            .Replace("{{expires}}", ttl.ToHumanString())
             .Replace("{{year}}", year)
             .Replace("{{supportEmail}}", "support@peshkov.biz")
         ;
@@ -100,7 +104,7 @@ internal sealed class SendCodeStep : IStep
         try
         {
             // The code must be stored and available for subsequent validation
-            await CodeService.SendAsync(msg, code, userId, Ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, userId, ttl, cancellationToken).ConfigureAwait(false);
 
             var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
             if (developerMode)
@@ -116,5 +120,17 @@ internal sealed class SendCodeStep : IStep
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
             return StepResult.Fail(ex);
         }
+    }
+
+    private TimeSpan ResolveTtl(Bag ctx)
+    {
+        var ttlDefault = TimeSpan.FromMinutes(5);
+
+        if (string.IsNullOrWhiteSpace(TtlKey))
+            return ttlDefault;
+
+        return ctx.TryGet(BagKey.Qualify(Kind, TtlKey), out TimeSpan? ttl) && ttl is not null
+            ? ttl.Value
+            : ttlDefault;
     }
 }

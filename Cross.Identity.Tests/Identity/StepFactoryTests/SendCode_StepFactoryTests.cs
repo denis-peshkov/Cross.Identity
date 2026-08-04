@@ -46,7 +46,6 @@ public class SendCode_StepFactoryTests
               "resolveBy": {
                 "field": "Email"
               },
-              "ttlSeconds": 300,
               "next": "verifyCode"
             }
             """);
@@ -61,7 +60,7 @@ public class SendCode_StepFactoryTests
         step.Channel.Should().Be(ChannelEnum.Email);
         step.SelectorKey.Should().Be("collectForm.Email");
         step.ResolveBy.Field.Should().Be("Email");
-        step.Ttl.Should().Be(TimeSpan.FromSeconds(300));
+        step.TtlKey.Should().BeNull();
         step.Next.Should().Be("verifyCode");
         step.CodeService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();
@@ -96,15 +95,15 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
-    public void SendCodeStepFactory_ShouldUseDefaultTtl()
+    public void SendCodeStepFactory_ShouldBindTtlKey()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "sendCode",
               "channel": "email",
               "selectorKey": "collectForm.Email",
+              "ttlKey": "collectForm.Ttl",
               "resolveBy": {
                 "field": "Email"
               }
@@ -112,12 +111,9 @@ public class SendCode_StepFactoryTests
             """);
 
         var factory = new SendCodeStepFactory();
-
-        // Act
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
-        step.Ttl.Should().Be(TimeSpan.FromMinutes(5)); // default value
+        step.TtlKey.Should().Be("collectForm.Ttl");
     }
 
     [Test]
