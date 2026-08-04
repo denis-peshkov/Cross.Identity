@@ -27,11 +27,10 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 
-### All flow files (18)
+### All flow files (17)
 
 | Flow | Operation | File |
 |------|-----------|------|
-| `edoctors` | Register | `edoctors.Register.json` |
 | `game` | auth | `game.auth.json` |
 | `game` | Register | `game.Register.json` |
 | `game` | request-code | `game.request-code.json` |
@@ -49,21 +48,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `shop` | auth | `shop.auth.json` |
 | `shop` | Register | `shop.Register.json` |
 | `shop` | request-code | `shop.request-code.json` |
-
----
-
-## `edoctors.Register.json`
-
-**Purpose:** eDoctors user registration by email with confirmation code delivery.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | Fields: `Email`, `FirstName`, `LastName`, `Password`, `ConfirmPassword`. Validator `equal(Password, ConfirmPassword)`. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` from `collectForm.*`; `selectorKey: collectForm.Email`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
-| `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
-
-> The form has no `FullName`, `Company`, `AcceptGetEmails`, `AcceptLicenseTerms` fields — they are defined only in the `createUser` step `map`.
 
 ---
 

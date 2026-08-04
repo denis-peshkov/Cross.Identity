@@ -109,8 +109,7 @@
 | A3 | Password validation (min 8, max 128) | Unit/Integration | ✅ `Handle_InvalidInput_ShouldThrowValidationException` |
 | A4 | `ConfirmPassword` no longer required — old clients not broken | Integration | ✅ test without `ConfirmPassword` |
 | A5 | Confirmation code stored in `EmailVerifications` | Integration | 🟨 `CodeServiceTests`; DB not verified in registration flow |
-| A6 | `edoctors.Register` — still requires `ConfirmPassword` | Integration | ✅ `EDoctors_Registration_FlowTests` |
-| A7 | `createUser` field mapping (`FullName`, `Company`, flags) | Integration | ⬜ no test for extended mapping |
+| A6 | `createUser` field mapping (`FullName`, `Company`, flags) | Integration | ⬜ no test for extended mapping |
 
 ---
 
@@ -230,7 +229,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
 | F6 | `MaxAttempts` exceeded (3) | Unit | ✅ `CodeServiceTests` |
-| F7 | `game.Token`, `shop.*` flows — regression | Integration | ⬜ only `edoctors.Register` |
+| F7 | `game.Token`, `shop.*` flows — regression | Integration | ⬜ |
 
 ---
 
@@ -289,7 +288,7 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 | ResetPassword | ✅ (step) | ✅ | `License_ResetPassword_FlowTests` |
 | Licensing | ✅ | ✅ | `License_LicenseCheck_FlowTests` |
 | ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
-| game/shop/edoctors flows | ⬜ | 🟨 | `edoctors.Register` only |
+| game/shop flows | ⬜ | ⬜ | — |
 
 **Current status:** 301/301 passed.
 

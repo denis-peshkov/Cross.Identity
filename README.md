@@ -96,7 +96,7 @@ Behavior:
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
     input: requestBodyAsDictionary,
-    flow: "license",           // e.g. license, game, shop, edoctors
+    flow: "license",           // e.g. license, game, shop
     operation: FlowOperationEnum.Token,
     cancellationToken);
 // result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
