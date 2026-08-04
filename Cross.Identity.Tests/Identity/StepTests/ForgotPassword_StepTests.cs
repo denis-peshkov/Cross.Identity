@@ -6,7 +6,8 @@ public class ForgotPassword_StepTests
 {
     private Mock<ILogger> _logger = null!;
     private Mock<ICodeService> _codeService = null!;
-    private Mock<IConfiguration> _configuration = null!;
+    private IConfiguration _defaultConfiguration = null!;
+    private IConfiguration _developerConfiguration = null!;
     private Mock<IHostEnvironment> _environment = null!;
     private Mock<IProcessDefinitionProvider> _processDefinitionProvider = null!;
     private ForgotPasswordStep _step = null!;
@@ -18,11 +19,26 @@ public class ForgotPassword_StepTests
         _faker = new Faker();
         _logger = new Mock<ILogger>();
         _codeService = new Mock<ICodeService>();
-        _configuration = new Mock<IConfiguration>();
+        _defaultConfiguration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "false",
+            })
+            .Build();
+        _developerConfiguration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true",
+            })
+            .Build();
         _environment = new Mock<IHostEnvironment>();
         _processDefinitionProvider = new Mock<IProcessDefinitionProvider>();
 
-        _step = new ForgotPasswordStep
+        _step = CreateStep(_developerConfiguration);
+    }
+
+    private ForgotPasswordStep CreateStep(IConfiguration configuration)
+        => new()
         {
             Kind = "forgotPassword",
             SelectorKey = "email",
@@ -30,12 +46,11 @@ public class ForgotPassword_StepTests
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             CodeService = _codeService.Object,
-            Configuration = _configuration.Object,
+            Configuration = configuration,
             Environment = _environment.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Next = "nextStep"
         };
-    }
 
     [Test]
     public async Task ExecuteAsync_WithEmail_ShouldSendResetEmail()
@@ -98,6 +113,33 @@ public class ForgotPassword_StepTests
         var code = bag.Get<string>("forgotPassword.LastCode");
         code.Should().NotBeNullOrEmpty();
         code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits
+    }
+
+    [Test]
+    public async Task ExecuteAsync_WhenDeveloperModeDisabled_ShouldNotSetLastCode()
+    {
+        var email = _faker.Internet.Email();
+        var bag = new Bag().Set("forgotPassword.email", email);
+        var step = CreateStep(_defaultConfiguration);
+
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
+            .Returns("Test template");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "html"))
+            .Returns("<html>Test template</html>");
+
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        bag.ContainsKey("forgotPassword.LastCode").Should().BeFalse();
     }
 
     [Test]

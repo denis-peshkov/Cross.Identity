@@ -80,6 +80,40 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    public async Task ForgotPassword_InProductionMode_ShouldOmitLastCode()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "false",
+            })
+            .Build();
+        RegisterToServiceProvider<IConfiguration, IConfiguration>(configuration);
+        RegisterToServiceProvider<ICodeService, ICodeService>(
+            new CodeService(
+                Context,
+                Mock.Of<ILogger<CodeService>>(),
+                Mock.Of<IEmailSenderService>(),
+                Mock.Of<ISmsSenderService>(),
+                configuration));
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["Email"] = Email },
+            Flow,
+            FlowOperationEnum.ForgotPassword,
+            CancellationToken.None);
+
+        if (result.Data is Dictionary<string, object?> payload)
+        {
+            payload.Should().NotContainKey("LastCode");
+        }
+        else
+        {
+            result.Data.Should().BeNull();
+        }
+    }
+
+    [Test]
     public async Task ForgotPassword_WithInvalidEmail_ShouldThrowValidationException()
     {
         var act = () => _flowExecutor.ExecuteAsync(

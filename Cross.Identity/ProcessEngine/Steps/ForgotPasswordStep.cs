@@ -107,8 +107,12 @@ internal sealed class ForgotPasswordStep : IStep
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
         }
 
-        // For debugging/tests, store the last code
-        ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: not shown in the schema, not visible that it exists; maybe expose as an Output field collection
+        var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
+        if (developerMode)
+        {
+            // For debugging/tests, store the last code
+            ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: not shown in the schema, not visible that it exists; maybe expose as an Output field collection
+        }
 
         return StepResult.Ok(Next);
     }
