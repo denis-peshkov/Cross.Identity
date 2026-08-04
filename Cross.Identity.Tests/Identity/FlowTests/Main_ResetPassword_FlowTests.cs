@@ -82,6 +82,56 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task ResetPassword_WithAlreadyUsedCode_ShouldRejectBeforePasswordChange()
+    {
+        SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10), usedAt: DateTime.UtcNow.AddMinutes(-1));
+
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = Email,
+            ["Code"] = ValidCode,
+            ["Password"] = Password,
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired verification code*");
+
+        _userServiceMock.Verify(
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ResetPassword_WithReusedCode_ShouldRejectSecondAttempt()
+    {
+        SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
+
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = Email,
+            ["Code"] = ValidCode,
+            ["Password"] = Password,
+        };
+
+        await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None);
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired verification code*");
+
+        _userServiceMock.Verify(
+            s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task ResetPassword_WithoutCode_ShouldThrowValidationException()
     {
         var input = new Dictionary<string, object?>
@@ -201,7 +251,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         verifyNext.Should().Be("resetPassword");
     }
 
-    private void SeedEmailCode(string code, DateTime expiresAt)
+    private void SeedEmailCode(string code, DateTime expiresAt, DateTime? usedAt = null)
     {
         AddToDb(new EmailVerificationEntity
         {
@@ -212,6 +262,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             Attempts = 0,
             MaxAttempts = 3,
             ExpiresAt = expiresAt,
+            UsedAt = usedAt,
             CreatedAt = DateTime.UtcNow.AddMinutes(-1),
         });
     }

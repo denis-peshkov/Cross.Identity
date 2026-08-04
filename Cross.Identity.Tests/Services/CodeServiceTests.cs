@@ -91,6 +91,52 @@ public class CodeServiceTests : EFTestsBase
 
         // Assert
         result.Should().BeTrue();
+        var stored = await Context.EmailVerifications.SingleAsync();
+        stored.UsedAt.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeAlreadyUsed()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            UsedAt = DateTime.UtcNow.AddMinutes(-1),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-2),
+        });
+
+        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeReused()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        (await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
     }
 
     [Test]
@@ -141,6 +187,31 @@ public class CodeServiceTests : EFTestsBase
 
         var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
+        var stored = await Context.PhoneVerifications.SingleAsync();
+        stored.UsedAt.Should().NotBeNull();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeAlreadyUsed()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            UsedAt = DateTime.UtcNow.AddMinutes(-1),
+            CreatedAt = DateTime.UtcNow.AddMinutes(-2),
+        });
+
+        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        result.Should().BeFalse();
     }
 
     [Test]
