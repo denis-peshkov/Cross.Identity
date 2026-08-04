@@ -53,3 +53,14 @@ Agent fills JSON fields; `format-pr-comment.mjs` renders this layout.
 - **bug** for broken flows/tests
 - **feature** for new flows/capabilities
 - **enhancement** for refactors/perf without behavior change
+
+## GitHub labels (CI)
+
+After analysis, `post-pr-triage.mjs` syncs PR labels via `apply-pr-labels.mjs`:
+
+| Field | Label |
+|-------|--------|
+| `category` | `feature` / `bug` / `enhancement` / `security` / `docs` / `chore` / `question` |
+| `priority` | `priority:critical` / `priority:high` / `priority:medium` / `priority:low` |
+
+Only these managed labels are added/removed; other PR labels are kept. Missing labels are created with `--force`.

@@ -47,5 +47,5 @@ bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.d
 
 ## CI
 
-- **PR opened/updated** — job `pr-triage-comment` posts wshm-style comment (`post-pr-triage.mjs`)
+- **PR opened/updated** — job `pr-triage-comment` posts wshm-style comment (`post-pr-triage.mjs`) and syncs labels `{category}` + `priority:{priority}`
 - **Weekly** — `.cursor/triage/docs/ci-report-*.md` and `.data/*.json` in artifact
