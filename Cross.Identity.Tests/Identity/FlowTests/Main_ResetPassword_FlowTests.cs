@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-internal class License_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private const string Email = "test@example.com";
     private const string Password = "P@ssw0rd!";
 

@@ -1,10 +1,10 @@
-namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 [Category(TestCategory.INTEGRATION)]
-internal class License_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private const string SignKeyBase64 = "tTPm5yP2Q+1m7UQlM3N2AVnleqk7D4HhR0YzF9o5+Xw=";
     private const string EncKeyBase64 = "r9lZJcR8CdpqgGgxP1VbUk2OQhlnwFJSwVOrMDyk4Lc=";
 

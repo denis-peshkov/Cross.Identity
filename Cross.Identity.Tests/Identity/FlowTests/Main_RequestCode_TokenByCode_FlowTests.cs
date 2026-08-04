@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-internal class License_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private Guid _userId;
 
     [SetUp]

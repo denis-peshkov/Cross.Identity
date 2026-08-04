@@ -52,13 +52,13 @@
 
 | # | Block | Key changes | Commits/files |
 |---|------|-------------------|---------------|
-| A | **Registration (US-129)** | `license.Register` — email+password, no `ConfirmPassword`; `createUser` → `sendCode` → `LastCode`+`UserId` | `license.Register.json`, `UserService`, flow tests |
+| A | **Registration (US-129)** | `main.Register` — email+password, no `ConfirmPassword`; `createUser` → `sendCode` → `LastCode`+`UserId` | `main.Register.json`, `UserService`, flow tests |
 | B | **External OAuth** | Google/Microsoft/GitHub/Apple; steps `initiateExternalLogin` / `completeExternalLogin`; flows `ExternalLogin`, `ExternalLoginCallback`; linking | `ExternalLoginService`, `ExternalOAuthProviders`, 2 JSON flows |
 | C | **Refresh Token / "Remember me"** | `AbsoluteExpiresAt`, `FamilyId` chain, rotation, background cleanup | `JwtTokenService`, `RefreshTokenStep`, `ExpiredRefreshTokenCleanupHostedService` |
 | D | **JWT licensing** | Validation on first `ExecuteAsync`; section `CrossIdentity:LicenseKey` | `LicenseAccessor`, `LicenseValidator`, `FlowExecutor` |
 | E | **Developer Mode** | Codes stored in DB without sending email/SMS | `CodeService`, `SendCodeStep`, `Authentication:DeveloperMode` |
-| F | **Token / TokenByCode / RequestCode** | End-to-end scenario request code → token by code | `License_RequestCode_TokenByCode_FlowTests` |
-| G | **Reset Password** | Email/SMS notification after password change; new form fields | `ResetPasswordStep`, `license.ResetPassword.json` |
+| F | **Token / TokenByCode / RequestCode** | End-to-end scenario request code → token by code | `Main_RequestCode_TokenByCode_FlowTests` |
+| G | **Reset Password** | Email/SMS notification after password change; new form fields | `ResetPasswordStep`, `main.ResetPassword.json` |
 | H | **Infrastructure** | `UnitTests` → `Tests`, CI triage, PR triggers, dependency updates | `.github/workflows/`, `.cursor/triage/` |
 
 ---
@@ -69,9 +69,9 @@
 
 | Change | Was (master) | Now (dev) | Action |
 |-----------|---------------|-------------|----------|
-| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `license/GetUserId` |
-| Flow file | `license.GetUser.json` | **`license.GetUserId.json`** | Update custom overrides |
-| Removed flows | `license.Auth.json`, `license.register1.json` | removed | Verify no one still calls them |
+| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `main/GetUserId` |
+| Flow file | `main.GetUser.json` | **`main.GetUserId.json`** | Update custom overrides |
+| Removed flows | `main.Auth.json`, `main.register1.json` | removed | Verify no one still calls them |
 | `collectResult` response with 1 field | bare value (`"abc"`) | **always an object** `{ "field": "abc" }` | Update deserialization on clients |
 | `IFlowExecutor` / `FlowExecutor` | public class | **internal class** | Public contract — only `IFlowExecutor` |
 
@@ -98,13 +98,13 @@
 
 ## 3. Checklists by functional blocks
 
-### A. Registration (`license.Register`)
+### A. Registration (`main.Register`)
 
-**Automated tests:** `License_Registration_FlowTests`, `LicenseRegisterFlowTests`, `CreateUser_StepTests`
+**Automated tests:** `Main_Registration_FlowTests`, `LicenseRegisterFlowTests`, `CreateUser_StepTests`
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|
-| A1 | Registration with valid email+password → `UserId` + `LastCode` in response | Integration | ✅ `License_Registration_FlowTests` |
+| A1 | Registration with valid email+password → `UserId` + `LastCode` in response | Integration | ✅ `Main_Registration_FlowTests` |
 | A2 | Re-registration with same email → error | Integration | 🟨 unit `CreateUserAsync_ShouldThrowWhenEmailExists`; flow ⬜ |
 | A3 | Password validation (min 8, max 128) | Unit/Integration | ✅ `Handle_InvalidInput_ShouldThrowValidationException` |
 | A4 | `ConfirmPassword` no longer required — old clients not broken | Integration | ✅ test without `ConfirmPassword` |
@@ -115,7 +115,7 @@
 
 ### B. External OAuth Login
 
-**Automated tests:** `ExternalLoginServiceTests`, `License_ExternalOAuth_FlowTests`, step/factory unit tests.
+**Automated tests:** `ExternalLoginServiceTests`, `Main_ExternalOAuth_FlowTests`, step/factory unit tests.
 
 #### B1. Configuration (required before any manual test)
 
@@ -144,8 +144,8 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | B1 | `CallbackUrl` set — otherwise `InvalidOperationException` | Unit | ✅ `ExternalLoginServiceTests` |
 | B2 | Provider not in config → `ValidationException` | Unit | ✅ |
 | B3 | Provider not in DB (`Providers` table) / disabled → `NotFoundException` | Unit | ✅ |
-| B4 | **Initiate:** `POST license/ExternalLogin` → `{ url }` with OAuth redirect | Integration | ✅ `License_ExternalOAuth_FlowTests` |
-| B5 | **Callback:** `POST license/ExternalLoginCallback` → tokens + `user_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
+| B4 | **Initiate:** `POST main/ExternalLogin` → `{ url }` with OAuth redirect | Integration | ✅ `Main_ExternalOAuth_FlowTests` |
+| B5 | **Callback:** `POST main/ExternalLoginCallback` → tokens + `user_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
 | B6 | OAuth error (`Error`, `ErrorDescription`) → correct error | Unit + Integration | ✅ |
 | B7 | State TTL expired → rejection | Unit | ✅ `CompleteAsync_ShouldThrow_WhenStateExpired` |
 | B8 | **New user** — auto-provision | Integration | ✅ callback creates user + external login in DB |
@@ -164,16 +164,16 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|
-| C1 | Access+refresh pair issued on `license.Token` (password) | Integration | ✅ |
-| C2 | Pair issued on `license.TokenByCode` | Integration | ✅ |
+| C1 | Access+refresh pair issued on `main.Token` (password) | Integration | ✅ |
+| C2 | Pair issued on `main.TokenByCode` | Integration | ✅ |
 | C3 | Rotation: old refresh invalidated, new one works | Unit | ✅ `JwtTokenServiceTests` |
 | C4 | `AbsoluteExpiresAt` preserved on rotation (chain) | Unit | ✅ |
 | C5 | Refresh after `AbsoluteExpiresAt` → rejection | Unit | 🟨 logic in `ValidateRefreshTokenAsync`; no dedicated test for expired absolute |
 | C6 | `RefreshTokenAbsoluteExpires` in config affects new chains | Unit | ✅ `GenerateRefreshTokenAsync_ShouldUseConfiguredRollingLifetime` |
 | C7 | `ExpiredRefreshTokenCleanupHostedService` removes expired tokens | Unit | ✅ |
 | C8 | Cleanup interval `Authentication:TokenCleanupInterval` (default 1h) | Manual | ⬜ |
-| C9 | `license.RefreshToken` flow end-to-end | Integration | ✅ `License_RefreshToken_FlowTests` |
-| C10 | Reuse of old refresh after rotation → rejection | Integration | 🟨 flow issues new pair (`License_RefreshToken_FlowTests`); repeat call with old token ⬜ |
+| C9 | `main.RefreshToken` flow end-to-end | Integration | ✅ `Main_RefreshToken_FlowTests` |
+| C10 | Reuse of old refresh after rotation → rejection | Integration | 🟨 flow issues new pair (`Main_RefreshToken_FlowTests`); repeat call with old token ⬜ |
 
 **Config for verification:**
 
@@ -223,8 +223,8 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|
-| F1 | `license.Token` — password OR code (validation `atLeastOneRequired`) | Integration | ✅ |
-| F2 | `license.TokenByCode` — code only | Integration | ✅ |
+| F1 | `main.Token` — password OR code (validation `atLeastOneRequired`) | Integration | ✅ |
+| F2 | `main.TokenByCode` — code only | Integration | ✅ |
 | F3 | RequestCode → TokenByCode end-to-end scenario | Integration | ✅ |
 | F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
@@ -236,14 +236,14 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|
-| G1 | `license.ForgotPassword` | Integration | ✅ |
+| G1 | `main.ForgotPassword` | Integration | ✅ |
 | G2 | `ResetPasswordStep` — password change + email notification | Unit | ✅ |
 | G3 | Notification on send failure — logged, flow does not fail | Unit | ✅ |
-| G4 | `license.ResetPassword.json` — `passwordKey: collectForm.Password`, form: `Email`, `Code`, `Password` | Code review | ✅ |
-| G5 | Integration flow test for `license.ResetPassword` | Integration | ✅ `License_ResetPassword_FlowTests` |
+| G4 | `main.ResetPassword.json` — `passwordKey: collectForm.Password`, form: `Email`, `Code`, `Password` | Code review | ✅ |
+| G5 | Integration flow test for `main.ResetPassword` | Integration | ✅ `Main_ResetPassword_FlowTests` |
 | G6 | Old password / code + new password — business logic | Manual | ⬜ |
 
-> **Recommendation:** before release, run `license.ResetPassword` manually via Sample.Api (password change + notification).
+> **Recommendation:** before release, run `main.ResetPassword` manually via Sample.Api (password change + notification).
 
 ---
 
@@ -282,11 +282,11 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 |---------|------|------------------|--------|
 | Registration | ✅ | ✅ | — |
 | Token / TokenByCode | ✅ | ✅ | — |
-| RefreshToken | ✅ | ✅ | `License_RefreshToken_FlowTests` |
-| External OAuth | ✅ (service) | ✅ | `License_ExternalOAuth_FlowTests` |
-| ResetPassword | ✅ (step) | ✅ | `License_ResetPassword_FlowTests` |
+| RefreshToken | ✅ | ✅ | `Main_RefreshToken_FlowTests` |
+| External OAuth | ✅ (service) | ✅ | `Main_ExternalOAuth_FlowTests` |
+| ResetPassword | ✅ (step) | ✅ | `Main_ResetPassword_FlowTests` |
 | Licensing | ✅ | ✅ | `License_LicenseCheck_FlowTests` |
-| ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `License_ForgotPassword_FlowTests` |
+| ForgotPassword | ✅ | ✅ | `ForgotPassword_StepTests`, `ForgotPassword_StepFactoryTests`, `Main_ForgotPassword_FlowTests` |
 
 **Current status:** 301/301 passed.
 
@@ -297,19 +297,19 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 ```bash
 dotnet run --project Sample.Api
 # Swagger: POST /api/identity/{flow}/{operation}
-# Or: rest-client/Sample.Api.http (10 license/* operations)
+# Or: rest-client/Sample.Api.http (10 main/* operations)
 ```
 
 | Scenario | Endpoint | Body (example) |
 |----------|----------|---------------|
-| Registration | `license/Register` | `{ "Email": "...", "Password": "..." }` |
-| Request code | `license/RequestCode` | `{ "Email": "...", "Ttl": "00:05:00" }` |
-| Token by code | `license/TokenByCode` | `{ "Email": "...", "Code": "..." }` |
-| Token by password | `license/Token` | `{ "Email": "...", "Password": "..." }` |
-| Refresh | `license/RefreshToken` | `{ "RefreshToken": "..." }` |
-| GetUserId | `license/GetUserId` | `{ "Email": "..." }` |
-| OAuth start | `license/ExternalLogin` | `{ "Provider": "Google" }` |
-| OAuth callback | `license/ExternalLoginCallback` | `{ "Code": "...", "State": "..." }` |
+| Registration | `main/Register` | `{ "Email": "...", "Password": "..." }` |
+| Request code | `main/RequestCode` | `{ "Email": "...", "Ttl": "00:05:00" }` |
+| Token by code | `main/TokenByCode` | `{ "Email": "...", "Code": "..." }` |
+| Token by password | `main/Token` | `{ "Email": "...", "Password": "..." }` |
+| Refresh | `main/RefreshToken` | `{ "RefreshToken": "..." }` |
+| GetUserId | `main/GetUserId` | `{ "Email": "..." }` |
+| OAuth start | `main/ExternalLogin` | `{ "Provider": "Google" }` |
+| OAuth callback | `main/ExternalLoginCallback` | `{ "Code": "...", "State": "..." }` |
 
 **Before E2E:**
 
@@ -393,8 +393,8 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 
 | Priority | Issue | Recommendation |
 |-----------|----------|--------------|
-| **P0** | `license.ResetPassword.json` — `passwordKey` | ✅ Fixed + `License_ResetPassword_FlowTests` |
-| **P0** | No integration flow tests for External OAuth | ✅ `License_ExternalOAuth_FlowTests` |
+| **P0** | `main.ResetPassword.json` — `passwordKey` | ✅ Fixed + `Main_ResetPassword_FlowTests` |
+| **P0** | No integration flow tests for External OAuth | ✅ `Main_ExternalOAuth_FlowTests` |
 | **P1** | `config.nuspec` — outdated dependencies | ✅ Synchronized with `.csproj` |
 | **P1** | `FLOWS.md` does not match code | ✅ Updated |
 | **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/MIGRATION.md` (file ⬜) |
@@ -409,7 +409,7 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 
 Execute in order; proceed to the next step after closing the previous one (or an explicit "skip" decision recorded in the PR).
 
-- ✅ **1. P0 blockers** — `license.ResetPassword.json`, `License_ResetPassword_FlowTests`, `License_ExternalOAuth_FlowTests`
+- ✅ **1. P0 blockers** — `main.ResetPassword.json`, `Main_ResetPassword_FlowTests`, `Main_ExternalOAuth_FlowTests`
 - 🟨 **2. Tests** — `dotnet test` 301/301 ✅ locally; coverage (opencover) ⬜
 - 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
 - 🟨 **4. DB** — SQL scripts ✅; staging apply + backfill/rollback runbook ⬜

@@ -2,9 +2,9 @@
 
 [TestFixture]
 [Category(TestCategory.INTEGRATION)]
-internal class License_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private const string CallbackUrl = "https://app.example/callback";
 
     private ExternalLoginService _externalLoginService = null!;

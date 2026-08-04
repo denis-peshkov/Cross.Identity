@@ -19,7 +19,7 @@ Thank you for your interest in the project.
 
 **Cross.Identity** is a NuGet identity and authentication library for .NET:
 
-- process engine with JSON flows (`license/*`, …);
+- process engine with JSON flows (`main/*`, …);
 - JWT access/refresh, Argon2, OTP (email/SMS);
 - external OAuth (Google, Microsoft, GitHub, Apple);
 - licensing via Peshkov JWT key (`CrossIdentity:LicenseKey`).

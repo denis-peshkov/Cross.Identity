@@ -144,7 +144,7 @@ public sealed class CoreInfrastructureBehaviorTests
 
         try
         {
-            var indexedFlowFile = Path.Combine(root, "license.token.json");
+            var indexedFlowFile = Path.Combine(root, "main.token.json");
             File.WriteAllText(indexedFlowFile, "{\"flow\":\"indexed\"}");
 
             var indexedTemplateFile = Path.Combine(templates, "welcome.en.html");
@@ -153,15 +153,15 @@ public sealed class CoreInfrastructureBehaviorTests
             var options = Microsoft.Extensions.Options.Options.Create(new FileSystemProcessDefinitionOptions { Directory = root, ReloadOnChange = false });
             using var sut = new FileSystemProcessDefinitionProvider(options);
 
-            var indexedFlow = sut.GetJson("license", FlowOperationEnum.Token);
+            var indexedFlow = sut.GetJson("main", FlowOperationEnum.Token);
             indexedFlow.Should().Contain("indexed");
 
             var indexedTemplate = sut.GetTemplate("welcome", "en", "html");
             indexedTemplate.Should().Contain("Hello");
 
-            var lazyFlowFile = Path.Combine(root, $"license.{FlowOperationEnum.RefreshToken}.json");
+            var lazyFlowFile = Path.Combine(root, $"main.{FlowOperationEnum.RefreshToken}.json");
             File.WriteAllText(lazyFlowFile, "{\"flow\":\"lazy\"}");
-            var lazyFlow = sut.GetJson("license", FlowOperationEnum.RefreshToken);
+            var lazyFlow = sut.GetJson("main", FlowOperationEnum.RefreshToken);
             lazyFlow.Should().Contain("lazy");
 
             var lazyTemplateFile = Path.Combine(templates, "reset.en.txt");

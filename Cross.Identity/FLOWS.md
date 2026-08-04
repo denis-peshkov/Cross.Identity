@@ -4,8 +4,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ### How flows work
 
-- Files are named `{flow}.{operation}.json` (e.g. `license.Token.json`).
-- Definition key: `{flow}.{operation}` in lowercase (`license.token`).
+- Files are named `{flow}.{operation}.json` (e.g. `main.Token.json`).
+- Definition key: `{flow}.{operation}` in lowercase (`main.token`).
 - Code invocation: `IFlowExecutor.ExecuteAsync(input, flow, FlowOperationEnum.Operation, ct)`.
 - Steps run in a `next` chain; `start` points to the first step.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
@@ -31,20 +31,20 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Flow | Operation | File |
 |------|-----------|------|
-| `license` | ForgotPassword | `license.ForgotPassword.json` |
-| `license` | GetUserId | `license.GetUserId.json` |
-| `license` | RefreshToken | `license.RefreshToken.json` |
-| `license` | Register | `license.Register.json` |
-| `license` | RequestCode | `license.RequestCode.json` |
-| `license` | ResetPassword | `license.ResetPassword.json` |
-| `license` | Token | `license.Token.json` |
-| `license` | TokenByCode | `license.TokenByCode.json` |
-| `license` | ExternalLogin | `license.ExternalLogin.json` |
-| `license` | ExternalLoginCallback | `license.ExternalLoginCallback.json` |
+| `main` | ForgotPassword | `main.ForgotPassword.json` |
+| `main` | GetUserId | `main.GetUserId.json` |
+| `main` | RefreshToken | `main.RefreshToken.json` |
+| `main` | Register | `main.Register.json` |
+| `main` | RequestCode | `main.RequestCode.json` |
+| `main` | ResetPassword | `main.ResetPassword.json` |
+| `main` | Token | `main.Token.json` |
+| `main` | TokenByCode | `main.TokenByCode.json` |
+| `main` | ExternalLogin | `main.ExternalLogin.json` |
+| `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
 
 ---
 
-## `license.ForgotPassword.json`
+## `main.ForgotPassword.json`
 
 **Purpose:** start password recovery (send code).
 
@@ -56,7 +56,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.GetUserId.json`
+## `main.GetUserId.json`
 
 **Purpose:** get `user_id` by email.
 
@@ -68,7 +68,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.RefreshToken.json`
+## `main.RefreshToken.json`
 
 **Purpose:** refresh token pair using `refresh_token`.
 
@@ -80,7 +80,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.Register.json`
+## `main.Register.json`
 
 **Purpose:** registration by email + password with confirmation code delivery.
 
@@ -93,7 +93,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.RequestCode.json`
+## `main.RequestCode.json`
 
 **Purpose:** send an email code with configurable TTL.
 
@@ -105,7 +105,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.ResetPassword.json`
+## `main.ResetPassword.json`
 
 **Purpose:** change password by email (optionally with code).
 
@@ -116,7 +116,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.Token.json`
+## `main.Token.json`
 
 **Purpose:** tokens by email and password **or** code (at least one required).
 
@@ -128,7 +128,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.TokenByCode.json`
+## `main.TokenByCode.json`
 
 **Purpose:** tokens by email + code only.
 
@@ -140,7 +140,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.ExternalLogin.json`
+## `main.ExternalLogin.json`
 
 **Purpose:** start OAuth (redirect to provider).
 
@@ -154,7 +154,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `license.ExternalLoginCallback.json`
+## `main.ExternalLoginCallback.json`
 
 **Purpose:** complete OAuth after provider redirect.
 

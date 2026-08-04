@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private string FLOW => "license";
+    private string FLOW => "main";
 
     [SetUp]
     public override void Setup()
@@ -45,7 +45,7 @@ internal class License_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<ISmsSenderService>(),
                 configuration));
 
-        // Load JSON as embedded /Flows/Definitions/licenses.register.json
+        // Load JSON as embedded /Flows/Definitions/main.Register.json
         // AddJson("""
         //         {
         //           "start": "collectForm",

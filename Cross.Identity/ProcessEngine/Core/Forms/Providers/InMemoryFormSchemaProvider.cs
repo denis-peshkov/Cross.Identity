@@ -2,7 +2,7 @@
 
 /// <summary>
 /// In-memory form schema provider. Schema names are unique strings,
-/// e.g. <c>"license.register"</c>, <c>"license.token"</c>.
+/// e.g. <c>"main.register"</c>, <c>"main.token"</c>.
 /// </summary>
 internal sealed class InMemoryFormSchemaProvider : IFormSchemaProvider
 {

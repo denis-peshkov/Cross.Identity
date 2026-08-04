@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-internal class License_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private string FLOW => "license";
+    private string FLOW => "main";
 
     [SetUp]
     public override void Setup()

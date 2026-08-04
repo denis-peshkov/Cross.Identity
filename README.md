@@ -96,13 +96,13 @@ Behavior:
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
     input: requestBodyAsDictionary,
-    flow: "license",
+    flow: "main",
     operation: FlowOperationEnum.Token,
     cancellationToken);
 // result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
 ```
 
-3. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `license.Token.json`, `license.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
+3. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
 
 ## Dependencies (NuGet)
 

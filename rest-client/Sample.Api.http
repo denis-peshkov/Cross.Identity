@@ -1,5 +1,5 @@
 ###
-# Cross.Identity Sample.Api — manual E2E for `license/*` flows (10 FlowOperationEnum values).
+# Cross.Identity Sample.Api — manual E2E for `main/*` flows (10 FlowOperationEnum values).
 #
 # Prerequisite:
 #   dotnet run --project Sample.Api --launch-profile http
@@ -15,9 +15,9 @@
 #   OAuth (ExternalLogin / ExternalLoginCallback) — seed Providers in DB + appsettings; placeholders below.
 
 ### Register
-# @name license-register
+# @name main-register
 # @no-cookie-jar
-POST {{HOST}}/api/identity/license/Register
+POST {{HOST}}/api/identity/main/Register
 Content-Type: application/json
 
 {
@@ -26,8 +26,8 @@ Content-Type: application/json
 }
 
 ### Request Code
-# @name license-request-code
-POST {{HOST}}/api/identity/license/RequestCode
+# @name main-request-code
+POST {{HOST}}/api/identity/main/RequestCode
 Content-Type: application/json
 
 {
@@ -36,8 +36,8 @@ Content-Type: application/json
 }
 
 ### Token
-# @name license-token-password
-POST {{HOST}}/api/identity/license/Token
+# @name main-token-password
+POST {{HOST}}/api/identity/main/Token
 Content-Type: application/json
 
 {
@@ -46,8 +46,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-token-by-code
-POST {{HOST}}/api/identity/license/TokenByCode
+# @name main-token-by-code
+POST {{HOST}}/api/identity/main/TokenByCode
 Content-Type: application/json
 
 {
@@ -56,8 +56,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-token-password-or-code
-POST {{HOST}}/api/identity/license/Token
+# @name main-token-password-or-code
+POST {{HOST}}/api/identity/main/Token
 Content-Type: application/json
 
 {
@@ -67,8 +67,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-refresh-token
-POST {{HOST}}/api/identity/license/RefreshToken
+# @name main-refresh-token
+POST {{HOST}}/api/identity/main/RefreshToken
 Content-Type: application/json
 
 {
@@ -76,8 +76,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-get-user-id
-POST {{HOST}}/api/identity/license/GetUserId
+# @name main-get-user-id
+POST {{HOST}}/api/identity/main/GetUserId
 Content-Type: application/json
 
 {
@@ -85,8 +85,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-forgot-password
-POST {{HOST}}/api/identity/license/ForgotPassword
+# @name main-forgot-password
+POST {{HOST}}/api/identity/main/ForgotPassword
 Content-Type: application/json
 
 {
@@ -94,8 +94,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-reset-password
-POST {{HOST}}/api/identity/license/ResetPassword
+# @name main-reset-password
+POST {{HOST}}/api/identity/main/ResetPassword
 Content-Type: application/json
 
 {
@@ -105,8 +105,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-external-login
-POST {{HOST}}/api/identity/license/ExternalLogin
+# @name main-external-login
+POST {{HOST}}/api/identity/main/ExternalLogin
 Content-Type: application/json
 
 {
@@ -115,8 +115,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-external-login-callback
-POST {{HOST}}/api/identity/license/ExternalLoginCallback
+# @name main-external-login-callback
+POST {{HOST}}/api/identity/main/ExternalLoginCallback
 Content-Type: application/json
 
 {

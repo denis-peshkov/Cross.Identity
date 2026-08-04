@@ -1,10 +1,10 @@
-namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 [Category(TestCategory.INTEGRATION)]
 internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private const string Email = "license-check@example.com";
 
     [SetUp]

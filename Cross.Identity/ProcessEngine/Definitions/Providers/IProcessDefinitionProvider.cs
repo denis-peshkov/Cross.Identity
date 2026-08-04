@@ -16,7 +16,7 @@ internal interface IProcessDefinitionProvider
     /// <summary>
     /// Get a process JSON definition by flow and operation identifiers.
     /// </summary>
-    /// <param name="flow">Flow identifier (for example, <c>"license"</c>).</param>
+    /// <param name="flow">Flow identifier (for example, <c>"main"</c>).</param>
     /// <param name="operation">Operation from <see cref="FlowOperationEnum"/> (for example <c>Register</c>, <c>Token</c>).</param>
     /// <returns>Process JSON definition string.</returns>
     /// <exception cref="KeyNotFoundException">When the definition is not found.</exception>

@@ -2,9 +2,9 @@
 
 [TestFixture]
 [Category(TestCategory.INTEGRATION)]
-internal class License_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
 {
-    private const string Flow = "license";
+    private const string Flow = "main";
     private const string Email = "test@example.com";
 
     [SetUp]
