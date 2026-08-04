@@ -44,7 +44,7 @@ describe('labelsFromTriage', () => {
 });
 
 describe('applyPrTriageLabels', () => {
-  it('creates missing labels, removes stale triage labels, adds current', () => {
+  it('creates missing labels, adds current, then removes stale triage labels', () => {
     /** @type {string[][]} */
     const calls = [];
     const gh = (args, opts) => {
@@ -73,19 +73,23 @@ describe('applyPrTriageLabels', () => {
     const createCalls = calls.filter((c) => c[0] === 'label' && c[1] === 'create');
     assert.equal(createCalls.length, 2);
 
-    const removeCall = calls.find(
+    const addCallIndex = calls.findIndex(
+      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--add-label')
+    );
+    const removeCallIndex = calls.findIndex(
       (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--remove-label')
     );
-    assert.ok(removeCall);
+    assert.ok(addCallIndex >= 0);
+    assert.ok(removeCallIndex >= 0);
+    assert.ok(addCallIndex < removeCallIndex, 'add labels before remove');
+
+    const addCall = calls[addCallIndex];
+    assert.ok(addCall.includes('enhancement'));
+    assert.ok(addCall.includes('priority:medium'));
+
+    const removeCall = calls[removeCallIndex];
     assert.ok(removeCall.includes('bug'));
     assert.ok(removeCall.includes('priority:high'));
     assert.ok(!removeCall.includes('needs-human'));
-
-    const addCall = calls.find(
-      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--add-label')
-    );
-    assert.ok(addCall);
-    assert.ok(addCall.includes('enhancement'));
-    assert.ok(addCall.includes('priority:medium'));
   });
 });
