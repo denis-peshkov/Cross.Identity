@@ -200,7 +200,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 |------|------|---------|
 | `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32). Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
-| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
+| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
 ---
 
