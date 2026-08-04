@@ -31,9 +31,9 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Flow | Operation | File |
 |------|-----------|------|
-| `game` | auth | `game.auth.json` |
+| `game` | Auth | `game.Auth.json` |
 | `game` | Register | `game.Register.json` |
-| `game` | request-code | `game.request-code.json` |
+| `game` | RequestCode | `game.RequestCode.json` |
 | `game` | Token | `game.Token.json` |
 | `license` | ForgotPassword | `license.ForgotPassword.json` |
 | `license` | GetUserId | `license.GetUserId.json` |
@@ -45,13 +45,13 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `license` | TokenByCode | `license.TokenByCode.json` |
 | `license` | ExternalLogin | `license.ExternalLogin.json` |
 | `license` | ExternalLoginCallback | `license.ExternalLoginCallback.json` |
-| `shop` | auth | `shop.auth.json` |
+| `shop` | Auth | `shop.Auth.json` |
 | `shop` | Register | `shop.Register.json` |
-| `shop` | request-code | `shop.request-code.json` |
+| `shop` | RequestCode | `shop.RequestCode.json` |
 
 ---
 
-## `game.auth.json`
+## `game.Auth.json`
 
 **Purpose:** game sign-in with a one-time email code.
 
@@ -81,7 +81,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `game.request-code.json`
+## `game.RequestCode.json`
 
 **Purpose:** send an email code without registration/sign-in.
 
@@ -228,7 +228,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `shop.auth.json`
+## `shop.Auth.json`
 
 **Purpose:** shop sign-in by phone and SMS code.
 
@@ -257,7 +257,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
-## `shop.request-code.json`
+## `shop.RequestCode.json`
 
 **Purpose:** request an SMS code for a phone number.
 
@@ -287,7 +287,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `initiateExternalLogin` | OAuth redirect URL |
 | `completeExternalLogin` | OAuth callback, issue tokens |
 
-JSON also uses `issueJwt`, but a separate `IssueJwtStepFactory` is **not registered** in `AddCrossIdentity` — flows `game.auth`, `game.Register`, `shop.auth`, `shop.Register` with this step will not run until the step is implemented and registered.
+JSON also uses `issueJwt`, but a separate `IssueJwtStepFactory` is **not registered** in `AddCrossIdentity` — flows `game.Auth`, `game.Register`, `shop.Auth`, `shop.Register` with this step will not run until the step is implemented and registered.
 
 ### Form validators (`schemaDef.validators`)
 
