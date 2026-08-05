@@ -48,7 +48,7 @@ Example:
 
 ```csharp
 [Test]
-public void GivenValidResume_WhenSubmitResume_ThenReturnsSuccess()
+public async Task GivenValidResume_WhenSubmitResume_ThenReturnsSuccessAsync()
 {
     // Arrange
     var dto = new SubmitResumeDto
