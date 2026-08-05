@@ -9,6 +9,11 @@
 /// new-token persistence, and old-token invalidation commit together.
 /// </para>
 /// <para>
+/// Reuse of an already rotated refresh token triggers family revoke with
+/// <see cref="RefreshTokenRevokeReason.REPLAY_DETECTED"/> (theft race: attacker may hold the newer token).
+/// See <see cref="IJwtTokenService.EnsureRefreshTokenActiveForRotationAsync"/>.
+/// </para>
+/// <para>
 /// Keys:
 /// <list type="bullet">
 ///   <item><description><see cref="RefreshTokenKey"/>:
@@ -46,10 +51,10 @@ internal sealed class RefreshTokenStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) validate the token
+        // 1) validate the token (revoked reuse → family REPLAY_DETECTED + Conflict)
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        if (!await JwtTokenService.ValidateRefreshTokenAsync(oldRefreshTokenHashValue).ConfigureAwait(false))
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, cancellationToken)
+            .ConfigureAwait(false);
 
         // 2) get UserId from the refresh token
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);

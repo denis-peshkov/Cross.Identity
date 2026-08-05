@@ -5,8 +5,24 @@ public enum RefreshTokenRevokeReason : short
     #region 1. Security reasons (critical)
 
     /// <summary>
-    /// Presenting an old token after rotation → attack attempt → invalidate the entire family.
+    /// Reuse of an already rotated (revoked) refresh token → revoke the entire <c>FamilyId</c> chain.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Rotation alone only rejects the reused token. Family revoke closes the theft race where
+    /// the attacker rotated first and still holds the newer active token:
+    /// </para>
+    /// <list type="number">
+    ///   <item><description>Attacker steals <c>R1</c> and refreshes first → gets active <c>R2</c>, <c>R1</c> revoked.</description></item>
+    ///   <item><description>Victim presents their copy of <c>R1</c> → reuse of a revoked refresh.</description></item>
+    ///   <item><description>Without family revoke: victim gets conflict / must re-login; attacker keeps live <c>R2</c>.</description></item>
+    ///   <item><description>With family revoke (<see cref="REPLAY_DETECTED"/>): <c>R2</c> (and access tokens in the family) are revoked too.</description></item>
+    /// </list>
+    /// <para>
+    /// Trade-off: a legitimate retry / concurrent double-refresh can look identical and kill a honest session.
+    /// That risk is accepted deliberately for the theft race above.
+    /// </para>
+    /// </remarks>
     REPLAY_DETECTED,
 
     /// <summary>

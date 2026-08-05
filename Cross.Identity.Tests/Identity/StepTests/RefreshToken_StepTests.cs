@@ -34,7 +34,8 @@ public class RefreshToken_StepTests
             NormalizedUserName = "user"
         };
 
-        _jwtTokenService.Setup(j => j.ValidateRefreshTokenAsync(refreshTokenHash)).ReturnsAsync(true);
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValueAsync(newRefreshToken, JwtRegisteredClaimNames.Jti))
@@ -75,7 +76,8 @@ public class RefreshToken_StepTests
     [Test]
     public async Task RefreshTokenStep_WhenTokenInvalid_ShouldThrow()
     {
-        _jwtTokenService.Setup(j => j.ValidateRefreshTokenAsync(It.IsAny<string>())).ReturnsAsync(false);
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new RefreshTokenStep
         {
@@ -95,5 +97,31 @@ public class RefreshToken_StepTests
 
         await act.Should().ThrowAsync<NotAuthorizedException>()
             .WithMessage("*Invalid or expired refresh token*");
+    }
+
+    [Test]
+    public async Task RefreshTokenStep_WhenTokenAlreadyUsed_ShouldPropagateConflict()
+    {
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ConflictException("Refresh token has already been used."));
+
+        var step = new RefreshTokenStep
+        {
+            Kind = "refreshToken",
+            RefreshTokenKey = "RefreshToken",
+            Logger = _logger.Object,
+            JwtTokenService = _jwtTokenService.Object,
+            UserService = _userService.Object,
+            AuthenticationOptions = new AuthenticationOptions(),
+            Next = null
+        };
+
+        var bag = new Bag();
+        bag.Set("refreshToken.RefreshToken", "already-used-hash");
+
+        var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
     }
 }

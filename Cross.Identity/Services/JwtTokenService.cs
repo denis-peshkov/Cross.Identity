@@ -219,6 +219,37 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
+    public async Task EnsureRefreshTokenActiveForRotationAsync(
+        string refreshToken,
+        CancellationToken cancellationToken = default)
+    {
+        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+
+        var entity = await _context.RefreshTokens
+            .Where(x => x.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null)
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        if (entity.RevokedAt is not null)
+        {
+            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
+            throw new ConflictException("Refresh token has already been used.");
+        }
+
+        if (entity.ExpiresAt < DateTime.UtcNow
+            || entity.AbsoluteExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow)
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+    }
+
+    /// <inheritdoc/>
     public async Task RevokeAccessTokenAsync(Guid jti)
     {
         var entry = await _context.AccessTokens.FindAsync(jti).ConfigureAwait(false);
@@ -336,6 +367,8 @@ internal class JwtTokenService : IJwtTokenService
 
         if (entity.RevokedAt is not null)
         {
+            // Concurrent refresh or replay of an already rotated token — see REPLAY_DETECTED.
+            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
         }
 
@@ -350,7 +383,86 @@ internal class JwtTokenService : IJwtTokenService
         }
         catch (DbUpdateConcurrencyException)
         {
+            // Another request won the rotation race; treat as reuse and kill the family
+            // so a possible attacker-held successor token cannot survive.
+            await _context.Entry(entity).ReloadAsync(cancellationToken).ConfigureAwait(false);
+            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task RevokeRefreshTokenFamilyAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        CancellationToken cancellationToken = default)
+    {
+        await RevokeRefreshTokenFamilyCoreAsync(familyId, reason, cancellationToken).ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Refresh-token reuse after rotation: mark the presented token and revoke the whole family.
+    /// </summary>
+    /// <remarks>
+    /// Threat model (why family revoke, not only Conflict on this token):
+    /// <list type="number">
+    ///   <item><description>Attacker steals <c>R1</c> and refreshes first → active <c>R2</c>, <c>R1</c> revoked.</description></item>
+    ///   <item><description>Victim sends <c>R1</c> → reuse of revoked refresh.</description></item>
+    ///   <item><description>Without family revoke: victim is rejected; attacker keeps live <c>R2</c>.</description></item>
+    ///   <item><description>With family revoke: <c>R2</c> and access tokens in the family are revoked too.</description></item>
+    /// </list>
+    /// Legitimate retry / double-refresh can look the same — accepted trade-off.
+    /// </remarks>
+    private async Task HandleRefreshTokenReplayAsync(
+        RefreshTokenEntity reusedToken,
+        CancellationToken cancellationToken)
+    {
+        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        // Audit: the presented token was already revoked (usually ROTATION_REQUIRED); record that reuse was detected.
+        reusedToken.RevokeReason = RefreshTokenRevokeReason.REPLAY_DETECTED;
+        reusedToken.RevokedByIp = revokedByIp;
+
+        await RevokeRefreshTokenFamilyCoreAsync(
+                reusedToken.FamilyId,
+                RefreshTokenRevokeReason.REPLAY_DETECTED,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task RevokeRefreshTokenFamilyCoreAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        CancellationToken cancellationToken)
+    {
+        var now = DateTime.UtcNow;
+        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        var refreshTokens = await _context.RefreshTokens
+            .Where(x => x.FamilyId == familyId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var token in refreshTokens)
+        {
+            token.RevokedAt = now;
+            token.RevokeReason = reason;
+            token.RevokedByIp = revokedByIp;
+        }
+
+        var accessTokens = await _context.AccessTokens
+            .Where(x => x.FamilyId == familyId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var token in accessTokens)
+        {
+            token.RevokedAt = now;
+            token.RevokeReason = reason;
+            token.RevokedByIp = revokedByIp;
         }
     }
 

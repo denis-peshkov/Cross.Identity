@@ -64,6 +64,20 @@ public interface IJwtTokenService
     Task<bool> ValidateRefreshTokenAsync(string refreshToken);
 
     /// <summary>
+    /// Ensure a refresh token may be used for rotation (exists, not revoked, not expired).
+    /// </summary>
+    /// <remarks>
+    /// If the token exists but is already revoked, this is treated as refresh-token reuse:
+    /// the entire family is revoked with <see cref="RefreshTokenRevokeReason.REPLAY_DETECTED"/>
+    /// (see that enum for the theft-race rationale), then a conflict is thrown.
+    /// </remarks>
+    /// <param name="refreshToken">Refresh token string.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
+    /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
+    Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Revoke an access token by <c>jti</c> (mark as revoked in the DB).
     /// </summary>
     /// <param name="jti">JTI (identifier) of the access token.</param>
@@ -107,11 +121,17 @@ public interface IJwtTokenService
     /// Invalidate (mark as replaced/revoked) a refresh token
     /// during session rotation.
     /// </summary>
+    /// <remarks>
+    /// If the token is already revoked (concurrent refresh or replay), the entire family is revoked
+    /// with <see cref="RefreshTokenRevokeReason.REPLAY_DETECTED"/> before throwing
+    /// <see cref="ConflictException"/>. See that enum for why family revoke is required.
+    /// </remarks>
     /// <param name="refreshToken">Current refresh token (string) to revoke.</param>
     /// <param name="newJti">
     /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken);
 
     /// <summary>
@@ -120,6 +140,18 @@ public interface IJwtTokenService
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revoke all active access and refresh tokens that share <paramref name="familyId"/>.
+    /// Persists changes via <c>SaveChanges</c>.
+    /// </summary>
+    /// <param name="familyId">Refresh/access token family (rotation chain).</param>
+    /// <param name="reason">Revocation reason stored on each active token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RevokeRefreshTokenFamilyAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).

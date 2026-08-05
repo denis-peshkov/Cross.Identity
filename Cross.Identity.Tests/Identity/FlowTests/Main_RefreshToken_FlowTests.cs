@@ -118,4 +118,48 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         await act.Should().ThrowAsync<ValidationException>();
     }
+
+    [Test]
+    public async Task RefreshToken_ReuseAfterRotation_ShouldRevokeFamilyAndThrowConflict()
+    {
+        // Attacker rotated first (R1 → R2); victim reuses R1 → REPLAY_DETECTED kills R2.
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "replay@example.com",
+            UserName = "replay-user",
+            NormalizedUserName = "replay-user",
+        });
+
+        var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId,
+            familyId,
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+
+        var first = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["RefreshToken"] = r1 },
+            Flow,
+            FlowOperationEnum.RefreshToken,
+            CancellationToken.None);
+
+        var payload = first.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var r2 = payload["refresh_token"]!.ToString()!;
+
+        var act = () => _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["RefreshToken"] = r1 },
+            Flow,
+            FlowOperationEnum.RefreshToken,
+            CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(r2)).Should().BeFalse();
+
+        var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
+        familyTokens.Should().OnlyContain(t => t.RevokedAt != null);
+        familyTokens.Should().Contain(t => t.RevokeReason == RefreshTokenRevokeReason.REPLAY_DETECTED);
+    }
 }
