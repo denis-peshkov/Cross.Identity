@@ -50,7 +50,7 @@
 
 Пароль можно не трогать.
 
-**Сейчас:** reason в enum есть, flow/endpoint logout-all — нет. Есть только revoke **одного** refresh на logout.
+**Сейчас:** reason в enum есть; user logout-all реализован (`main.LogoutAll.json`, `LogoutAllStep` + factory, flow-тесты) — revoke всех токенов пользователя с `USER_LOGOUT_ALL` по живому refresh. Stamp rotation в этом flow ещё нет. Отдельного admin-endpoint с `ADMIN_REVOKE` нет.
 
 ---
 
@@ -93,18 +93,18 @@
 
 ---
 
-## Сводная таблица
+## Summary table
 
-| Событие | Крутить stamp? | Revoke tokens? | Есть в коде сейчас |
+| Event | Rotate stamp? | Revoke tokens? | In code now |
 |--------|----------------|----------------|--------------------|
-| Password change/reset | да | да (`PASSWORD_CHANGED`) | ✅ |
-| Unlink external login | да | да (`EXTERNAL_LOGIN_REMOVED`) | ✅ |
-| Disable / lock account | да | да (`ACCOUNT_DISABLED`) | ❌ API |
-| Admin / logout-all | да | да (`ADMIN_REVOKE` / `USER_LOGOUT_ALL`) | ❌ API |
-| MFA reset / disable | да | да (`MFA_RESET`) | ❌ MFA |
-| Change email/phone (после confirm) | обычно да | обычно да | ❌ change-flow |
-| Обычный profile update (display name) | нет | нет | — |
-| Pepper rehash при login | нет | нет | правильно |
+| Password change/reset | yes | yes (`PASSWORD_CHANGED`) | ✅ |
+| Unlink external login | yes | yes (`EXTERNAL_LOGIN_REMOVED`) | ✅ |
+| Disable / lock account | yes | yes (`ACCOUNT_DISABLED`) | ❌ API |
+| Admin / logout-all | yes | yes (`ADMIN_REVOKE` / `USER_LOGOUT_ALL`) | ✅ logout-all (`USER_LOGOUT_ALL`); ❌ admin `ADMIN_REVOKE` + stamp |
+| MFA reset / disable | yes | yes (`MFA_RESET`) | ❌ MFA |
+| Change email/phone (after confirm) | usually yes | usually yes | ❌ change-flow |
+| Ordinary profile update (display name) | no | no | — |
+| Pepper rehash on login | no | no | correct |
 
 ---
 
