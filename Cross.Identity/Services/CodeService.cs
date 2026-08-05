@@ -131,7 +131,26 @@ internal sealed class CodeService : ICodeService
                         return false;
                     }
 
-                    // Mark code as used
+                    // Check attempt count
+                    if (entity.Attempts >= entity.MaxAttempts)
+                    {
+                        _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedIdentity);
+                        return false;
+                    }
+
+                    // Increment attempt counter (even for wrong code)
+                    entity.Attempts++;
+
+                    // Verify code hash
+                    if (!entity.TokenHash.SequenceEqual(codeHash))
+                    {
+                        // Wrong code, but attempt already counted
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        _logger.LogWarning("Email verification code mismatch for {Email}", normalizedIdentity);
+                        return false;
+                    }
+
+                    // Correct code — mark as used
                     entity.UsedAt = now;
 
                     try

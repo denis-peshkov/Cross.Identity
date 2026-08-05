@@ -288,6 +288,48 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeMismatch()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("correct"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("email", "test@example.com", "wrongcode", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailMaxAttemptsExceeded()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 3,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        result.Should().BeFalse();
+    }
+
+    [Test]
     public async Task VerifyAsync_ShouldReturnFalse_ForUnsupportedChannel()
     {
         var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);
