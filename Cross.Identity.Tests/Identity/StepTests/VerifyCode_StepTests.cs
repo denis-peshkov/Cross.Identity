@@ -15,7 +15,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
-    public async Task VerifyCodeStep_ShouldVerifyValidCode()
+    public async Task GivenValidCode_WhenExecuteAsync_ThenReturnsOkAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -48,7 +48,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
-    public async Task VerifyCodeStep_ShouldFailOnInvalidCode()
+    public async Task GivenInvalidCode_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -81,7 +81,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
-    public async Task VerifyCodeStep_ShouldHandleRelativeKeys()
+    public async Task GivenRelativeKeys_WhenExecuteAsync_ThenVerifiesCodeAsync()
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");

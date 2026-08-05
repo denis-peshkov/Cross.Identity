@@ -13,7 +13,7 @@ public class ExternalLoginUnlink_StepTests
     }
 
     [Test]
-    public async Task GivenProvider_WhenStepExecutes_ThenServiceIsCalledAndUnlinkedIsSetAsync()
+    public async Task GivenProvider_WhenExecuteAsync_ThenUnlinksAndSetsFlagAsync()
     {
         _externalLoginService
             .Setup(s => s.UnlinkAsync("Google", It.IsAny<CancellationToken>()))

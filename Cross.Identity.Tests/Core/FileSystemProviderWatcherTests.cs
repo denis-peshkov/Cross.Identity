@@ -5,7 +5,7 @@
 public sealed class FileSystemProviderWatcherTests
 {
     [Test]
-    public void Ctor_WhenTemplatesDirectoryMissing_ShouldThrow()
+    public void GivenMissingTemplatesDirectory_WhenConstructed_ThenThrows()
     {
         var root = Path.Combine(Path.GetTempPath(), $"fs-no-templates-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -27,7 +27,7 @@ public sealed class FileSystemProviderWatcherTests
     }
 
     [Test]
-    public void Watchers_ShouldReloadRenameAndDeleteFlowsAndTemplates()
+    public void GivenFileChanges_WhenWatchersActive_ThenReloadsRenamesAndDeletes()
     {
         var root = Path.Combine(Path.GetTempPath(), $"fs-watch-{Guid.NewGuid():N}");
         var templates = Path.Combine(root, "Templates");

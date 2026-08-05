@@ -5,7 +5,7 @@
 public sealed class RegistryLoaderAndValidatorTests
 {
     [Test]
-    public void StepRegistry_RegisterCreateAndHelpers_ShouldWork()
+    public void GivenStepRegistry_WhenRegisterCreateAndHelpers_ThenWork()
     {
         var reg = new StepRegistry();
         reg.Register(new FakeFactory("alpha"));
@@ -21,7 +21,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
-    public void StepRegistry_Errors_ShouldThrow()
+    public void GivenInvalidRegistryOperations_WhenExecuted_ThenThrow()
     {
         var reg = new StepRegistry();
         var sp = new ServiceCollection().BuildServiceProvider();
@@ -40,7 +40,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
-    public void ProcessLoader_FromJson_ShouldBuildAndValidate()
+    public void GivenValidJson_WhenFromJson_ThenBuildsAndValidates()
     {
         var reg = new StepRegistry(new[]
         {
@@ -65,7 +65,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
-    public void ProcessLoader_FromJson_Errors_ShouldThrow()
+    public void GivenInvalidJson_WhenFromJson_ThenThrows()
     {
         var reg = new StepRegistry(new[] { new FakeFactory("s1") });
         var sp = new ServiceCollection().BuildServiceProvider();
@@ -86,7 +86,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
-    public async Task UnifiedValidatorFactory_ShouldCoverFieldAndCrossRules()
+    public async Task GivenFormSchemaWithRules_WhenValidateAsync_ThenCoversFieldAndCrossRulesAsync()
     {
         var schema = new FormSchema(
             "reg",
@@ -143,7 +143,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
-    public async Task UnifiedValidatorFactory_EmptyMap_ShouldTriggerRequired()
+    public async Task GivenEmptyInputMap_WhenValidateAsync_ThenTriggersRequiredAsync()
     {
         var schema = new FormSchema(
             "x",

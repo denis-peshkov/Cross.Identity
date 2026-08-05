@@ -60,7 +60,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task LogoutAll_WithValidRefresh_ShouldRevokeAllUserTokens()
+    public async Task GivenValidRefreshToken_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
     {
         var userId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
@@ -104,7 +104,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task LogoutAll_WithInvalidRefresh_ShouldThrowNotAuthorized()
+    public async Task GivenInvalidRefreshToken_WhenLogoutAllFlow_ThenThrowsNotAuthorizedAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = new string('x', 32) },

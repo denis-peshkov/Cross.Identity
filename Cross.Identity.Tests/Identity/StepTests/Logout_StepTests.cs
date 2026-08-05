@@ -13,7 +13,7 @@ public class Logout_StepTests
     }
 
     [Test]
-    public async Task LogoutStep_WhenValid_ShouldRevokeAndSetResult()
+    public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenRevokesAndSetsResultAsync()
     {
         var refreshToken = "refresh-token-value";
         _jwtTokenService

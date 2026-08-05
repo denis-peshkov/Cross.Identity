@@ -26,7 +26,7 @@ public class CollectForm_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public async Task CollectForm_WithSchemaDefAndPatch_ShouldApplyAddOverrideRemoveRenameAndValidate()
+    public async Task GivenSchemaDefAndPatch_WhenCreateAndExecuteAsync_ThenAppliesPatchAndValidatesAsync()
     {
         using var json = JsonDocument.Parse(
             """
@@ -91,7 +91,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public async Task CollectForm_ShouldFailValidation_WhenRequiredMissing()
+    public async Task GivenRequiredFieldMissing_WhenExecuteAsync_ThenReturnsValidationFailureAsync()
     {
         using var json = JsonDocument.Parse(
             """
@@ -124,7 +124,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public async Task CollectForm_ShouldFailValidation_WhenPasswordsDoNotMatch()
+    public async Task GivenMismatchedPasswords_WhenExecuteAsync_ThenReturnsValidationFailureAsync()
     {
         using var json = JsonDocument.Parse(
             """
@@ -164,7 +164,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public void CollectForm_WhenKindMismatch_ShouldThrow()
+    public void GivenKindMismatch_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -181,7 +181,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public void CollectForm_WithSchemaNameWithoutProvider_ShouldThrow()
+    public void GivenSchemaNameWithoutProvider_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -198,7 +198,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public void CollectForm_WhenSchemaDefWithoutFields_ShouldThrow()
+    public void GivenSchemaDefWithoutFields_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -215,7 +215,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
-    public void CollectForm_WhenUnknownFieldType_ShouldThrow()
+    public void GivenUnknownFieldType_WhenCreate_ThenThrowsArgumentOutOfRangeException()
     {
         using var json = JsonDocument.Parse(
             """

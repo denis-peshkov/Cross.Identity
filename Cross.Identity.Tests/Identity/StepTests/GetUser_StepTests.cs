@@ -13,7 +13,7 @@ public class GetUser_StepTests
     }
 
     [Test]
-    public async Task GetUserStep_ShouldPutUserId_WhenFound()
+    public async Task GivenExistingUser_WhenExecuteAsync_ThenStoresUserIdAsync()
     {
         var email = _faker.Internet.Email();
         var userId = Guid.NewGuid().ToString("N");
@@ -43,7 +43,7 @@ public class GetUser_StepTests
     }
 
     [Test]
-    public async Task GetUserStep_ShouldFail_WhenNotFound()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var phone = _faker.Phone.PhoneNumber("+407########");
         var users = new Mock<IUserService>(MockBehavior.Strict);

@@ -60,7 +60,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Logout_WithValidRefresh_ShouldRevokeOnlyThatToken()
+    public async Task GivenValidRefreshToken_WhenLogoutFlow_ThenRevokesOnlyThatTokenAsync()
     {
         var userId = Guid.NewGuid();
         var familyA = Guid.NewGuid();
@@ -97,7 +97,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Logout_WithUnknownRefresh_ShouldStillSucceedIdempotent()
+    public async Task GivenUnknownRefreshToken_WhenLogoutFlow_ThenSucceedsIdempotentlyAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = new string('x', 32) },

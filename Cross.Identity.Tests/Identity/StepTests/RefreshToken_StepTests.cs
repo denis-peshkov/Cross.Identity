@@ -19,7 +19,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
-    public async Task RefreshTokenStep_WhenTokenValid_ShouldSetAccessAndRefreshTokens()
+    public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenSetsAccessAndRefreshTokensAsync()
     {
         var refreshTokenHash = "refresh-token-hash";
         var userId = Guid.NewGuid();
@@ -74,7 +74,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
-    public async Task RefreshTokenStep_WhenTokenInvalid_ShouldThrow()
+    public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
@@ -100,7 +100,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
-    public async Task RefreshTokenStep_WhenTokenAlreadyUsed_ShouldPropagateConflict()
+    public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Refresh token has already been used."));

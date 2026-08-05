@@ -5,7 +5,7 @@
 public sealed class EmbeddedProviderTests
 {
     [Test]
-    public void EmbeddedProvider_ShouldLoadAndReturnKnownFlow()
+    public void GivenEmbeddedProvider_WhenGetJsonForKnownFlow_ThenReturnsJson()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
         {
@@ -20,7 +20,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
-    public void EmbeddedProvider_GetJson_WhenMissingOrInvalidArgs_ShouldThrow()
+    public void GivenMissingOrInvalidArgs_WhenGetJson_ThenThrows()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
         {
@@ -37,7 +37,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
-    public void EmbeddedProvider_GetTemplate_WhenMissingOrInvalidArgs_ShouldThrow()
+    public void GivenMissingOrInvalidArgs_WhenGetTemplate_ThenThrows()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
         {
@@ -59,7 +59,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
-    public void EmbeddedOptions_EmptyAssemblyName_ShouldFallbackToExecutingAssembly()
+    public void GivenEmptyAssemblyName_WhenAssemblyAccessed_ThenFallbacksToExecutingAssembly()
     {
         var opt = new EmbeddedProcessDefinitionOptions();
         opt.AssemblyName = "";

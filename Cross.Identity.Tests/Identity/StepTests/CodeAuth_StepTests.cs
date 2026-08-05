@@ -17,7 +17,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
-    public async Task CodeAuthStep_WhenCodeValid_ShouldSetUserIdAndReturnOk()
+    public async Task GivenValidCode_WhenExecuteAsync_ThenSetsUserIdAndReturnsOkAsync()
     {
         var email = _faker.Internet.Email();
         var code = "ABC123";
@@ -55,7 +55,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
-    public async Task CodeAuthStep_WhenCodeInvalid_ShouldReturnFail()
+    public async Task GivenInvalidCode_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var email = _faker.Internet.Email();
         var code = "WRONG";
@@ -87,7 +87,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
-    public async Task CodeAuthStep_WhenUserNotFound_ShouldReturnFail()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var email = _faker.Internet.Email();
         var code = "ABC123";
@@ -120,7 +120,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
-    public async Task CodeAuthStep_WithRelativeKeys_ShouldQualifyKeys()
+    public async Task GivenRelativeKeys_WhenExecuteAsync_ThenQualifiesKeysAndSetsUserIdAsync()
     {
         var phone = _faker.Phone.PhoneNumber("+1##########");
         var code = "123456";

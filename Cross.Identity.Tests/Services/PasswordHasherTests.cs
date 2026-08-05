@@ -23,7 +23,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Hash_ShouldReturnPhcString()
+    public void GivenPassword_WhenHash_ThenReturnsPhcString()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -38,7 +38,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Hash_ShouldProduceDifferentHashForSamePassword()
+    public void GivenSamePassword_WhenHashTwice_ThenProducesDifferentHashes()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -53,7 +53,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_ShouldReturnSuccessForCorrectPassword()
+    public void GivenCorrectPasswordAndHash_WhenVerify_ThenReturnsSuccess()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -68,7 +68,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_ShouldReturnFailedForIncorrectPassword()
+    public void GivenIncorrectPassword_WhenVerify_ThenReturnsFailed()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -84,7 +84,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_ShouldReturnFailedForWrongPepper()
+    public void GivenWrongPepper_WhenVerify_ThenReturnsFailed()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -100,7 +100,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void NeedsRehash_ShouldReturnFalseForValidHash()
+    public void GivenValidHash_WhenNeedsRehash_ThenReturnsFalse()
     {
         // Arrange
         var password = "P@ssw0rd!";
@@ -115,7 +115,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void NeedsRehash_ShouldReturnTrueForInvalidFormat()
+    public void GivenInvalidHashFormat_WhenNeedsRehash_ThenReturnsTrue()
     {
         // Arrange
         var invalidHash = "invalid-hash-format";
@@ -128,7 +128,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Hash_WithArgon2id_ShouldReturnArgon2PhcString()
+    public void GivenArgon2idAlgorithm_WhenHash_ThenReturnsArgon2PhcString()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
         {
@@ -146,7 +146,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_WithArgon2id_ShouldReturnSuccessForCorrectPassword()
+    public void GivenArgon2idHashAndCorrectPassword_WhenVerify_ThenReturnsSuccess()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
         {
@@ -167,7 +167,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Hash_WithSha256_ShouldReturnSha256PhcString()
+    public void GivenSha256Algorithm_WhenHash_ThenReturnsSha256PhcString()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
         {
@@ -182,7 +182,7 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_WithSha256_ShouldReturnSuccessForCorrectPassword()
+    public void GivenSha256HashAndCorrectPassword_WhenVerify_ThenReturnsSuccess()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
         {
@@ -200,14 +200,14 @@ public class PasswordHasherTests
     }
 
     [Test]
-    public void Verify_WhenPhcUnknownPrefix_ShouldReturnFailed()
+    public void GivenUnknownPhcPrefix_WhenVerify_ThenReturnsFailed()
     {
         var result = _hasher.Verify("p", "$unknown$format", "pepper");
         result.Should().Be(PasswordVerificationEnum.Failed);
     }
 
     [Test]
-    public void Verify_WhenPhcMalformedPbkdf2_IsNotTreatedAsValid()
+    public void GivenMalformedPbkdf2Phc_WhenVerify_ThenIsNotTreatedAsValid()
     {
         AssertMalformedPbkdf2PhcIsRejected("$pbkdf2-sha256$i=notanumber$YmFzZTY0$YmFzZTY0");
         AssertMalformedPbkdf2PhcIsRejected("$pbkdf2-sha256$i=1000$!!!not-base64!!!$YmFzZTY0");

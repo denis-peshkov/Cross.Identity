@@ -15,7 +15,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
-    public async Task PasswordAuthStep_ShouldAuthenticateValidCredentials()
+    public async Task GivenValidCredentials_WhenExecuteAsync_ThenSetsUserIdAndReturnsOkAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -54,7 +54,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
-    public async Task PasswordAuthStep_ShouldFailOnInvalidCredentials()
+    public async Task GivenInvalidCredentials_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -88,7 +88,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
-    public async Task PasswordAuthStep_ShouldHandleRelativeKeys()
+    public async Task GivenRelativeKeys_WhenExecuteAsync_ThenAuthenticatesAndSetsUserIdAsync()
     {
         // Arrange
         var username = _faker.Internet.UserName();

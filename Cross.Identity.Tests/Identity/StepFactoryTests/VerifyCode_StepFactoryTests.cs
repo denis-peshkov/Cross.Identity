@@ -18,7 +18,7 @@ public class VerifyCode_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void VerifyCodeStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -47,7 +47,7 @@ public class VerifyCode_StepFactoryTests
     }
 
     [Test]
-    public void VerifyCodeStepFactory_ShouldHandlePhoneChannel()
+    public void GivenPhoneChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -70,7 +70,7 @@ public class VerifyCode_StepFactoryTests
     }
 
     [Test]
-    public void VerifyCodeStepFactory_ShouldHandleRelativeKeys()
+    public void GivenRelativeKeysJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(

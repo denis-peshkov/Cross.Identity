@@ -5,7 +5,7 @@
 public sealed class JsonHelpersAndOptionsTests
 {
     [Test]
-    public void JsonHelpers_Methods_ShouldHandleCommonCases()
+    public void GivenJsonElement_WhenJsonHelperMethods_ThenHandleCommonCases()
     {
         using var json = JsonDocument.Parse(
             """
@@ -36,7 +36,7 @@ public sealed class JsonHelpersAndOptionsTests
     }
 
     [Test]
-    public void StepFactoryJsonGuards_ShouldValidateMismatch()
+    public void GivenKindMismatch_WhenValidateOptionalKind_ThenThrows()
     {
         using var okJson = JsonDocument.Parse("""{"kind":"collectForm"}""");
         var actOk = () => StepFactoryJsonGuards.ValidateOptionalKind(okJson.RootElement, "collectForm");
@@ -48,7 +48,7 @@ public sealed class JsonHelpersAndOptionsTests
     }
 
     [Test]
-    public void EmbeddedProcessDefinitionOptions_AssemblyName_Property_ShouldSetAssembly()
+    public void GivenAssemblyName_WhenSet_ThenSetsAssembly()
     {
         var opt = new EmbeddedProcessDefinitionOptions();
         opt.AssemblyName = typeof(EmbeddedProcessDefinitionOptions).Assembly.GetName().Name!;

@@ -5,7 +5,7 @@
 public sealed class CoreInfrastructureBehaviorTests
 {
     [Test]
-    public void ProcessBuilder_Build_WithoutStart_ShouldThrow()
+    public void GivenNoStartStep_WhenBuild_ThenThrows()
     {
         var sut = new ProcessBuilder();
         var act = () => sut.Build();
@@ -13,7 +13,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void ProcessBuilder_DuplicateKind_ShouldThrow()
+    public void GivenDuplicateKind_WhenThenAdded_ThenThrows()
     {
         var sut = new ProcessBuilder()
             .StartWith(new FakeStep("first", null))
@@ -25,7 +25,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public async Task ProcessBuilder_Build_AndRun_ShouldPassThroughSteps()
+    public async Task GivenValidSteps_WhenBuildAndRun_ThenPassesThroughStepsAsync()
     {
         var sut = new ProcessBuilder()
             .StartWith(new FakeStep("start", "next"))
@@ -41,14 +41,14 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void CompositeProvider_EmptyProviders_ShouldThrow()
+    public void GivenEmptyProviders_WhenConstructed_ThenThrows()
     {
         var act = () => new CompositeProcessDefinitionProvider(Array.Empty<IProcessDefinitionProvider>());
         act.Should().Throw<ArgumentException>();
     }
 
     [Test]
-    public void CompositeProvider_GetJson_ShouldFallbackAndCache()
+    public void GivenFailingFirstProvider_WhenGetJson_ThenFallbacksAndCaches()
     {
         var first = new CountingProvider(throwJson: true, throwTemplate: true);
         var second = new CountingProvider(json: "{\"ok\":1}", template: "tpl");
@@ -64,7 +64,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void CompositeProvider_GetTemplate_ShouldFallbackAndCache()
+    public void GivenFailingFirstProvider_WhenGetTemplate_ThenFallbacksAndCaches()
     {
         var first = new CountingProvider(throwJson: true, throwTemplate: true);
         var second = new CountingProvider(json: "{\"ok\":1}", template: "html");
@@ -80,7 +80,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void CompositeProvider_GetJson_WhenNotFound_ShouldThrow()
+    public void GivenNoMatchingProvider_WhenGetJson_ThenThrows()
     {
         var sut = new CompositeProcessDefinitionProvider(new[] { new CountingProvider(throwJson: true, throwTemplate: true) });
         var act = () => sut.GetJson("none", FlowOperationEnum.Token);
@@ -88,7 +88,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void InMemoryFormSchemaProvider_ShouldGetCaseInsensitive_AndThrowForMissing()
+    public void GivenRegisteredSchema_WhenGetCaseInsensitiveAndMissing_ThenWorksAndThrows()
     {
         var schema = new FormSchema("Registration", new List<FieldDescriptor>());
         var sut = new InMemoryFormSchemaProvider(new[] { schema });
@@ -99,7 +99,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void DbContextReadOnlyAdapter_Query_ShouldRespectTrackChangesFlag()
+    public void GivenTrackChangesFlag_WhenQuery_ThenRespectsFlag()
     {
         var options = new DbContextOptionsBuilder<IdentityContext>()
             .UseInMemoryDatabase($"read-adapter-{Guid.NewGuid()}")
@@ -122,7 +122,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void FileSystemProvider_MissingFlowDirectory_ShouldThrow()
+    public void GivenMissingFlowDirectory_WhenConstructed_ThenThrows()
     {
         var options = Microsoft.Extensions.Options.Options.Create(new FileSystemProcessDefinitionOptions
         {
@@ -135,7 +135,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void FileSystemProvider_ShouldReadIndexedAndLazyFiles_ForFlowsAndTemplates()
+    public void GivenIndexedAndLazyFiles_WhenGetJsonAndTemplate_ThenReadsBoth()
     {
         var root = Path.Combine(Path.GetTempPath(), $"flows-{Guid.NewGuid():N}");
         var templates = Path.Combine(root, "Templates");
@@ -185,7 +185,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void ServiceCollectionExtensions_AddIfNotNull_ShouldAddOnlyNonEmpty()
+    public void GivenMixedClaimValues_WhenAddIfNotNull_ThenAddsOnlyNonEmpty()
     {
         var claims = new List<Claim>();
 
@@ -199,7 +199,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void ServiceCollectionExtensions_AddFlowDefinitionsComposite_WithoutDescriptors_ShouldThrow()
+    public void GivenNoDescriptors_WhenAddFlowDefinitionsComposite_ThenThrows()
     {
         var services = new ServiceCollection();
         var act = () => services.AddFlowDefinitionsComposite();
@@ -207,7 +207,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void ServiceCollectionExtensions_AddFlowDefinitionsComposite_ShouldRegisterComposite()
+    public void GivenDescriptors_WhenAddFlowDefinitionsComposite_ThenRegistersComposite()
     {
         var services = new ServiceCollection();
         services.AddFlowDefinitionsComposite(
@@ -222,7 +222,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void ServiceCollectionExtensions_AddFlowDefinitionsCompositeFromDirectoryAndEmbedded_And_AddCrossIdentity_ShouldRegister()
+    public void GivenConfiguration_WhenAddFlowDefinitionsAndCrossIdentity_ThenRegistersServices()
     {
         var root = Path.Combine(Path.GetTempPath(), $"svc-flow-{Guid.NewGuid():N}");
         Directory.CreateDirectory(root);
@@ -271,7 +271,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
-    public void FileSystemProvider_PrivateHelpers_ShouldBeInvokable()
+    public void GivenPrivateHelperMethods_WhenInvoked_ThenWork()
     {
         var resolve = typeof(FileSystemProcessDefinitionProvider).GetMethod(
             "ResolveTemplatesRoot",

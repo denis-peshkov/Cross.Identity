@@ -100,7 +100,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_LicenseRegistration_SuccessfulExecution()
+    public async Task GivenValidRegistrationInput_WhenExecuteRegisterFlow_ThenSucceedsAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -131,7 +131,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_InvalidInput_ShouldThrowValidationException()
+    public async Task GivenInvalidRegistrationInput_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>

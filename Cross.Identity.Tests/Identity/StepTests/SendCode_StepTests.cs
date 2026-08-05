@@ -39,7 +39,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_ShouldSendCodeByEmail()
+    public async Task GivenEmailChannel_WhenExecuteAsync_ThenSendsCodeByEmailAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -98,7 +98,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_WithTtlKey_ShouldUseBagTtl()
+    public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();
         var userId = Guid.NewGuid().ToString();
@@ -152,7 +152,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_WithTtlKeyMissingInBag_ShouldUseDefaultTtl()
+    public async Task GivenTtlKeyMissingInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
         var userId = Guid.NewGuid().ToString();
@@ -204,7 +204,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_ShouldGenerateNumericCodeForSms()
+    public async Task GivenSmsChannel_WhenExecuteAsync_ThenGeneratesNumericCodeAsync()
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
@@ -248,7 +248,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_InDevelopment_ShouldNotSetLastCodeWhenSendFails()
+    public async Task GivenDevelopmentEnvironmentAndSendFailure_WhenExecuteAsync_ThenReturnsFailWithoutLastCodeAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -306,7 +306,7 @@ public class SendCode_StepTests
     }
 
     [Test]
-    public async Task SendCodeStep_ShouldHandleUserNotFound()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenThrowsNotFoundExceptionAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();

@@ -18,7 +18,7 @@ public class PasswordAuth_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void PasswordAuthStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -49,7 +49,7 @@ public class PasswordAuth_StepFactoryTests
     }
 
     [Test]
-    public void PasswordAuthStepFactory_ShouldUseDefaultUserIdKey()
+    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -72,7 +72,7 @@ public class PasswordAuth_StepFactoryTests
     }
 
     [Test]
-    public void PasswordAuthStepFactory_ShouldHandleUserNameSelector()
+    public void GivenUserNameSelectorJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(

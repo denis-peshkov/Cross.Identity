@@ -26,7 +26,7 @@ public class RefreshToken_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void RefreshTokenStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
             """

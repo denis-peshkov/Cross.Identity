@@ -5,7 +5,7 @@
 public class StringExtensionsTests
 {
     [Test]
-    public void ToCamelCase_WhenNull_ReturnsEmpty()
+    public void GivenNullInput_WhenToCamelCase_ThenReturnsEmpty()
     {
         string? input = null;
         input.ToCamelCase().Should().Be("");
@@ -15,55 +15,55 @@ public class StringExtensionsTests
     [TestCase("SendCodeStep", "sendCodeStep")]
     [TestCase("IPAddress", "ipAddress")]
     [TestCase("URL", "url")]
-    public void ToCamelCase_ShouldConvertCorrectly(string input, string expected)
+    public void GivenPascalCaseInput_WhenToCamelCase_ThenConvertsCorrectly(string input, string expected)
     {
         input.ToCamelCase().Should().Be(expected);
     }
 
     [Test]
-    public void ToCamelCase_WhenAlreadyLower_ReturnsSame()
+    public void GivenAlreadyLowerInput_WhenToCamelCase_ThenReturnsSame()
     {
         "alreadyLower".ToCamelCase().Should().Be("alreadyLower");
     }
 
     [Test]
-    public void ToCamelCase1_ShouldLowerFirstLetter()
+    public void GivenPascalCaseInput_WhenToCamelCase1_ThenLowersFirstLetter()
     {
         "Pascal".ToCamelCase1().Should().Be("pascal");
     }
 
     [Test]
-    public void ToPascalCase_ShouldUpperFirstLetter()
+    public void GivenLowercaseInput_WhenToPascalCase_ThenUppersFirstLetter()
     {
         "camel".ToPascalCase().Should().Be("Camel");
     }
 
     [Test]
-    public void MaskSSN_WhenNull_ReturnsNull()
+    public void GivenNullInput_WhenMaskSSN_ThenReturnsNull()
     {
         ((string?)null).MaskSSN().Should().BeNull();
     }
 
     [Test]
-    public void MaskSSN_WhenEmpty_ReturnsEmpty()
+    public void GivenEmptyInput_WhenMaskSSN_ThenReturnsEmpty()
     {
         "".MaskSSN().Should().Be("");
     }
 
     [Test]
-    public void MaskSSN_WhenShort_ReturnsFiveStars()
+    public void GivenShortInput_WhenMaskSSN_ThenReturnsFiveStars()
     {
         "123".MaskSSN().Should().Be("*****");
     }
 
     [Test]
-    public void MaskSSN_WhenLongEnough_MasksFirstPart()
+    public void GivenLongEnoughInput_WhenMaskSSN_ThenMasksFirstPart()
     {
         "123456789".MaskSSN().Should().Be("*****6789");
     }
 
     [Test]
-    public void ToPascalCaseWithoutSpaces_ShouldCapitalizeAfterSpaces()
+    public void GivenSpacedInput_WhenToPascalCaseWithoutSpaces_ThenCapitalizesAfterSpaces()
     {
         "hello world".ToPascalCaseWithoutSpaces().Should().Be("HelloWorld");
     }

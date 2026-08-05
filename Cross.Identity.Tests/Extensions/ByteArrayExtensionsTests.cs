@@ -5,7 +5,7 @@
 public class ByteArrayExtensionsTests
 {
     [Test]
-    public void GetBytes_WhenSourceNull_ShouldThrow()
+    public void GivenNullSource_WhenGetBytes_ThenThrowsArgumentNullException()
     {
         byte[]? source = null;
 
@@ -15,7 +15,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
-    public void GetBytes_WhenLengthZero_ShouldReturnEmpty()
+    public void GivenZeroLength_WhenGetBytes_ThenReturnsEmpty()
     {
         var source = new byte[] { 1, 2, 3 };
 
@@ -25,7 +25,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
-    public void GetBytes_WhenLengthNegative_ShouldReturnEmpty()
+    public void GivenNegativeLength_WhenGetBytes_ThenReturnsEmpty()
     {
         var source = new byte[] { 1, 2, 3 };
 
@@ -35,7 +35,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
-    public void GetBytes_WhenLengthGreaterOrEqualSourceLength_ShouldReturnCopy()
+    public void GivenLengthGreaterOrEqualSourceLength_WhenGetBytes_ThenReturnsCopy()
     {
         var source = new byte[] { 1, 2, 3 };
 
@@ -46,7 +46,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
-    public void GetBytes_WhenLengthLessThanSource_ShouldReturnFirstLengthBytes()
+    public void GivenLengthLessThanSourceLength_WhenGetBytes_ThenReturnsFirstLengthBytes()
     {
         var source = new byte[] { 1, 2, 3, 4, 5 };
 

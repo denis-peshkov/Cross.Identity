@@ -25,7 +25,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task SendAsync_ShouldSendEmailForEmailChannel()
+    public async Task GivenEmailNotification_WhenSendAsync_ThenSendsEmailAsync()
     {
         // Arrange
         var message = NotificationMessage.For(ChannelEnum.Email, "test@example.com")
@@ -46,7 +46,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task SendAsync_ShouldSendSmsForSmsChannel()
+    public async Task GivenSmsNotification_WhenSendAsync_ThenSendsSmsAsync()
     {
         // Arrange
         var message = NotificationMessage.For(ChannelEnum.Sms, "+1234567890")
@@ -65,7 +65,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnTrue()
+    public async Task GivenValidEmailCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         // Arrange — current implementation checks the database record
         var userId = Guid.NewGuid();
@@ -96,7 +96,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeAlreadyUsed()
+    public async Task GivenUsedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
@@ -119,7 +119,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeReused()
+    public async Task GivenPreviouslyVerifiedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
@@ -140,14 +140,14 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeNotFound()
+    public async Task GivenMissingEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("email", "nobody@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeExpired()
+    public async Task GivenExpiredEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
@@ -168,7 +168,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnTrue_ForPhoneChannel()
+    public async Task GivenValidPhoneCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -192,7 +192,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeAlreadyUsed()
+    public async Task GivenUsedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -215,14 +215,14 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeNotFound()
+    public async Task GivenMissingPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("phone", "+9999999999", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeExpired()
+    public async Task GivenExpiredPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -244,7 +244,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneCodeMismatch()
+    public async Task GivenMismatchedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -266,7 +266,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenPhoneMaxAttemptsExceeded()
+    public async Task GivenPhoneMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -288,7 +288,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailCodeMismatch()
+    public async Task GivenMismatchedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
@@ -309,7 +309,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_WhenEmailMaxAttemptsExceeded()
+    public async Task GivenEmailMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
@@ -330,7 +330,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task VerifyAsync_ShouldReturnFalse_ForUnsupportedChannel()
+    public async Task GivenUnsupportedChannel_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);
         result.Should().BeFalse();

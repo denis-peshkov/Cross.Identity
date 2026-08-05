@@ -13,7 +13,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
-    public async Task CreateUserStep_ShouldCreateUserAndSaveUserId()
+    public async Task GivenUserDataInBag_WhenExecuteAsync_ThenCreatesUserAndStoresUserIdAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -62,7 +62,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
-    public async Task CreateUserStep_ShouldHandleRelativeKeys()
+    public async Task GivenRelativeKeys_WhenExecuteAsync_ThenCreatesUserAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -102,7 +102,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
-    public async Task CreateUserStep_ShouldHandleMissingValues()
+    public async Task GivenMissingMapValues_WhenExecuteAsync_ThenCreatesUserWithAvailableFieldsAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();

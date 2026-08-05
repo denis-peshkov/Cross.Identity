@@ -50,7 +50,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CreateUserAsync_ShouldCreateUser()
+    public async Task GivenNewUserDetails_WhenCreateUserAsync_ThenCreatesUserAsync()
     {
         // Arrange
         var email = "test@example.com";
@@ -77,7 +77,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CreateUserAsync_ShouldThrowWhenEmailExists()
+    public async Task GivenExistingEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         // Arrange
         var email = "existing@example.com";
@@ -101,7 +101,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserIdByAsync_ShouldReturnUserIdForEmail()
+    public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -120,7 +120,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserIdByAsync_ShouldThrowWhenUserNotFound()
+    public async Task GivenMissingUserByEmail_WhenGetUserIdByAsync_ThenThrowsNotFoundExceptionAsync()
     {
         // Act & Assert
         await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Email", "nonexistent@example.com", CancellationToken.None))
@@ -130,7 +130,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserIdByAsync_ShouldReturnUserIdForUserName()
+    public async Task GivenExistingUserByUserName_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         var userId = Guid.NewGuid();
         var userName = "testuser";
@@ -148,7 +148,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserIdByAsync_ShouldReturnUserIdForPhone()
+    public async Task GivenExistingUserByPhone_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -166,7 +166,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserIdByAsync_ShouldThrow_WhenSelectorNotSupported()
+    public async Task GivenUnsupportedSelector_WhenGetUserIdByAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Unknown", "value", CancellationToken.None))
             .Should()
@@ -175,7 +175,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserByAsync_ShouldReturnUserDictionary()
+    public async Task GivenExistingUserByEmail_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         // Arrange
         var userId = Guid.NewGuid();
@@ -198,7 +198,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserByAsync_ShouldReturnUser_WhenSelectorIsId()
+    public async Task GivenExistingUserById_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -216,7 +216,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserByAsync_ShouldReturnUser_WhenSelectorIsUserName()
+    public async Task GivenExistingUserByUserName_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         var userId = Guid.NewGuid();
         var userName = "myuser";
@@ -236,7 +236,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GetUserByAsync_ShouldThrow_WhenSelectorNotSupported()
+    public async Task GivenUnsupportedSelector_WhenGetUserByAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.GetUserByAsync("Unknown", "v", CancellationToken.None))
             .Should()
@@ -244,7 +244,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidateCodeAsync_ShouldReturnTrue_ForValidEmailCode()
+    public async Task GivenValidEmailCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -266,7 +266,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidateCodeAsync_ShouldUseLatestActiveEmailVerification_ForEmail()
+    public async Task GivenMultipleEmailVerifications_WhenValidateCodeAsync_ThenUsesLatestActiveVerificationAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -309,7 +309,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidateCodeAsync_ShouldReturnFalse_WhenCodeWrong()
+    public async Task GivenWrongEmailCode_WhenValidateCodeAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -331,7 +331,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidateCodeAsync_ShouldReturnTrue_ForValidPhoneCode()
+    public async Task GivenValidPhoneCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
         var phone = "+1234567890";
@@ -353,7 +353,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_ShouldReturnTrue_WhenPasswordValid()
+    public async Task GivenValidPassword_WhenValidatePasswordAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -378,7 +378,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenPasswordInvalid()
+    public async Task GivenInvalidPassword_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -402,7 +402,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenPepperNotFound()
+    public async Task GivenMissingPepperVersion_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -425,7 +425,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_WhenRehashNeeded_ShouldUpdatePasswordPhc()
+    public async Task GivenPasswordNeedingRehash_WhenValidatePasswordAsync_ThenUpdatesPasswordPhcAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -461,14 +461,14 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_ShouldReturnFalse_WhenSelectorValueEmpty()
+    public async Task GivenEmptySelectorValue_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var result = await _userService.ValidatePasswordAsync("Email", "   ", "pass", CancellationToken.None);
         result.Should().BeFalse();
     }
 
     [Test]
-    public async Task ValidatePasswordAsync_ShouldThrow_WhenSelectorNotSupported()
+    public async Task GivenUnsupportedSelector_WhenValidatePasswordAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.ValidatePasswordAsync("Unknown", "v", "p", CancellationToken.None))
             .Should()
@@ -476,7 +476,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task SetPasswordAsync_ShouldUpdatePasswordHashAndVersion()
+    public async Task GivenExistingUser_WhenSetPasswordAsync_ThenUpdatesPasswordHashAndVersionAsync()
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
@@ -512,7 +512,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task SetPasswordAsync_ShouldThrowNotFound_WhenUserDoesNotExist()
+    public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", CancellationToken.None))
             .Should()
@@ -520,7 +520,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ConcurrentUserAccountUpdates_ShouldThrowDbUpdateConcurrencyException()
+    public async Task GivenConcurrentUserAccountUpdates_WhenSavingChanges_ThenThrowsDbUpdateConcurrencyExceptionAsync()
     {
         var dbName = $"user-concurrency-{Guid.NewGuid():N}";
         await using var ctx1 = InMemoryDbHelper.CreateContext(dbName);

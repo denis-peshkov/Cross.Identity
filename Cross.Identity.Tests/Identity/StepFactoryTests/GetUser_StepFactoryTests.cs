@@ -18,7 +18,7 @@ public class GetUser_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void GetUserStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -45,7 +45,7 @@ public class GetUser_StepFactoryTests
     }
 
     [Test]
-    public void GetUserStepFactory_ShouldCreateStep_WithoutOptionalNext()
+    public void GivenJsonWithoutNext_WhenCreate_ThenReturnsConfiguredStepWithoutNext()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -69,7 +69,7 @@ public class GetUser_StepFactoryTests
     }
 
     [Test]
-    public void GetUserStepFactory_ShouldHandlePhoneSelector()
+    public void GivenPhoneSelectorJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(

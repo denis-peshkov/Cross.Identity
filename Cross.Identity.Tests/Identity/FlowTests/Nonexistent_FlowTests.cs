@@ -4,7 +4,7 @@
 internal class Nonexistent_FlowTests : RunFlowCommandHandlerTestsBase
 {
     [Test]
-    public async Task Handle_NoneExistFlow_ThrowsException()
+    public async Task GivenNonexistentFlow_WhenExecuteFlow_ThenThrowsKeyNotFoundExceptionAsync()
     {
         base.Setup();
 

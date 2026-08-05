@@ -5,7 +5,7 @@
 public sealed class BagAndMapTests
 {
     [Test]
-    public void Bag_GetTrySetAndReadOnlyMembers_ShouldWork()
+    public void GivenBagWithValues_WhenGetTrySetAndReadOnlyMembers_ThenWorks()
     {
         var bag = new Bag()
             .Set("a", 1)
@@ -29,7 +29,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void Bag_Get_WhenMissingOrInvalid_ShouldThrow()
+    public void GivenMissingOrInvalidKey_WhenGet_ThenThrows()
     {
         var bag = new Bag().Set("x", "abc").Set("n", null);
 
@@ -44,7 +44,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void Bag_ToDictionaryAndAsEnumerable_ShouldReturnData()
+    public void GivenBagWithValues_WhenToDictionaryAndAsEnumerable_ThenReturnsData()
     {
         var bag = new Bag().Set("k1", "v1").Set("k2", 2);
         var dict = bag.ToDictionary();
@@ -55,7 +55,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void BagKey_Qualify_ShouldHandleRelativeAndAbsolute()
+    public void GivenRelativeAndAbsoluteKeys_WhenQualify_ThenHandlesBoth()
     {
         BagKey.Qualify("step", "email").Should().Be("step.email");
         BagKey.Qualify("step", "collect.email").Should().Be("collect.email");
@@ -68,7 +68,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void ResolveBy_DefaultForAndFromJson_ShouldWork()
+    public void GivenChannelAndJson_WhenResolveByMethods_ThenWork()
     {
         ResolveBy.DefaultFor(ChannelEnum.Email).Field.Should().Be("Email");
         ResolveBy.DefaultFor(ChannelEnum.Sms).Field.Should().Be("PhoneNumber");
@@ -88,7 +88,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void BagMap_ToBag_And_FromBag_ShouldMapSimpleTypesAndAttributes()
+    public void GivenSampleMap_WhenToBagAndFromBag_ThenMapsSimpleTypesAndAttributes()
     {
         var now = DateTime.UtcNow;
         var dto = new SampleMap
@@ -131,7 +131,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
-    public void BagMap_FromBag_WhenNullOrEnumAsNumber_ShouldWork()
+    public void GivenNullAndEnumAsNumber_WhenFromBag_ThenWorks()
     {
         var src = new Dictionary<string, object?>
         {

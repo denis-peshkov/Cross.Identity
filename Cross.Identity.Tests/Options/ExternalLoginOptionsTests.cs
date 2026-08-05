@@ -5,7 +5,7 @@
 public class ExternalLoginOptionsTests
 {
     [Test]
-    public void ExternalLoginProviderOptions_IsConfigured_ShouldBeFalse_WhenCredentialsMissing()
+    public void GivenMissingCredentials_WhenIsConfiguredChecked_ThenReturnsFalse()
     {
         var options = new ExternalLoginProviderOptions
         {
@@ -17,7 +17,7 @@ public class ExternalLoginOptionsTests
     }
 
     [Test]
-    public void ExternalLoginProviderOptions_IsConfigured_ShouldBeFalse_WhenDisabled()
+    public void GivenDisabledProvider_WhenIsConfiguredChecked_ThenReturnsFalse()
     {
         var options = new ExternalLoginProviderOptions
         {
@@ -30,7 +30,7 @@ public class ExternalLoginOptionsTests
     }
 
     [Test]
-    public void ExternalLoginProviderOptions_IsConfigured_ShouldBeTrue_WhenEnabledAndConfigured()
+    public void GivenEnabledConfiguredProvider_WhenIsConfiguredChecked_ThenReturnsTrue()
     {
         var options = new ExternalLoginProviderOptions
         {

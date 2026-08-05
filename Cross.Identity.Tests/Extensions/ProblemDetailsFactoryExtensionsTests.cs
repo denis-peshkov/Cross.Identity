@@ -5,7 +5,7 @@
 public class ProblemDetailsFactoryExtensionsTests
 {
     [Test]
-    public void ToValidationProblemDetails_FromValidationException_ShouldMapErrors()
+    public void GivenValidationException_WhenToValidationProblemDetails_ThenMapsErrors()
     {
         var ex = new ValidationException(new[]
         {
@@ -23,7 +23,7 @@ public class ProblemDetailsFactoryExtensionsTests
     }
 
     [Test]
-    public void ToValidationProblemDetails_FromDictionary_ShouldSetStatusAndTitle()
+    public void GivenErrorDictionary_WhenToValidationProblemDetails_ThenSetsStatusAndTitle()
     {
         var errors = new Dictionary<string, string[]>
         {

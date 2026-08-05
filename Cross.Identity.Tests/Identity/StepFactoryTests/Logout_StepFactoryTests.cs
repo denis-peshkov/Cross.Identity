@@ -18,7 +18,7 @@ public class Logout_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void LogoutStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
             """

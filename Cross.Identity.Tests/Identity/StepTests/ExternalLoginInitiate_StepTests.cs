@@ -13,7 +13,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
-    public async Task GivenProviderAndReturnUrl_WhenStepExecutes_ThenAuthorizationUrlIsStoredAsync()
+    public async Task GivenProviderAndReturnUrl_WhenExecuteAsync_ThenSetsAuthorizationUrlAsync()
     {
         _externalLoginService
             .Setup(s => s.InitiateAsync("Google", "/home", null, It.IsAny<CancellationToken>()))
@@ -40,7 +40,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
-    public async Task GivenGuidOrStringLinkUserId_WhenStepExecutes_ThenLinkUserIdIsForwardedAsync()
+    public async Task GivenGuidOrStringLinkUserId_WhenExecuteAsync_ThenForwardsLinkUserIdAsync()
     {
         var linkUserId = Guid.NewGuid();
         _externalLoginService
@@ -71,7 +71,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
-    public async Task GivenInvalidLinkUserId_WhenStepExecutes_ThenNullIsForwardedAsync()
+    public async Task GivenInvalidLinkUserId_WhenExecuteAsync_ThenForwardsNullAsync()
     {
         _externalLoginService
             .Setup(s => s.InitiateAsync("Google", null, null, It.IsAny<CancellationToken>()))

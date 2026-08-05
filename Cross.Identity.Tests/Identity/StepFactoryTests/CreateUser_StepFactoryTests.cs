@@ -18,7 +18,7 @@ public class CreateUser_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void CreateUserStepFactory_ShouldCreateStepWithMap()
+    public void GivenValidJsonWithMap_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -54,7 +54,7 @@ public class CreateUser_StepFactoryTests
     }
 
     [Test]
-    public void CreateUserStepFactory_ShouldUseDefaultUserIdKey()
+    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -78,7 +78,7 @@ public class CreateUser_StepFactoryTests
     }
 
     [Test]
-    public void CreateUserStepFactory_ShouldHandleRelativeKeys()
+    public void GivenRelativeKeysJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(

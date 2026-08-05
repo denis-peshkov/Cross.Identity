@@ -73,7 +73,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLogin_ShouldReturnAuthorizationUrl()
+    public async Task GivenGoogleProvider_WhenExternalLogin_ThenReturnsAuthorizationUrlAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
@@ -93,7 +93,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLoginUnlink_ShouldUnlinkProvider_WhenAuthenticated()
+    public async Task GivenAuthenticatedUserWithLinkedProvider_WhenExternalLoginUnlink_ThenUnlinksProviderAsync()
     {
         var userId = Guid.NewGuid();
         var provider = await Context.Providers.SingleAsync(x => x.Name == "Google");
@@ -138,7 +138,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLogin_WithLinkUserId_ShouldAcceptWhenMatchesAuthenticatedUser()
+    public async Task GivenMatchingLinkUserId_WhenExternalLogin_ThenAcceptsAsync()
     {
         var linkUserId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -170,7 +170,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLogin_WithLinkUserIdForAnotherUser_ShouldReject()
+    public async Task GivenMismatchedLinkUserId_WhenExternalLogin_ThenRejectsAsync()
     {
         var authenticatedUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
@@ -192,7 +192,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLogin_WithInvalidLinkUserId_ShouldThrowValidationException()
+    public async Task GivenInvalidLinkUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
     {
         await FluentActions.Invoking(() =>
                 _flowExecutor.ExecuteAsync(
@@ -209,7 +209,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLoginCallback_ShouldReturnTokens_WhenGoogleOAuthSucceeds()
+    public async Task GivenSuccessfulGoogleOAuth_WhenExternalLoginCallback_ThenReturnsTokensAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
@@ -237,7 +237,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLoginCallback_ShouldFail_WhenProviderReturnsOAuthError()
+    public async Task GivenOAuthError_WhenExternalLoginCallback_ThenFailsAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
@@ -259,7 +259,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ExternalLoginCallback_WithStateAndError_WithoutCode_ShouldPassValidationAndProcessError()
+    public async Task GivenStateAndErrorWithoutCode_WhenExternalLoginCallback_ThenProcessesErrorAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);

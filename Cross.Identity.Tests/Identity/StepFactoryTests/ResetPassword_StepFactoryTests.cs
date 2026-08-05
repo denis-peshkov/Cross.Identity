@@ -22,7 +22,7 @@ public class ResetPassword_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void ResetPasswordStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -49,7 +49,7 @@ public class ResetPassword_StepFactoryTests
     }
 
     [Test]
-    public void ResetPasswordStepFactory_ShouldThrowWhenPasswordKeyMissing()
+    public void GivenMissingPasswordKey_WhenCreate_ThenThrowsKeyNotFoundException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -69,7 +69,7 @@ public class ResetPassword_StepFactoryTests
     }
 
     [Test]
-    public void ResetPasswordStepFactory_ShouldThrowWhenChannelMissing()
+    public void GivenMissingChannel_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -90,7 +90,7 @@ public class ResetPassword_StepFactoryTests
     }
 
     [Test]
-    public void ResetPasswordStepFactory_ShouldThrowWhenResolveByMissing()
+    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """

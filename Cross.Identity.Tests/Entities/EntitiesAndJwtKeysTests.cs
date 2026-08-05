@@ -5,7 +5,7 @@
 public sealed class EntitiesAndJwtKeysTests
 {
     [Test]
-    public void ProviderEntity_And_UserExternalLoginEntity_ShouldSetProperties()
+    public void GivenProviderAndExternalLogin_WhenCreated_ThenSetsProperties()
     {
         var user = new UserAccountEntity
         {
@@ -53,7 +53,7 @@ public sealed class EntitiesAndJwtKeysTests
     }
 
     [Test]
-    public void JwtKeys_GetRsaKey_ShouldReturnKeyWithKeyId()
+    public void GivenJwtKeys_WhenGetRsaKey_ThenReturnsKeyWithKeyId()
     {
         var key = JwtKeys.GetRsaKey();
         key.Should().NotBeNull();
