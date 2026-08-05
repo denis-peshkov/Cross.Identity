@@ -49,9 +49,9 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 Error importing ruleset: The ruleset you are importing contains an invalid actor
 ```
 
-Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev (`GH013`: PR required + check `build`).
+Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope), not `GITHUB_TOKEN`. Plain `GITHUB_TOKEN` is blocked by Protect-dev / Protect release tags (`GH013`).
 
-**Back-merge checkout gotcha:** `actions/checkout` can persist `GITHUB_TOKEN` as `http.https://github.com/.extraheader`. That header overrides a later `git remote set-url` with `TAGTOKEN`. `backmerge-master-to-dev.yml` sets `persist-credentials: false` and unsets that header before push.
+**Tag push gotcha (same as back-merge):** `actions/checkout` can persist `GITHUB_TOKEN` as `http.https://github.com/.extraheader`, which overrides `git remote set-url` with `TAGTOKEN`. `dotnet.yml` sets `persist-credentials: false` and unsets that header before pushing `v*` tags.
 
 ## After import
 
