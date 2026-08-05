@@ -380,4 +380,38 @@ internal class JwtTokenService : IJwtTokenService
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
+
+    /// <inheritdoc/>
+    public async Task RevokeAllTokensForUserAsync(
+        Guid userId,
+        RefreshTokenRevokeReason reason,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+        var refreshTokens = await _context.RefreshTokens
+            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var token in refreshTokens)
+        {
+            token.RevokedAt = now;
+            token.RevokeReason = reason;
+            token.RevokedByIp = revokedByIp;
+        }
+
+        var accessTokens = await _context.AccessTokens
+            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var token in accessTokens)
+        {
+            token.RevokedAt = now;
+            token.RevokeReason = reason;
+            token.RevokedByIp = revokedByIp;
+        }
+    }
 }

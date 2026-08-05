@@ -148,7 +148,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             pepperVault.Object,
             passwordHasher.Object,
             phoneNormalizer.Object,
-            headersContextAccessor);
+            headersContextAccessor,
+            Mock.Of<IJwtTokenService>());
     }
 
     /// <summary>

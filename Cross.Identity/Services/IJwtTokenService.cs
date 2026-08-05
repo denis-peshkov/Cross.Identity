@@ -120,6 +120,15 @@ public interface IJwtTokenService
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
+    /// Does not call <c>SaveChanges</c> — the caller persists changes on the shared <c>IdentityContext</c>.
+    /// </summary>
+    /// <param name="userId">User whose sessions must be invalidated.</param>
+    /// <param name="reason">Revocation reason stored on each token.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken = default);
 }
 
 // /// <summary>
