@@ -5,7 +5,7 @@
 public sealed class LicenseTests
 {
     [Test]
-    public void ParameterlessConstructor_ShouldNotBeConfigured()
+    public void GivenParameterlessConstructor_WhenCreated_ThenIsNotConfigured()
     {
         var sut = new License();
 
@@ -15,7 +15,7 @@ public sealed class LicenseTests
     }
 
     [Test]
-    public void ClaimsPrincipal_WithAllRequiredClaims_ShouldBeConfigured()
+    public void GivenAllRequiredClaims_WhenCreated_ThenIsConfigured()
     {
         var now = DateTimeOffset.UtcNow;
         var claims = new[]

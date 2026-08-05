@@ -23,7 +23,7 @@ public class ResetPassword_StepTests
     }
 
     [Test]
-    public async Task ResetPasswordStep_ShouldSetPasswordAndReturnNext()
+    public async Task GivenEmailAndPassword_WhenExecuteAsync_ThenSetsPasswordAndReturnsNextAsync()
     {
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";

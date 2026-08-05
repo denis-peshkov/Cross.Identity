@@ -5,7 +5,7 @@
 public class ExpiredRefreshTokenCleanupHostedServiceTests
 {
     [Test]
-    public async Task ExecuteAsync_ShouldInvokeCleanup_AndStopOnCancellation()
+    public async Task GivenHostedService_WhenExecuteAsync_ThenInvokesCleanupAndStopsOnCancellationAsync()
     {
         var jwtTokenService = new Mock<IJwtTokenService>();
         jwtTokenService
@@ -37,7 +37,7 @@ public class ExpiredRefreshTokenCleanupHostedServiceTests
     }
 
     [Test]
-    public async Task CleanupAsync_ShouldLogError_WhenCleanupFails()
+    public async Task GivenCleanupFailure_WhenCleanupAsync_ThenLogsErrorAsync()
     {
         var jwtTokenService = new Mock<IJwtTokenService>();
         jwtTokenService

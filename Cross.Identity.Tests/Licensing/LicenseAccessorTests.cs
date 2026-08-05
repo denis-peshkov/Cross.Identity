@@ -11,7 +11,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
-    public void Current_WithoutLicenseKey_ShouldReturnUnconfiguredLicense()
+    public void GivenNoLicenseKey_WhenCurrentAccessed_ThenReturnsUnconfiguredLicense()
     {
         var sut = new LicenseAccessor(
             new IdentityServiceConfiguration(),
@@ -24,7 +24,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
-    public void Current_WithInvalidLicenseKey_ShouldReturnUnconfiguredLicense()
+    public void GivenInvalidLicenseKey_WhenCurrentAccessed_ThenReturnsUnconfiguredLicense()
     {
         var sut = new LicenseAccessor(
             new IdentityServiceConfiguration { LicenseKey = "not-a-jwt" },
@@ -34,7 +34,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
-    public void CheckLicense_ShouldRunOnlyOnce()
+    public void GivenServiceProvider_WhenCheckLicenseCalledTwice_ThenRunsOnlyOnce()
     {
         var services = new ServiceCollection();
         services.AddLogging();

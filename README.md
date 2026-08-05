@@ -144,34 +144,19 @@ dotnet test
 
 ## Tests
 
-### Categories (NUnit)
+Canonical rules (naming, AAA, categories, layout, run commands): [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
 
-Constants — `Cross.Identity.Tests.Common.TestCategory`, attributes: `[Category(TestCategory.UNIT)]`, `[Category(TestCategory.INTEGRATION)]`, `[Category(TestCategory.FUNCTIONAL)]`.
+Summary:
 
-| Category | Purpose |
-|----------|---------|
-| **UNIT** | Mocks, single component, no InMemory EF |
-| **INTEGRATION** | `EFTestsBase` (InMemory EF + real services), `RunFlowCommandHandlerTestsBase` / `Identity/FlowTests` (end-to-end process engine) |
-| **FUNCTIONAL** | Reserved (E2E / TestServer / external dependencies), not used yet |
-
-Run examples:
+- **NUnit** in `Cross.Identity.Tests/`; categories via `TestCategory` (`Unit` / `Integration` / `Functional`).
+- **Method names:** `Given[X]_When[Y]_Then[Z]` (async tests end with `Async`).
+- **Layout:** `Identity/FlowTests` (integration), `Identity/StepTests` + `StepFactoryTests` (unit), `Services/` (unit or integration).
 
 ```bash
+dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj
 dotnet test --filter "Category=Unit"
 dotnet test --filter "Category=Integration"
 ```
-
-### Method naming
-
-**Given_When_Then** convention:
-
-- **Given** — context/preconditions.
-- **When** — action.
-- **Then** — expected result.
-
-Example: `ExistingUser_RequestCode_SendsCodeAndReturnsLastCode`.
-
-Layout: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests and StepFactoryTests (unit); `Services/` — unit or integration depending on the base class (`EFTestsBase` → integration).
 
 ## Additional resources
 

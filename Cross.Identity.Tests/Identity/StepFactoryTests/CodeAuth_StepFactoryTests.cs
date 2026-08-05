@@ -19,7 +19,7 @@ public class CodeAuth_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void CodeAuthStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -49,7 +49,7 @@ public class CodeAuth_StepFactoryTests
     }
 
     [Test]
-    public void CodeAuthStepFactory_ShouldUseDefaultUserIdKey()
+    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
     {
         using var json = JsonDocument.Parse(
             """
@@ -69,7 +69,7 @@ public class CodeAuth_StepFactoryTests
     }
 
     [Test]
-    public void CodeAuthStepFactory_ShouldThrowWhenResolveByMissing()
+    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """

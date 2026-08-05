@@ -60,7 +60,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task RefreshToken_WithValidToken_ShouldReturnNewTokenPair()
+    public async Task GivenValidRefreshToken_WhenRefreshTokenFlow_ThenReturnsNewTokenPairAsync()
     {
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
@@ -93,7 +93,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task RefreshToken_WithInvalidToken_ShouldThrowNotAuthorizedException()
+    public async Task GivenInvalidRefreshToken_WhenRefreshTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
     {
         var invalidToken = new string('x', 32);
 
@@ -108,7 +108,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task RefreshToken_WithTooShortInput_ShouldThrowValidationException()
+    public async Task GivenTooShortRefreshToken_WhenRefreshTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = "short" },
@@ -120,7 +120,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task RefreshToken_ReuseAfterRotation_ShouldRevokeFamilyAndThrowConflict()
+    public async Task GivenReusedRefreshTokenAfterRotation_WhenRefreshTokenFlow_ThenRevokesFamilyAndThrowsConflictAsync()
     {
         // Attacker rotated first (R1 → R2); victim reuses R1 → REPLAY_DETECTED kills R2.
         var userId = Guid.NewGuid();

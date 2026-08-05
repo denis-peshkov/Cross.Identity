@@ -2,7 +2,7 @@
 
 [Category(TestCategory.UNIT)]
 [TestFixture]
-public class CompleteExternalLogin_StepTests
+public class ExternalLoginComplete_StepTests
 {
     private Mock<IExternalLoginService> _externalLoginService = null!;
     private Mock<IJwtTokenService> _jwtTokenService = null!;
@@ -17,7 +17,7 @@ public class CompleteExternalLogin_StepTests
     }
 
     [Test]
-    public async Task CompleteExternalLoginStep_WhenLinking_ShouldSkipTokenGeneration()
+    public async Task GivenLinkingCompletion_WhenExecuteAsync_ThenSkipsTokenGenerationAsync()
     {
         var userId = Guid.NewGuid();
         _externalLoginService
@@ -30,16 +30,16 @@ public class CompleteExternalLogin_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<Guid>("completeExternalLogin.UserId").Should().Be(userId);
-        bag.Get<bool>("completeExternalLogin.IsLinking").Should().BeTrue();
-        bag.ContainsKey("completeExternalLogin.AccessToken").Should().BeFalse();
+        bag.Get<Guid>("externalLoginComplete.UserId").Should().Be(userId);
+        bag.Get<bool>("externalLoginComplete.IsLinking").Should().BeTrue();
+        bag.ContainsKey("externalLoginComplete.AccessToken").Should().BeFalse();
         _jwtTokenService.Verify(
             j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>()),
             Times.Never);
     }
 
     [Test]
-    public async Task CompleteExternalLoginStep_WhenLogin_ShouldIssueTokens()
+    public async Task GivenSuccessfulLogin_WhenExecuteAsync_ThenIssuesTokensAsync()
     {
         var userId = Guid.NewGuid();
         var user = new UserAccountEntity
@@ -70,22 +70,22 @@ public class CompleteExternalLogin_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("completeExternalLogin.AccessToken").Should().Be("access-token");
-        bag.Get<string>("completeExternalLogin.RefreshToken").Should().Be("refresh-token");
-        bag.Get<string>("completeExternalLogin.TokenType").Should().Be("Bearer");
-        bag.Get<int>("completeExternalLogin.ExpiresIn").Should().Be(3600);
+        bag.Get<string>("externalLoginComplete.AccessToken").Should().Be("access-token");
+        bag.Get<string>("externalLoginComplete.RefreshToken").Should().Be("refresh-token");
+        bag.Get<string>("externalLoginComplete.TokenType").Should().Be("Bearer");
+        bag.Get<int>("externalLoginComplete.ExpiresIn").Should().Be(3600);
     }
 
     [Test]
-    public async Task CompleteExternalLoginStep_ShouldForwardOAuthError()
+    public async Task GivenOAuthError_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
             .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
-        var step = new CompleteExternalLoginStep
+        var step = new ExternalLoginCompleteStep
         {
-            Kind = "completeExternalLogin",
+            Kind = "externalLoginComplete",
             CodeKey = "Code",
             StateKey = "State",
             ErrorKey = "Error",
@@ -96,25 +96,25 @@ public class CompleteExternalLogin_StepTests
         };
 
         var bag = new Bag();
-        bag.Set("completeExternalLogin.Code", "code");
-        bag.Set("completeExternalLogin.State", "state");
-        bag.Set("completeExternalLogin.Error", "access_denied");
-        bag.Set("completeExternalLogin.ErrorDescription", "Denied");
+        bag.Set("externalLoginComplete.Code", "code");
+        bag.Set("externalLoginComplete.State", "state");
+        bag.Set("externalLoginComplete.Error", "access_denied");
+        bag.Set("externalLoginComplete.ErrorDescription", "Denied");
 
         await FluentActions.Invoking(async () => await step.ExecuteAsync(bag, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>().WithMessage("Denied");
     }
 
     [Test]
-    public async Task CompleteExternalLoginStep_WithoutCode_ShouldForwardOAuthError()
+    public async Task GivenOAuthErrorWithoutCode_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
             .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
-        var step = new CompleteExternalLoginStep
+        var step = new ExternalLoginCompleteStep
         {
-            Kind = "completeExternalLogin",
+            Kind = "externalLoginComplete",
             CodeKey = "Code",
             StateKey = "State",
             ErrorKey = "Error",
@@ -125,18 +125,18 @@ public class CompleteExternalLogin_StepTests
         };
 
         var bag = new Bag();
-        bag.Set("completeExternalLogin.State", "state");
-        bag.Set("completeExternalLogin.Error", "access_denied");
-        bag.Set("completeExternalLogin.ErrorDescription", "Denied");
+        bag.Set("externalLoginComplete.State", "state");
+        bag.Set("externalLoginComplete.Error", "access_denied");
+        bag.Set("externalLoginComplete.ErrorDescription", "Denied");
 
         await FluentActions.Invoking(async () => await step.ExecuteAsync(bag, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>().WithMessage("Denied");
     }
 
-    private CompleteExternalLoginStep CreateStep()
+    private ExternalLoginCompleteStep CreateStep()
         => new()
         {
-            Kind = "completeExternalLogin",
+            Kind = "externalLoginComplete",
             CodeKey = "Code",
             StateKey = "State",
             ExternalLoginService = _externalLoginService.Object,
@@ -148,8 +148,8 @@ public class CompleteExternalLogin_StepTests
     private static Bag CreateBag()
     {
         var bag = new Bag();
-        bag.Set("completeExternalLogin.Code", "code");
-        bag.Set("completeExternalLogin.State", "state");
+        bag.Set("externalLoginComplete.Code", "code");
+        bag.Set("externalLoginComplete.State", "state");
         return bag;
     }
 }

@@ -5,25 +5,25 @@
 public class ConstantsTests
 {
     [Test]
-    public void ClaimConstants_Username_ShouldReturnExpected()
+    public void GivenClaimConstants_WhenUsername_ThenReturnsExpected()
     {
         ClaimConstants.Username.Should().Be("username");
     }
 
     [Test]
-    public void ClaimConstants_Permission_ShouldReturnExpected()
+    public void GivenClaimConstants_WhenPermission_ThenReturnsExpected()
     {
         ClaimConstants.Permission.Should().Be("permission");
     }
 
     [Test]
-    public void IdentityConstants_RequestPatchBody_ShouldReturnExpected()
+    public void GivenIdentityConstants_WhenRequestPatchBody_ThenReturnsExpected()
     {
         IdentityConstants.RequestPatchBody.Should().Be("RequestPatchBody");
     }
 
     [Test]
-    public void IdentityConstants_TokenNames_ShouldReturnExpected()
+    public void GivenIdentityConstants_WhenTokenNames_ThenReturnsExpected()
     {
         IdentityConstants.AccessToken.Should().Be("access_token");
         IdentityConstants.RefreshToken.Should().Be("refresh_token");
@@ -33,7 +33,7 @@ public class ConstantsTests
     }
 
     [Test]
-    public void ExternalLoginCompletion_ShouldExposeValues()
+    public void GivenExternalLoginCompletion_WhenCreated_ThenExposesValues()
     {
         var userId = Guid.NewGuid();
         var completion = new ExternalLoginCompletion(userId, true);
@@ -43,7 +43,7 @@ public class ConstantsTests
     }
 
     [Test]
-    public void ExactlyOneRequiredRule_ShouldStoreFields()
+    public void GivenExactlyOneRequiredRule_WhenCreated_ThenStoresFields()
     {
         var rule = new ExactlyOneRequiredRule(new[] { "email", "phone" }, "pick one");
 

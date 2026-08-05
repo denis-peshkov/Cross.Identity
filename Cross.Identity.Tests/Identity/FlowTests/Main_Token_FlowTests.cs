@@ -97,7 +97,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_LicenseRegistration_SuccessfulExecution()
+    public async Task GivenValidCredentials_WhenExecuteTokenFlow_ThenReturnsTokensAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -133,7 +133,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_InvalidPassword_ShouldReturnIsInvalidCode()
+    public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenReturnsIsInvalidCodeAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -154,7 +154,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_InvalidInput_ShouldThrowValidationException()
+    public async Task GivenInvalidTokenInput_WhenExecuteTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>

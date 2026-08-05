@@ -13,7 +13,7 @@ public class LogoutAll_StepTests
     }
 
     [Test]
-    public async Task LogoutAllStep_WhenValid_ShouldRevokeAndSetResult()
+    public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenRevokesAllAndSetsResultAsync()
     {
         var refreshToken = "refresh-token-value";
         _jwtTokenService
@@ -42,7 +42,7 @@ public class LogoutAll_StepTests
     }
 
     [Test]
-    public async Task LogoutAllStep_WhenServiceThrows_ShouldPropagate()
+    public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenPropagatesNotAuthorizedExceptionAsync()
     {
         _jwtTokenService
             .Setup(j => j.RevokeAllTokensForLogoutAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

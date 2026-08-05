@@ -53,7 +53,7 @@ public class ForgotPassword_StepTests
         };
 
     [Test]
-    public async Task ExecuteAsync_WithEmail_ShouldSendResetEmail()
+    public async Task GivenEmailChannel_WhenExecuteAsync_ThenSendsResetEmailAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -92,7 +92,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WithSms_ShouldSendNumericCode()
+    public async Task GivenSmsChannel_WhenExecuteAsync_ThenGeneratesNumericCodeAsync()
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
@@ -116,7 +116,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WhenDeveloperModeDisabled_ShouldNotSetLastCode()
+    public async Task GivenDeveloperModeDisabled_WhenExecuteAsync_ThenDoesNotSetLastCodeAsync()
     {
         var email = _faker.Internet.Email();
         var bag = new Bag().Set("forgotPassword.email", email);
@@ -143,7 +143,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
-    public async Task ExecuteAsync_InDevelopment_ShouldNotSendNotification()
+    public async Task GivenDevelopmentEnvironment_WhenExecuteAsync_ThenDoesNotSendNotificationAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
@@ -170,7 +170,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
-    public async Task ExecuteAsync_WhenCodeServiceFails_ShouldLogErrorAndContinue()
+    public async Task GivenCodeServiceFailure_WhenExecuteAsync_ThenLogsErrorAndReturnsOkAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();

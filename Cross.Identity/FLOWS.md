@@ -145,9 +145,9 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `LinkUserId` (opt. Guid string). → `initiateExternalLogin` |
-| `initiateExternalLogin` | initiateExternalLogin | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
-| `collectResult` | collectResult | `url = initiateExternalLogin.Url`. `next: null` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `LinkUserId` (opt. Guid string). → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
+| `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
 > `LinkUserId` enables account linking when present and must match the authenticated principal (`sub` / NameIdentifier); omit for normal sign-in / sign-up.
 
@@ -159,11 +159,53 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.). → `completeExternalLogin` |
-| `completeExternalLogin` | completeExternalLogin | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.). → `externalLoginComplete` |
+| `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
+
+---
+
+## `main.ExternalLoginUnlink.json`
+
+**Purpose:** unlink an external OAuth provider from the authenticated user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Provider` (2–32). → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`. → `collectResult` |
+| `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
+
+> Requires an authenticated principal (`sub` / NameIdentifier). Removes the matching row from `auth.UsersExternalLogins` for the current user and provider.
+
+---
+
+## `main.Logout.json`
+
+**Purpose:** revoke the current session (presented refresh token).
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logout` |
+| `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
+
+> Revokes the refresh token with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
+
+---
+
+## `main.LogoutAll.json`
+
+**Purpose:** revoke all sessions for the user (prove ownership via refresh token).
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logoutAll` |
+| `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
+
+> Proves session ownership via the refresh token, then revokes every active access/refresh token for that user with `USER_LOGOUT_ALL`.
 
 ---
 
@@ -183,8 +225,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `getUserId` | Find user, return `UserId` |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
-| `initiateExternalLogin` | OAuth redirect URL |
-| `completeExternalLogin` | OAuth callback, issue tokens |
+| `externalLoginInitiate` | OAuth redirect URL |
+| `externalLoginComplete` | OAuth callback, issue tokens |
+| `externalLoginUnlink` | Unlink OAuth provider from current user |
+| `logout` | Revoke current refresh token (`USER_LOGOUT`) |
+| `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
 
 ### Form validators (`schemaDef.validators`)
 

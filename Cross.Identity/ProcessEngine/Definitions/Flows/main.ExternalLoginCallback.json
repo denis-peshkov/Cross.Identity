@@ -16,10 +16,10 @@
           { "kind": "atLeastOneRequired", "fields": ["Code", "Error"], "message": "Provide an authorization code or an OAuth error." }
         ]
       },
-      "next": "completeExternalLogin"
+      "next": "externalLoginComplete"
     },
     {
-      "kind": "completeExternalLogin",
+      "kind": "externalLoginComplete",
       "codeKey": "collectForm.Code",
       "stateKey": "collectForm.State",
       "errorKey": "collectForm.Error",
@@ -29,12 +29,12 @@
     {
       "kind": "collectResult",
       "map": {
-        "access_token": "completeExternalLogin.AccessToken",
-        "refresh_token": "completeExternalLogin.RefreshToken",
-        "token_type": "completeExternalLogin.TokenType",
-        "expires_in": "completeExternalLogin.ExpiresIn",
-        "user_id": "completeExternalLogin.UserId",
-        "is_linking": "completeExternalLogin.IsLinking"
+        "access_token": "externalLoginComplete.AccessToken",
+        "refresh_token": "externalLoginComplete.RefreshToken",
+        "token_type": "externalLoginComplete.TokenType",
+        "expires_in": "externalLoginComplete.ExpiresIn",
+        "user_id": "externalLoginComplete.UserId",
+        "is_linking": "externalLoginComplete.IsLinking"
       },
       "next": null
     }

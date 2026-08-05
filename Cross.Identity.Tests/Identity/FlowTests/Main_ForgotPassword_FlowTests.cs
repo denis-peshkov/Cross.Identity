@@ -66,7 +66,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ForgotPassword_WithValidEmail_ShouldReturnLastCode()
+    public async Task GivenValidEmailInDevelopmentMode_WhenForgotPasswordFlow_ThenReturnsLastCodeAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["Email"] = Email },
@@ -81,7 +81,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ForgotPassword_InProductionMode_ShouldOmitLastCode()
+    public async Task GivenValidEmailInProductionMode_WhenForgotPasswordFlow_ThenOmitsLastCodeAsync()
     {
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -115,7 +115,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task ForgotPassword_WithInvalidEmail_ShouldThrowValidationException()
+    public async Task GivenInvalidEmail_WhenForgotPasswordFlow_ThenThrowsValidationExceptionAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["Email"] = "invalid-email" },

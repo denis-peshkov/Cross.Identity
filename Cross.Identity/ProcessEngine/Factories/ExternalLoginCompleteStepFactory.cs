@@ -1,6 +1,6 @@
 namespace Cross.Identity.ProcessEngine.Factories;
 
-internal sealed class CompleteExternalLoginStepFactory : IStepFactory
+internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
 {
     /// <inheritdoc />
     public string Kind => ((IStepFactory)this).GetKind;
@@ -12,7 +12,7 @@ internal sealed class CompleteExternalLoginStepFactory : IStepFactory
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
 
-        return new CompleteExternalLoginStep
+        return new ExternalLoginCompleteStep
         {
             Kind                 = Kind,
             ExternalLoginService = externalLoginService,

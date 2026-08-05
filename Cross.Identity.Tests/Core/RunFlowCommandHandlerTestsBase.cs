@@ -36,8 +36,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new SendCodeStepFactory());
         _registry.Register(new TokenStepFactory());
         _registry.Register(new VerifyCodeStepFactory());
-        _registry.Register(new InitiateExternalLoginStepFactory());
-        _registry.Register(new CompleteExternalLoginStepFactory());
+        _registry.Register(new ExternalLoginInitiateStepFactory());
+        _registry.Register(new ExternalLoginCompleteStepFactory());
         _registry.Register(new ExternalLoginUnlinkStepFactory());
         _registry.Register(new LogoutStepFactory());
         _registry.Register(new LogoutAllStepFactory());

@@ -4,8 +4,8 @@
 /// External OAuth login service: start authorization, complete callback, and unlink a provider.
 /// Used by process steps:
 /// <list type="bullet">
-/// <item><description><c>InitiateExternalLoginStep</c> — <see cref="InitiateAsync"/></description></item>
-/// <item><description><c>CompleteExternalLoginStep</c> — <see cref="CompleteAsync"/></description></item>
+/// <item><description><c>ExternalLoginInitiateStep</c> — <see cref="InitiateAsync"/></description></item>
+/// <item><description><c>ExternalLoginCompleteStep</c> — <see cref="CompleteAsync"/></description></item>
 /// <item><description><c>ExternalLoginUnlinkStep</c> — <see cref="UnlinkAsync"/></description></item>
 /// </list>
 /// Corresponding flows: <c>main.ExternalLogin</c>, <c>main.ExternalLoginCallback</c>, <c>main.ExternalLoginUnlink</c>.

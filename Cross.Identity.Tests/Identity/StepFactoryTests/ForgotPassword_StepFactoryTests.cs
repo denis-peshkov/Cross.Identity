@@ -1,4 +1,4 @@
-namespace Cross.Identity.Tests.Identity.StepFactoryTests;
+﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
 [Category(TestCategory.UNIT)]
 [TestFixture]
@@ -27,7 +27,7 @@ public class ForgotPassword_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void ForgotPasswordStepFactory_ShouldCreateStep()
+    public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -51,7 +51,7 @@ public class ForgotPassword_StepFactoryTests
     }
 
     [Test]
-    public void ForgotPasswordStepFactory_WhenResolveByMissing_ShouldThrow()
+    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
             """

@@ -15,14 +15,14 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
-    public void Validate_UnconfiguredLicense_ShouldNotThrow()
+    public void GivenUnconfiguredLicense_WhenValidate_ThenDoesNotThrow()
     {
         var act = () => _sut.Validate(new License(), _productInfo);
         act.Should().NotThrow();
     }
 
     [Test]
-    public void Validate_ExpiredLicense_ShouldNotThrow()
+    public void GivenExpiredLicense_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense(expiration: DateTimeOffset.UtcNow.AddDays(-1));
 
@@ -31,7 +31,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
-    public void Validate_WrongProductType_ShouldNotThrow()
+    public void GivenWrongProductType_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense(productType: (ProductTypeEnum)999);
 
@@ -40,7 +40,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
-    public void Validate_ValidLicense_ShouldNotThrow()
+    public void GivenValidLicense_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense();
 

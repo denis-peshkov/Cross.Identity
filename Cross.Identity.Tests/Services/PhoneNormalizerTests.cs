@@ -13,7 +13,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldExtractDigits()
+    public void GivenFormattedPhoneNumber_WhenNormalizePhone_ThenExtractsDigits()
     {
         // Act
         var result = _normalizer.NormalizePhone("+1 (234) 567-8900");
@@ -23,7 +23,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldPreservePlus()
+    public void GivenPhoneWithPlus_WhenNormalizePhone_ThenPreservesPlus()
     {
         // Act
         var result = _normalizer.NormalizePhone("+1234567890");
@@ -33,7 +33,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldNotAddPlusIfMissing()
+    public void GivenPhoneWithoutPlus_WhenNormalizePhone_ThenDoesNotAddPlus()
     {
         // Act
         var result = _normalizer.NormalizePhone("1234567890");
@@ -44,7 +44,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldTrimWhitespace()
+    public void GivenPhoneWithWhitespace_WhenNormalizePhone_ThenTrimsWhitespace()
     {
         // Act
         var result = _normalizer.NormalizePhone("  +1 234 567 8900  ");
@@ -54,7 +54,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldThrowWhenTooShort()
+    public void GivenTooShortPhone_WhenNormalizePhone_ThenThrowsArgumentException()
     {
         // Act & Assert
         FluentActions.Invoking(() => _normalizer.NormalizePhone("123456"))
@@ -64,7 +64,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizePhone_ShouldThrowWhenTooLong()
+    public void GivenTooLongPhone_WhenNormalizePhone_ThenThrowsArgumentException()
     {
         // Act & Assert
         FluentActions.Invoking(() => _normalizer.NormalizePhone("+1234567890123456789"))
@@ -74,7 +74,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizeToE164_ShouldFormatValidNumber()
+    public void GivenValidPhoneNumber_WhenNormalizeToE164_ThenFormatsToE164()
     {
         // Act
         var result = _normalizer.NormalizeToE164("+1 234 567 8900", "US");
@@ -85,7 +85,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizeToE164_ShouldReturnNullForInvalidNumber()
+    public void GivenInvalidPhoneNumber_WhenNormalizeToE164_ThenReturnsNull()
     {
         // Act
         var result = _normalizer.NormalizeToE164("123", "US");
@@ -95,7 +95,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizeToE164_ShouldReturnNullForEmptyString()
+    public void GivenEmptyPhoneNumber_WhenNormalizeToE164_ThenReturnsNull()
     {
         // Act
         var result = _normalizer.NormalizeToE164("", "US");
@@ -105,7 +105,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
-    public void NormalizeToE164OrThrow_ShouldThrowForInvalidNumber()
+    public void GivenInvalidPhoneNumber_WhenNormalizeToE164OrThrow_ThenThrowsArgumentException()
     {
         // Act & Assert
         FluentActions.Invoking(() => _normalizer.NormalizeToE164OrThrow("invalid", "US"))

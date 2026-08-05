@@ -62,7 +62,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithValidCode_ShouldPassPasswordToUserService()
+    public async Task GivenValidCode_WhenResetPasswordFlow_ThenPassesPasswordToUserServiceAsync()
     {
         SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
 
@@ -82,7 +82,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithAlreadyUsedCode_ShouldRejectBeforePasswordChange()
+    public async Task GivenAlreadyUsedCode_WhenResetPasswordFlow_ThenRejectsBeforePasswordChangeAsync()
     {
         SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10), usedAt: DateTime.UtcNow.AddMinutes(-1));
 
@@ -106,7 +106,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithReusedCode_ShouldRejectSecondAttempt()
+    public async Task GivenReusedCode_WhenResetPasswordFlowSecondAttempt_ThenRejectsAsync()
     {
         SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
 
@@ -132,7 +132,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithoutCode_ShouldThrowValidationException()
+    public async Task GivenMissingCode_WhenResetPasswordFlow_ThenThrowsValidationExceptionAsync()
     {
         var input = new Dictionary<string, object?>
         {
@@ -152,7 +152,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithInvalidCode_ShouldRejectBeforePasswordChange()
+    public async Task GivenInvalidCode_WhenResetPasswordFlow_ThenRejectsBeforePasswordChangeAsync()
     {
         SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(10));
 
@@ -176,7 +176,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ResetPassword_WithExpiredCode_ShouldRejectBeforePasswordChange()
+    public async Task GivenExpiredCode_WhenResetPasswordFlow_ThenRejectsBeforePasswordChangeAsync()
     {
         SeedEmailCode(ValidCode, expiresAt: DateTime.UtcNow.AddMinutes(-5));
 
@@ -200,7 +200,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void ResetPassword_EmbeddedDefinition_ShouldRequireCodeVerificationBeforeReset()
+    public void GivenEmbeddedResetPasswordDefinition_WhenParsed_ThenRequiresCodeVerificationBeforeReset()
     {
         var json = _processDefinitionProvider.GetJson(Flow, FlowOperationEnum.ResetPassword);
         using var doc = JsonDocument.Parse(json);

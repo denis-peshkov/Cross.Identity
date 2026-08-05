@@ -5,7 +5,7 @@
 public class CollectResult_StepTests
 {
     [Test]
-    public async Task CollectResultStep_ShouldCollectValuesFromBag()
+    public async Task GivenMappedBagValues_WhenExecuteAsync_ThenCollectsValuesAsync()
     {
         // Arrange
         var step = new CollectResultStep
@@ -37,7 +37,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
-    public async Task CollectResultStep_ShouldHandleMissingValues()
+    public async Task GivenMissingMappedValues_WhenExecuteAsync_ThenSkipsMissingKeysAsync()
     {
         // Arrange
         var step = new CollectResultStep
@@ -65,7 +65,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
-    public async Task CollectResultStep_ShouldHandleRelativeKeys()
+    public async Task GivenRelativeKeys_WhenExecuteAsync_ThenCollectsValuesAsync()
     {
         // Arrange
         var step = new CollectResultStep
@@ -90,7 +90,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
-    public async Task CollectResultStep_ShouldReturnEmptyWhenFlagSet()
+    public async Task GivenReturnEmptyFlag_WhenExecuteAsync_ThenSetsEmptyFlagAsync()
     {
         // Arrange
         var step = new CollectResultStep

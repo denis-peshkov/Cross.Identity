@@ -34,7 +34,7 @@ public class SendCode_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void SendCodeStepFactory_ShouldCreateStepWithEmailChannel()
+    public void GivenEmailChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -69,7 +69,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
-    public void SendCodeStepFactory_ShouldCreateStepWithSmsChannel()
+    public void GivenSmsChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -95,7 +95,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
-    public void SendCodeStepFactory_ShouldBindTtlKey()
+    public void GivenTtlKeyInJson_WhenCreate_ThenBindsTtlKey()
     {
         using var json = JsonDocument.Parse(
             """
@@ -117,7 +117,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
-    public void SendCodeStepFactory_ShouldThrowWhenChannelMissing()
+    public void GivenMissingChannel_WhenCreate_ThenThrowsInvalidOperationException()
     {
         // Arrange
         using var json = JsonDocument.Parse(

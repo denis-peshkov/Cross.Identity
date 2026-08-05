@@ -33,7 +33,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenProviderNotSupported()
+    public async Task GivenUnsupportedProvider_WhenInitiateAsync_ThenThrowsNotFoundAsync()
     {
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
@@ -43,7 +43,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenProviderNotConfigured()
+    public async Task GivenUnconfiguredProvider_WhenInitiateAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(
@@ -56,7 +56,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenCallbackUrlMissing()
+    public async Task GivenMissingCallbackUrl_WhenInitiateAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(
@@ -69,7 +69,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenProviderDisabledInDatabase()
+    public async Task GivenDisabledProvider_WhenInitiateAsync_ThenThrowsNotFoundAsync()
     {
         SeedProvider("Google", isEnabled: false);
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
@@ -80,7 +80,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenProviderAlreadyLinkedToUser()
+    public async Task GivenAlreadyLinkedProvider_WhenInitiateAsync_ThenThrowsValidationExceptionAsync()
     {
         var userId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -102,7 +102,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenLinkUserIdWithoutAuthentication()
+    public async Task GivenUnauthenticatedUser_WhenInitiateAsyncWithLinkUserId_ThenThrowsNotAuthorizedAsync()
     {
         SeedProvider("Google");
         ClearAuthenticatedUser();
@@ -114,7 +114,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldThrow_WhenLinkUserIdDoesNotMatchAuthenticatedUser()
+    public async Task GivenMismatchedLinkUserId_WhenInitiateAsync_ThenThrowsNotAuthorizedAsync()
     {
         SeedProvider("Google");
         SetAuthenticatedUser(Guid.NewGuid());
@@ -126,7 +126,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldPersistState_InDatabase()
+    public async Task GivenValidProvider_WhenInitiateAsync_ThenPersistsStateInDatabaseAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
@@ -140,7 +140,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldReturnGoogleAuthorizationUrl()
+    public async Task GivenGoogleProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
@@ -157,7 +157,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task InitiateAsync_ShouldAddResponseMode_ForMicrosoftProvider()
+    public async Task GivenMicrosoftProvider_WhenInitiateAsync_ThenAddsResponseModeQueryAsync()
     {
         SeedProvider("Microsoft");
         var sut = CreateService(
@@ -177,7 +177,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenProviderReturnsError()
+    public async Task GivenProviderError_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
@@ -187,7 +187,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenStateMissing()
+    public async Task GivenMissingState_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
@@ -197,7 +197,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenStateInvalid()
+    public async Task GivenInvalidState_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
@@ -207,7 +207,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenStateExpired()
+    public async Task GivenExpiredState_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
@@ -224,7 +224,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenLinkingWithoutAuthenticatedUser()
+    public async Task GivenUnauthenticatedUser_WhenCompleteAsyncForLinking_ThenThrowsNotAuthorizedAsync()
     {
         var payload = new ExternalLoginStatePayload
         {
@@ -244,7 +244,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldCreateUserAndExternalLogin_ForGoogle()
+    public async Task GivenGoogleSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
     {
         SeedProvider("Google");
         var provisioner = new Mock<IExternalLoginUserProvisioner>();
@@ -271,7 +271,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenStateAlreadyUsed()
+    public async Task GivenUsedState_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
@@ -286,7 +286,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldReturnExistingUser_WhenExternalLoginAlreadyExists()
+    public async Task GivenExistingExternalLogin_WhenCompleteAsync_ThenReturnsExistingUserAsync()
     {
         var userId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -321,7 +321,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldMatchUserByEmail_WhenExternalLoginMissing()
+    public async Task GivenMatchingEmailWithoutExternalLogin_WhenCompleteAsync_ThenLinksToExistingUserAsync()
     {
         var userId = Guid.NewGuid();
         SeedProvider("Google");
@@ -348,7 +348,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldLinkProviderToExistingUser()
+    public async Task GivenAuthenticatedUser_WhenCompleteAsyncForLinking_ThenLinksProviderAsync()
     {
         var userId = Guid.NewGuid();
         SeedProvider("Google");
@@ -376,7 +376,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenLinkUserIdDoesNotMatchAuthenticatedUser()
+    public async Task GivenMismatchedAuthenticatedUser_WhenCompleteAsyncForLinking_ThenThrowsNotAuthorizedAsync()
     {
         var ownerUserId = Guid.NewGuid();
         var attackerUserId = Guid.NewGuid();
@@ -406,7 +406,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenLinkTargetUserMissing()
+    public async Task GivenMissingLinkTargetUser_WhenCompleteAsyncForLinking_ThenThrowsNotFoundAsync()
     {
         var missingUserId = Guid.NewGuid();
         SeedProvider("Google");
@@ -422,7 +422,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenExternalAccountLinkedToAnotherUser()
+    public async Task GivenExternalAccountLinkedToAnotherUser_WhenCompleteAsyncForLinking_ThenThrowsValidationExceptionAsync()
     {
         var currentUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
@@ -471,7 +471,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldUpdateExistingExternalLogin()
+    public async Task GivenExistingExternalLogin_WhenCompleteAsync_ThenUpdatesExternalLoginAsync()
     {
         var userId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -508,7 +508,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldUseMicrosoftProfileEndpoint()
+    public async Task GivenMicrosoftProvider_WhenCompleteAsync_ThenUsesMicrosoftProfileEndpointAsync()
     {
         SeedProvider("Microsoft");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -545,7 +545,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldFetchGitHubPrimaryEmail_WhenUserEmailMissing()
+    public async Task GivenGitHubWithoutEmail_WhenCompleteAsync_ThenFetchesPrimaryEmailAsync()
     {
         SeedProvider("GitHub");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -594,7 +594,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenTokenExchangeFails()
+    public async Task GivenFailedTokenExchange_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -614,7 +614,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenAccessTokenMissingInResponse()
+    public async Task GivenMissingAccessTokenInResponse_WhenCompleteAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         SeedProvider("Google");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -634,7 +634,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenProviderUserIdMissing()
+    public async Task GivenMissingProviderUserId_WhenCompleteAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         SeedProvider("Google");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -656,7 +656,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenAppleProfileNotSupported()
+    public async Task GivenAppleProvider_WhenCompleteAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         SeedProvider("Apple");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -686,7 +686,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenStateIsMalformedBase64()
+    public async Task GivenMalformedBase64State_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
@@ -697,7 +697,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task CompleteAsync_ShouldThrow_WhenProviderAlreadyLinkedToAnotherAccountOnUpsert()
+    public async Task GivenDifferentProviderUserIdAlreadyLinked_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         var userId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -731,7 +731,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task UnlinkAsync_ShouldRemoveLogin_RotateSecurityStamp_AndRevokeTokens()
+    public async Task GivenLinkedProviderWithPassword_WhenUnlinkAsync_ThenRemovesLoginRotatesStampAndRevokesTokensAsync()
     {
         var userId = Guid.NewGuid();
         var oldStamp = Guid.NewGuid();
@@ -780,7 +780,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task UnlinkAsync_ShouldReject_WhenUnauthenticated()
+    public async Task GivenUnauthenticatedUser_WhenUnlinkAsync_ThenThrowsNotAuthorizedAsync()
     {
         SeedProvider("Google");
         ClearAuthenticatedUser();
@@ -793,7 +793,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task UnlinkAsync_ShouldReject_WhenLastLoginMethod()
+    public async Task GivenOAuthOnlyUser_WhenUnlinkAsync_ThenThrowsValidationExceptionAsync()
     {
         var userId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -829,7 +829,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task UnlinkAsync_ShouldReject_WhenProviderNotLinked()
+    public async Task GivenUnlinkedProvider_WhenUnlinkAsync_ThenThrowsNotFoundAsync()
     {
         var userId = Guid.NewGuid();
         SeedProvider("Google");

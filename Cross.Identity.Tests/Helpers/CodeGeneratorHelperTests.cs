@@ -5,7 +5,7 @@
 public class CodeGeneratorHelperTests
 {
     [Test]
-    public void GenerateCode_ShouldReturnRequestedLength()
+    public void GivenRequestedLength_WhenGenerateCode_ThenReturnsMatchingLength()
     {
         var code = CodeGeneratorHelper.GenerateCode(10);
 
@@ -14,7 +14,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
-    public void GenerateLetterCode_ShouldReturnUppercaseLettersOnly()
+    public void GivenRequestedLength_WhenGenerateLetterCode_ThenReturnsUppercaseLettersOnly()
     {
         var code = CodeGeneratorHelper.GenerateLetterCode(8);
 
@@ -23,7 +23,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
-    public void GenerateNumericCode_ShouldReturnDigitsOnly()
+    public void GivenRequestedLength_WhenGenerateNumericCode_ThenReturnsDigitsOnly()
     {
         var code = CodeGeneratorHelper.GenerateNumericCode(6);
 
@@ -32,7 +32,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
-    public void GenerateHash_ShouldReturnSha256Bytes()
+    public void GivenInput_WhenGenerateHash_ThenReturnsSha256Bytes()
     {
         var hash = CodeGeneratorHelper.GenerateHash("123456");
 

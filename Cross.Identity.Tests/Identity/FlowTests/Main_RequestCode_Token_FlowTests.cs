@@ -77,7 +77,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_RequestCodeThenToken_SuccessfulExecution()
+    public async Task GivenRequestCodeThenToken_WhenExecuted_ThenSucceedsAsync()
     {
         var email = "test@example.com";
 
@@ -128,7 +128,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
-    public async Task Handle_TokenAfterSecondRequestCode_UsesLatestCode()
+    public async Task GivenSecondRequestCode_WhenTokenFlow_ThenUsesLatestCodeAsync()
     {
         var email = "test@example.com";
 
