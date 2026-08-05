@@ -67,11 +67,6 @@
     "@cursor/sdk-linux-x64" "1.0.22"
     "@cursor/sdk-win32-x64" "1.0.22"
 
-"@fastify/busboy@^2.0.0":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.1.tgz#b9da6a878a371829a0502c9b6c1c143ef6663f4d"
-  integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
-
 "@statsig/client-core@3.31.0":
   version "3.31.0"
   resolved "https://registry.yarnpkg.com/@statsig/client-core/-/client-core-3.31.0.tgz#decec1aaf147f5e283fe1dda2239368ec4ad3ea4"
@@ -84,12 +79,10 @@
   dependencies:
     "@statsig/client-core" "3.31.0"
 
-undici@^5.28.4:
-  version "5.29.0"
-  resolved "https://registry.yarnpkg.com/undici/-/undici-5.29.0.tgz#419595449ae3f2cdcba3580a2e8903399bd1f5a3"
-  integrity sha512-raqeBD6NQK4SkWhQzeYKd1KmIG6dllBOTt55Rmkt4HtI9mwdWtJljnrXjAFUBLTSN67HWrOIZ3EPF4kjUw80Bg==
-  dependencies:
-    "@fastify/busboy" "^2.0.0"
+undici@6.28.0, undici@^5.28.4:
+  version "6.28.0"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-6.28.0.tgz#9f0e385744fef5021d6596c5bccd783f61193c1c"
+  integrity sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==
 
 zod@^3.25.0:
   version "3.25.76"
