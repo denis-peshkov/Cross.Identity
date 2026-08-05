@@ -57,7 +57,7 @@
 | C | **Refresh Token / "Remember me"** | `AbsoluteExpiresAt`, `FamilyId` chain, rotation, background cleanup | `JwtTokenService`, `RefreshTokenStep`, `ExpiredRefreshTokenCleanupHostedService` |
 | D | **JWT licensing** | Validation on first `ExecuteAsync`; section `CrossIdentity:LicenseKey` | `LicenseAccessor`, `LicenseValidator`, `FlowExecutor` |
 | E | **Developer Mode** | Codes stored in DB without sending email/SMS | `CodeService`, `SendCodeStep`, `Authentication:DeveloperMode` |
-| F | **Token / TokenByCode / RequestCode** | End-to-end scenario request code → token by code | `Main_RequestCode_TokenByCode_FlowTests` |
+| F | **Token / RequestCode** | End-to-end scenario request code → token by code via `main.Token` | `Main_RequestCode_Token_FlowTests` |
 | G | **Reset Password** | Email/SMS notification after password change; new form fields | `ResetPasswordStep`, `main.ResetPassword.json` |
 | H | **Infrastructure** | `UnitTests` → `Tests`, CI triage, PR triggers, dependency updates | `.github/workflows/`, `.cursor/triage/` |
 
@@ -165,7 +165,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | # | Check | Type | Status |
 |---|----------|-----|--------|
 | C1 | Access+refresh pair issued on `main.Token` (password) | Integration | ✅ |
-| C2 | Pair issued on `main.TokenByCode` | Integration | ✅ |
+| C2 | Pair issued on `main.Token` (code) | Integration | ✅ |
 | C3 | Rotation: old refresh invalidated, new one works | Unit | ✅ `JwtTokenServiceTests` |
 | C4 | `AbsoluteExpiresAt` preserved on rotation (chain) | Unit | ✅ |
 | C5 | Refresh after `AbsoluteExpiresAt` → rejection | Unit | 🟨 logic in `ValidateRefreshTokenAsync`; no dedicated test for expired absolute |
@@ -219,13 +219,13 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 ---
 
-### F. Token / TokenByCode / RequestCode
+### F. Token / RequestCode
 
 | # | Check | Type | Status |
 |---|----------|-----|--------|
 | F1 | `main.Token` — password OR code (validation `atLeastOneRequired`) | Integration | ✅ |
-| F2 | `main.TokenByCode` — code only | Integration | ✅ |
-| F3 | RequestCode → TokenByCode end-to-end scenario | Integration | ✅ |
+| F2 | `main.Token` — code only | Integration | ✅ |
+| F3 | RequestCode → Token end-to-end scenario | Integration | ✅ |
 | F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
 | F6 | `MaxAttempts` exceeded (3) | Unit | ✅ `CodeServiceTests` |
@@ -281,7 +281,7 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 | Area | Unit | Integration Flow | Gap |
 |---------|------|------------------|--------|
 | Registration | ✅ | ✅ | — |
-| Token / TokenByCode | ✅ | ✅ | — |
+| Token | ✅ | ✅ | — |
 | RefreshToken | ✅ | ✅ | `Main_RefreshToken_FlowTests` |
 | External OAuth | ✅ (service) | ✅ | `Main_ExternalOAuth_FlowTests` |
 | ResetPassword | ✅ (step) | ✅ | `Main_ResetPassword_FlowTests` |
@@ -297,14 +297,14 @@ dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
 ```bash
 dotnet run --project Sample.Api
 # Swagger: POST /api/identity/{flow}/{operation}
-# Or: rest-client/Sample.Api.http (10 main/* operations)
+# Or: rest-client/Sample.Api.http (main/* operations)
 ```
 
 | Scenario | Endpoint | Body (example) |
 |----------|----------|---------------|
 | Registration | `main/Register` | `{ "Email": "...", "Password": "..." }` |
 | Request code | `main/RequestCode` | `{ "Email": "...", "Ttl": "00:05:00" }` |
-| Token by code | `main/TokenByCode` | `{ "Email": "...", "Code": "..." }` |
+| Token by code | `main/Token` | `{ "Email": "...", "Code": "..." }` |
 | Token by password | `main/Token` | `{ "Email": "...", "Password": "..." }` |
 | Refresh | `main/RefreshToken` | `{ "RefreshToken": "..." }` |
 | GetUserId | `main/GetUserId` | `{ "Email": "..." }` |

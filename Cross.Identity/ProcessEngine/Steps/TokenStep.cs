@@ -61,7 +61,7 @@ internal sealed class TokenStep : IStep
             ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out codeValue);
         }
 
-        // 2) validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided" — otherwise the code branch does not run (TokenByCode).
+        // 2) validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided" — otherwise the code branch does not run.
         var validated = false;
         if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {

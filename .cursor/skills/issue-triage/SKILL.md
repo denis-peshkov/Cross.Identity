@@ -139,8 +139,8 @@ Comment template: `templates/issue-comment.md`.
 For bug reports request:
 
 - NuGet version / commit
-- Target framework (net7/net8)
-- Flow name (`main.TokenByCode`, `main.Register`, etc.)
+- Target framework (net8/net10)
+- Flow name (`main.Token`, `main.Register`, etc.)
 - Reproduction steps without real tokens/passwords
 
 ## Edge cases

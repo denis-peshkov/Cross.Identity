@@ -18,7 +18,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 |----------------|------|
 | `*.Register.json` | `Register` |
 | `*.Token.json` | `Token` |
-| `*.TokenByCode.json` | `TokenByCode` |
 | `*.RefreshToken.json` | `RefreshToken` |
 | `*.RequestCode.json` | `RequestCode` |
 | `*.ResetPassword.json` | `ResetPassword` |
@@ -26,8 +25,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.GetUserId.json` | `GetUserId` |
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
+| `*.ExternalLoginUnlink.json` | `ExternalLoginUnlink` |
+| `*.Logout.json` | `Logout` |
+| `*.LogoutAll.json` | `LogoutAll` |
 
-### All flow files (10)
+### All flow files (12)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -38,9 +40,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `main` | RequestCode | `main.RequestCode.json` |
 | `main` | ResetPassword | `main.ResetPassword.json` |
 | `main` | Token | `main.Token.json` |
-| `main` | TokenByCode | `main.TokenByCode.json` |
 | `main` | ExternalLogin | `main.ExternalLogin.json` |
 | `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
+| `main` | ExternalLoginUnlink | `main.ExternalLoginUnlink.json` |
+| `main` | Logout | `main.Logout.json` |
+| `main` | LogoutAll | `main.LogoutAll.json` |
 
 ---
 
@@ -131,18 +135,6 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 |------|------|---------|
 | `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32). Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
-| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
-
----
-
-## `main.TokenByCode.json`
-
-**Purpose:** tokens by email + code only.
-
-| Step | kind | Details |
-|------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (4–32). → `token` |
-| `token` | token | `selectorKey`, `codeKey`, `channel: email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
 ---
