@@ -46,23 +46,12 @@ Content-Type: application/json
 }
 
 ###
-# @name main-token-by-code
-POST {{HOST}}/api/identity/main/TokenByCode
-Content-Type: application/json
-
-{
-  "Email": "{{EMAIL}}",
-  "Code": "{{LAST_CODE}}"
-}
-
-###
-# @name main-token-password-or-code
+# @name main-token-code
 POST {{HOST}}/api/identity/main/Token
 Content-Type: application/json
 
 {
   "Email": "{{EMAIL}}",
-  "Password": "",
   "Code": "{{LAST_CODE}}"
 }
 

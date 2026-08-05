@@ -23,7 +23,7 @@ To move forward, we need:
 
 - **NuGet version** or git commit (`Cross.Identity` package version)
 - **Target framework** (e.g. net8.0)
-- **Flow name** if auth-related (see `FLOWS.md`, e.g. `main.TokenByCode`)
+- **Flow name** if auth-related (see `FLOWS.md`, e.g. `main.Token`)
 - **Reproduction steps** (no real passwords, tokens, or PII)
 
 ### Next Steps

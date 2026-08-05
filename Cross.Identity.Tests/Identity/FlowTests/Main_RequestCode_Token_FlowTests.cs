@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTestsBase
+internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
     private Guid _userId;
@@ -77,7 +77,7 @@ internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTes
     }
 
     [Test]
-    public async Task Handle_RequestCodeThenTokenByCode_SuccessfulExecution()
+    public async Task Handle_RequestCodeThenToken_SuccessfulExecution()
     {
         var email = "test@example.com";
 
@@ -116,7 +116,7 @@ internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTes
                 ["Code"] = lastCode,
             },
             Flow,
-            FlowOperationEnum.TokenByCode,
+            FlowOperationEnum.Token,
             CancellationToken.None);
 
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
@@ -128,7 +128,7 @@ internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTes
     }
 
     [Test]
-    public async Task Handle_TokenByCodeAfterSecondRequestCode_UsesLatestCode()
+    public async Task Handle_TokenAfterSecondRequestCode_UsesLatestCode()
     {
         var email = "test@example.com";
 
@@ -186,7 +186,7 @@ internal class Main_RequestCode_TokenByCode_FlowTests : RunFlowCommandHandlerTes
                 ["Code"] = latestCode,
             },
             Flow,
-            FlowOperationEnum.TokenByCode,
+            FlowOperationEnum.Token,
             CancellationToken.None);
 
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
