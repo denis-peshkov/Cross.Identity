@@ -352,11 +352,13 @@ internal class JwtTokenService : IJwtTokenService
             return;
         }
 
+        var newConcurrencyStamp = Guid.NewGuid();
         var affectedRows = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash && x.RevokedAt == null)
             .ExecuteUpdateAsync(
                 setters => setters
                     .SetProperty(x => x.ReplacedByTokenId, jti)
+                    .SetProperty(x => x.ConcurrencyStamp, newConcurrencyStamp)
                     .SetProperty(x => x.RevokedAt, revokedAt)
                     .SetProperty(x => x.RevokeReason, RefreshTokenRevokeReason.ROTATION_REQUIRED)
                     .SetProperty(x => x.RevokedByIp, revokedByIp),

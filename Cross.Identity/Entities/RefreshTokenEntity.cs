@@ -20,8 +20,11 @@ public class RefreshTokenEntity
     public string? UserAgent { get; set; }
     public string? IpAddress { get; set; }
 
-    /// <summary>Concurrency token (SQL Server generates it; value generator is used for InMemory).</summary>
-    public byte[]? RowVersion { get; set; }
+    /// <summary>
+    /// App-managed optimistic concurrency token.
+    /// EF checks the original value on UPDATE/DELETE; the code updates it on every logical mutation.
+    /// </summary>
+    public Guid ConcurrencyStamp { get; set; }
 }
 
 // ReplacedByTokenId

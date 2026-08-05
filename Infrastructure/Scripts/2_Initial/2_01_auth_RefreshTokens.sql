@@ -14,7 +14,7 @@
     [DeviceFingerprint] NVARCHAR(100)    NULL,
     [UserAgent]         NVARCHAR(512)    NULL,
     [IpAddress]         NVARCHAR(45)     NULL,
-    [RowVersion]        ROWVERSION       NOT NULL,
+    [ConcurrencyStamp]  UNIQUEIDENTIFIER NOT NULL,
 
     CONSTRAINT [PK_RefreshTokens] PRIMARY KEY CLUSTERED ([RefreshTokenId] ASC)
 )

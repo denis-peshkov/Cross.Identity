@@ -246,7 +246,10 @@ public sealed class CoreInfrastructureBehaviorTests
             var services = new ServiceCollection();
             services.AddHttpContextAccessor();
             services.AddLogging();
-            services.AddDbContext<IdentityContext>(o => o.UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}"));
+            services.AddDbContext<IdentityContext>(options =>
+                options
+                    .UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}")
+                    .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
             services.AddScoped<IHeadersContextAccessor>(_ => new HeadersContextAccessor());
             services.AddScoped<IPepperVaultProvider>(_ =>
             {

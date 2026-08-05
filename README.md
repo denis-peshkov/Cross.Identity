@@ -62,7 +62,20 @@ Cross.Identity.slnx
 
 ## Usage
 
-1. **Registration** in the application (ASP.NET Core):
+1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
+
+   Attach `RefreshTokenConcurrencyStampInterceptor` — it is **required**. The interceptor rotates `RefreshTokenEntity.ConcurrencyStamp` on every insert/update through `SaveChanges`. Without it, new refresh tokens may keep `ConcurrencyStamp = default(Guid)` and optimistic concurrency for refresh rotation will not work.
+
+```csharp
+services.AddDbContext<IdentityContext>(options =>
+    options
+        .UseSqlServer(connectionString) // or UseInMemoryDatabase(...)
+        .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
+```
+
+   Note: bulk updates (`ExecuteUpdateAsync`) bypass interceptors; those paths set `ConcurrencyStamp` explicitly in `JwtTokenService`.
+
+2. **Register Cross.Identity** services:
 
 ```csharp
 services.AddCrossIdentity(configuration);
@@ -91,7 +104,7 @@ Behavior:
 | Expired / wrong product type | `LogError` + `LogCritical`, flow runs |
 | Valid key | `LogInformation` with edition and expiration date |
 
-2. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
+3. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
 
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
@@ -102,7 +115,7 @@ var result = await _flowExecutor.ExecuteAsync(
 // result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
 ```
 
-3. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
+4. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
 
 ## Dependencies (NuGet)
 

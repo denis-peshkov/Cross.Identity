@@ -8,6 +8,7 @@ public static class InMemoryDbHelper
         var options = new DbContextOptionsBuilder<IdentityContext>()
             .UseInMemoryDatabase(databaseName: dbName)
             .EnableSensitiveDataLogging()
+            .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor())
             .Options;
 
         var context = new IdentityContext(options);

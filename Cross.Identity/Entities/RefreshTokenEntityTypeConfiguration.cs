@@ -7,10 +7,8 @@ internal class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<Re
         builder.ToTable(nameof(IdentityContext.RefreshTokens), IdentityContext.DefaultSchema);
         builder.Property(x => x.Id).HasColumnName("RefreshTokenId");
         builder.Property(x => x.RevokeReason).HasColumnType("smallint");
-        builder.Property(x => x.RowVersion)
-            .IsRowVersion()           // for SQL Server → rowversion/timestamp
-            .IsConcurrencyToken()     // tell EF to check on UPDATE
-            .HasValueGenerator<RowVersionValueGenerator>(); // for InMemory we supply a value; for SQL Server the generator returns null — DB generates it
+        builder.Property(x => x.ConcurrencyStamp)
+            .IsConcurrencyToken();  // tell EF to check on UPDATE
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.RefreshTokens)}");
