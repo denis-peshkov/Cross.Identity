@@ -10,6 +10,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Agent, CursorAgentError } from '@cursor/sdk';
 import { formatPrTriageComment, parseAgentJson } from './format-pr-comment.mjs';
+import { applyPrTriageLabels } from './apply-pr-labels.mjs';
 import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -320,6 +321,16 @@ async function main() {
     ]).trim();
     const comment = formatPrTriageComment(data, { repo, defaultBranch });
     upsertPrComment(repo, prNumber, comment);
+
+    try {
+      const { added, removed } = applyPrTriageLabels(gh, prNumber, data);
+      console.log(
+        `Triage labels on PR #${prNumber}: +[${added.join(', ')}] -[${removed.join(', ')}]`
+      );
+    } catch (labelErr) {
+      console.error('Failed to apply triage labels:', labelErr.message ?? labelErr);
+      process.exit(1);
+    }
   } catch (err) {
     if (err instanceof CursorAgentError) {
       console.error('Cursor SDK error:', err.message);

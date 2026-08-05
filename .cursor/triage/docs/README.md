@@ -34,7 +34,7 @@ Workflow `.github/workflows/triage.yml`:
 - **Schedule**: Monday 06:00 UTC
 - **workflow_dispatch**: manual run
 - **issues opened**: data collection
-- **pull_request** opened/synchronize: AI comment on PR (wshm-style)
+- **pull_request** opened/synchronize/reopened/edited: AI comment on PR (wshm-style)
 
 ### Secrets
 
@@ -51,6 +51,7 @@ Workflow `triage.yml` → job **PR automated comment**:
 
 - Cursor Agent analyzes the diff
 - Posts a wshm-style comment (category, priority, confidence, summary, files)
+- Applies GitHub labels: `{category}` and `priority:{priority}` (e.g. `enhancement`, `priority:medium`); on re-run replaces previous triage labels only
 - On a new push **updates** the same comment (marker `<!-- cross-identity-triage -->`)
 
 Manual test: **Actions → Triage → Run workflow** → `pr_number` field.

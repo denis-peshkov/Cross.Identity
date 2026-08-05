@@ -1,16 +1,16 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class UserExternalLoginEntity
+public class UserExternalLoginEntity : IHasConcurrencyStamp
 {
     public long Id { get; set; }
 
     public Guid UserAccountId { get; set; }
 
-    public UserAccountEntity UserAccount { get; set; } = null!;
+    public virtual UserAccountEntity UserAccount { get; set; } = null!;
 
     public short ProviderId { get; set; }
 
-    public ProviderEntity ProviderEntity { get; set; } = null!;
+    public virtual ProviderEntity ProviderEntity { get; set; } = null!;
 
     public string ProviderUserId { get; set; } = null!;
 
@@ -33,4 +33,7 @@ public class UserExternalLoginEntity
     public DateTime CreatedAt { get; set; }
 
     public DateTime? LastUsedAt { get; set; }
+
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
 }

@@ -38,6 +38,9 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new VerifyCodeStepFactory());
         _registry.Register(new InitiateExternalLoginStepFactory());
         _registry.Register(new CompleteExternalLoginStepFactory());
+        _registry.Register(new ExternalLoginUnlinkStepFactory());
+        _registry.Register(new LogoutStepFactory());
+        _registry.Register(new LogoutAllStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -148,7 +151,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             pepperVault.Object,
             passwordHasher.Object,
             phoneNormalizer.Object,
-            headersContextAccessor);
+            headersContextAccessor,
+            Mock.Of<IJwtTokenService>());
     }
 
     /// <summary>

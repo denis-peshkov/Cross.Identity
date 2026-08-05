@@ -7,7 +7,7 @@
 ///   <item><description><c>kind</c> — must be <c>"collectResult"</c>.</description></item>
 ///   <item><description><c>map</c> — projection object:
 ///       <c>"result_field": "bag_key"</c>. Key examples:
-///       absolute <c>"issueJwt.Token"</c> or relative <c>"Token"</c> (read as <c>"collectResult.Token"</c>).</description></item>
+///       absolute <c>"token.AccessToken"</c> or relative <c>"Token"</c> (read as <c>"collectResult.Token"</c>).</description></item>
 ///   <item><description><c>resultKey</c> — (opt.) where to store the final dictionary; relative <c>"Result"</c> by default
 ///       → will be written as <c>"collectResult.Result"</c>.</description></item>
 ///   <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
@@ -17,8 +17,8 @@
 /// {
 ///   "kind": "collectResult",
 ///   "map": {
-///     "userId": "codeAuth.UserId",
-///     "token":  "issueJwt.Token"
+///     "access_token": "token.AccessToken",
+///     "user_id": "token.UserId"
 ///   },
 ///   "next": null
 /// }

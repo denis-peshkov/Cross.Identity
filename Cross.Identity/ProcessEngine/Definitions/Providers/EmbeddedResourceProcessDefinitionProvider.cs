@@ -48,7 +48,7 @@ internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefini
     {
         ArgumentException.ThrowIfNullOrEmpty(flow);
 
-        var key = $"{flow}.{operation}".ToLowerInvariant(); // example: "licenses.getuser"
+        var key = $"{flow}.{operation}".ToLowerInvariant(); // example: "main.getuserid"
         lock (_lock)
         {
             if (_flows.TryGetValue(key, out var json))
@@ -91,7 +91,7 @@ internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefini
                 continue;
 
             // tail after base namespace (without leading dot)
-            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "game.auth.json" or "license.Register.json"
+            var flowTail = fullName.Substring(flowPrefix.Length).TrimStart('.'); // e.g. "main.Register.json"
 
             // 1) Flows
             var flowMatch = FlowKeyRegex.Match(flowTail);

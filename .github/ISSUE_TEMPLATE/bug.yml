@@ -85,11 +85,11 @@ body:
     attributes:
       label: Step-by-step reproduction
       description: |
-        Include flow/operation (e.g. `license` / `Register`), request shape, relevant appsettings keys (values redacted), and commands if applicable.
+        Include flow/operation (e.g. `main` / `Register`), request shape, relevant appsettings keys (values redacted), and commands if applicable.
       render: shell
       placeholder: |
         dotnet run --project Sample.Api
-        POST /api/identity/license/Register
+        POST /api/identity/main/Register
         { "Email": "user@example.com", "Password": "..." }
     validations:
       required: true

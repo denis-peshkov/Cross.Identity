@@ -36,7 +36,7 @@ public sealed class FileSystemProviderWatcherTests
 
         try
         {
-            var flowA = Path.Combine(root, "license.token.json");
+            var flowA = Path.Combine(root, "main.token.json");
             var tplA = Path.Combine(templates, "welcome.en.html");
             File.WriteAllText(flowA, """{"v":"1"}""");
             File.WriteAllText(tplA, "<h1>v1</h1>");
@@ -49,23 +49,23 @@ public sealed class FileSystemProviderWatcherTests
 
             using var sut = new FileSystemProcessDefinitionProvider(options);
 
-            sut.GetJson("license", FlowOperationEnum.Token).Should().Contain("\"1\"");
+            sut.GetJson("main", FlowOperationEnum.Token).Should().Contain("\"1\"");
             sut.GetTemplate("welcome", "en", "html").Should().Contain("v1");
 
             // changed
             File.WriteAllText(flowA, """{"v":"2"}""");
             File.WriteAllText(tplA, "<h1>v2</h1>");
-            WaitUntil(() => sut.GetJson("license", FlowOperationEnum.Token).Contains("\"2\""));
+            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.Token).Contains("\"2\""));
             WaitUntil(() => sut.GetTemplate("welcome", "en", "html").Contains("v2"));
 
             // renamed
-            var flowB = Path.Combine(root, "license.refreshtoken.json");
+            var flowB = Path.Combine(root, "main.refreshtoken.json");
             File.Move(flowA, flowB);
             WaitUntil(() =>
             {
                 try
                 {
-                    _ = sut.GetJson("license", FlowOperationEnum.Token);
+                    _ = sut.GetJson("main", FlowOperationEnum.Token);
                     return false;
                 }
                 catch (KeyNotFoundException)
@@ -73,7 +73,7 @@ public sealed class FileSystemProviderWatcherTests
                     return true;
                 }
             });
-            WaitUntil(() => sut.GetJson("license", FlowOperationEnum.RefreshToken).Contains("\"2\""));
+            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.RefreshToken).Contains("\"2\""));
 
             var tplB = Path.Combine(templates, "verify.en.txt");
             File.Move(tplA, tplB);
@@ -98,7 +98,7 @@ public sealed class FileSystemProviderWatcherTests
             {
                 try
                 {
-                    _ = sut.GetJson("license", FlowOperationEnum.RefreshToken);
+                    _ = sut.GetJson("main", FlowOperationEnum.RefreshToken);
                     return false;
                 }
                 catch (KeyNotFoundException)

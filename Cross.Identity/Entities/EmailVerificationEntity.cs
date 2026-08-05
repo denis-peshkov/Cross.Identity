@@ -1,8 +1,9 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class EmailVerificationEntity
+public class EmailVerificationEntity : IHasConcurrencyStamp
 {
     public long Id { get; set; }
+
     public Guid UserAccountId { get; set; }
     public virtual UserAccountEntity UserAccount { get; set; }
     public string Email { get; set; }
@@ -14,4 +15,7 @@ public class EmailVerificationEntity
     public DateTime ExpiresAt { get; set; }
     public DateTime? UsedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
 }

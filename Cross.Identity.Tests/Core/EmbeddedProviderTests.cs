@@ -14,7 +14,7 @@ public sealed class EmbeddedProviderTests
         });
 
         var sut = new EmbeddedResourceProcessDefinitionProvider(opt);
-        var json = sut.GetJson("license", FlowOperationEnum.Register);
+        var json = sut.GetJson("main", FlowOperationEnum.Register);
 
         json.Should().Contain("\"start\"");
     }

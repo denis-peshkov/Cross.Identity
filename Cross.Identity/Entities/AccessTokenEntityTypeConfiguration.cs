@@ -6,7 +6,8 @@ internal class AccessTokenEntityTypeConfiguration : IEntityTypeConfiguration<Acc
     {
         builder.ToTable(nameof(IdentityContext.AccessTokens), IdentityContext.DefaultSchema);
         builder.Property(x => x.Id).HasColumnName("AccessTokenId");
-        builder.Property(x => x.RevokeReason).HasColumnType("smallint");
+        builder.Property(x => x.RevokeReason).HasConversion<short?>();
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.AccessTokens)}");

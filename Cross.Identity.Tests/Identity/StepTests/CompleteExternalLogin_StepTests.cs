@@ -105,6 +105,34 @@ public class CompleteExternalLogin_StepTests
             .Should().ThrowAsync<ValidationException>().WithMessage("Denied");
     }
 
+    [Test]
+    public async Task CompleteExternalLoginStep_WithoutCode_ShouldForwardOAuthError()
+    {
+        _externalLoginService
+            .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ValidationException("Denied"));
+
+        var step = new CompleteExternalLoginStep
+        {
+            Kind = "completeExternalLogin",
+            CodeKey = "Code",
+            StateKey = "State",
+            ErrorKey = "Error",
+            ErrorDescriptionKey = "ErrorDescription",
+            ExternalLoginService = _externalLoginService.Object,
+            JwtTokenService = _jwtTokenService.Object,
+            UserService = _userService.Object,
+        };
+
+        var bag = new Bag();
+        bag.Set("completeExternalLogin.State", "state");
+        bag.Set("completeExternalLogin.Error", "access_denied");
+        bag.Set("completeExternalLogin.ErrorDescription", "Denied");
+
+        await FluentActions.Invoking(async () => await step.ExecuteAsync(bag, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>().WithMessage("Denied");
+    }
+
     private CompleteExternalLoginStep CreateStep()
         => new()
         {

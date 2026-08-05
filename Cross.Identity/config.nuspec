@@ -16,9 +16,23 @@
     <tags>Identity Authentication JWT Argon2 Registration Login ForgotPassword Token RefreshToken ProcessEngine Flows Email Sms Verification License OAuth NetCore AspNetCore</tags>
     <releaseNotes><![CDATA[
 Cross.Identity: identity and authentication flows, JWT, process engine.
+
+BREAKING: built-in flow rename license → main
+- Flow id: ExecuteAsync(..., "main", operation, ...) (was "license").
+- Definitions: main.{Operation}.json (was license.{Operation}.json).
+- Sample/API path segment: /api/identity/main/{Operation} (was .../license/...).
+- Removed demo flows: game.*, shop.*, edoctors.*.
+
+Other breaking (same line)
+- GetUser → GetUserId (enum, files, routes).
+- collectResult with one field: Data is always an object, not a bare scalar.
+- FlowExecutor is internal; use IFlowExecutor.
+
 Licensing
 - JWT license validation (Peshkov software) on first IFlowExecutor.ExecuteAsync call.
 - Configure via CrossIdentity:LicenseKey in appsettings or CrossIdentity__LicenseKey environment variable.
+
+Also: External OAuth, refresh-token AbsoluteExpiresAt / rotation, DeveloperMode codes.
 ]]></releaseNotes>
     <dependencies>
       <group targetFramework="net8.0">

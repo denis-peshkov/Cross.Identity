@@ -41,6 +41,19 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
 | Device binding      | on login, save device_id or fingerprint                                        |
 | Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
+## Replay detection (family revoke + `REPLAY_DETECTED`)
+
+Rotation alone rejects a reused refresh token. That is **not** enough when the attacker rotated **first**:
+
+1. Attacker steals `R1` and refreshes first → gets active `R2`, `R1` revoked.
+2. Victim sends their copy of `R1` → reuse of a revoked refresh.
+3. **Without** family revoke: victim gets conflict / must re-login; attacker keeps live `R2`.
+4. **With** family revoke (`RefreshTokenRevokeReason.REPLAY_DETECTED`): `R2` and access tokens in the same `FamilyId` are revoked too.
+
+Implemented in `EnsureRefreshTokenActiveForRotationAsync` / `InvalidateRefreshTokenAsync` → `HandleRefreshTokenReplayAsync`.
+
+**Trade-off:** a legitimate retry or concurrent double-refresh can look identical to this race and kill an honest session. That risk is accepted deliberately so the theft race above cannot leave the attacker with a live successor token.
+
 ## What happens without rotation
 1. You issued the user:
       o	**access_token** — lives, say, 15 minutes;

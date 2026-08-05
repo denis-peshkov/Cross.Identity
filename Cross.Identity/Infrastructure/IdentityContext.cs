@@ -18,8 +18,24 @@ public class IdentityContext : DbContext
     {
     }
 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        if (!HasConcurrencyStampInterceptor(optionsBuilder))
+        {
+            optionsBuilder.AddInterceptors(ConcurrencyStampInterceptor.Instance);
+        }
+
+        base.OnConfiguring(optionsBuilder);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
+    }
+
+    private static bool HasConcurrencyStampInterceptor(DbContextOptionsBuilder optionsBuilder)
+    {
+        var core = optionsBuilder.Options.FindExtension<CoreOptionsExtension>();
+        return core?.Interceptors?.OfType<ConcurrencyStampInterceptor>().Any() == true;
     }
 }

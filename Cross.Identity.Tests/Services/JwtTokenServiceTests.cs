@@ -342,6 +342,98 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task InvalidateRefreshTokenAsync_WhenTokenAlreadyRevoked_ShouldThrowConflictException()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        await _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
+    }
+
+    [Test]
+    public async Task InvalidateRefreshTokenAsync_WhenTokenAlreadyRevoked_ShouldRevokeEntireFamilyWithReplayDetected()
+    {
+        // Theft race: attacker refreshed first (R1 → R2); victim reuses R1 → family must die.
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var otherFamilyId = Guid.NewGuid();
+
+        var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var r2 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var accessInFamily = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>());
+        var otherFamilyRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(userId, otherFamilyId, new List<Claim>());
+
+        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(r2)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessInFamily)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherFamilyRefresh)).Should().BeTrue();
+
+        var r1Entity = await Context.RefreshTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r1))));
+        r1Entity.RevokeReason.Should().Be(RefreshTokenRevokeReason.REPLAY_DETECTED);
+
+        var r2Entity = await Context.RefreshTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r2))));
+        r2Entity.RevokedAt.Should().NotBeNull();
+        r2Entity.RevokeReason.Should().Be(RefreshTokenRevokeReason.REPLAY_DETECTED);
+
+        var accessEntity = await Context.AccessTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(accessInFamily))));
+        accessEntity.RevokedAt.Should().NotBeNull();
+        accessEntity.RevokeReason.Should().Be(RefreshTokenRevokeReason.REPLAY_DETECTED);
+    }
+
+    [Test]
+    public async Task EnsureRefreshTokenActiveForRotationAsync_WhenValid_ShouldNotThrow()
+    {
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>());
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(token, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    public async Task EnsureRefreshTokenActiveForRotationAsync_WhenMissing_ShouldThrowNotAuthorized()
+    {
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync("missing-token", CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired refresh token*");
+    }
+
+    [Test]
+    public async Task EnsureRefreshTokenActiveForRotationAsync_WhenRevoked_ShouldRevokeFamilyAndThrowConflict()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var r2 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(r1, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(r2)).Should().BeFalse();
+        var r2Entity = await Context.RefreshTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r2))));
+        r2Entity.RevokeReason.Should().Be(RefreshTokenRevokeReason.REPLAY_DETECTED);
+    }
+
+    [Test]
     public async Task RevokeRefreshTokenForLogoutAsync_ShouldSetRevokedAtAndUserLogoutReason()
     {
         var userId = Guid.NewGuid();
@@ -379,6 +471,87 @@ public class JwtTokenServiceTests : EFTestsBase
         var act = () => _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, CancellationToken.None);
 
         await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    public async Task RevokeAllTokensForLogoutAsync_ShouldRevokeAllUserTokensWithUserLogoutAll()
+    {
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var familyA = Guid.NewGuid();
+        var familyB = Guid.NewGuid();
+
+        var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyA, new List<Claim>());
+        var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyB, new List<Claim>());
+        var accessA = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyA, new List<string>(), new List<Claim>());
+        var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(otherUserId, Guid.NewGuid(), new List<Claim>());
+
+        await _jwtTokenService.RevokeAllTokensForLogoutAsync(refreshA, CancellationToken.None);
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessA)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh)).Should().BeTrue();
+
+        var userTokens = await Context.RefreshTokens.Where(x => x.UserId == userId).ToListAsync();
+        userTokens.Should().OnlyContain(t =>
+            t.RevokedAt != null && t.RevokeReason == RefreshTokenRevokeReason.USER_LOGOUT_ALL);
+    }
+
+    [Test]
+    public async Task RevokeAllTokensForLogoutAsync_WhenNullOrEmpty_ShouldNotThrow()
+    {
+        var act = async () =>
+        {
+            await _jwtTokenService.RevokeAllTokensForLogoutAsync(null, CancellationToken.None);
+            await _jwtTokenService.RevokeAllTokensForLogoutAsync("   ", CancellationToken.None);
+        };
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    public async Task RevokeAllTokensForLogoutAsync_WhenInvalid_ShouldThrowNotAuthorized()
+    {
+        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync("not-a-token", CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired refresh token*");
+    }
+
+    [Test]
+    public async Task RevokeAllTokensForLogoutAsync_WhenAlreadyRevoked_ShouldThrowNotAuthorized()
+    {
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>());
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, CancellationToken.None);
+
+        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync(token, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Invalid or expired refresh token*");
+    }
+
+    [Test]
+    public async Task RevokeAllTokensForUserAsync_ShouldRevokeActiveAccessAndRefreshTokens()
+    {
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+
+        var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>());
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(otherUserId, Guid.NewGuid(), new List<Claim>());
+
+        await _jwtTokenService.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, CancellationToken.None);
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessToken)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshToken)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh)).Should().BeTrue();
+
+        var userRefresh = await Context.RefreshTokens.SingleAsync(x => x.UserId == userId);
+        userRefresh.RevokedAt.Should().NotBeNull();
+        userRefresh.RevokeReason.Should().Be(RefreshTokenRevokeReason.PASSWORD_CHANGED);
     }
 
     [Test]

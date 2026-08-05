@@ -3,7 +3,7 @@
 /// <summary>
 /// Model for storing access tokens
 /// </summary>
-public class AccessTokenEntity
+public class AccessTokenEntity : IHasConcurrencyStamp
 {
     /// <summary>Jti</summary>
     public Guid Id { get; set; }
@@ -20,4 +20,7 @@ public class AccessTokenEntity
     public string? DeviceFingerprint { get; set; }
     public string? UserAgent { get; set; }
     public string? IpAddress { get; set; }
+
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
 }

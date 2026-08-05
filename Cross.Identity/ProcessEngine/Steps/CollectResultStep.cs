@@ -11,13 +11,13 @@
 /// {
 ///   "kind": "collectResult",
 ///   "map": {
-///     "userId": "codeAuth.UserId",
-///     "token":  "issueJwt.Token"
+///     "access_token": "token.AccessToken",
+///     "user_id": "token.UserId"
 ///   },
 ///   "next": null
 /// }
 /// Result example:
-/// "collectResult.userId", "collectResult.token".
+/// "collectResult.access_token", "collectResult.user_id".
 /// </code>
 /// </summary>
 internal sealed class CollectResultStep : IStep

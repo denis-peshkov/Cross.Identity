@@ -3,7 +3,7 @@
 /// <summary>
 /// Represents a user in the identity system
 /// </summary>
-public class UserAccountEntity
+public class UserAccountEntity : IHasConcurrencyStamp
 {
     /// <summary>
     /// Gets or sets the primary key for this user.
@@ -78,14 +78,13 @@ public class UserAccountEntity
     public int AccessFailedCount { get; set; }
 
     /// <summary>
-    /// A random value that must change whenever a users credentials change (password changed, login removed)
+    /// A random value that must change whenever a user's credentials change (password changed, login removed).
+    /// Rotating this stamp invalidates existing sessions (tokens are also revoked on password change).
     /// </summary>
     public Guid? SecurityStamp { get; set; }
 
-    /// <summary>
-    /// A random value that must change whenever a user is persisted to the store
-    /// </summary>
-    public Guid? ConcurrencyStamp { get; set; }
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating if a user has confirmed their email address.

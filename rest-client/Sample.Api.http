@@ -1,5 +1,5 @@
 ###
-# Cross.Identity Sample.Api — manual E2E for `license/*` flows (10 FlowOperationEnum values).
+# Cross.Identity Sample.Api — manual E2E for `main/*` flows (FlowOperationEnum values).
 #
 # Prerequisite:
 #   dotnet run --project Sample.Api --launch-profile http
@@ -14,10 +14,10 @@
 #   After Register or Token — copy LastCode / refresh_token into http-client.private.env.json (gitignored) if needed.
 #   OAuth (ExternalLogin / ExternalLoginCallback) — seed Providers in DB + appsettings; placeholders below.
 
-# @name license-register
+### Register
+# @name main-register
 # @no-cookie-jar
-
-POST {{HOST}}/api/identity/license/Register
+POST {{HOST}}/api/identity/main/Register
 Content-Type: application/json
 
 {
@@ -25,10 +25,9 @@ Content-Type: application/json
   "Password": "{{PASSWORD}}"
 }
 
-###
-# @name license-request-code
-
-POST {{HOST}}/api/identity/license/RequestCode
+### Request Code
+# @name main-request-code
+POST {{HOST}}/api/identity/main/RequestCode
 Content-Type: application/json
 
 {
@@ -36,10 +35,9 @@ Content-Type: application/json
   "Ttl": "{{TTL}}"
 }
 
-###
-# @name license-token-password
-
-POST {{HOST}}/api/identity/license/Token
+### Token
+# @name main-token-password
+POST {{HOST}}/api/identity/main/Token
 Content-Type: application/json
 
 {
@@ -48,9 +46,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-token-by-code
-
-POST {{HOST}}/api/identity/license/TokenByCode
+# @name main-token-by-code
+POST {{HOST}}/api/identity/main/TokenByCode
 Content-Type: application/json
 
 {
@@ -59,9 +56,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-token-password-or-code
-
-POST {{HOST}}/api/identity/license/Token
+# @name main-token-password-or-code
+POST {{HOST}}/api/identity/main/Token
 Content-Type: application/json
 
 {
@@ -71,9 +67,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-refresh-token
-
-POST {{HOST}}/api/identity/license/RefreshToken
+# @name main-refresh-token
+POST {{HOST}}/api/identity/main/RefreshToken
 Content-Type: application/json
 
 {
@@ -81,9 +76,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-get-user-id
-
-POST {{HOST}}/api/identity/license/GetUserId
+# @name main-get-user-id
+POST {{HOST}}/api/identity/main/GetUserId
 Content-Type: application/json
 
 {
@@ -91,9 +85,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-forgot-password
-
-POST {{HOST}}/api/identity/license/ForgotPassword
+# @name main-forgot-password
+POST {{HOST}}/api/identity/main/ForgotPassword
 Content-Type: application/json
 
 {
@@ -101,9 +94,8 @@ Content-Type: application/json
 }
 
 ###
-# @name license-reset-password
-
-POST {{HOST}}/api/identity/license/ResetPassword
+# @name main-reset-password
+POST {{HOST}}/api/identity/main/ResetPassword
 Content-Type: application/json
 
 {
@@ -113,20 +105,20 @@ Content-Type: application/json
 }
 
 ###
-# @name license-external-login
-
-POST {{HOST}}/api/identity/license/ExternalLogin
+# @name main-external-login
+POST {{HOST}}/api/identity/main/ExternalLogin
 Content-Type: application/json
 
 {
   "Provider": "Google",
   "ReturnUrl": "{{HOST}}/swagger"
 }
+# Optional account-link (must match authenticated user): "LinkUserId": "<user-guid>"
+
 
 ###
-# @name license-external-login-callback
-
-POST {{HOST}}/api/identity/license/ExternalLoginCallback
+# @name main-external-login-callback
+POST {{HOST}}/api/identity/main/ExternalLoginCallback
 Content-Type: application/json
 
 {
@@ -134,4 +126,35 @@ Content-Type: application/json
   "State": "<oauth-state-from-initiate>",
   "Error": "",
   "ErrorDescription": ""
+}
+
+###
+# @name main-external-login-unlink
+# Requires authenticated caller (Bearer ACCESS_TOKEN with sub = current user).
+POST {{HOST}}/api/identity/main/ExternalLoginUnlink
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+
+{
+  "Provider": "Google"
+}
+
+###
+# @name main-logout
+# Logout current session: revokes the presented refresh token (USER_LOGOUT). Idempotent.
+POST {{HOST}}/api/identity/main/Logout
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{REFRESH_TOKEN}}"
+}
+
+###
+# @name main-logout-all
+# Logout from all devices: presents a live refresh token, revokes all sessions (USER_LOGOUT_ALL).
+POST {{HOST}}/api/identity/main/LogoutAll
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{REFRESH_TOKEN}}"
 }

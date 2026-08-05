@@ -56,6 +56,7 @@ internal interface IUserService
 
     /// <summary>
     /// Set (or replace) the password of a user found by selector.
+    /// Rotates <c>SecurityStamp</c> and revokes all active access/refresh tokens for the user.
     /// </summary>
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>

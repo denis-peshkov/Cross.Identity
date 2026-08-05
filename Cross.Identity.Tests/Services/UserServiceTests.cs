@@ -8,6 +8,7 @@ public class UserServiceTests : EFTestsBase
     private Mock<IPasswordHasher> _hasher = null!;
     private Mock<IPhoneNormalizer> _phoneNormalizer = null!;
     private Mock<IHeadersContextAccessor> _headersContextAccessor = null!;
+    private Mock<IJwtTokenService> _jwtTokenService = null!;
     private UserService _userService = null!;
 
     [SetUp]
@@ -30,13 +31,22 @@ public class UserServiceTests : EFTestsBase
         _headersContextAccessor.Setup(h => h.LanguageCode).Returns("US");
         _phoneNormalizer.Setup(p => p.NormalizeToE164(It.IsAny<string>(), It.IsAny<string>())).Returns<string, string>((p, r) => p);
 
+        _jwtTokenService = new Mock<IJwtTokenService>();
+        _jwtTokenService
+            .Setup(j => j.RevokeAllTokensForUserAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<RefreshTokenRevokeReason>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         _userService = new UserService(
             Context,
             _logger.Object,
             _pepperVault.Object,
             _hasher.Object,
             _phoneNormalizer.Object,
-            _headersContextAccessor.Object);
+            _headersContextAccessor.Object,
+            _jwtTokenService.Object);
     }
 
     [Test]
@@ -470,12 +480,14 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
+        var oldStamp = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             Email = email,
             PasswordPhc = "$pbkdf2$old",
             PasswordPepperVersion = 1,
+            SecurityStamp = oldStamp,
         });
 
         _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
@@ -492,6 +504,11 @@ public class UserServiceTests : EFTestsBase
         user.Should().NotBeNull();
         user!.PasswordPhc.Should().Be("$pbkdf2$new");
         user.PasswordPepperVersion.Should().Be((short)2);
+        user.SecurityStamp.Should().NotBeNull();
+        user.SecurityStamp.Should().NotBe(oldStamp);
+        _jwtTokenService.Verify(
+            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 
     [Test]
@@ -500,5 +517,35 @@ public class UserServiceTests : EFTestsBase
         await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>();
+    }
+
+    [Test]
+    public async Task ConcurrentUserAccountUpdates_ShouldThrowDbUpdateConcurrencyException()
+    {
+        var dbName = $"user-concurrency-{Guid.NewGuid():N}";
+        await using var ctx1 = InMemoryDbHelper.CreateContext(dbName);
+        await using var ctx2 = InMemoryDbHelper.CreateContext(dbName);
+
+        var userId = Guid.NewGuid();
+        ctx1.UsersAccounts.Add(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "concurrency@example.com",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        await ctx1.SaveChangesAsync();
+
+        var user1 = await ctx1.UsersAccounts.SingleAsync(x => x.Id == userId);
+        var user2 = await ctx2.UsersAccounts.SingleAsync(x => x.Id == userId);
+
+        user1.EmailConfirmed = true;
+        await ctx1.SaveChangesAsync();
+
+        user2.PhoneConfirmed = true;
+        await FluentActions.Invoking(() => ctx2.SaveChangesAsync())
+            .Should()
+            .ThrowAsync<DbUpdateConcurrencyException>();
     }
 }

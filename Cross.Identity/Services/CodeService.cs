@@ -114,7 +114,7 @@ internal sealed class CodeService : ICodeService
                 {
                     // Look up email code
                     var entity = await _context.EmailVerifications
-                        .Where(x => x.Email == normalizedIdentity && x.TokenHash == codeHash)
+                        .Where(x => x.Email == normalizedIdentity && x.TokenHash == codeHash && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -131,17 +131,44 @@ internal sealed class CodeService : ICodeService
                         return false;
                     }
 
-                    // Mark code as used
-                    entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    // Check attempt count
+                    if (entity.Attempts >= entity.MaxAttempts)
+                    {
+                        _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedIdentity);
+                        return false;
+                    }
 
-                    return true;
+                    // Increment attempt counter (even for wrong code)
+                    entity.Attempts++;
+
+                    // Verify code hash
+                    if (!entity.TokenHash.SequenceEqual(codeHash))
+                    {
+                        // Wrong code, but attempt already counted
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        _logger.LogWarning("Email verification code mismatch for {Email}", normalizedIdentity);
+                        return false;
+                    }
+
+                    // Correct code — mark as used
+                    entity.UsedAt = now;
+
+                    try
+                    {
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        return true;
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning("Email verification code already used for {Email}", normalizedIdentity);
+                        return false;
+                    }
                 }
             case "phone":
                 {
-                    // For phone, find the latest record first (without hash check)
+                    // For phone, find the latest unused record
                     var entity = await _context.PhoneVerifications
-                        .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash)
+                        .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash && x.UsedAt == null)
                         .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -179,9 +206,17 @@ internal sealed class CodeService : ICodeService
 
                     // Correct code — mark as used
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                    return true;
+                    try
+                    {
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        return true;
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning("Phone verification code already used for {Phone}", normalizedIdentity);
+                        return false;
+                    }
                 }
             default:
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);

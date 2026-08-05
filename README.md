@@ -53,7 +53,7 @@ Cross.Identity.slnx
 ├── Sample.Api/                         # Minimal API example (ASP.NET Core)
 ├── .cursor/triage/docs/                # Automated triage reports (.data/, ci-report-*.md)
 ├── .github/workflows/                  # dotnet.yml, triage.yml
-├── Infrastructure/Scripts/             # DbUp SQL example for auth schema (copy; see README)
+├── Infrastructure/Scripts/             # DbUp DDL: SqlServer / PostgreSQL / MySQL (see Scripts README)
 ├── RefreshToken.md
 ├── CONTRIBUTING.md
 ├── LICENSE.md
@@ -62,7 +62,26 @@ Cross.Identity.slnx
 
 ## Usage
 
-1. **Registration** in the application (ASP.NET Core):
+1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
+
+   `IdentityContext` attaches `ConcurrencyStampInterceptor` itself (via `OnConfiguring`). It rotates `ConcurrencyStamp` on insert/update through `SaveChanges` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors` for this.
+
+```csharp
+services.AddDbContext<IdentityContext>(options =>
+    options
+        // SQL Server:
+        .UseSqlServer(connectionString)
+        // PostgreSQL: .UseNpgsql(connectionString)
+        // MySQL:      .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        // Test:       .UseInMemoryDatabase("…")
+        );
+```
+
+   Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.
+
+   Note: bulk updates (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) bypass interceptors; prefer tracked `SaveChanges` for rows that use `ConcurrencyStamp`.
+
+2. **Register Cross.Identity** services:
 
 ```csharp
 services.AddCrossIdentity(configuration);
@@ -91,18 +110,18 @@ Behavior:
 | Expired / wrong product type | `LogError` + `LogCritical`, flow runs |
 | Valid key | `LogInformation` with edition and expiration date |
 
-2. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
+3. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
 
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
     input: requestBodyAsDictionary,
-    flow: "license",           // e.g. license, game, shop, edoctors
+    flow: "main",
     operation: FlowOperationEnum.Token,
     cancellationToken);
 // result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
 ```
 
-3. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `license.Token.json`, `game.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
+4. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
 
 ## Dependencies (NuGet)
 
@@ -157,7 +176,7 @@ Layout: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests 
 ## Additional resources
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute: branches, PRs, tests, code style.
-- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp SQL example for the `auth` schema.
+- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp DDL for SQL Server, PostgreSQL, and MySQL (`auth` schema).
 - [RefreshToken.md](RefreshToken.md) — access/refresh token lifetimes and rotation recommendations.
 - [LICENSE.md](LICENSE.md) — license.
 

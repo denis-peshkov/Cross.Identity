@@ -21,7 +21,6 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
         var authenticationOptions = sp.GetRequiredService<IOptionsSnapshot<AuthenticationOptions>>().Value;
-        var context = sp.GetRequiredService<IdentityContext>();
 
         return new RefreshTokenStep
         {
@@ -30,7 +29,6 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
             JwtTokenService       = jwtTokenService,
             UserService           = userService,
             AuthenticationOptions = authenticationOptions,
-            Context               = context,
             RefreshTokenKey       = cfg.Str("refreshTokenKey"),
             Next                  = cfg.StrOpt("next")
         };

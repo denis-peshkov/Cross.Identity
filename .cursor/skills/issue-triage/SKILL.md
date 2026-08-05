@@ -140,7 +140,7 @@ For bug reports request:
 
 - NuGet version / commit
 - Target framework (net7/net8)
-- Flow name (`license.TokenByCode`, `shop.auth`, etc.)
+- Flow name (`main.TokenByCode`, `main.Register`, etc.)
 - Reproduction steps without real tokens/passwords
 
 ## Edge cases

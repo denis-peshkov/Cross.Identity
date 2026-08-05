@@ -12,6 +12,7 @@ internal sealed class UserService : IUserService
     private readonly IPasswordHasher _hasher;
     private readonly IPhoneNormalizer _phoneNormalizer;
     private readonly IHeadersContextAccessor _headersContextAccessor;
+    private readonly IJwtTokenService _jwtTokenService;
 
     public UserService(
         IdentityContext context,
@@ -19,7 +20,8 @@ internal sealed class UserService : IUserService
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
         IPhoneNormalizer phoneNormalizer,
-        IHeadersContextAccessor headersContextAccessor)
+        IHeadersContextAccessor headersContextAccessor,
+        IJwtTokenService jwtTokenService)
     {
         _context = context;
         _logger = logger;
@@ -27,6 +29,7 @@ internal sealed class UserService : IUserService
         _hasher = hasher;
         _phoneNormalizer = phoneNormalizer;
         _headersContextAccessor = headersContextAccessor;
+        _jwtTokenService = jwtTokenService;
     }
 
     /// <inheritdoc/>
@@ -329,6 +332,12 @@ internal sealed class UserService : IUserService
 
         user.PasswordPhc = _hasher.Hash(newPassword, pepper);
         user.PasswordPepperVersion = _pepperVault.CurrentVersion;
+        // Invalidate existing sessions: stamp rotation + revoke all tokens (PASSWORD_CHANGED).
+        user.SecurityStamp = Guid.NewGuid();
+
+        await _jwtTokenService
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokeReason.PASSWORD_CHANGED, cancellationToken)
+            .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -340,7 +349,7 @@ internal sealed class UserService : IUserService
         CancellationToken cancellationToken)
     {
         var verification = await _context.EmailVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -359,8 +368,16 @@ internal sealed class UserService : IUserService
         }
 
         verification.UsedAt = now;
-        verification.ExpiresAt = now;
-        return true;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 
     private async Task<bool> TryValidatePhoneCodeAsync(
@@ -370,7 +387,7 @@ internal sealed class UserService : IUserService
         CancellationToken cancellationToken)
     {
         var verification = await _context.PhoneVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -389,7 +406,15 @@ internal sealed class UserService : IUserService
         }
 
         verification.UsedAt = now;
-        verification.ExpiresAt = now;
-        return true;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 }

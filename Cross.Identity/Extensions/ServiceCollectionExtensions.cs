@@ -6,7 +6,7 @@
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-      private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
@@ -73,6 +73,9 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, VerifyCodeStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, InitiateExternalLoginStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CompleteExternalLoginStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, ExternalLoginUnlinkStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, LogoutStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, LogoutAllStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();
@@ -87,20 +90,10 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
         services.AddHttpClient(nameof(ExternalLoginService));
+        services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
 
         return services;
-    }
-
-    /// <summary>
-    /// Adds a claim only when the value is non-empty (null/empty string ignored).
-    /// </summary>
-    public static List<Claim> AddIfNotNull(this List<Claim> claims, string claimType, string? value)
-    {
-        if (!string.IsNullOrWhiteSpace(value))
-            claims.Add(new Claim(claimType, value));
-
-        return claims;
     }
 
     /// <summary>

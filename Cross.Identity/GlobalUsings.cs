@@ -1,4 +1,4 @@
-// Global using directives
+﻿// Global using directives
 
 global using System;
 global using System.Collections;
@@ -35,7 +35,6 @@ global using System.Text.Json.Serialization.Metadata;
 global using System.Text.RegularExpressions;
 global using System.Threading;
 global using System.Threading.Tasks;
-global using System.Transactions;
 global using System.Web;
 global using Cross.Headers;
 global using Cross.ErrorHandlers.Exceptions;
@@ -76,6 +75,8 @@ global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.Mvc.Filters;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.ChangeTracking;
+global using Microsoft.EntityFrameworkCore.Diagnostics;
+global using Microsoft.EntityFrameworkCore.Infrastructure;
 global using Microsoft.EntityFrameworkCore.InMemory.Infrastructure.Internal;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
 global using Microsoft.EntityFrameworkCore.ValueGeneration;

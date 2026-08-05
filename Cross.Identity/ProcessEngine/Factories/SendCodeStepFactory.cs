@@ -18,9 +18,6 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
         var configuration             = sp.GetRequiredService<IConfiguration>();
 
-        // ttlSeconds (optional), 5 minutes by default
-        var ttl = cfg.TimeSpanSecondsOpt("ttlSeconds") ?? TimeSpan.FromMinutes(5);
-
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
@@ -42,6 +39,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             Kind                      = Kind,
             Channel                   = channel,
             SelectorKey               = cfg.Str("selectorKey"),
+            TtlKey                    = cfg.StrOpt("ttlKey"),
             CodeService               = codeService,
             UserService               = userService,
             Environment               = hostEnvironment,
@@ -49,7 +47,6 @@ internal sealed class SendCodeStepFactory : IStepFactory
             ProcessDefinitionProvider = processDefinitionProvider,
             Logger                    = loggerFactory.CreateLogger<SendCodeStep>(),
             ResolveBy                 = resolveBy,
-            Ttl                       = ttl,
             Next                      = cfg.StrOpt("next"),
         };
     }
