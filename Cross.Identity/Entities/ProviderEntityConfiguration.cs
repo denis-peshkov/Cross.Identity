@@ -7,9 +7,9 @@ internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEn
         builder.ToTable(nameof(IdentityContext.Providers), IdentityContext.DefaultSchema);
 
         builder.Property(x => x.Id).HasColumnName("ProviderId");
-        builder.Property(x => x.Name).IsRequired().HasMaxLength(50);
-        builder.Property(x => x.Scheme).IsRequired().HasMaxLength(100);
-        builder.Property(x => x.CreatedAt).IsRequired().HasColumnType("datetime2(7)");
+        builder.Property(x => x.Name).IsRequired();
+        builder.Property(x => x.Scheme).IsRequired();
+        builder.Property(x => x.CreatedAt).IsRequired();
         builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)

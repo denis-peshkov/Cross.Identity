@@ -6,19 +6,7 @@ internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAcc
     {
         builder.ToTable(nameof(IdentityContext.UsersAccounts), IdentityContext.DefaultSchema);
         builder.Property(x => x.Id).HasColumnName("UserAccountId");
-        builder.Property(x => x.UserName).HasMaxLength(200);
-        builder.Property(x => x.NormalizedUserName).HasMaxLength(200);
-
-        builder.Property(x => x.Email).HasMaxLength(200);
-        builder.Property(x => x.PhoneNumber).HasMaxLength(20); // E.164
-
-        builder.Property(x => x.PasswordPhc).HasMaxLength(800);
-        // builder.Property(x => x.PasswordHash).HasColumnType("binary(32)");
-        // builder.Property(x => x.PasswordSalt).HasMaxLength(200);
-        builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
-        builder.Property(x => x.LastLoginAt).HasColumnType("datetime2(7)");
-        builder.Property(x => x.LockoutEnd).HasColumnType("datetimeoffset(0)");
-        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken(); // tell EF to check on UPDATE
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersAccounts)}");

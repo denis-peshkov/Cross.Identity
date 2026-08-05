@@ -53,7 +53,7 @@ Cross.Identity.slnx
 ├── Sample.Api/                         # Minimal API example (ASP.NET Core)
 ├── .cursor/triage/docs/                # Automated triage reports (.data/, ci-report-*.md)
 ├── .github/workflows/                  # dotnet.yml, triage.yml
-├── Infrastructure/Scripts/             # DbUp SQL example for auth schema (copy; see README)
+├── Infrastructure/Scripts/             # DbUp DDL: SqlServer / PostgreSQL / MySQL (see Scripts README)
 ├── RefreshToken.md
 ├── CONTRIBUTING.md
 ├── LICENSE.md
@@ -69,9 +69,15 @@ Cross.Identity.slnx
 ```csharp
 services.AddDbContext<IdentityContext>(options =>
     options
-        .UseSqlServer(connectionString) // or UseInMemoryDatabase(...)
+        // SQL Server:
+        .UseSqlServer(connectionString)
+        // PostgreSQL: .UseNpgsql(connectionString)
+        // MySQL:      .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        // Test:       .UseInMemoryDatabase("…")
         .AddInterceptors(new ConcurrencyStampInterceptor()));
 ```
+
+   Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.
 
    Note: bulk updates (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) bypass interceptors; prefer tracked `SaveChanges` for rows that use `ConcurrencyStamp`.
 
@@ -170,7 +176,7 @@ Layout: `Cross.Identity.Tests/Identity/` — FlowTests (integration), StepTests 
 ## Additional resources
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute: branches, PRs, tests, code style.
-- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp SQL example for the `auth` schema.
+- [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp DDL for SQL Server, PostgreSQL, and MySQL (`auth` schema).
 - [RefreshToken.md](RefreshToken.md) — access/refresh token lifetimes and rotation recommendations.
 - [LICENSE.md](LICENSE.md) — license.
 
