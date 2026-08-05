@@ -329,7 +329,7 @@ async function main() {
       );
     } catch (labelErr) {
       console.error('Failed to apply triage labels:', labelErr.message ?? labelErr);
-      // Comment already posted — do not fail the job solely on label sync.
+      process.exit(1);
     }
   } catch (err) {
     if (err instanceof CursorAgentError) {
