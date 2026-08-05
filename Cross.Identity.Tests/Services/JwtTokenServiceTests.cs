@@ -342,6 +342,20 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task InvalidateRefreshTokenAsync_WhenTokenAlreadyRevoked_ShouldThrowConflictException()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        await _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), CancellationToken.None);
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*already been used*");
+    }
+
+    [Test]
     public async Task RevokeRefreshTokenForLogoutAsync_ShouldSetRevokedAtAndUserLogoutReason()
     {
         var userId = Guid.NewGuid();
