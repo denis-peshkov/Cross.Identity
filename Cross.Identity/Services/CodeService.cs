@@ -150,6 +150,7 @@ internal sealed class CodeService : ICodeService
                     // For phone, find the latest unused record
                     var entity = await _context.PhoneVerifications
                         .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash && x.UsedAt == null)
+                        .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
 
