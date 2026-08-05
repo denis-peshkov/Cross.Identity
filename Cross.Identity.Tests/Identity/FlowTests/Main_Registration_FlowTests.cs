@@ -45,7 +45,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<ISmsSenderService>(),
                 configuration));
 
-        // Load JSON as embedded /Flows/Definitions/main.Register.json
+        // Load JSON as embedded /ProcessEngine/Definitions/Flows/main.Register.json
         // AddJson("""
         //         {
         //           "start": "collectForm",
