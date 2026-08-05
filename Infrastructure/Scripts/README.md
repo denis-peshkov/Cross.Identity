@@ -56,22 +56,16 @@ Point DbUp at the folder for your provider, e.g. `Infrastructure/Scripts/SqlServ
 
 ```csharp
 // SQL Server
-options
-    .UseSqlServer(connectionString)
-    .AddInterceptors(new ConcurrencyStampInterceptor());
+options.UseSqlServer(connectionString);
 
 // PostgreSQL (Npgsql.EntityFrameworkCore.PostgreSQL)
-options
-    .UseNpgsql(connectionString)
-    .AddInterceptors(new ConcurrencyStampInterceptor());
+options.UseNpgsql(connectionString);
 
 // MySQL (Pomelo.EntityFrameworkCore.MySql)
-options
-    .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
-    .AddInterceptors(new ConcurrencyStampInterceptor());
+options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 ```
 
-`AddCrossIdentity` does not register `DbContext` or database providers — the host owns that.
+`IdentityContext` attaches `ConcurrencyStampInterceptor` automatically. `AddCrossIdentity` does not register `DbContext` or database providers — the host owns that.
 
 ## Type mapping notes
 

@@ -64,7 +64,7 @@ Cross.Identity.slnx
 
 1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
 
-   Attach `ConcurrencyStampInterceptor` — it is **required**. It rotates `ConcurrencyStamp` on insert/update through `SaveChanges` for all identity entities that implement `IHasConcurrencyStamp` (`UserAccount`, tokens, verifications, OAuth state, external logins, providers).
+   `IdentityContext` attaches `ConcurrencyStampInterceptor` itself (via `OnConfiguring`). It rotates `ConcurrencyStamp` on insert/update through `SaveChanges` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors` for this.
 
 ```csharp
 services.AddDbContext<IdentityContext>(options =>
@@ -74,7 +74,7 @@ services.AddDbContext<IdentityContext>(options =>
         // PostgreSQL: .UseNpgsql(connectionString)
         // MySQL:      .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
         // Test:       .UseInMemoryDatabase("…")
-        .AddInterceptors(new ConcurrencyStampInterceptor()));
+        );
 ```
 
    Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.

@@ -10,6 +10,9 @@
 /// </summary>
 public sealed class ConcurrencyStampInterceptor : SaveChangesInterceptor
 {
+    /// <summary>Shared instance used by <see cref="IdentityContext"/> (safe to reuse; interceptor is stateless).</summary>
+    public static ConcurrencyStampInterceptor Instance { get; } = new();
+
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)
