@@ -12,9 +12,11 @@ The EF model is **provider-agnostic** (no SQL Server-specific column types). The
 ```text
 Infrastructure/Scripts/
 ├── SqlServer/     # T-SQL (original)
-├── PostgreSQL/    # plpgsql-compatible DDL
+├── PostgreSQL/    # PostgreSQL 13+ (uses gen_random_uuid() in seed; built-in since PG 13)
 └── MySQL/         # MySQL 8+ (Pomelo: schema → database `auth`)
 ```
+
+PostgreSQL scripts require **PostgreSQL 13 or later**: `4_SeedData/4_01_auth_Providers.sql` calls `gen_random_uuid()` (available in core since 13; on older versions enable `pgcrypto` or replace UUID generation).
 
 Each provider folder uses the same DbUp layer layout:
 
