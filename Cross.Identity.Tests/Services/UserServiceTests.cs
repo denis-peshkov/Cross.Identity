@@ -501,4 +501,34 @@ public class UserServiceTests : EFTestsBase
             .Should()
             .ThrowAsync<NotFoundException>();
     }
+
+    [Test]
+    public async Task ConcurrentUserAccountUpdates_ShouldThrowDbUpdateConcurrencyException()
+    {
+        var dbName = $"user-concurrency-{Guid.NewGuid():N}";
+        await using var ctx1 = InMemoryDbHelper.CreateContext(dbName);
+        await using var ctx2 = InMemoryDbHelper.CreateContext(dbName);
+
+        var userId = Guid.NewGuid();
+        ctx1.UsersAccounts.Add(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "concurrency@example.com",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        await ctx1.SaveChangesAsync();
+
+        var user1 = await ctx1.UsersAccounts.SingleAsync(x => x.Id == userId);
+        var user2 = await ctx2.UsersAccounts.SingleAsync(x => x.Id == userId);
+
+        user1.EmailConfirmed = true;
+        await ctx1.SaveChangesAsync();
+
+        user2.PhoneConfirmed = true;
+        await FluentActions.Invoking(() => ctx2.SaveChangesAsync())
+            .Should()
+            .ThrowAsync<DbUpdateConcurrencyException>();
+    }
 }

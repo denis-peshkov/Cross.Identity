@@ -64,13 +64,15 @@ Cross.Identity.slnx
 
 1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
 
-   Attach `RefreshTokenConcurrencyStampInterceptor` — it is **required**. The interceptor rotates `RefreshTokenEntity.ConcurrencyStamp` on every insert/update through `SaveChanges`. Without it, new refresh tokens may keep `ConcurrencyStamp = default(Guid)` and optimistic concurrency for refresh rotation will not work.
+   Attach `ConcurrencyStampInterceptor` — it is **required**. It rotates `ConcurrencyStamp` on insert/update through `SaveChanges` for:
+   - `RefreshTokenEntity` (refresh token rows)
+   - `UserAccountEntity` (optimistic concurrency on profile/password updates)
 
 ```csharp
 services.AddDbContext<IdentityContext>(options =>
     options
         .UseSqlServer(connectionString) // or UseInMemoryDatabase(...)
-        .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
+        .AddInterceptors(new ConcurrencyStampInterceptor()));
 ```
 
    Note: bulk updates (`ExecuteUpdateAsync`) bypass interceptors; those paths set `ConcurrencyStamp` explicitly in `JwtTokenService`.

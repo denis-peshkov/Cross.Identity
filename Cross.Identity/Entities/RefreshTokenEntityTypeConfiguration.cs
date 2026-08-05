@@ -7,8 +7,7 @@ internal class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<Re
         builder.ToTable(nameof(IdentityContext.RefreshTokens), IdentityContext.DefaultSchema);
         builder.Property(x => x.Id).HasColumnName("RefreshTokenId");
         builder.Property(x => x.RevokeReason).HasColumnType("smallint");
-        builder.Property(x => x.ConcurrencyStamp)
-            .IsConcurrencyToken();  // tell EF to check on UPDATE
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken(); // tell EF to check on UPDATE
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.RefreshTokens)}");

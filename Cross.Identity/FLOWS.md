@@ -80,14 +80,14 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >
-> **Concurrency interceptor (required):** when registering `IdentityContext`, the host must attach `RefreshTokenConcurrencyStampInterceptor`:
+> **Concurrency interceptor (required):** when registering `IdentityContext`, the host must attach `ConcurrencyStampInterceptor`:
 > ```csharp
 > services.AddDbContext<IdentityContext>(options =>
 >     options
 >         .UseSqlServer(connectionString)
->         .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
+>         .AddInterceptors(new ConcurrencyStampInterceptor()));
 > ```
-> `AddCrossIdentity` does not register this interceptor. Without it, `ConcurrencyStamp` is not rotated on `SaveChanges` insert/update of refresh tokens.
+> `AddCrossIdentity` does not register this interceptor. It rotates `ConcurrencyStamp` on `SaveChanges` for refresh tokens and user accounts.
 
 ---
 

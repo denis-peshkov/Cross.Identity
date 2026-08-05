@@ -18,6 +18,7 @@ internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAcc
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.LastLoginAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.LockoutEnd).HasColumnType("datetimeoffset(0)");
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken(); // tell EF to check on UPDATE
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersAccounts)}");

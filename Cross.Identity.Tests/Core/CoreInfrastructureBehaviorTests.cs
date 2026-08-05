@@ -249,7 +249,7 @@ public sealed class CoreInfrastructureBehaviorTests
             services.AddDbContext<IdentityContext>(options =>
                 options
                     .UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}")
-                    .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
+                    .AddInterceptors(new ConcurrencyStampInterceptor()));
             services.AddScoped<IHeadersContextAccessor>(_ => new HeadersContextAccessor());
             services.AddScoped<IPepperVaultProvider>(_ =>
             {

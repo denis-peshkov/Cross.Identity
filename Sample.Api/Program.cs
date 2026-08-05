@@ -4,7 +4,7 @@
 builder.Services.AddDbContext<IdentityContext>(options =>
     options
         .UseInMemoryDatabase("CrossIdentity")
-        .AddInterceptors(new RefreshTokenConcurrencyStampInterceptor()));
+        .AddInterceptors(new ConcurrencyStampInterceptor()));
 
 // HttpContextAccessor for JwtTokenService
 builder.Services.AddHttpContextAccessor();
