@@ -39,6 +39,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Disabling shallow clones is recommended for improving the relevancy of reporting
+          # Avoid persisting GITHUB_TOKEN so tag push can authenticate as TAGTOKEN (admin ruleset bypass).
+          persist-credentials: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -120,10 +122,22 @@ jobs:
 
       - name: Push git Tag
         if: ${{ contains(fromJson('["refs/heads/master", "refs/heads/release", "refs/heads/hotfix"]'), github.ref) }}
+        env:
+          TAGTOKEN: ${{ secrets.TAGTOKEN }}
         run: |
+          set -euo pipefail
+
+          if [ -z "${TAGTOKEN}" ]; then
+            echo "::error::Secret TAGTOKEN is missing or empty. Create an owner classic PAT (repo scope) and add it as Actions secret TAGTOKEN."
+            exit 1
+          fi
+
+          # Drop any leftover checkout auth header so push uses TAGTOKEN (admin bypass on Protect release tags).
+          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+
           git config --global user.name 'Denis Peshkov'
           git config --global user.email 'denis.peshkov@outlook.com'
-          git remote set-url origin https://x-access-token:${{ secrets.TAGTOKEN }}@github.com/${{ github.repository }}
+          git remote set-url origin "https://x-access-token:${TAGTOKEN}@github.com/${{ github.repository }}.git"
           git push origin v${{ env.semVer }}
 
       - name: Nuget Push
