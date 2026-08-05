@@ -10,10 +10,10 @@
           { "key": "LinkUserId", "type": "String", "required": false, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" }
         ]
       },
-      "next": "initiateExternalLogin"
+      "next": "externalLoginInitiate"
     },
     {
-      "kind": "initiateExternalLogin",
+      "kind": "externalLoginInitiate",
       "providerKey": "collectForm.Provider",
       "returnUrlKey": "collectForm.ReturnUrl",
       "linkUserIdKey": "collectForm.LinkUserId",
@@ -22,7 +22,7 @@
     {
       "kind": "collectResult",
       "map": {
-        "url": "initiateExternalLogin.Url"
+        "url": "externalLoginInitiate.Url"
       },
       "next": null
     }

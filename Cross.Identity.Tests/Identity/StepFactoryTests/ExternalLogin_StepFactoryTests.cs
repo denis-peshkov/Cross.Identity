@@ -20,12 +20,12 @@ public class ExternalLogin_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void InitiateExternalLoginStepFactory_ShouldCreateStep()
+    public void ExternalLoginInitiateStepFactory_ShouldCreateStep()
     {
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "initiateExternalLogin",
+              "kind": "externalLoginInitiate",
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
               "linkUserIdKey": "LinkUserId",
@@ -33,10 +33,10 @@ public class ExternalLogin_StepFactoryTests
             }
             """);
 
-        var factory = new InitiateExternalLoginStepFactory();
-        var step = (InitiateExternalLoginStep)factory.Create(json.RootElement, _sp);
+        var factory = new ExternalLoginInitiateStepFactory();
+        var step = (ExternalLoginInitiateStep)factory.Create(json.RootElement, _sp);
 
-        step.Kind.Should().Be("initiateExternalLogin");
+        step.Kind.Should().Be("externalLoginInitiate");
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
         step.LinkUserIdKey.Should().Be("LinkUserId");
@@ -45,12 +45,12 @@ public class ExternalLogin_StepFactoryTests
     }
 
     [Test]
-    public void CompleteExternalLoginStepFactory_ShouldCreateStep()
+    public void ExternalLoginCompleteStepFactory_ShouldCreateStep()
     {
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "completeExternalLogin",
+              "kind": "externalLoginComplete",
               "codeKey": "Code",
               "stateKey": "State",
               "errorKey": "Error",
@@ -59,10 +59,10 @@ public class ExternalLogin_StepFactoryTests
             }
             """);
 
-        var factory = new CompleteExternalLoginStepFactory();
-        var step = (CompleteExternalLoginStep)factory.Create(json.RootElement, _sp);
+        var factory = new ExternalLoginCompleteStepFactory();
+        var step = (ExternalLoginCompleteStep)factory.Create(json.RootElement, _sp);
 
-        step.Kind.Should().Be("completeExternalLogin");
+        step.Kind.Should().Be("externalLoginComplete");
         step.CodeKey.Should().Be("Code");
         step.StateKey.Should().Be("State");
         step.ErrorKey.Should().Be("Error");

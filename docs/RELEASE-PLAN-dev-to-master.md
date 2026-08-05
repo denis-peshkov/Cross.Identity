@@ -53,7 +53,7 @@
 | # | Block | Key changes | Commits/files |
 |---|------|-------------------|---------------|
 | A | **Registration (US-129)** | `main.Register` — email+password, no `ConfirmPassword`; `createUser` → `sendCode` → `LastCode`+`UserId` | `main.Register.json`, `UserService`, flow tests |
-| B | **External OAuth** | Google/Microsoft/GitHub/Apple; steps `initiateExternalLogin` / `completeExternalLogin`; flows `ExternalLogin`, `ExternalLoginCallback`; linking | `ExternalLoginService`, `ExternalOAuthProviders`, 2 JSON flows |
+| B | **External OAuth** | Google/Microsoft/GitHub/Apple; steps `externalLoginInitiate` / `externalLoginComplete`; flows `ExternalLogin`, `ExternalLoginCallback`; linking | `ExternalLoginService`, `ExternalOAuthProviders`, 2 JSON flows |
 | C | **Refresh Token / "Remember me"** | `AbsoluteExpiresAt`, `FamilyId` chain, rotation, background cleanup | `JwtTokenService`, `RefreshTokenStep`, `ExpiredRefreshTokenCleanupHostedService` |
 | D | **JWT licensing** | Validation on first `ExecuteAsync`; section `CrossIdentity:LicenseKey` | `LicenseAccessor`, `LicenseValidator`, `FlowExecutor` |
 | E | **Developer Mode** | Codes stored in DB without sending email/SMS | `CodeService`, `SendCodeStep`, `Authentication:DeveloperMode` |

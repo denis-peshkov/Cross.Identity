@@ -3,7 +3,7 @@
 /// <summary>
 /// Step that initiates external OAuth login: builds the provider authorization URL.
 /// </summary>
-internal sealed class InitiateExternalLoginStep : IStep
+internal sealed class ExternalLoginInitiateStep : IStep
 {
     /// <inheritdoc/>
     public required string Kind { get; init; }

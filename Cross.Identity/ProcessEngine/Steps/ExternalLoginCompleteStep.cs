@@ -3,7 +3,7 @@
 /// <summary>
 /// Step that completes external OAuth login: code exchange, account linking, and JWT issuance.
 /// </summary>
-internal sealed class CompleteExternalLoginStep : IStep
+internal sealed class ExternalLoginCompleteStep : IStep
 {
     /// <inheritdoc/>
     public required string Kind { get; init; }

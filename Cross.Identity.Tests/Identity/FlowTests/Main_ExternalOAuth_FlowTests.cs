@@ -52,8 +52,8 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
 
         AddRegistryStep<CollectFormStepFactory>();
-        AddRegistryStep<InitiateExternalLoginStepFactory>();
-        AddRegistryStep<CompleteExternalLoginStepFactory>();
+        AddRegistryStep<ExternalLoginInitiateStepFactory>();
+        AddRegistryStep<ExternalLoginCompleteStepFactory>();
         AddRegistryStep<ExternalLoginUnlinkStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
