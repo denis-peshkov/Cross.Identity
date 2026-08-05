@@ -38,6 +38,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new VerifyCodeStepFactory());
         _registry.Register(new InitiateExternalLoginStepFactory());
         _registry.Register(new CompleteExternalLoginStepFactory());
+        _registry.Register(new ExternalLoginUnlinkStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();

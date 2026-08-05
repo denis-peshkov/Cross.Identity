@@ -127,3 +127,14 @@ Content-Type: application/json
   "Error": "",
   "ErrorDescription": ""
 }
+
+###
+# @name main-external-login-unlink
+# Requires authenticated caller (Bearer access_token with sub = current user).
+POST {{HOST}}/api/identity/main/ExternalLoginUnlink
+Content-Type: application/json
+Authorization: Bearer {{access_token}}
+
+{
+  "Provider": "Google"
+}

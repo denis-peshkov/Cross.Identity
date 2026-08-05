@@ -12,6 +12,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
     public ExternalLoginService(
@@ -20,6 +21,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
         IHttpContextAccessor httpContextAccessor,
+        IJwtTokenService jwtTokenService,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;
@@ -27,6 +29,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         _options = options.Value;
         _logger = logger;
         _httpContextAccessor = httpContextAccessor;
+        _jwtTokenService = jwtTokenService;
         _userProvisioner = userProvisioner;
     }
 
@@ -168,6 +171,60 @@ internal sealed class ExternalLoginService : IExternalLoginService
         await UpsertExternalLoginAsync(providerEntity, userId, profile, cancellationToken).ConfigureAwait(false);
 
         return new ExternalLoginCompletion(userId, isLinking);
+    }
+
+    /// <inheritdoc/>
+    public async Task UnlinkAsync(string provider, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(provider);
+
+        var userId = TryGetAuthenticatedUserId()
+            ?? throw new NotAuthorizedException("Authentication is required to unlink an external login.");
+
+        var providerEntity = await _identityContext.Providers
+            .AsNoTracking()
+            .Where(x => x.IsEnabled && x.Name.ToLower() == provider.ToLower())
+            .Select(x => new { x.Id, x.Name })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException($"Provider '{provider}' is not enabled.");
+
+        var login = await _identityContext.UsersExternalLogins
+            .FirstOrDefaultAsync(
+                x => x.UserAccountId == userId && x.ProviderId == providerEntity.Id,
+                cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException($"Provider '{provider}' is not linked to the current user.");
+
+        var account = await _identityContext.UsersAccounts
+            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException("Current user account was not found.");
+
+        var remainingExternalLogins = await _identityContext.UsersExternalLogins
+            .CountAsync(x => x.UserAccountId == userId && x.Id != login.Id, cancellationToken)
+            .ConfigureAwait(false);
+
+        var hasPassword = !string.IsNullOrWhiteSpace(account.PasswordPhc);
+        if (!hasPassword && remainingExternalLogins == 0)
+        {
+            throw new ValidationException(
+                "Cannot unlink the last login method. Set a password or link another provider first.");
+        }
+
+        _identityContext.UsersExternalLogins.Remove(login);
+        account.SecurityStamp = Guid.NewGuid();
+
+        await _jwtTokenService
+            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, cancellationToken)
+            .ConfigureAwait(false);
+
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "Unlinked external login. UserId={UserId} Provider={Provider}",
+            userId,
+            providerEntity.Name);
     }
 
     private string BuildAuthorizationUrl(

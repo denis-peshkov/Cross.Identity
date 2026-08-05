@@ -9,6 +9,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     private ExternalLoginService _externalLoginService = null!;
     private HttpContextAccessor _httpContextAccessor = null!;
+    private IJwtTokenService _jwtTokenService = null!;
 
     [SetUp]
     public override void Setup()
@@ -31,18 +32,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             UserAgent = "TestAgent",
         };
 
-        _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
-
-        AddRegistryStep<CollectFormStepFactory>();
-        AddRegistryStep<InitiateExternalLoginStepFactory>();
-        AddRegistryStep<CompleteExternalLoginStepFactory>();
-        AddRegistryStep<CollectResultStepFactory>();
-
-        RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
-
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
         {
@@ -59,8 +48,20 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
         });
 
-        RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(Context, optionsSnapshot.Object, _httpContextAccessor));
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, _httpContextAccessor);
+        _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
+
+        AddRegistryStep<CollectFormStepFactory>();
+        AddRegistryStep<InitiateExternalLoginStepFactory>();
+        AddRegistryStep<CompleteExternalLoginStepFactory>();
+        AddRegistryStep<ExternalLoginUnlinkStepFactory>();
+        AddRegistryStep<CollectResultStepFactory>();
+
+        RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
+        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
     private void SetAuthenticatedUser(Guid userId)
@@ -89,6 +90,51 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         url.Should().StartWith("https://accounts.google.com/o/oauth2/v2/auth?");
         url.Should().Contain("client_id=google-client");
         url.Should().Contain("state=");
+    }
+
+    [Test]
+    public async Task ExternalLoginUnlink_ShouldUnlinkProvider_WhenAuthenticated()
+    {
+        var userId = Guid.NewGuid();
+        var provider = await Context.Providers.SingleAsync(x => x.Name == "Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "unlink@example.com",
+            UserName = "unlink",
+            NormalizedUserName = "unlink",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userId,
+            ProviderId = provider.Id,
+            ProviderUserId = "google-sub-unlink",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SetAuthenticatedUser(userId);
+
+        // Recreate service so it uses the authenticated HttpContext principal.
+        _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
+        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["Provider"] = "Google",
+            },
+            Flow,
+            FlowOperationEnum.ExternalLoginUnlink,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["unlinked"].Should().Be(true);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
     }
 
     [Test]
@@ -273,7 +319,8 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
-            _httpContextAccessor);
+            _httpContextAccessor,
+            _jwtTokenService);
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

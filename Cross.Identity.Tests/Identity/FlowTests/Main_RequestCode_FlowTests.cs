@@ -35,7 +35,8 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<IPepperVaultProvider>(),
                 Mock.Of<IPasswordHasher>(),
                 Mock.Of<IPhoneNormalizer>(),
-                headersContextAccessor));
+                headersContextAccessor,
+                Mock.Of<IJwtTokenService>()));
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

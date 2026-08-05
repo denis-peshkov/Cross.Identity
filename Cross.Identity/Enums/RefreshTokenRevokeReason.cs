@@ -80,6 +80,11 @@ public enum RefreshTokenRevokeReason : short
     /// </summary>
     DEVICE_REMOVED_BY_USER,
 
+    /// <summary>
+    /// User unlinked an external login provider → sessions revoked via SecurityStamp rotation.
+    /// </summary>
+    EXTERNAL_LOGIN_REMOVED,
+
     #endregion
 
     #region 4. Admin / backend-initiated reasons

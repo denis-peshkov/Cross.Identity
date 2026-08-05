@@ -72,4 +72,25 @@ public class ExternalLogin_StepFactoryTests
         step.JwtTokenService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();
     }
+
+    [Test]
+    public void ExternalLoginUnlinkStepFactory_ShouldCreateStep()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "externalLoginUnlink",
+              "providerKey": "Provider",
+              "next": "done"
+            }
+            """);
+
+        var factory = new ExternalLoginUnlinkStepFactory();
+        var step = (ExternalLoginUnlinkStep)factory.Create(json.RootElement, _sp);
+
+        step.Kind.Should().Be("externalLoginUnlink");
+        step.ProviderKey.Should().Be("Provider");
+        step.Next.Should().Be("done");
+        step.ExternalLoginService.Should().NotBeNull();
+    }
 }

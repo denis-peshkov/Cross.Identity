@@ -78,7 +78,8 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public int AccessFailedCount { get; set; }
 
     /// <summary>
-    /// A random value that must change whenever a users credentials change (password changed, login removed)
+    /// A random value that must change whenever a user's credentials change (password changed, login removed).
+    /// Rotating this stamp invalidates existing sessions (tokens are also revoked on password change).
     /// </summary>
     public Guid? SecurityStamp { get; set; }
 

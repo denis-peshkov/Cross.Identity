@@ -396,6 +396,29 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task RevokeAllTokensForUserAsync_ShouldRevokeActiveAccessAndRefreshTokens()
+    {
+        var userId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+
+        var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>());
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>());
+        var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(otherUserId, Guid.NewGuid(), new List<Claim>());
+
+        await _jwtTokenService.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, CancellationToken.None);
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessToken)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshToken)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh)).Should().BeTrue();
+
+        var userRefresh = await Context.RefreshTokens.SingleAsync(x => x.UserId == userId);
+        userRefresh.RevokedAt.Should().NotBeNull();
+        userRefresh.RevokeReason.Should().Be(RefreshTokenRevokeReason.PASSWORD_CHANGED);
+    }
+
+    [Test]
     public void AccessTokenExpiresInSeconds_ShouldReturnConfiguredLifetime()
     {
         _jwtTokenService.AccessTokenExpiresInSeconds.Should().Be(15 * 60);

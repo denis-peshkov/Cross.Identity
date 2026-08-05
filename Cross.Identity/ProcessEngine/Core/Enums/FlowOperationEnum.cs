@@ -15,4 +15,5 @@ public enum FlowOperationEnum
     GetUserId,
     ExternalLogin,
     ExternalLoginCallback,
+    ExternalLoginUnlink,
 }
