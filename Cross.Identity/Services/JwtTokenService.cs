@@ -494,6 +494,36 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
+    public async Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            return;
+        }
+
+        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+
+        var entity = await _context.RefreshTokens
+            .AsNoTracking()
+            .Where(x => x.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null
+            || entity.RevokedAt is not null
+            || entity.ExpiresAt < DateTime.UtcNow
+            || entity.AbsoluteExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow)
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        await RevokeAllTokensForUserAsync(entity.UserId, RefreshTokenRevokeReason.USER_LOGOUT_ALL, cancellationToken)
+            .ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
     public async Task RevokeAllTokensForUserAsync(
         Guid userId,
         RefreshTokenRevokeReason reason,

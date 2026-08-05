@@ -74,6 +74,8 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, InitiateExternalLoginStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CompleteExternalLoginStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginUnlinkStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, LogoutStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, LogoutAllStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();

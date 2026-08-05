@@ -142,6 +142,19 @@ public interface IJwtTokenService
     Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Logout from all devices: resolve the user from a live refresh token and revoke every
+    /// active access/refresh token for that user with <see cref="RefreshTokenRevokeReason.USER_LOGOUT_ALL"/>.
+    /// </summary>
+    /// <param name="refreshToken">
+    /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
+    /// </param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="NotAuthorizedException">
+    /// Refresh token is missing in storage, revoked, or expired.
+    /// </exception>
+    Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Revoke all active access and refresh tokens that share <paramref name="familyId"/>.
     /// Persists changes via <c>SaveChanges</c>.
     /// </summary>

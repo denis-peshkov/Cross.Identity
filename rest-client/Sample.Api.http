@@ -1,5 +1,5 @@
 ###
-# Cross.Identity Sample.Api — manual E2E for `main/*` flows (10 FlowOperationEnum values).
+# Cross.Identity Sample.Api — manual E2E for `main/*` flows (FlowOperationEnum values).
 #
 # Prerequisite:
 #   dotnet run --project Sample.Api --launch-profile http
@@ -137,4 +137,24 @@ Authorization: Bearer {{access_token}}
 
 {
   "Provider": "Google"
+}
+
+###
+# @name main-logout
+# Logout current session: revokes the presented refresh token (USER_LOGOUT). Idempotent.
+POST {{HOST}}/api/identity/main/Logout
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{REFRESH_TOKEN}}"
+}
+
+###
+# @name main-logout-all
+# Logout from all devices: presents a live refresh token, revokes all sessions (USER_LOGOUT_ALL).
+POST {{HOST}}/api/identity/main/LogoutAll
+Content-Type: application/json
+
+{
+  "RefreshToken": "{{REFRESH_TOKEN}}"
 }

@@ -1,0 +1,26 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+        ]
+      },
+      "next": "logout"
+    },
+    {
+      "kind": "logout",
+      "refreshTokenKey": "collectForm.RefreshToken",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "revoked": "logout.Revoked"
+      },
+      "next": null
+    }
+  ]
+}
