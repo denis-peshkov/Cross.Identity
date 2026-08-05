@@ -28,8 +28,11 @@ Use for deep review of PRs in `pr-triage` and `bugbot`.
 
 ## Tests
 
+Canonical: `.cursor/rules/300-testing-dotnet.mdc` (keep review comments aligned with it).
+
 - New behavior covered in `Cross.Identity.Tests/`
-- Flow tests / step tests following existing patterns
+- Method names: `Given[X]_When[Y]_Then[Z]`; async tests end with `Async`
+- Flow → `Identity/FlowTests/` (Integration); steps/factories → `StepTests` / `StepFactoryTests` (Unit)
 - Run: `dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj`
 
 ## Breaking Changes

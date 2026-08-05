@@ -17,7 +17,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
-    public async Task ExternalLoginCompleteStep_WhenLinking_ShouldSkipTokenGeneration()
+    public async Task GivenLinkingCompletion_WhenStepExecutes_ThenTokenGenerationIsSkippedAsync()
     {
         var userId = Guid.NewGuid();
         _externalLoginService
@@ -39,7 +39,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
-    public async Task ExternalLoginCompleteStep_WhenLogin_ShouldIssueTokens()
+    public async Task GivenSuccessfulLogin_WhenStepExecutes_ThenTokensAreIssuedAsync()
     {
         var userId = Guid.NewGuid();
         var user = new UserAccountEntity
@@ -77,7 +77,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
-    public async Task ExternalLoginCompleteStep_ShouldForwardOAuthError()
+    public async Task GivenOAuthError_WhenStepExecutes_ThenValidationExceptionIsForwardedAsync()
     {
         _externalLoginService
             .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
@@ -106,7 +106,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
-    public async Task ExternalLoginCompleteStep_WithoutCode_ShouldForwardOAuthError()
+    public async Task GivenOAuthErrorWithoutCode_WhenStepExecutes_ThenValidationExceptionIsForwardedAsync()
     {
         _externalLoginService
             .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))

@@ -20,7 +20,7 @@ public class ExternalLogin_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
-    public void ExternalLoginInitiateStepFactory_ShouldCreateStep()
+    public void GivenValidInitiateJson_WhenFactoryCreates_ThenStepIsConfigured()
     {
         using var json = JsonDocument.Parse(
             """
@@ -45,7 +45,7 @@ public class ExternalLogin_StepFactoryTests
     }
 
     [Test]
-    public void ExternalLoginCompleteStepFactory_ShouldCreateStep()
+    public void GivenValidCompleteJson_WhenFactoryCreates_ThenStepIsConfigured()
     {
         using var json = JsonDocument.Parse(
             """
@@ -74,7 +74,7 @@ public class ExternalLogin_StepFactoryTests
     }
 
     [Test]
-    public void ExternalLoginUnlinkStepFactory_ShouldCreateStep()
+    public void GivenValidUnlinkJson_WhenFactoryCreates_ThenStepIsConfigured()
     {
         using var json = JsonDocument.Parse(
             """

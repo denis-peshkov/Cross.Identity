@@ -63,7 +63,7 @@ Do not mix refactoring, formatting untouched files, and a feature in one PR. Dri
 - `.editorconfig` — style source (UTF-8 BOM, CRLF, 4 spaces for `.cs`).
 - `GlobalUsings.cs` — all `using` directives in one file; `ImplicitUsings` = `disable`.
 - New `.cs` / `.csproj` / `.sln` files — **UTF-8 with BOM**.
-- Tests — **NUnit**, names in `Method_Should_Expected_When_Condition` style.
+- Tests — **NUnit**; method names `Given[X]_When[Y]_Then[Z]` (async → `…Async`). Canonical: [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
 
 More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 
@@ -213,6 +213,8 @@ After approval — merge into `dev`. Release to `master` and NuGet publish is a 
 
 ## Testing
 
+**Canonical:** [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc) (naming `Given[X]_When[Y]_Then[Z]`, AAA, categories, layout, coverage commands). Do not use a different naming style in new or renamed tests.
+
 ### Local run
 
 ```bash
@@ -220,26 +222,11 @@ dotnet build Cross.Identity.slnx
 dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj
 ```
 
-With coverage (as in CI):
-
-```bash
-dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj \
-  --collect:"XPlat Code Coverage" \
-  --results-directory ./TestResults \
-  -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
-```
-
-### Categories (NUnit)
-
-| Category | When to add |
-|----------|-------------|
-| `Unit` | Isolated step/service tests |
-| `Integration` | Flow tests, EF InMemory, OAuth with mock HTTP |
-| `Functional` | `Sample.Api` via `WebApplicationFactory` |
+With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.mdc`.
 
 ### Pre-PR checklist
 
-- [ ] Tests added/updated for changed behavior
+- [ ] Tests added/updated for changed behavior (`Given[X]_When[Y]_Then[Z]`; async → `Async`)
 - [ ] `dotnet test` — green locally
 - [ ] For flows — integration test in `Cross.Identity.Tests/Identity/FlowTests/`
 - [ ] For OAuth/JWT/licensing — not only happy path

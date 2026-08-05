@@ -1,30 +1,54 @@
+---
+description: Canonical .NET / NUnit testing rules (naming, structure, categories).
+globs:
+  - "**/*Tests.cs"
+  - "**/*Test.cs"
+  - "**/*Tests/**/*.cs"
+alwaysApply: false
+---
+
 # .NET testing
+
+**Canonical source** for .NET test conventions. Keep project docs and triage checklists aligned with this file — do not invent a second naming style.
+
+Stack: **NUnit** (adapt category constants to the test project's shared helpers if present).
 
 ## Test naming
 
-- **Given-When-Then pattern** - use `Given[X]_When[Y]_Then[Z]` for test names
-- **Descriptive names** - test names should describe the scenario and expected result
+- **Pattern:** `Given[X]_When[Y]_Then[Z]`
+  - **Given** — context / preconditions (`[X]`)
+  - **When** — action under test (`[Y]`)
+  - **Then** — expected outcome (`[Z]`)
+- **Async tests:** method name **must** end with `Async` (same rule as production async APIs).
+- **Do not** use `Method_Should_Expected_When_Condition` or other legacy styles for new or renamed tests.
+- Names must be descriptive; `[X]` / `[Y]` / `[Z]` are PascalCase phrases without spaces.
 
-Example:
+Examples:
+
 ```csharp
-[Fact]
-public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()
+[Test]
+public void GivenValidInput_WhenHandlerRuns_ThenReturnsSuccess()
 {
-    // Arrange
-    // Act
-    // Assert
+    // Arrange / Act / Assert
+}
+
+[Test]
+public async Task GivenValidInput_WhenHandlerRuns_ThenReturnsSuccessAsync()
+{
+    // Arrange / Act / Assert
 }
 ```
 
 ## Test structure
 
-- **Arrange-Act-Assert** - use the AAA pattern for test structure
-- **Readability** - test code should be as readable as possible
+- **Arrange–Act–Assert (AAA)** — structure every test this way.
+- Prefer readable setup over clever helpers; share fixtures via base classes or test fixtures when the project already uses them.
 
 Example:
+
 ```csharp
-[Fact]
-public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()
+[Test]
+public void GivenValidResume_WhenSubmitResume_ThenReturnsSuccess()
 {
     // Arrange
     var dto = new SubmitResumeDto
@@ -39,4 +63,42 @@ public void Given_ValidResume_When_SubmitResume_Then_ReturnsSuccess()
     // Assert
     Assert.True(result);
 }
+```
+
+## Categories (NUnit)
+
+Tag tests with NUnit `[Category(…)]` (or a shared constants class in the test project):
+
+| Category | Purpose |
+|----------|---------|
+| `Unit` | Isolated unit under test; mocks; no real I/O / DB |
+| `Integration` | Components together (e.g. InMemory DB, HTTP mocks, end-to-end in-process flows) |
+| `Functional` | Broader E2E / TestServer / external dependencies (use sparingly) |
+
+```bash
+dotnet test --filter "Category=Unit"
+dotnet test --filter "Category=Integration"
+```
+
+## Layout
+
+- Mirror production areas under the test project (e.g. by feature or layer: services, handlers, UI).
+- Prefer separate folders for unit vs integration when the suite is large.
+- New behavior in a PR **must** have matching tests; cover failure paths for auth, security, and money-sensitive logic.
+- Never commit real secrets, tokens, or production credentials in fixtures.
+
+## Local verification
+
+```bash
+dotnet build
+dotnet test
+```
+
+With OpenCover (when the pipeline uses it):
+
+```bash
+dotnet test path/to/Tests.csproj \
+  --collect:"XPlat Code Coverage" \
+  --results-directory ./TestResults \
+  -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
 ```
