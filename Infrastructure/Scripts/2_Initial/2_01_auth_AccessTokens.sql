@@ -12,6 +12,7 @@
     [DeviceFingerprint] NVARCHAR(100)    NULL,
     [UserAgent]         NVARCHAR(512)    NULL,
     [IpAddress]         NVARCHAR(45)     NULL,
+    [ConcurrencyStamp]  UNIQUEIDENTIFIER NOT NULL,
 
     CONSTRAINT [PK_AccessTokens] PRIMARY KEY CLUSTERED ([AccessTokenId] ASC)
 )

@@ -340,7 +340,7 @@ internal sealed class UserService : IUserService
         CancellationToken cancellationToken)
     {
         var verification = await _context.EmailVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -359,8 +359,16 @@ internal sealed class UserService : IUserService
         }
 
         verification.UsedAt = now;
-        verification.ExpiresAt = now;
-        return true;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 
     private async Task<bool> TryValidatePhoneCodeAsync(
@@ -370,7 +378,7 @@ internal sealed class UserService : IUserService
         CancellationToken cancellationToken)
     {
         var verification = await _context.PhoneVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now)
+            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -389,7 +397,15 @@ internal sealed class UserService : IUserService
         }
 
         verification.UsedAt = now;
-        verification.ExpiresAt = now;
-        return true;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 }

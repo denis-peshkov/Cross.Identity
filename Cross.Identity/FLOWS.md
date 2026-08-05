@@ -87,7 +87,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 >         .UseSqlServer(connectionString)
 >         .AddInterceptors(new ConcurrencyStampInterceptor()));
 > ```
-> `AddCrossIdentity` does not register this interceptor. It rotates `ConcurrencyStamp` on `SaveChanges` for refresh tokens and user accounts.
+> `AddCrossIdentity` does not register this interceptor. It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
 
 ---
 

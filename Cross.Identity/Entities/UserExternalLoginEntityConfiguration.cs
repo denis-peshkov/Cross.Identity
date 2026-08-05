@@ -14,6 +14,7 @@ internal class UserExternalLoginEntityConfiguration : IEntityTypeConfiguration<U
         builder.Property(x => x.Scope).HasMaxLength(500);
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.LastUsedAt).HasColumnType("datetime2(7)");
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersExternalLogins)}");

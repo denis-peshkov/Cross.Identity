@@ -7,6 +7,7 @@ CREATE TABLE [auth].[ExternalLoginStates]
     [LinkUserId]           UNIQUEIDENTIFIER      NULL,
     [ExpiresAt]            DATETIME2(7)          NOT NULL,
     [CreatedAt]            DATETIME2(7)          NOT NULL,
+    [ConcurrencyStamp]     UNIQUEIDENTIFIER      NOT NULL,
 
     CONSTRAINT [PK_auth_ExternalLoginStates] PRIMARY KEY ([ExternalLoginStateId])
 );

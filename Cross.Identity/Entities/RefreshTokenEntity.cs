@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class RefreshTokenEntity
+public class RefreshTokenEntity : IHasConcurrencyStamp
 {
     /// <summary>Jti</summary>
     public Guid Id { get; set; }
@@ -20,10 +20,7 @@ public class RefreshTokenEntity
     public string? UserAgent { get; set; }
     public string? IpAddress { get; set; }
 
-    /// <summary>
-    /// App-managed optimistic concurrency token.
-    /// EF checks the original value on UPDATE/DELETE; the code updates it on every logical mutation.
-    /// </summary>
+    /// <inheritdoc />
     public Guid ConcurrencyStamp { get; set; }
 }
 

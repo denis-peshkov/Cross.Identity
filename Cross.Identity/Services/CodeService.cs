@@ -133,16 +133,23 @@ internal sealed class CodeService : ICodeService
 
                     // Mark code as used
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                    return true;
+                    try
+                    {
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        return true;
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning("Email verification code already used for {Email}", normalizedIdentity);
+                        return false;
+                    }
                 }
             case "phone":
                 {
                     // For phone, find the latest unused record
                     var entity = await _context.PhoneVerifications
                         .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash && x.UsedAt == null)
-                        .OrderByDescending(x => x.CreatedAt)
                         .FirstOrDefaultAsync(cancellationToken)
                         .ConfigureAwait(false);
 
@@ -179,9 +186,17 @@ internal sealed class CodeService : ICodeService
 
                     // Correct code — mark as used
                     entity.UsedAt = now;
-                    await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-                    return true;
+                    try
+                    {
+                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        return true;
+                    }
+                    catch (DbUpdateConcurrencyException)
+                    {
+                        _logger.LogWarning("Phone verification code already used for {Phone}", normalizedIdentity);
+                        return false;
+                    }
                 }
             default:
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);

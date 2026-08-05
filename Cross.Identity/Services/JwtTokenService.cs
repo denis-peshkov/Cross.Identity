@@ -327,55 +327,29 @@ internal class JwtTokenService : IJwtTokenService
     {
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
         var jti = Guid.Parse(newJti);
-        var revokedAt = DateTime.UtcNow;
-        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-        if (_context.Database.IsInMemory())
+        var entity = await _context.RefreshTokens
+            .Where(x => x.TokenHash == tokenHash)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false)
+                     ?? throw new InvalidOperationException("Refresh token not found.");
+
+        if (entity.RevokedAt is not null)
         {
-            var entity = await _context.RefreshTokens
-                .Where(x => x.TokenHash == tokenHash)
-                .FirstOrDefaultAsync(cancellationToken)
-                .ConfigureAwait(false)
-                         ?? throw new InvalidOperationException("Refresh token not found.");
-
-            if (entity.RevokedAt is not null)
-            {
-                throw new ConflictException("Refresh token has already been used.");
-            }
-
-            entity.ReplacedByTokenId = jti;
-            entity.RevokedAt = revokedAt;
-            entity.RevokeReason = RefreshTokenRevokeReason.ROTATION_REQUIRED;
-            entity.RevokedByIp = revokedByIp;
-
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            return;
+            throw new ConflictException("Refresh token has already been used.");
         }
 
-        var newConcurrencyStamp = Guid.NewGuid();
-        var affectedRows = await _context.RefreshTokens
-            .Where(x => x.TokenHash == tokenHash && x.RevokedAt == null)
-            .ExecuteUpdateAsync(
-                setters => setters
-                    .SetProperty(x => x.ReplacedByTokenId, jti)
-                    .SetProperty(x => x.ConcurrencyStamp, newConcurrencyStamp)
-                    .SetProperty(x => x.RevokedAt, revokedAt)
-                    .SetProperty(x => x.RevokeReason, RefreshTokenRevokeReason.ROTATION_REQUIRED)
-                    .SetProperty(x => x.RevokedByIp, revokedByIp),
-                cancellationToken)
-            .ConfigureAwait(false);
+        entity.ReplacedByTokenId = jti;
+        entity.RevokedAt = DateTime.UtcNow;
+        entity.RevokeReason = RefreshTokenRevokeReason.ROTATION_REQUIRED;
+        entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
-        if (affectedRows == 0)
+        try
         {
-            var exists = await _context.RefreshTokens
-                .AnyAsync(x => x.TokenHash == tokenHash, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (!exists)
-            {
-                throw new InvalidOperationException("Refresh token not found.");
-            }
-
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
             throw new ConflictException("Refresh token has already been used.");
         }
     }

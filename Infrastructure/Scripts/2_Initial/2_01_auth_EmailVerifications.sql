@@ -10,6 +10,7 @@ CREATE TABLE [auth].[EmailVerifications]
     [ExpiresAt]           DATETIME2(7)          NOT NULL,
     [UsedAt]              DATETIME2(7)          NULL,
     [CreatedAt]           DATETIME2(7)          NOT NULL,
+    [ConcurrencyStamp]    UNIQUEIDENTIFIER      NOT NULL,
 
     CONSTRAINT [PK_auth_EmailVerifications] PRIMARY KEY ([EmailVerificationId])
 );

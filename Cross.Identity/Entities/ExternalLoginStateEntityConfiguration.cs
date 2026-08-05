@@ -12,6 +12,7 @@ internal class ExternalLoginStateEntityConfiguration : IEntityTypeConfiguration<
         builder.Property(x => x.ReturnUrl).HasMaxLength(512);
         builder.Property(x => x.ExpiresAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.ExternalLoginStates)}");

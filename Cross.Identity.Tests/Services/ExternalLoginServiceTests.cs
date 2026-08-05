@@ -271,6 +271,21 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task CompleteAsync_ShouldThrow_WhenStateAlreadyUsed()
+    {
+        SeedProvider("Google");
+        var sut = CreateService(GoogleSuccessHandler());
+        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*expired or was already used*");
+    }
+
+    [Test]
     public async Task CompleteAsync_ShouldReturnExistingUser_WhenExternalLoginAlreadyExists()
     {
         var userId = Guid.NewGuid();

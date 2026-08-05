@@ -15,7 +15,7 @@ CREATE TABLE [auth].[UsersAccounts]
     [AccessFailedCount]     INT               NOT NULL,
 
     [SecurityStamp]         UNIQUEIDENTIFIER  NULL,
-    [ConcurrencyStamp]      UNIQUEIDENTIFIER  NULL,
+    [ConcurrencyStamp]      UNIQUEIDENTIFIER  NOT NULL,
 
     [EmailConfirmed]        BIT               NOT NULL,
     [PhoneConfirmed]        BIT               NOT NULL,

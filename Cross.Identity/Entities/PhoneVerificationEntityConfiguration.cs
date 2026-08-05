@@ -15,6 +15,7 @@ internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<P
         builder.Property(x => x.ExpiresAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.UsedAt).HasColumnType("datetime2(7)");
         builder.Property(x => x.CreatedAt).HasColumnType("datetime2(7)");
+        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}");

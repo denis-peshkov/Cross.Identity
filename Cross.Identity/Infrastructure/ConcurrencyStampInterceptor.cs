@@ -1,11 +1,11 @@
 ﻿namespace Cross.Identity.Infrastructure;
 
 /// <summary>
-/// Rotates <c>ConcurrencyStamp</c> on insert/update via <see cref="DbContext.SaveChangesAsync(CancellationToken)"/>
-/// for <see cref="RefreshTokenEntity"/> and <see cref="UserAccountEntity"/>.
+/// Rotates <see cref="IHasConcurrencyStamp.ConcurrencyStamp"/> on insert/update via
+/// <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> for all identity entities that implement the interface.
 /// <para>
 /// Bulk updates like <c>ExecuteUpdateAsync</c> bypass <c>SaveChanges</c>; those paths must set
-/// <c>ConcurrencyStamp</c> explicitly (see <see cref="JwtTokenService"/>).
+/// <c>ConcurrencyStamp</c> explicitly.
 /// </para>
 /// </summary>
 public sealed class ConcurrencyStampInterceptor : SaveChangesInterceptor
@@ -34,19 +34,16 @@ public sealed class ConcurrencyStampInterceptor : SaveChangesInterceptor
             return;
         }
 
-        foreach (var entry in dbContext.ChangeTracker.Entries<RefreshTokenEntity>())
+        foreach (var entry in dbContext.ChangeTracker.Entries())
         {
-            if (entry.State is EntityState.Added or EntityState.Modified)
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
             {
-                entry.Entity.ConcurrencyStamp = Guid.NewGuid();
+                continue;
             }
-        }
 
-        foreach (var entry in dbContext.ChangeTracker.Entries<UserAccountEntity>())
-        {
-            if (entry.State is EntityState.Added or EntityState.Modified)
+            if (entry.Entity is IHasConcurrencyStamp stamped)
             {
-                entry.Entity.ConcurrencyStamp = Guid.NewGuid();
+                stamped.ConcurrencyStamp = Guid.NewGuid();
             }
         }
     }

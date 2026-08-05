@@ -1,8 +1,9 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class PhoneVerificationEntity
+public class PhoneVerificationEntity : IHasConcurrencyStamp
 {
     public long Id { get; set; }
+
     public Guid UserAccountId { get; set; }
     public virtual UserAccountEntity UserAccount { get; set; } = null!;
 
@@ -15,4 +16,7 @@ public class PhoneVerificationEntity
     public DateTime ExpiresAt { get; set; }
     public DateTime? UsedAt { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
 }
