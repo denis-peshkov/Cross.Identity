@@ -1,5 +1,8 @@
 ﻿namespace Cross.Identity.Services;
 
+/// <summary>
+/// Issues, validates, and revokes JWT access/refresh tokens and related session state in storage.
+/// </summary>
 public interface IJwtTokenService
 {
     /// <summary>
@@ -16,7 +19,8 @@ public interface IJwtTokenService
     string GenerateIdToken(List<Claim> claims);
 
     /// <summary>
-    /// Issue an access token (JWT) for API authorization.
+    /// Issue an access token (JWT) for API authorization and persist its <c>jti</c> in storage.
+    /// When encryption is enabled, the token is issued as JWE.
     /// </summary>
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
@@ -27,7 +31,7 @@ public interface IJwtTokenService
     Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Issue a refresh token (JWT) for session rotation.
+    /// Issue a refresh token (JWT) for session rotation and persist its hash in storage.
     /// </summary>
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
@@ -98,11 +102,13 @@ public interface IJwtTokenService
     /// <summary>
     /// Delete refresh tokens whose chain absolute lifetime (<c>AbsoluteExpiresAt</c>) has expired.
     /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
     Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Get a claim value from a compact JWT/JWE by type(s). Synchronous.
-    /// JWS (3 parts): reads the Base64URL JSON payload. JWE (5 parts): decrypts/validates, then reads claims.
+    /// JWS (3 parts): reads the Base64URL JSON payload without verifying the signature.
+    /// JWE (5 parts): decrypts and validates, then reads claims from the validated identity.
     /// </summary>
     /// <param name="token">JWT/JWE in compact form.</param>
     /// <param name="claimTypes">
