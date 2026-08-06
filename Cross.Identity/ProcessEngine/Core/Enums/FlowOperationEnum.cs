@@ -9,6 +9,7 @@ public enum FlowOperationEnum
     Token,
     RefreshToken,
     RequestCode,
+    ChangePassword,
     ResetPassword,
     ForgotPassword,
     GetUserId,
