@@ -119,12 +119,12 @@ Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async A
 
 **Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.
 
-### `IJwtTokenService.ValidateAccessTokenAsync` — optional `CancellationToken`
+### `IJwtTokenService.ValidateAccessTokenAsync`
 
 | Was (1.7) | Now (1.8+) |
 |-----------|------------|
-| `Task<bool> ValidateAccessTokenAsync(string accessToken)` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)` |
+| `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
 
-Call sites that only pass the token keep compiling against the library. That does **not** fully preserve binary/source compatibility for custom `IJwtTokenService` implementations: the interface member signature changed, so those types must add the parameter and forward it to DB lookups (e.g. `FindAsync` / queries). Existing compiled callers against an older interface assembly still need a rebuild when swapping to 1.8.
+Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup. Optional-parameter syntax does **not** fully preserve binary compatibility for interface implementers.
 
-**Action:** update custom `IJwtTokenService` implementations to accept `CancellationToken` and pass it through; optional callers may keep omitting the argument.
+**Action:** rebuild callers; custom implementations must perform crypto validation (e.g. `ValidateTokenAsync`) before using `jti`.

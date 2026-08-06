@@ -176,15 +176,44 @@ internal class JwtTokenService : IJwtTokenService
     /// <inheritdoc/>
     public async Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)
     {
-        var jwt = _handler.ReadJsonWebToken(accessToken);
-        var jti = jwt.GetClaim(JwtRegisteredClaimNames.Jti)?.Value;
-
-        if (!Guid.TryParse(jti, out var jtiGuid))
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
-            return false; // invalid token
+            return false;
         }
 
-        var entity = await _context.AccessTokens.FindAsync(new object[] { jtiGuid }, cancellationToken).ConfigureAwait(false);
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = _options.Jwt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = _options.Jwt.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = _signingKey,
+            ValidateLifetime = true,
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+        if (_options.Jwt.UseEncryption)
+        {
+            parameters.TokenDecryptionKey = _encryptionKey;
+        }
+
+        var validation = await _handler
+            .ValidateTokenAsync(accessToken, parameters)
+            .ConfigureAwait(false);
+        if (!validation.IsValid || validation.ClaimsIdentity is null)
+        {
+            return false;
+        }
+
+        var jtiClaim = validation.ClaimsIdentity.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        if (!Guid.TryParse(jtiClaim, out var jtiGuid))
+        {
+            return false;
+        }
+
+        var entity = await _context.AccessTokens.FindAsync(new object[] { jtiGuid }, cancellationToken)
+            .ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow

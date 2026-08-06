@@ -29,18 +29,13 @@ public interface IJwtTokenService
     Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims);
 
     /// <summary>
-    /// Validate an access token by <c>jti</c>.
-    /// Typically used when the raw JWT string is available and can be parsed safely.
-    /// <para>
-    /// For encrypted (JWE) tokens, prefer <see cref="ValidateAccessTokenJtiAsync"/>,
-    /// because middleware has already extracted claims from the token.
-    /// </para>
+    /// Cryptographically validate an access token (signature, issuer, audience, lifetime;
+    /// decrypts JWE when encryption is enabled), then confirm <c>jti</c> is active in storage.
     /// </summary>
     /// <param name="accessToken">Access token string (JWT/JWE) in compact form.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c> if the token is considered valid (not revoked and not expired per DB data);
-    /// otherwise <c>false</c>.
+    /// <c>true</c> if crypto checks and DB status both succeed; otherwise <c>false</c>.
     /// </returns>
     Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default);
 

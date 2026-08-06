@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Validates an access token against storage (not revoked, not expired).
-/// Sets <c>Valid</c>; when valid, also <c>UserId</c> and <c>Jti</c> from claims when present.
-/// Malformed tokens are treated as invalid (no throw).
+/// Validates an access token (crypto + storage) via <see cref="IJwtTokenService.ValidateAccessTokenAsync"/>.
+/// Sets <c>Valid</c>; when valid, also <c>UserId</c> and <c>Jti</c> from claims.
+/// Invalid tokens yield <c>Valid = false</c> (no throw).
 /// </summary>
 internal sealed class VerifyTokenStep : IStep
 {
