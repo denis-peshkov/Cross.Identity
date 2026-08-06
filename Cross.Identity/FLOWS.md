@@ -20,6 +20,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.Token.json` | `Token` |
 | `*.RefreshToken.json` | `RefreshToken` |
 | `*.RequestCode.json` | `RequestCode` |
+| `*.ChangePassword.json` | `ChangePassword` |
 | `*.ResetPassword.json` | `ResetPassword` |
 | `*.ForgotPassword.json` | `ForgotPassword` |
 | `*.GetUserId.json` | `GetUserId` |
@@ -29,7 +30,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
 
-### All flow files (12)
+### All flow files (13)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -38,6 +39,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `main` | RefreshToken | `main.RefreshToken.json` |
 | `main` | Register | `main.Register.json` |
 | `main` | RequestCode | `main.RequestCode.json` |
+| `main` | ChangePassword | `main.ChangePassword.json` |
 | `main` | ResetPassword | `main.ResetPassword.json` |
 | `main` | Token | `main.Token.json` |
 | `main` | ExternalLogin | `main.ExternalLogin.json` |
@@ -110,6 +112,20 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan). → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
+
+---
+
+## `main.ChangePassword.json`
+
+**Purpose:** change password by email after validating the current password.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `Email` (8–128), `CurrentPassword` (8–128), `NewPassword` (8–128). → `passwordAuth` |
+| `passwordAuth` | passwordAuth | `selectorField: Email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
+| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Email`. `next: null` |
+
+> Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
 
 ---
 
