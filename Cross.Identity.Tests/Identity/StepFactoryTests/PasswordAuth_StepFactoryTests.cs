@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class PasswordAuth_StepFactoryTests
 {
@@ -18,6 +17,7 @@ public class PasswordAuth_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
@@ -49,6 +49,7 @@ public class PasswordAuth_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
     {
         // Arrange
@@ -72,6 +73,7 @@ public class PasswordAuth_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenUserNameSelectorJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange

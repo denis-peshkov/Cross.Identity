@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -60,6 +59,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenRefreshTokenFlow_ThenReturnsNewTokenPairAsync()
     {
         var userId = Guid.NewGuid();
@@ -75,7 +75,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var oldRefreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
@@ -93,6 +93,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRefreshToken_WhenRefreshTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
     {
         var invalidToken = new string('x', 32);
@@ -108,6 +109,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenTooShortRefreshToken_WhenRefreshTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(
@@ -120,6 +122,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenReusedRefreshTokenAfterRotation_WhenRefreshTokenFlow_ThenRevokesFamilyAndThrowsConflictAsync()
     {
         // Attacker rotated first (R1 → R2); victim reuses R1 → REPLAY_DETECTED kills R2.
@@ -136,7 +139,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
 
         var first = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = r1 },
@@ -156,7 +159,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(r2)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(r2, CancellationToken.None)).Should().BeFalse();
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);

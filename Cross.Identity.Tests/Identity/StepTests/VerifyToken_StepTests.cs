@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class VerifyToken_StepTests
 {
@@ -13,6 +12,7 @@ public class VerifyToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidAccessToken_WhenExecuteAsync_ThenSetsValidAndClaimsAsync()
     {
         var accessToken = "access-token-value";
@@ -20,14 +20,14 @@ public class VerifyToken_StepTests
         var jti = Guid.NewGuid().ToString();
 
         _jwtTokenService
-            .Setup(j => j.ValidateAccessTokenAsync(accessToken))
+            .Setup(j => j.ValidateAccessTokenAsync(accessToken, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _jwtTokenService
-            .Setup(j => j.GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier))
-            .ReturnsAsync(userId.ToString());
+            .Setup(j => j.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier))
+            .Returns(userId.ToString());
         _jwtTokenService
-            .Setup(j => j.GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Jti))
-            .ReturnsAsync(jti);
+            .Setup(j => j.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti))
+            .Returns(jti);
 
         var step = new VerifyTokenStep
         {
@@ -50,11 +50,12 @@ public class VerifyToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidAccessToken_WhenExecuteAsync_ThenSetsValidFalseAsync()
     {
         var accessToken = "access-token-value";
         _jwtTokenService
-            .Setup(j => j.ValidateAccessTokenAsync(accessToken))
+            .Setup(j => j.ValidateAccessTokenAsync(accessToken, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var step = new VerifyTokenStep
@@ -74,16 +75,17 @@ public class VerifyToken_StepTests
         bag.Get<bool>("verifyToken.Valid").Should().BeFalse();
         bag.TryGet<Guid>("verifyToken.UserId", out _).Should().BeFalse();
         _jwtTokenService.Verify(
-            j => j.GetClaimValueAsync(It.IsAny<string>(), It.IsAny<string[]>()),
+            j => j.GetClaimValue(It.IsAny<string>(), It.IsAny<string[]>()),
             Times.Never);
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMalformedAccessToken_WhenExecuteAsync_ThenSetsValidFalseAsync()
     {
         var accessToken = "not-a-jwt";
         _jwtTokenService
-            .Setup(j => j.ValidateAccessTokenAsync(accessToken))
+            .Setup(j => j.ValidateAccessTokenAsync(accessToken, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ArgumentException("Not a JWT token."));
 
         var step = new VerifyTokenStep

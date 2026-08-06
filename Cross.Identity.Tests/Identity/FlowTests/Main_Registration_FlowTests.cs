@@ -100,6 +100,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRegistrationInput_WhenExecuteRegisterFlow_ThenSucceedsAsync()
     {
         // Arrange
@@ -131,6 +132,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRegistrationInput_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange

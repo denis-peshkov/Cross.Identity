@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLogin_StepFactoryTests
 {
@@ -20,6 +19,7 @@ public class ExternalLogin_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidInitiateJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
@@ -45,6 +45,7 @@ public class ExternalLogin_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidCompleteJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
@@ -74,6 +75,7 @@ public class ExternalLogin_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidUnlinkJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(

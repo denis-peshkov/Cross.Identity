@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Services;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExpiredRefreshTokenCleanupHostedServiceTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenHostedService_WhenExecuteAsync_ThenInvokesCleanupAndStopsOnCancellationAsync()
     {
         var jwtTokenService = new Mock<IJwtTokenService>();
@@ -37,6 +37,7 @@ public class ExpiredRefreshTokenCleanupHostedServiceTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenCleanupFailure_WhenCleanupAsync_ThenLogsErrorAsync()
     {
         var jwtTokenService = new Mock<IJwtTokenService>();

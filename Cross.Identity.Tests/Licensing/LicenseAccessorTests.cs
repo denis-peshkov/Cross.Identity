@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Licensing;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class LicenseAccessorTests
 {
@@ -11,6 +10,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNoLicenseKey_WhenCurrentAccessed_ThenReturnsUnconfiguredLicense()
     {
         var sut = new LicenseAccessor(
@@ -24,6 +24,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidLicenseKey_WhenCurrentAccessed_ThenReturnsUnconfiguredLicense()
     {
         var sut = new LicenseAccessor(
@@ -34,6 +35,7 @@ public sealed class LicenseAccessorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenServiceProvider_WhenCheckLicenseCalledTwice_ThenRunsOnlyOnce()
     {
         var services = new ServiceCollection();

@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Licensing;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class LicenseTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenParameterlessConstructor_WhenCreated_ThenIsNotConfigured()
     {
         var sut = new License();
@@ -15,6 +15,7 @@ public sealed class LicenseTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenAllRequiredClaims_WhenCreated_ThenIsConfigured()
     {
         var now = DateTimeOffset.UtcNow;

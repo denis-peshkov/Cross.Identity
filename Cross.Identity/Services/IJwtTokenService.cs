@@ -1,47 +1,55 @@
 ﻿namespace Cross.Identity.Services;
 
+/// <summary>
+/// Issues, validates, and revokes JWT access/refresh tokens and related session state in storage.
+/// </summary>
 public interface IJwtTokenService
 {
     /// <summary>
+    /// Access token lifetime in seconds.
+    /// </summary>
+    int AccessTokenExpiresInSeconds { get; }
+
+    /// <summary>
     /// Issue an <c>id_token</c> (OIDC-like token) from a set of claims.
+    /// Synchronous: builds and signs the JWT in memory (no I/O).
     /// </summary>
     /// <param name="claims">Claims to include in the token.</param>
     /// <returns>Token string in compact form.</returns>
-    Task<string> GenerateIdTokenAsync(List<Claim> claims);
+    string GenerateIdToken(List<Claim> claims);
 
     /// <summary>
-    /// Issue an access token (JWT) for API authorization.
+    /// Issue an access token (JWT) for API authorization and persist its <c>jti</c> in storage.
+    /// When encryption is enabled, the token is issued as JWE.
     /// </summary>
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="permissions">Permissions to add as claims.</param>
     /// <param name="claims">Additional token claims.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Access token string in compact form.</returns>
-    Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims);
+    Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Issue a refresh token (JWT) for session rotation.
+    /// Issue a refresh token (JWT) for session rotation and persist its hash in storage.
     /// </summary>
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="claims">Additional refresh-token claims.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token string.</returns>
-    Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims);
+    Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Validate an access token by <c>jti</c>.
-    /// Typically used when the raw JWT string is available and can be parsed safely.
-    /// <para>
-    /// For encrypted (JWE) tokens, prefer <see cref="ValidateAccessTokenJtiAsync"/>,
-    /// because middleware has already extracted claims from the token.
-    /// </para>
+    /// Cryptographically validate an access token (signature, issuer, audience, lifetime;
+    /// decrypts JWE when encryption is enabled), then confirm <c>jti</c> is active in storage.
     /// </summary>
     /// <param name="accessToken">Access token string (JWT/JWE) in compact form.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c> if the token is considered valid (not revoked and not expired per DB data);
-    /// otherwise <c>false</c>.
+    /// <c>true</c> if crypto checks and DB status both succeed; otherwise <c>false</c>.
     /// </returns>
-    Task<bool> ValidateAccessTokenAsync(string accessToken);
+    Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Validate an access token by <c>jti</c> without re-parsing/decrypting the token.
@@ -53,15 +61,16 @@ public interface IJwtTokenService
     /// <c>true</c> if the access token with the given <c>jti</c> exists in the DB, is not revoked, and not expired;
     /// otherwise <c>false</c>.
     /// </returns>
-    Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken = default);
+    Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken);
 
     /// <summary>
     /// Validate a refresh token by its string value.
     /// Expects the refresh token was issued by the server and exists in the refresh-tokens table.
     /// </summary>
     /// <param name="refreshToken">Refresh token string.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>true</c> if the token is valid (not revoked and not expired); otherwise <c>false</c>.</returns>
-    Task<bool> ValidateRefreshTokenAsync(string refreshToken);
+    Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Ensure a refresh token may be used for rotation (exists, not revoked, not expired).
@@ -75,33 +84,38 @@ public interface IJwtTokenService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
-    Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken = default);
+    Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke an access token by <c>jti</c> (mark as revoked in the DB).
     /// </summary>
     /// <param name="jti">JTI (identifier) of the access token.</param>
-    Task RevokeAccessTokenAsync(Guid jti);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RevokeAccessTokenAsync(Guid jti, CancellationToken cancellationToken);
 
     /// <summary>
     /// Remove expired access tokens from storage by <c>ExpiresAt</c> (run periodically).
     /// </summary>
-    Task CleanupExpiredAccessTokensAsync();
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task CleanupExpiredAccessTokensAsync(CancellationToken cancellationToken);
 
     /// <summary>
     /// Delete refresh tokens whose chain absolute lifetime (<c>AbsoluteExpiresAt</c>) has expired.
     /// </summary>
-    Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken = default);
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken);
 
     /// <summary>
-    /// Get a claim value from a JWT by type(s).
+    /// Get a claim value from a compact JWT/JWE by type(s). Synchronous.
+    /// JWS (3 parts): reads the Base64URL JSON payload without verifying the signature.
+    /// JWE (5 parts): decrypts and validates, then reads claims from the validated identity.
     /// </summary>
-    /// <param name="token">JWT in compact form.</param>
+    /// <param name="token">JWT/JWE in compact form.</param>
     /// <param name="claimTypes">
-    /// Claim types to search. The first matching type is returned as the value.
+    /// Claim types to search. Matching values overwrite; the last match is returned.
     /// </param>
-    /// <returns>Claim value, or <c>null</c> if not found.</returns>
-    Task<string?> GetClaimValueAsync(string token, params string[] claimTypes);
+    /// <returns>Claim value, or <c>null</c> if not found / JWE validation fails.</returns>
+    string? GetClaimValue(string token, params string[] claimTypes);
 
     /// <summary>
     /// Get a refresh token from storage by its string value.
@@ -111,11 +125,6 @@ public interface IJwtTokenService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token entity, or <c>null</c> if not found.</returns>
     Task<RefreshTokenEntity?> GetRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Access token lifetime in seconds.
-    /// </summary>
-    int AccessTokenExpiresInSeconds { get; }
 
     /// <summary>
     /// Invalidate (mark as replaced/revoked) a refresh token
@@ -139,7 +148,7 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
+    Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Logout from all devices: resolve the user from a live refresh token and revoke every
@@ -152,7 +161,7 @@ public interface IJwtTokenService
     /// <exception cref="NotAuthorizedException">
     /// Refresh token is missing in storage, revoked, or expired.
     /// </exception>
-    Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default);
+    Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke all active access and refresh tokens that share <paramref name="familyId"/>.
@@ -161,10 +170,7 @@ public interface IJwtTokenService
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeRefreshTokenFamilyAsync(
-        Guid familyId,
-        RefreshTokenRevokeReason reason,
-        CancellationToken cancellationToken = default);
+    Task RevokeRefreshTokenFamilyAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
@@ -173,7 +179,7 @@ public interface IJwtTokenService
     /// <param name="userId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken = default);
+    Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken);
 }
 
 // /// <summary>

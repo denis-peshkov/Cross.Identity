@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Services;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class PhoneNormalizerTests
 {
@@ -13,6 +12,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenFormattedPhoneNumber_WhenNormalizePhone_ThenExtractsDigits()
     {
         // Act
@@ -23,6 +23,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPhoneWithPlus_WhenNormalizePhone_ThenPreservesPlus()
     {
         // Act
@@ -33,6 +34,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPhoneWithoutPlus_WhenNormalizePhone_ThenDoesNotAddPlus()
     {
         // Act
@@ -44,6 +46,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPhoneWithWhitespace_WhenNormalizePhone_ThenTrimsWhitespace()
     {
         // Act
@@ -54,6 +57,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenTooShortPhone_WhenNormalizePhone_ThenThrowsArgumentException()
     {
         // Act & Assert
@@ -64,6 +68,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenTooLongPhone_WhenNormalizePhone_ThenThrowsArgumentException()
     {
         // Act & Assert
@@ -74,6 +79,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidPhoneNumber_WhenNormalizeToE164_ThenFormatsToE164()
     {
         // Act
@@ -85,6 +91,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidPhoneNumber_WhenNormalizeToE164_ThenReturnsNull()
     {
         // Act
@@ -95,6 +102,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmptyPhoneNumber_WhenNormalizeToE164_ThenReturnsNull()
     {
         // Act
@@ -105,6 +113,7 @@ public class PhoneNormalizerTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidPhoneNumber_WhenNormalizeToE164OrThrow_ThenThrowsArgumentException()
     {
         // Act & Assert

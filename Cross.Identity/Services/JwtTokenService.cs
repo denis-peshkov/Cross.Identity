@@ -35,7 +35,10 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateIdTokenAsync(List<Claim> claims)
+    public int AccessTokenExpiresInSeconds => (int)_options.Jwt.AccessTokenExpires.TotalSeconds;
+
+    /// <inheritdoc/>
+    public string GenerateIdToken(List<Claim> claims)
     {
         var jti = Guid.NewGuid();
 
@@ -56,13 +59,11 @@ internal class JwtTokenService : IJwtTokenService
             SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256)
         };
 
-        var tokenString = _handler.CreateToken(descriptor);
-
-        return tokenString;
+        return _handler.CreateToken(descriptor);
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims)
+    public async Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims, CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
 
@@ -111,19 +112,16 @@ internal class JwtTokenService : IJwtTokenService
             IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
         };
 
-        // await _context.AccessTokens.Where(x => x.IsRevoked).DeleteFromQueryAsync();
-        // await _context.AccessTokens.Where(x => x.UserId == userId && x.ExpiresAt < DateTime.UtcNow).DeleteFromQueryAsync();
-
         // Persist jti in the access-tokens table (blacklist, audit, and revocation)
-        await _context.AccessTokens.AddAsync(entity).ConfigureAwait(false);
+        await _context.AccessTokens.AddAsync(entity, cancellationToken).ConfigureAwait(false);
 
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return tokenString;
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims)
+    public async Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims, CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
 
@@ -133,7 +131,7 @@ internal class JwtTokenService : IJwtTokenService
 
         var createdAt = DateTime.UtcNow;
         var expiresAt = createdAt.Add(_options.Jwt.RefreshTokenExpires);
-        var absoluteExpiresAt = await ResolveRefreshTokenAbsoluteExpiresAtAsync(familyId, createdAt).ConfigureAwait(false);
+        var absoluteExpiresAt = await ResolveRefreshTokenAbsoluteExpiresAtAsync(familyId, createdAt, cancellationToken).ConfigureAwait(false);
 
         var descriptor = new SecurityTokenDescriptor
         {
@@ -150,8 +148,6 @@ internal class JwtTokenService : IJwtTokenService
         var tokenString = _handler.CreateToken(descriptor);
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(tokenString)));
 
-        // await _context.RefreshTokens.Where(x => x.IsRevoked).DeleteFromQueryAsync();
-        // await _context.RefreshTokens.Where(x => x.UserId == userId && x.ExpiresAt < DateTime.UtcNow).DeleteFromQueryAsync();
         await _context.RefreshTokens.AddAsync(
             new RefreshTokenEntity
             {
@@ -165,34 +161,70 @@ internal class JwtTokenService : IJwtTokenService
                 DeviceFingerprint = null,
                 UserAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString(),
                 IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
-            })
+            },
+            cancellationToken)
             .ConfigureAwait(false);
 
-        await _context.SaveChangesAsync().ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         return tokenString;
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ValidateAccessTokenAsync(string accessToken)
+    public async Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken)
     {
-        var jwt = _handler.ReadJsonWebToken(accessToken);
-        var jti = jwt.GetClaim(JwtRegisteredClaimNames.Jti)?.Value;
-
-        if (!Guid.TryParse(jti, out var jtiGuid))
+        if (string.IsNullOrWhiteSpace(accessToken))
         {
-            return false; // invalid token
+            return false;
         }
 
-        var entity = await _context.AccessTokens.FindAsync(jtiGuid).ConfigureAwait(false);
+        var validation = await _handler
+            .ValidateTokenAsync(accessToken, CreateAccessTokenValidationParameters(requireDecryption: _options.Jwt.UseEncryption))
+            .ConfigureAwait(false);
+        if (!validation.IsValid || validation.ClaimsIdentity is null)
+        {
+            return false;
+        }
+
+        var jtiClaim = validation.ClaimsIdentity.FindFirst(JwtRegisteredClaimNames.Jti)?.Value;
+        if (!Guid.TryParse(jtiClaim, out var jtiGuid))
+        {
+            return false;
+        }
+
+        var entity = await _context.AccessTokens.FindAsync(new object[] { jtiGuid }, cancellationToken)
+            .ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
                && entity.CreatedAt <= DateTime.UtcNow;
     }
 
+    private TokenValidationParameters CreateAccessTokenValidationParameters(bool requireDecryption)
+    {
+        var parameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = _options.Jwt.Issuer,
+            ValidateAudience = true,
+            ValidAudience = _options.Jwt.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = _signingKey,
+            ValidateLifetime = true,
+            RequireExpirationTime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+
+        if (requireDecryption)
+        {
+            parameters.TokenDecryptionKey = _encryptionKey;
+        }
+
+        return parameters;
+    }
+
     /// <inheritdoc/>
-    public async Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken = default)
+    public async Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken)
     {
         var entity = await _context.AccessTokens
             .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken).ConfigureAwait(false);
@@ -203,13 +235,13 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ValidateRefreshTokenAsync(string refreshToken)
+    public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
     {
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync()
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
@@ -219,9 +251,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task EnsureRefreshTokenActiveForRotationAsync(
-        string refreshToken,
-        CancellationToken cancellationToken = default)
+    public async Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken)
     {
         var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
@@ -250,33 +280,33 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAccessTokenAsync(Guid jti)
+    public async Task RevokeAccessTokenAsync(Guid jti, CancellationToken cancellationToken)
     {
-        var entry = await _context.AccessTokens.FindAsync(jti).ConfigureAwait(false);
+        var entry = await _context.AccessTokens.FindAsync(new object[] { jti }, cancellationToken).ConfigureAwait(false);
         if (entry != null)
         {
             entry.RevokedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync().ConfigureAwait(false);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public async Task CleanupExpiredAccessTokensAsync()
+    public async Task CleanupExpiredAccessTokensAsync(CancellationToken cancellationToken)
     {
         var expired = await _context.AccessTokens
             .Where(x => x.ExpiresAt < DateTime.UtcNow)
-            .ToListAsync()
+            .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         if (expired.Any())
         {
             _context.AccessTokens.RemoveRange(expired);
-            await _context.SaveChangesAsync().ConfigureAwait(false);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
     /// <inheritdoc/>
-    public async Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken = default)
+    public async Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
         var expiredQuery = _context.RefreshTokens.Where(x => x.AbsoluteExpiresAt < now);
@@ -294,21 +324,33 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public Task<string?> GetClaimValueAsync(string token, params string[] claimTypes)
+    public string? GetClaimValue(string token, params string[] claimTypes)
     {
         ArgumentNullException.ThrowIfNull(token);
 
-        static string DecodeJwtPayload(string jwt)
+        var parts = token.Split('.');
+        return parts.Length switch
         {
-            var p = jwt.Split('.');
-            if (p.Length < 2) throw new ArgumentException("Not a JWT token.");
-            var payload = p[1].Replace('-', '+').Replace('_', '/');
-            switch (payload.Length % 4) { case 2: payload += "=="; break; case 3: payload += "="; break; }
-            return Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+            // JWS compact: header.payload.signature — payload is plain Base64URL JSON
+            3 => GetClaimValueFromJwsToken(token, claimTypes),
+            // JWE compact: 5 segments — decrypt/validate, then read claims
+            5 => GetClaimValueFromJweToken(token, claimTypes),
+            _ => throw new ArgumentException("Not a JWT token (expected JWS with 3 parts or JWE with 5 parts)."),
+        };
+    }
+
+    private static string? GetClaimValueFromJwsToken(string token, string[] claimTypes)
+    {
+        var p = token.Split('.');
+        var payload = p[1].Replace('-', '+').Replace('_', '/');
+        switch (payload.Length % 4)
+        {
+            case 2: payload += "=="; break;
+            case 3: payload += "="; break;
         }
 
-        var t = DecodeJwtPayload(token);
-        using var json = JsonDocument.Parse(t);
+        var jsonText = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
+        using var json = JsonDocument.Parse(jsonText);
         var root = json.RootElement;
 
         string? result = null;
@@ -320,7 +362,33 @@ internal class JwtTokenService : IJwtTokenService
             }
         }
 
-        return Task.FromResult(result);
+        return result;
+    }
+
+    private string? GetClaimValueFromJweToken(string token, string[] claimTypes)
+    {
+        // JWE always needs the decryption key; signing key validates the inner JWT.
+        var validation = _handler
+            .ValidateTokenAsync(token, CreateAccessTokenValidationParameters(requireDecryption: true))
+            .GetAwaiter()
+            .GetResult();
+
+        if (!validation.IsValid || validation.ClaimsIdentity is null)
+        {
+            return null;
+        }
+
+        string? result = null;
+        foreach (var claimType in claimTypes)
+        {
+            var value = validation.ClaimsIdentity.FindFirst(claimType)?.Value;
+            if (value is not null)
+            {
+                result = value;
+            }
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>
@@ -337,17 +405,14 @@ internal class JwtTokenService : IJwtTokenService
         return entity;
     }
 
-    /// <inheritdoc/>
-    public int AccessTokenExpiresInSeconds => (int)_options.Jwt.AccessTokenExpires.TotalSeconds;
-
-    private async Task<DateTime> ResolveRefreshTokenAbsoluteExpiresAtAsync(Guid familyId, DateTime createdAt)
+    private async Task<DateTime> ResolveRefreshTokenAbsoluteExpiresAtAsync(Guid familyId, DateTime createdAt, CancellationToken cancellationToken)
     {
         var chainAbsolute = await _context.RefreshTokens
             .AsNoTracking()
             .Where(x => x.FamilyId == familyId)
             .OrderBy(x => x.CreatedAt)
             .Select(x => (DateTime?)x.AbsoluteExpiresAt)
-            .FirstOrDefaultAsync()
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
         return chainAbsolute ?? createdAt.Add(_options.Jwt.RefreshTokenAbsoluteExpires);
@@ -392,10 +457,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeRefreshTokenFamilyAsync(
-        Guid familyId,
-        RefreshTokenRevokeReason reason,
-        CancellationToken cancellationToken = default)
+    public async Task RevokeRefreshTokenFamilyAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
     {
         await RevokeRefreshTokenFamilyCoreAsync(familyId, reason, cancellationToken).ConfigureAwait(false);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -414,9 +476,7 @@ internal class JwtTokenService : IJwtTokenService
     /// </list>
     /// Legitimate retry / double-refresh can look the same — accepted trade-off.
     /// </remarks>
-    private async Task HandleRefreshTokenReplayAsync(
-        RefreshTokenEntity reusedToken,
-        CancellationToken cancellationToken)
+    private async Task HandleRefreshTokenReplayAsync(RefreshTokenEntity reusedToken, CancellationToken cancellationToken)
     {
         var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
 
@@ -433,10 +493,7 @@ internal class JwtTokenService : IJwtTokenService
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task RevokeRefreshTokenFamilyCoreAsync(
-        Guid familyId,
-        RefreshTokenRevokeReason reason,
-        CancellationToken cancellationToken)
+    private async Task RevokeRefreshTokenFamilyCoreAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
         var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
@@ -467,7 +524,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default)
+    public async Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -494,7 +551,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken = default)
+    public async Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -524,10 +581,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAllTokensForUserAsync(
-        Guid userId,
-        RefreshTokenRevokeReason reason,
-        CancellationToken cancellationToken = default)
+    public async Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
         var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();

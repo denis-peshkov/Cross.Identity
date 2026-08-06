@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class EmbeddedProviderTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmbeddedProvider_WhenGetJsonForKnownFlow_ThenReturnsJson()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
@@ -20,6 +20,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidArgs_WhenGetJson_ThenThrows()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
@@ -37,6 +38,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidArgs_WhenGetTemplate_ThenThrows()
     {
         var opt = Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
@@ -59,6 +61,7 @@ public sealed class EmbeddedProviderTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmptyAssemblyName_WhenAssemblyAccessed_ThenFallbacksToExecutingAssembly()
     {
         var opt = new EmbeddedProcessDefinitionOptions();

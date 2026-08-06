@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class JsonHelpersAndOptionsTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenJsonElement_WhenJsonHelperMethods_ThenHandleCommonCases()
     {
         using var json = JsonDocument.Parse(
@@ -36,6 +36,7 @@ public sealed class JsonHelpersAndOptionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenKindMismatch_WhenValidateOptionalKind_ThenThrows()
     {
         using var okJson = JsonDocument.Parse("""{"kind":"collectForm"}""");
@@ -48,6 +49,7 @@ public sealed class JsonHelpersAndOptionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenAssemblyName_WhenSet_ThenSetsAssembly()
     {
         var opt = new EmbeddedProcessDefinitionOptions();

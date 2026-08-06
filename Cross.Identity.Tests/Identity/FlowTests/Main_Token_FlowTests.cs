@@ -83,13 +83,15 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
                 It.IsAny<List<string>>(),
-                It.IsAny<List<System.Security.Claims.Claim>>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         jwtMock
             .Setup(j => j.GenerateRefreshTokenAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
-                It.IsAny<List<System.Security.Claims.Claim>>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(),
+                It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 
@@ -97,6 +99,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidCredentials_WhenExecuteTokenFlow_ThenReturnsTokensAsync()
     {
         // Arrange
@@ -133,6 +136,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenReturnsIsInvalidCodeAsync()
     {
         // Arrange
@@ -154,6 +158,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidTokenInput_WhenExecuteTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange

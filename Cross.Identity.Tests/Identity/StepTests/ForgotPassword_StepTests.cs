@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ForgotPassword_StepTests
 {
@@ -53,6 +52,7 @@ public class ForgotPassword_StepTests
         };
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenEmailChannel_WhenExecuteAsync_ThenSendsResetEmailAsync()
     {
         // Arrange
@@ -92,6 +92,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenSmsChannel_WhenExecuteAsync_ThenGeneratesNumericCodeAsync()
     {
         // Arrange
@@ -116,6 +117,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenDeveloperModeDisabled_WhenExecuteAsync_ThenDoesNotSetLastCodeAsync()
     {
         var email = _faker.Internet.Email();
@@ -143,6 +145,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenDevelopmentEnvironment_WhenExecuteAsync_ThenDoesNotSendNotificationAsync()
     {
         // Arrange
@@ -170,6 +173,7 @@ public class ForgotPassword_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenCodeServiceFailure_WhenExecuteAsync_ThenLogsErrorAndReturnsOkAsync()
     {
         // Arrange

@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -73,6 +72,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenGoogleProvider_WhenExternalLogin_ThenReturnsAuthorizationUrlAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
@@ -93,6 +93,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAuthenticatedUserWithLinkedProvider_WhenExternalLoginUnlink_ThenUnlinksProviderAsync()
     {
         var userId = Guid.NewGuid();
@@ -138,6 +139,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMatchingLinkUserId_WhenExternalLogin_ThenAcceptsAsync()
     {
         var linkUserId = Guid.NewGuid();
@@ -170,6 +172,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMismatchedLinkUserId_WhenExternalLogin_ThenRejectsAsync()
     {
         var authenticatedUserId = Guid.NewGuid();
@@ -192,6 +195,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidLinkUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
     {
         await FluentActions.Invoking(() =>
@@ -209,6 +213,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenSuccessfulGoogleOAuth_WhenExternalLoginCallback_ThenReturnsTokensAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, CancellationToken.None);
@@ -237,6 +242,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenOAuthError_WhenExternalLoginCallback_ThenFailsAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
@@ -259,6 +265,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenStateAndErrorWithoutCode_WhenExternalLoginCallback_ThenProcessesErrorAsync()
     {
         var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);

@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -60,6 +59,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenLogoutFlow_ThenRevokesOnlyThatTokenAsync()
     {
         var userId = Guid.NewGuid();
@@ -75,9 +75,9 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
@@ -88,8 +88,8 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["revoked"].Should().Be(true);
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB)).Should().BeTrue();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeTrue();
 
         var entityA = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshA))));
@@ -97,6 +97,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnknownRefreshToken_WhenLogoutFlow_ThenSucceedsIdempotentlyAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(

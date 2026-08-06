@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class GetUser_StepTests
 {
@@ -13,6 +12,7 @@ public class GetUser_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenExistingUser_WhenExecuteAsync_ThenStoresUserIdAsync()
     {
         var email = _faker.Internet.Email();
@@ -43,6 +43,7 @@ public class GetUser_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var phone = _faker.Phone.PhoneNumber("+407########");

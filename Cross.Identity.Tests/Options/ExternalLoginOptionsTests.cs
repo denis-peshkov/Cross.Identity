@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Options;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLoginOptionsTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingCredentials_WhenIsConfiguredChecked_ThenReturnsFalse()
     {
         var options = new ExternalLoginProviderOptions
@@ -17,6 +17,7 @@ public class ExternalLoginOptionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenDisabledProvider_WhenIsConfiguredChecked_ThenReturnsFalse()
     {
         var options = new ExternalLoginProviderOptions
@@ -30,6 +31,7 @@ public class ExternalLoginOptionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEnabledConfiguredProvider_WhenIsConfiguredChecked_ThenReturnsTrue()
     {
         var options = new ExternalLoginProviderOptions

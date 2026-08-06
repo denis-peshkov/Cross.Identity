@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class BagAndMapTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenBagWithValues_WhenGetTrySetAndReadOnlyMembers_ThenWorks()
     {
         var bag = new Bag()
@@ -29,6 +29,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidKey_WhenGet_ThenThrows()
     {
         var bag = new Bag().Set("x", "abc").Set("n", null);
@@ -44,6 +45,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenBagWithValues_WhenToDictionaryAndAsEnumerable_ThenReturnsData()
     {
         var bag = new Bag().Set("k1", "v1").Set("k2", 2);
@@ -55,6 +57,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRelativeAndAbsoluteKeys_WhenQualify_ThenHandlesBoth()
     {
         BagKey.Qualify("step", "email").Should().Be("step.email");
@@ -68,6 +71,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenChannelAndJson_WhenResolveByMethods_ThenWork()
     {
         ResolveBy.DefaultFor(ChannelEnum.Email).Field.Should().Be("Email");
@@ -88,6 +92,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSampleMap_WhenToBagAndFromBag_ThenMapsSimpleTypesAndAttributes()
     {
         var now = DateTime.UtcNow;
@@ -131,6 +136,7 @@ public sealed class BagAndMapTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNullAndEnumAsNumber_WhenFromBag_ThenWorks()
     {
         var src = new Dictionary<string, object?>
