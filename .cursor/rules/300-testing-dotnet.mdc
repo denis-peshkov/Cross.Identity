@@ -13,6 +13,12 @@ alwaysApply: false
 
 Stack: **NUnit** (adapt category constants to the test project's shared helpers if present).
 
+## Documentation
+
+- **Do not require** XML `/// <summary>` (or other API-doc comments) on test classes, `[SetUp]`/`[TearDown]`, or `[Test]` methods.
+- A descriptive `Given[X]_When[Y]_Then[Z]` name is enough; do **not** flag missing XML docs on tests as a review finding.
+- Optional XML on shared test helpers/base classes is fine when it clarifies non-obvious fixtures — not mandatory.
+
 ## Test naming
 
 - **Pattern:** `Given[X]_When[Y]_Then[Z]`
