@@ -29,19 +29,15 @@ public interface IJwtTokenService
     Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims);
 
     /// <summary>
-    /// Validate an access token by <c>jti</c>.
-    /// Typically used when the raw JWT string is available and can be parsed safely.
-    /// <para>
-    /// For encrypted (JWE) tokens, prefer <see cref="ValidateAccessTokenJtiAsync"/>,
-    /// because middleware has already extracted claims from the token.
-    /// </para>
+    /// Cryptographically validate an access token (signature, issuer, audience, lifetime;
+    /// decrypts JWE when encryption is enabled), then confirm <c>jti</c> is active in storage.
     /// </summary>
     /// <param name="accessToken">Access token string (JWT/JWE) in compact form.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c> if the token is considered valid (not revoked and not expired per DB data);
-    /// otherwise <c>false</c>.
+    /// <c>true</c> if crypto checks and DB status both succeed; otherwise <c>false</c>.
     /// </returns>
-    Task<bool> ValidateAccessTokenAsync(string accessToken);
+    Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validate an access token by <c>jti</c> without re-parsing/decrypting the token.
@@ -101,7 +97,7 @@ public interface IJwtTokenService
     /// Claim types to search. The first matching type is returned as the value.
     /// </param>
     /// <returns>Claim value, or <c>null</c> if not found.</returns>
-    Task<string?> GetClaimValueAsync(string token, params string[] claimTypes);
+    string? GetClaimValue(string token, params string[] claimTypes);
 
     /// <summary>
     /// Get a refresh token from storage by its string value.
@@ -161,10 +157,7 @@ public interface IJwtTokenService
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeRefreshTokenFamilyAsync(
-        Guid familyId,
-        RefreshTokenRevokeReason reason,
-        CancellationToken cancellationToken = default);
+    Task RevokeRefreshTokenFamilyAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
