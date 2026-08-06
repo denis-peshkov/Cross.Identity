@@ -1,18 +1,8 @@
-<!-- PR body: narrative sections + checklist (Homebrew-style). English — for GitHub history and triage bot. -->
+<!-- PR body: short narrative + minimal checklist. English only — used in GitHub history and triage. -->
 
-## PR Merge Title
+## Summary
 
-<!-- Same as squash merge title and lead commit — imperative English per CONTRIBUTING.md. Breaking: prefix commit/PR body with BREAKING: -->
-
-```
-Add integration tests for RefreshToken flow
-```
-
----
-
-## Solution
-
-<!-- One-line summary of what was built and why it fixes the problem. -->
+<!-- What changed and why. The PR title should already be the intended squash merge title. Prefix the PR title with BREAKING: when needed. Add "Closes: #0000" if applicable. -->
 
 Closes: #0000
 
@@ -29,68 +19,45 @@ Closes: #0000
 
 ---
 
-## Acceptance criteria
+## Test plan
 
 <!-- How you verified the change — check off before merge. -->
 
-- [ ] …
+- [ ] New or updated tests cover the changed behavior
 - [ ] `dotnet build Cross.Identity.slnx` — green locally
 - [ ] `dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj` — green locally
 
 ---
 
-## Why this PR is small and safe
+## Risks / notes
 
-<!-- Why review is straightforward: narrow diff, no unrelated refactors, risk boundaries. -->
+<!-- Required for auth, JWT, refresh, OAuth, licensing, PII/logging, or breaking changes. Otherwise write "N/A". -->
 
--
+N/A
+
 
 ---
 
-<!-- Do not tick a checkbox below if you have not performed its action. Honesty keeps review smooth. -->
-
-### Process
+## Checklist
 
 - [ ] I have read and followed [CONTRIBUTING.md](../CONTRIBUTING.md).
-- [ ] **PR Merge Title** above matches the squash title and lead commit message.
+- [ ] PR title matches the intended squash merge title and lead commit message.
 - [ ] There is no other open [pull request](https://github.com/denis-peshkov/Cross.Identity/pulls) for the same fix or feature.
-- [ ] This PR targets **`dev`** (contributors must not target `master`, `release/*`, or `hotfix/*`; owner-only — see [CONTRIBUTING.md](../CONTRIBUTING.md)).
 - [ ] **One PR = one feature or one fix** — no unrelated refactors or drive-by formatting.
+- [ ] `.editorconfig` respected; no secrets committed.
+- [ ] If this PR changes a public flow or step JSON, update [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) and add/update an integration test in `Cross.Identity.Tests/Identity/FlowTests/`.
+- [ ] If this PR changes public API, options, or consumer contract, update README / XML docs as needed.
+- [ ] If this PR is breaking for NuGet consumers, update [`docs/MIGRATION.md`](../docs/MIGRATION.md), `config.nuspec` releaseNotes, and prefix the **PR title** with `BREAKING:`.
+- [ ] If this PR edits `docs/RELEASE-PLAN-dev-to-master.md`, run `node docs/scripts/release-plan-summary.mjs --write`.
+- [ ] If this PR touches auth / JWT / OAuth / licensing / passwords, the risks are described above and the diff contains no secrets.
 
-### CI and quality
-
-- [ ] CI [.NET workflow](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml) is expected to pass (build, test, SonarCloud quality gate on PR).
-- [ ] New or updated tests cover the changed behavior (unit / integration / functional as appropriate).
-
-### Scope-specific (tick what applies)
-
-- [ ] **Flow / step / JSON definition** — integration test in `Cross.Identity.Tests/Identity/FlowTests/`, update [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
-- [ ] **Breaking change for NuGet consumers** — [`docs/MIGRATION.md`](../docs/MIGRATION.md) and `config.nuspec` releaseNotes updated; `BREAKING:` noted in **Solution**.
-- [ ] **New option or public API** — README and XML docs on the options/type updated.
-- [ ] **Sample.Api** — smoke-checked locally (`dotnet run --project Sample.Api`) or via [`rest-client/Sample.Api.http`](../rest-client/Sample.Api.http) where relevant.
-- [ ] **Release plan checklist** — if edited, ran `node docs/scripts/release-plan-summary.mjs --write`.
-- [ ] **Auth / JWT / OAuth / licensing / passwords** — risks described in **Why this PR is small and safe** or below; no secrets in the diff.
-
-### Security notes
-
-<!-- Required for auth, JWT, refresh, OAuth, licensing, or PII/logging changes. Otherwise write "N/A". -->
-
--
-
-### Repository conventions
-
-- [ ] `.editorconfig` respected (UTF-8 BOM, CRLF, 4 spaces for `.cs`; `GlobalUsings.cs` for usings).
-- [ ] No secrets, `.env`, pepper values, OAuth client secrets, or real license keys committed.
 
 ---
 
-### AI assistance
+## AI assistance
 
-- [ ] AI was used to generate or assist with this PR. *Describe below how AI helped and what you manually verified.*
+- [ ] AI was used to generate or assist with this PR. *Describe briefly what AI helped with and what you manually verified.*
 
-<!-- If you did not use AI, leave unchecked and write "N/A" below. -->
-
--
 
 ---
 
