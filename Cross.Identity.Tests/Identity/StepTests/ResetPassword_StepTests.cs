@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ResetPassword_StepTests
 {
@@ -23,6 +22,7 @@ public class ResetPassword_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenEmailAndPassword_WhenExecuteAsync_ThenSetsPasswordAndReturnsNextAsync()
     {
         var email = _faker.Internet.Email();

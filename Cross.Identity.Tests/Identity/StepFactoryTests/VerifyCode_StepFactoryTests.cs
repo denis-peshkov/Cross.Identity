@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class VerifyCode_StepFactoryTests
 {
@@ -18,6 +17,7 @@ public class VerifyCode_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
@@ -47,6 +47,7 @@ public class VerifyCode_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPhoneChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
@@ -70,6 +71,7 @@ public class VerifyCode_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRelativeKeysJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange

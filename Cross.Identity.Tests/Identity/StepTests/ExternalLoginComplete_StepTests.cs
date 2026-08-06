@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLoginComplete_StepTests
 {
@@ -17,6 +16,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenLinkingCompletion_WhenExecuteAsync_ThenSkipsTokenGenerationAsync()
     {
         var userId = Guid.NewGuid();
@@ -34,11 +34,12 @@ public class ExternalLoginComplete_StepTests
         bag.Get<bool>("externalLoginComplete.IsLinking").Should().BeTrue();
         bag.ContainsKey("externalLoginComplete.AccessToken").Should().BeFalse();
         _jwtTokenService.Verify(
-            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>()),
+            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenSuccessfulLogin_WhenExecuteAsync_ThenIssuesTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -58,10 +59,10 @@ public class ExternalLoginComplete_StepTests
             .ReturnsAsync(user);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _jwtTokenService
-            .Setup(j => j.GenerateAccessTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>()))
+            .Setup(j => j.GenerateAccessTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         _jwtTokenService
-            .Setup(j => j.GenerateRefreshTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<Claim>>()))
+            .Setup(j => j.GenerateRefreshTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
 
         var step = CreateStep();
@@ -77,6 +78,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenOAuthError_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
@@ -106,6 +108,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenOAuthErrorWithoutCode_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService

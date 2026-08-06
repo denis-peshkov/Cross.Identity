@@ -1,21 +1,23 @@
 # Migration guide (NuGet consumers)
 
-Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.8` = all sections below).
+Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.10` = all sections below).
 
 | Upgrade path | Section |
 |--------------|---------|
 | `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150) |
 | `1.5.x` → `1.6.0+` | [From 1.5.x to 1.6.0](#from-15x-to-160) |
 | `1.6.x` → `1.7.0+` | [From 1.6.x to 1.7.0](#from-16x-to-170) |
-| `1.7.x` → `1.8.0+` | [From 1.7.x to 1.8.0](#from-17x-to-180) |
+| `1.9.x` → `1.10.0+` | [From 1.9.x to 1.10.0](#from-19x-to-1100) |
+
+`1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes (additive: `ChangePassword`, `VerifyToken`).
 
 Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
 
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
-Release notes mirror: [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec).
+Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
 
-When shipping a new breaking change: append a **From X.Y.Z to A.B.C** section (chronological order), sync `config.nuspec` `releaseNotes`, prefix the **PR title** with `BREAKING:`.
+When shipping a new breaking change: append a **From X.Y.Z to A.B.C** section (chronological order) and prefix the **PR title** with `BREAKING:`.
 
 ---
 
@@ -66,6 +68,7 @@ JWT license validation runs on the first `IFlowExecutor.ExecuteAsync` call.
 Reference DDL: `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/`.
 
 - Prefer `Email` over removed `NormalizedEmail`.
+- `RowVersion` → `ConcurrencyStamp` (`IHasConcurrencyStamp` + interceptor); update host EF mappings and SQL scripts accordingly.
 - `RefreshToken.AbsoluteExpiresAt` — add column and backfill.
 - External logins: `UserExternalLogin` + provider seed (Google, Microsoft, GitHub, Apple).
 
@@ -107,24 +110,40 @@ Flow operations stay `ExternalLogin` / `ExternalLoginCallback`. Step **type** na
 
 ---
 
-## From 1.7.x to 1.8.0
+## From 1.9.x to 1.10.0
 
 ### `IJwtTokenService.GetClaimValueAsync` → `GetClaimValue`
 
 Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async API was removed.
 
-| Was (1.7) | Now (1.8+) |
-|-----------|------------|
+| Was (1.9) | Now (1.10+) |
+|-----------|-------------|
 | `Task<string?> GetClaimValueAsync(...)` | `string? GetClaimValue(...)` |
 
 **Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.
 
+### `IJwtTokenService.GenerateIdTokenAsync` → `GenerateIdToken`
+
+Id-token issuance is in-memory only (sign JWT, no I/O). The fake-async API was removed.
+
+| Was (1.9) | Now (1.10+) |
+|-----------|-------------|
+| `Task<string> GenerateIdTokenAsync(...)` | `string GenerateIdToken(...)` |
+
+**Action:** replace `await jwt.GenerateIdTokenAsync(...)` with `jwt.GenerateIdToken(...)`.
+
 ### `IJwtTokenService.ValidateAccessTokenAsync`
 
-| Was (1.7) | Now (1.8+) |
-|-----------|------------|
-| `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
+| Was (1.9) | Now (1.10+) |
+|-----------|-------------|
+| `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
 
-Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup. Optional-parameter syntax does **not** fully preserve binary compatibility for interface implementers.
+Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including required `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup.
 
-**Action:** rebuild callers; custom implementations must perform crypto validation (e.g. `ValidateTokenAsync`) before using `jti`.
+**Action:** pass `CancellationToken` at every call site; custom implementations must perform crypto validation (e.g. `ValidateTokenAsync`) before using `jti`.
+
+### `CancellationToken` is required (no `= default`)
+
+On `IJwtTokenService`, `CancellationToken` is required on async methods (including generate/validate/revoke/cleanup helpers). Some methods that previously had no CT parameter now require one; optional `= default` was removed everywhere on this interface. Call sites must pass a token explicitly (e.g. `CancellationToken.None` or `HttpContext.RequestAborted`).
+
+**Action:** update callers and custom `IJwtTokenService` implementations accordingly.

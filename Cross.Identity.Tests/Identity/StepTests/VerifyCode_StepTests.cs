@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class VerifyCode_StepTests
 {
@@ -15,6 +14,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidCode_WhenExecuteAsync_ThenReturnsOkAsync()
     {
         // Arrange
@@ -48,6 +48,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidCode_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         // Arrange
@@ -81,6 +82,7 @@ public class VerifyCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRelativeKeys_WhenExecuteAsync_ThenVerifiesCodeAsync()
     {
         // Arrange

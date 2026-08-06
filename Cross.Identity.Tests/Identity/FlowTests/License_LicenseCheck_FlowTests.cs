@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -38,6 +37,7 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenNoLicenseKey_WhenExecuteGetUserIdFlow_ThenCompletesAsync()
     {
         IsLicenseGateChecked().Should().BeFalse();
@@ -51,6 +51,7 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidLicenseKey_WhenExecuteGetUserIdFlow_ThenStillCompletesAsync()
     {
         RegisterLicenseAccessor(new IdentityServiceConfiguration { LicenseKey = "aaa.bbb.ccc" });
@@ -63,6 +64,7 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenSecondFlowCall_WhenExecuteGetUserIdFlow_ThenDoesNotResetLicenseGateAsync()
     {
         await ExecuteGetUserIdFlowAsync();

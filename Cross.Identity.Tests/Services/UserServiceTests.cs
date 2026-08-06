@@ -50,6 +50,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenNewUserDetails_WhenCreateUserAsync_ThenCreatesUserAsync()
     {
         // Arrange
@@ -77,6 +78,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         // Arrange
@@ -101,6 +103,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange
@@ -120,6 +123,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUserByEmail_WhenGetUserIdByAsync_ThenThrowsNotFoundExceptionAsync()
     {
         // Act & Assert
@@ -130,6 +134,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByUserName_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         var userId = Guid.NewGuid();
@@ -148,6 +153,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByPhone_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         var userId = Guid.NewGuid();
@@ -166,6 +172,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedSelector_WhenGetUserIdByAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Unknown", "value", CancellationToken.None))
@@ -175,6 +182,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByEmail_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         // Arrange
@@ -198,6 +206,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserById_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         var userId = Guid.NewGuid();
@@ -216,6 +225,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByUserName_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         var userId = Guid.NewGuid();
@@ -236,6 +246,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedSelector_WhenGetUserByAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.GetUserByAsync("Unknown", "v", CancellationToken.None))
@@ -244,6 +255,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -266,6 +278,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMultipleEmailVerifications_WhenValidateCodeAsync_ThenUsesLatestActiveVerificationAsync()
     {
         var userId = Guid.NewGuid();
@@ -309,6 +322,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenWrongEmailCode_WhenValidateCodeAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -331,6 +345,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPhoneCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -353,6 +368,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPassword_WhenValidatePasswordAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -378,6 +394,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidPassword_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -402,6 +419,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPepperVersion_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -425,6 +443,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenPasswordNeedingRehash_WhenValidatePasswordAsync_ThenUpdatesPasswordPhcAsync()
     {
         var userId = Guid.NewGuid();
@@ -461,6 +480,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmptySelectorValue_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var result = await _userService.ValidatePasswordAsync("Email", "   ", "pass", CancellationToken.None);
@@ -468,6 +488,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedSelector_WhenValidatePasswordAsync_ThenThrowsNotSupportedExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.ValidatePasswordAsync("Unknown", "v", "p", CancellationToken.None))
@@ -476,6 +497,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUser_WhenSetPasswordAsync_ThenUpdatesPasswordHashAndVersionAsync()
     {
         var userId = Guid.NewGuid();
@@ -512,6 +534,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
         await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", CancellationToken.None))
@@ -520,6 +543,7 @@ public class UserServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenConcurrentUserAccountUpdates_WhenSavingChanges_ThenThrowsDbUpdateConcurrencyExceptionAsync()
     {
         var dbName = $"user-concurrency-{Guid.NewGuid():N}";

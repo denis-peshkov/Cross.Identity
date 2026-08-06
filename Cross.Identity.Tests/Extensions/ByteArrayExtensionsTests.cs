@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Extensions;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ByteArrayExtensionsTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNullSource_WhenGetBytes_ThenThrowsArgumentNullException()
     {
         byte[]? source = null;
@@ -15,6 +15,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenZeroLength_WhenGetBytes_ThenReturnsEmpty()
     {
         var source = new byte[] { 1, 2, 3 };
@@ -25,6 +26,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNegativeLength_WhenGetBytes_ThenReturnsEmpty()
     {
         var source = new byte[] { 1, 2, 3 };
@@ -35,6 +37,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenLengthGreaterOrEqualSourceLength_WhenGetBytes_ThenReturnsCopy()
     {
         var source = new byte[] { 1, 2, 3 };
@@ -46,6 +49,7 @@ public class ByteArrayExtensionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenLengthLessThanSourceLength_WhenGetBytes_ThenReturnsFirstLengthBytes()
     {
         var source = new byte[] { 1, 2, 3, 4, 5 };

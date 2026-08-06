@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Helpers;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CodeGeneratorHelperTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRequestedLength_WhenGenerateCode_ThenReturnsMatchingLength()
     {
         var code = CodeGeneratorHelper.GenerateCode(10);
@@ -14,6 +14,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRequestedLength_WhenGenerateLetterCode_ThenReturnsUppercaseLettersOnly()
     {
         var code = CodeGeneratorHelper.GenerateLetterCode(8);
@@ -23,6 +24,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRequestedLength_WhenGenerateNumericCode_ThenReturnsDigitsOnly()
     {
         var code = CodeGeneratorHelper.GenerateNumericCode(6);
@@ -32,6 +34,7 @@ public class CodeGeneratorHelperTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInput_WhenGenerateHash_ThenReturnsSha256Bytes()
     {
         var hash = CodeGeneratorHelper.GenerateHash("123456");

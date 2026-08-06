@@ -48,7 +48,7 @@ This is an identity library. Any change to JWT, refresh tokens, OAuth state, pas
 
 ### Flow contracts are public API
 
-JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/MIGRATION.md` and `config.nuspec` releaseNotes.
+JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` links there and must not duplicate the list).
 
 ### One `kind` per flow
 
@@ -63,7 +63,7 @@ Do not mix refactoring, formatting untouched files, and a feature in one PR. Dri
 - `.editorconfig` — style source (UTF-8 BOM, CRLF, 4 spaces for `.cs`).
 - `GlobalUsings.cs` — all `using` directives in one file; `ImplicitUsings` = `disable`.
 - New `.cs` / `.csproj` / `.sln` files — **UTF-8 with BOM**.
-- Tests — **NUnit**; method names `Given[X]_When[Y]_Then[Z]` (async → `…Async`). Canonical: [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
+- Tests — **NUnit**; method names `Given[X]_When[Y]_Then[Z]` (async → `…Async`); `[Category]` on **methods only** (not classes/bases). Canonical: [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
 
 More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 
@@ -179,7 +179,7 @@ git checkout -b feature/short-description
 
 - Follow directory structure (`Services/`, `ProcessEngine/Steps/`, `Entities/`).
 - Do not touch unrelated files.
-- Breaking change → `docs/MIGRATION.md` + `config.nuspec` releaseNotes.
+- Breaking change → `docs/MIGRATION.md` only (nuspec keeps a link, not a duplicate list).
 
 ### 3. Tests (required)
 
@@ -240,7 +240,7 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 | What changed | Update |
 |--------------|--------|
 | JSON flow / step | `Cross.Identity/FLOWS.md` |
-| Breaking change for consumers | `docs/MIGRATION.md`, `config.nuspec` |
+| Breaking change for consumers | `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
 | New configuration option | `README.md`, XML on options class |
 | OAuth / multi-instance | `FLOWS.md` (briefly), release plan §B |
 | Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + summary script |

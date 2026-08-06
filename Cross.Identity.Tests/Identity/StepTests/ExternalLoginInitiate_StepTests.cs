@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLoginInitiate_StepTests
 {
@@ -13,6 +12,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenProviderAndReturnUrl_WhenExecuteAsync_ThenSetsAuthorizationUrlAsync()
     {
         _externalLoginService
@@ -40,6 +40,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenGuidOrStringLinkUserId_WhenExecuteAsync_ThenForwardsLinkUserIdAsync()
     {
         var linkUserId = Guid.NewGuid();
@@ -71,6 +72,7 @@ public class ExternalLoginInitiate_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidLinkUserId_WhenExecuteAsync_ThenForwardsNullAsync()
     {
         _externalLoginService

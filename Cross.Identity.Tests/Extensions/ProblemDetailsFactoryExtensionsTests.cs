@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Extensions;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ProblemDetailsFactoryExtensionsTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidationException_WhenToValidationProblemDetails_ThenMapsErrors()
     {
         var ex = new ValidationException(new[]
@@ -23,6 +23,7 @@ public class ProblemDetailsFactoryExtensionsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenErrorDictionary_WhenToValidationProblemDetails_ThenSetsStatusAndTitle()
     {
         var errors = new Dictionary<string, string[]>

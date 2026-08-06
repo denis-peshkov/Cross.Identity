@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CreateUser_StepTests
 {
@@ -13,6 +12,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenUserDataInBag_WhenExecuteAsync_ThenCreatesUserAndStoresUserIdAsync()
     {
         // Arrange
@@ -62,6 +62,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRelativeKeys_WhenExecuteAsync_ThenCreatesUserAsync()
     {
         // Arrange
@@ -102,6 +103,7 @@ public class CreateUser_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMissingMapValues_WhenExecuteAsync_ThenCreatesUserWithAvailableFieldsAsync()
     {
         // Arrange

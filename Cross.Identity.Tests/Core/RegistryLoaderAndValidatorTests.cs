@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class RegistryLoaderAndValidatorTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenStepRegistry_WhenRegisterCreateAndHelpers_ThenWork()
     {
         var reg = new StepRegistry();
@@ -21,6 +21,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidRegistryOperations_WhenExecuted_ThenThrow()
     {
         var reg = new StepRegistry();
@@ -40,6 +41,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidJson_WhenFromJson_ThenBuildsAndValidates()
     {
         var reg = new StepRegistry(new[]
@@ -65,6 +67,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidJson_WhenFromJson_ThenThrows()
     {
         var reg = new StepRegistry(new[] { new FakeFactory("s1") });
@@ -86,6 +89,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenFormSchemaWithRules_WhenValidateAsync_ThenCoversFieldAndCrossRulesAsync()
     {
         var schema = new FormSchema(
@@ -143,6 +147,7 @@ public sealed class RegistryLoaderAndValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenEmptyInputMap_WhenValidateAsync_ThenTriggersRequiredAsync()
     {
         var schema = new FormSchema(

@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class RefreshToken_StepTests
 {
@@ -19,6 +18,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenSetsAccessAndRefreshTokensAsync()
     {
         var refreshTokenHash = "refresh-token-hash";
@@ -40,9 +40,9 @@ public class RefreshToken_StepTests
             .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValue(newRefreshToken, JwtRegisteredClaimNames.Jti))
             .Returns("new-jti");
-        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>()))
+        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(newAccessToken);
-        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>()))
+        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(newRefreshToken);
         _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -74,6 +74,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -100,6 +101,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))

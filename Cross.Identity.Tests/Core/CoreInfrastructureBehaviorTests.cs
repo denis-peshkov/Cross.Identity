@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class CoreInfrastructureBehaviorTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNoStartStep_WhenBuild_ThenThrows()
     {
         var sut = new ProcessBuilder();
@@ -13,6 +13,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenDuplicateKind_WhenThenAdded_ThenThrows()
     {
         var sut = new ProcessBuilder()
@@ -25,6 +26,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidSteps_WhenBuildAndRun_ThenPassesThroughStepsAsync()
     {
         var sut = new ProcessBuilder()
@@ -41,6 +43,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmptyProviders_WhenConstructed_ThenThrows()
     {
         var act = () => new CompositeProcessDefinitionProvider(Array.Empty<IProcessDefinitionProvider>());
@@ -48,6 +51,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenFailingFirstProvider_WhenGetJson_ThenFallbacksAndCaches()
     {
         var first = new CountingProvider(throwJson: true, throwTemplate: true);
@@ -64,6 +68,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenFailingFirstProvider_WhenGetTemplate_ThenFallbacksAndCaches()
     {
         var first = new CountingProvider(throwJson: true, throwTemplate: true);
@@ -80,6 +85,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNoMatchingProvider_WhenGetJson_ThenThrows()
     {
         var sut = new CompositeProcessDefinitionProvider(new[] { new CountingProvider(throwJson: true, throwTemplate: true) });
@@ -88,6 +94,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenRegisteredSchema_WhenGetCaseInsensitiveAndMissing_ThenWorksAndThrows()
     {
         var schema = new FormSchema("Registration", new List<FieldDescriptor>());
@@ -99,6 +106,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenTrackChangesFlag_WhenQuery_ThenRespectsFlag()
     {
         var options = new DbContextOptionsBuilder<IdentityContext>()
@@ -122,6 +130,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingFlowDirectory_WhenConstructed_ThenThrows()
     {
         var options = Microsoft.Extensions.Options.Options.Create(new FileSystemProcessDefinitionOptions
@@ -135,6 +144,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIndexedAndLazyFiles_WhenGetJsonAndTemplate_ThenReadsBoth()
     {
         var root = Path.Combine(Path.GetTempPath(), $"flows-{Guid.NewGuid():N}");
@@ -185,6 +195,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMixedClaimValues_WhenAddIfNotNull_ThenAddsOnlyNonEmpty()
     {
         var claims = new List<Claim>();
@@ -199,6 +210,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNoDescriptors_WhenAddFlowDefinitionsComposite_ThenThrows()
     {
         var services = new ServiceCollection();
@@ -207,6 +219,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenDescriptors_WhenAddFlowDefinitionsComposite_ThenRegistersComposite()
     {
         var services = new ServiceCollection();
@@ -222,6 +235,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenConfiguration_WhenAddFlowDefinitionsAndCrossIdentity_ThenRegistersServices()
     {
         var root = Path.Combine(Path.GetTempPath(), $"svc-flow-{Guid.NewGuid():N}");
@@ -271,6 +285,7 @@ public sealed class CoreInfrastructureBehaviorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPrivateHelperMethods_WhenInvoked_ThenWork()
     {
         var resolve = typeof(FileSystemProcessDefinitionProvider).GetMethod(

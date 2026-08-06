@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class PasswordAuth_StepTests
 {
@@ -15,6 +14,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidCredentials_WhenExecuteAsync_ThenSetsUserIdAndReturnsOkAsync()
     {
         // Arrange
@@ -54,6 +54,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidCredentials_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         // Arrange
@@ -88,6 +89,7 @@ public class PasswordAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRelativeKeys_WhenExecuteAsync_ThenAuthenticatesAndSetsUserIdAsync()
     {
         // Arrange

@@ -27,7 +27,7 @@ internal sealed class ProcessExecutor
     /// <exception cref="InvalidOperationException">
     /// Thrown when a step with the specified <c>kind</c> is not found or a <c>Next</c> transition points to a missing step.
     /// </exception>
-    public async Task RunAsync(Bag ctx, CancellationToken cancellationToken = default)
+    public async Task RunAsync(Bag ctx, CancellationToken cancellationToken)
     {
         string? current = _start;
 

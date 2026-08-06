@@ -33,6 +33,7 @@ Canonical: `.cursor/rules/300-testing-dotnet.mdc` (keep review comments aligned 
 - New behavior covered in `Cross.Identity.Tests/`
 - Method names: `Given[X]_When[Y]_Then[Z]`; async tests end with `Async`
 - Flow → `Identity/FlowTests/` (Integration); steps/factories → `StepTests` / `StepFactoryTests` (Unit)
+- `[Category(TestCategory.…)]` on **each test method** only — never on the class / `[TestFixture]` / base
 - Run: `dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj`
 - **Do not** request or nitpick missing XML `/// <summary>` on test methods / `[SetUp]` — names are the documentation
 

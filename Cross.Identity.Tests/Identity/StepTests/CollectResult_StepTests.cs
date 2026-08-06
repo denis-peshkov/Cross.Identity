@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CollectResult_StepTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMappedBagValues_WhenExecuteAsync_ThenCollectsValuesAsync()
     {
         // Arrange
@@ -37,6 +37,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMissingMappedValues_WhenExecuteAsync_ThenSkipsMissingKeysAsync()
     {
         // Arrange
@@ -65,6 +66,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRelativeKeys_WhenExecuteAsync_ThenCollectsValuesAsync()
     {
         // Arrange
@@ -90,6 +92,7 @@ public class CollectResult_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenReturnEmptyFlag_WhenExecuteAsync_ThenSetsEmptyFlagAsync()
     {
         // Arrange

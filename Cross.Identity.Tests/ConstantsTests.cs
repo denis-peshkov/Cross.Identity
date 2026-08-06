@@ -1,28 +1,31 @@
 ﻿namespace Cross.Identity.Tests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ConstantsTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenClaimConstants_WhenUsername_ThenReturnsExpected()
     {
         ClaimConstants.Username.Should().Be("username");
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenClaimConstants_WhenPermission_ThenReturnsExpected()
     {
         ClaimConstants.Permission.Should().Be("permission");
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIdentityConstants_WhenRequestPatchBody_ThenReturnsExpected()
     {
         IdentityConstants.RequestPatchBody.Should().Be("RequestPatchBody");
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIdentityConstants_WhenTokenNames_ThenReturnsExpected()
     {
         IdentityConstants.AccessToken.Should().Be("access_token");
@@ -33,6 +36,7 @@ public class ConstantsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenExternalLoginCompletion_WhenCreated_ThenExposesValues()
     {
         var userId = Guid.NewGuid();
@@ -43,6 +47,7 @@ public class ConstantsTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenExactlyOneRequiredRule_WhenCreated_ThenStoresFields()
     {
         var rule = new ExactlyOneRequiredRule(new[] { "email", "phone" }, "pick one");

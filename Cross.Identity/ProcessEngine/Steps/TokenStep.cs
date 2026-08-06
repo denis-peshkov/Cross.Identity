@@ -78,7 +78,8 @@ internal sealed class TokenStep : IStep
         }
 
         // 3) get user data
-        var user = (await UserService.GetUserByAsync(ResolveBy.Field, selectorValue, cancellationToken).ConfigureAwait(false)).ToBag();
+        var userAccount = await UserService.GetUserByAsync(ResolveBy.Field, selectorValue, cancellationToken).ConfigureAwait(false);
+        var user = userAccount.ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var id     = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
@@ -97,10 +98,10 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, cancellationToken).ConfigureAwait(false);
 
         // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

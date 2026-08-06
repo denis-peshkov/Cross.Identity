@@ -1,9 +1,8 @@
-namespace Cross.Identity.Tests.Core;
+﻿namespace Cross.Identity.Tests.Core;
 
 /// <summary>
 /// Base for tests with a real <see cref="IdentityContext"/> (InMemory) and persistence.
 /// </summary>
-[Category(TestCategory.INTEGRATION)]
 [TestFixture]
 public class EFTestsBase
 {

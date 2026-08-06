@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLoginUnlink_StepTests
 {
@@ -13,6 +12,7 @@ public class ExternalLoginUnlink_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenProvider_WhenExecuteAsync_ThenUnlinksAndSetsFlagAsync()
     {
         _externalLoginService

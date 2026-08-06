@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Entities;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class EntitiesAndJwtKeysTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenProviderAndExternalLogin_WhenCreated_ThenSetsProperties()
     {
         var user = new UserAccountEntity
@@ -53,6 +53,7 @@ public sealed class EntitiesAndJwtKeysTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenJwtKeys_WhenGetRsaKey_ThenReturnsKeyWithKeyId()
     {
         var key = JwtKeys.GetRsaKey();
