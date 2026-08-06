@@ -187,6 +187,59 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task GivenForgedAccessTokenWithRealJti_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        _ = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, familyId, new List<string>(),
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+
+        var forged = CreateJwtSignedWithWrongKey(
+            jti: entity.Id,
+            sub: userId,
+            issuer: "test-issuer",
+            audience: "test-audience");
+
+        var result = await _jwtTokenService.ValidateAccessTokenAsync(forged);
+
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    public async Task GivenEncryptedAccessToken_WhenValidateAccessTokenAsync_ThenReturnsTrueAsync()
+    {
+        var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        options.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Jwt = new AuthenticationOptions.JwtOptions
+            {
+                Issuer = "test-issuer",
+                Audience = "test-audience",
+                Key = SignKeyBase64,
+                EncryptionKey = EncKeyBase64,
+                UseEncryption = true,
+                AccessTokenExpires = TimeSpan.FromMinutes(15),
+                RefreshTokenExpires = TimeSpan.FromMinutes(60),
+                RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
+            }
+        });
+        var encryptedService = new JwtTokenService(Context, options.Object, _httpContextAccessor.Object);
+
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await encryptedService.GenerateAccessTokenAsync(
+            userId, familyId, new List<string>(),
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+        token.Split('.').Length.Should().Be(5);
+
+        var result = await encryptedService.ValidateAccessTokenAsync(token);
+
+        result.Should().BeTrue();
+    }
+
+    [Test]
     public async Task GivenValidRefreshToken_WhenValidateRefreshTokenAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -275,24 +328,24 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GivenAccessTokenWithClaim_WhenGetClaimValueAsync_ThenReturnsClaimValueAsync()
+    public async Task GivenAccessTokenWithClaim_WhenGetClaimValue_ThenReturnsClaimValueAsync()
     {
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(),
             new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
 
-        var value = await _jwtTokenService.GetClaimValueAsync(token, JwtRegisteredClaimNames.Sub);
+        var value = _jwtTokenService.GetClaimValue(token, JwtRegisteredClaimNames.Sub);
 
         value.Should().Be(userId.ToString());
     }
 
     [Test]
-    public async Task GivenNullToken_WhenGetClaimValueAsync_ThenThrowsArgumentNullExceptionAsync()
+    public void GivenNullToken_WhenGetClaimValue_ThenThrowsArgumentNullException()
     {
-        var act = () => _jwtTokenService.GetClaimValueAsync(null!, "sub");
+        var act = () => _jwtTokenService.GetClaimValue(null!, "sub");
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Test]
@@ -592,5 +645,27 @@ public class JwtTokenServiceTests : EFTestsBase
         var secondEntity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == secondHash);
 
         secondEntity.AbsoluteExpiresAt.Should().Be(firstEntity.AbsoluteExpiresAt);
+    }
+
+    private static string CreateJwtSignedWithWrongKey(Guid jti, Guid sub, string issuer, string audience)
+    {
+        var wrongKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32));
+        var handler = new JsonWebTokenHandler();
+        var createdAt = DateTime.UtcNow;
+        return handler.CreateToken(new Microsoft.IdentityModel.Tokens.SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Jti, jti.ToString()),
+                new Claim(JwtRegisteredClaimNames.Sub, sub.ToString()),
+            }),
+            Issuer = issuer,
+            Audience = audience,
+            IssuedAt = createdAt,
+            NotBefore = createdAt.AddSeconds(-1),
+            Expires = createdAt.AddMinutes(15),
+            SigningCredentials = new Microsoft.IdentityModel.Tokens.SigningCredentials(
+                wrongKey, Microsoft.IdentityModel.Tokens.SecurityAlgorithms.HmacSha256),
+        });
     }
 }

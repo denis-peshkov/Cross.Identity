@@ -91,12 +91,26 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
             userId, familyId, new List<string>(), new List<Claim>());
 
-        var jti = await _jwtTokenService.GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Jti);
+        var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();
         await _jwtTokenService.RevokeAccessTokenAsync(jtiGuid);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },
+            Flow,
+            FlowOperationEnum.VerifyToken,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["valid"].Should().Be(false);
+        payload.Should().NotContainKey("user_id");
+    }
+
+    [Test]
+    public async Task GivenShortNonEmptyAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
+    {
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["AccessToken"] = "x" },
             Flow,
             FlowOperationEnum.VerifyToken,
             CancellationToken.None);
