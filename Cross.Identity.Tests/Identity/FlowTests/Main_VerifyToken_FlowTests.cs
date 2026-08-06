@@ -107,6 +107,20 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    public async Task GivenShortNonEmptyAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
+    {
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["AccessToken"] = "x" },
+            Flow,
+            FlowOperationEnum.VerifyToken,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["valid"].Should().Be(false);
+        payload.Should().NotContainKey("user_id");
+    }
+
+    [Test]
     public async Task GivenMalformedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(

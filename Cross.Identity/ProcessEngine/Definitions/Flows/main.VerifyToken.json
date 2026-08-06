@@ -5,7 +5,7 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "AccessToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+          { "key": "AccessToken", "type": "String", "required": true, "max": 2048 }
         ]
       },
       "next": "verifyToken"
