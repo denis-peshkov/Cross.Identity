@@ -63,7 +63,7 @@ Do not mix refactoring, formatting untouched files, and a feature in one PR. Dri
 - `.editorconfig` — style source (UTF-8 BOM, CRLF, 4 spaces for `.cs`).
 - `GlobalUsings.cs` — all `using` directives in one file; `ImplicitUsings` = `disable`.
 - New `.cs` / `.csproj` / `.sln` files — **UTF-8 with BOM**.
-- Tests — **NUnit**; method names `Given[X]_When[Y]_Then[Z]` (async → `…Async`). Canonical: [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
+- Tests — **NUnit**; method names `Given[X]_When[Y]_Then[Z]` (async → `…Async`); `[Category]` on **methods only** (not classes/bases). Canonical: [`.cursor/rules/300-testing-dotnet.mdc`](.cursor/rules/300-testing-dotnet.mdc).
 
 More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 

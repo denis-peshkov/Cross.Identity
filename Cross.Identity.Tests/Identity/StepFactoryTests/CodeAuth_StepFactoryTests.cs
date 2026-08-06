@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CodeAuth_StepFactoryTests
 {
@@ -19,6 +18,7 @@ public class CodeAuth_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         using var json = JsonDocument.Parse(
@@ -49,6 +49,7 @@ public class CodeAuth_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
     {
         using var json = JsonDocument.Parse(
@@ -69,6 +70,7 @@ public class CodeAuth_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(

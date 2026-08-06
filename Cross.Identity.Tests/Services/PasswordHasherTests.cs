@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Services;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class PasswordHasherTests
 {
@@ -23,6 +22,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenPassword_WhenHash_ThenReturnsPhcString()
     {
         // Arrange
@@ -38,6 +38,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSamePassword_WhenHashTwice_ThenProducesDifferentHashes()
     {
         // Arrange
@@ -53,6 +54,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenCorrectPasswordAndHash_WhenVerify_ThenReturnsSuccess()
     {
         // Arrange
@@ -68,6 +70,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIncorrectPassword_WhenVerify_ThenReturnsFailed()
     {
         // Arrange
@@ -84,6 +87,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenWrongPepper_WhenVerify_ThenReturnsFailed()
     {
         // Arrange
@@ -100,6 +104,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidHash_WhenNeedsRehash_ThenReturnsFalse()
     {
         // Arrange
@@ -115,6 +120,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenInvalidHashFormat_WhenNeedsRehash_ThenReturnsTrue()
     {
         // Arrange
@@ -128,6 +134,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenArgon2idAlgorithm_WhenHash_ThenReturnsArgon2PhcString()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
@@ -146,6 +153,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenArgon2idHashAndCorrectPassword_WhenVerify_ThenReturnsSuccess()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
@@ -167,6 +175,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSha256Algorithm_WhenHash_ThenReturnsSha256PhcString()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
@@ -182,6 +191,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSha256HashAndCorrectPassword_WhenVerify_ThenReturnsSuccess()
     {
         _optionsMonitor.Setup(o => o.CurrentValue).Returns(new CrossIdentityPasswordHasherOptions
@@ -200,6 +210,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenUnknownPhcPrefix_WhenVerify_ThenReturnsFailed()
     {
         var result = _hasher.Verify("p", "$unknown$format", "pepper");
@@ -207,6 +218,7 @@ public class PasswordHasherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMalformedPbkdf2Phc_WhenVerify_ThenIsNotTreatedAsValid()
     {
         AssertMalformedPbkdf2PhcIsRejected("$pbkdf2-sha256$i=notanumber$YmFzZTY0$YmFzZTY0");

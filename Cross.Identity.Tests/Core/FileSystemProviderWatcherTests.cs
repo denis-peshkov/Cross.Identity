@@ -1,10 +1,10 @@
 ﻿namespace Cross.Identity.Tests.Core;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class FileSystemProviderWatcherTests
 {
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingTemplatesDirectory_WhenConstructed_ThenThrows()
     {
         var root = Path.Combine(Path.GetTempPath(), $"fs-no-templates-{Guid.NewGuid():N}");
@@ -27,6 +27,7 @@ public sealed class FileSystemProviderWatcherTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenFileChanges_WhenWatchersActive_ThenReloadsRenamesAndDeletes()
     {
         var root = Path.Combine(Path.GetTempPath(), $"fs-watch-{Guid.NewGuid():N}");

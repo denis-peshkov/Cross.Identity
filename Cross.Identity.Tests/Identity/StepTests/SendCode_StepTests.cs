@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class SendCode_StepTests
 {
@@ -39,6 +38,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenEmailChannel_WhenExecuteAsync_ThenSendsCodeByEmailAsync()
     {
         // Arrange
@@ -98,6 +98,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();
@@ -152,6 +153,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenTtlKeyMissingInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
@@ -204,6 +206,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenSmsChannel_WhenExecuteAsync_ThenGeneratesNumericCodeAsync()
     {
         // Arrange
@@ -248,6 +251,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenDevelopmentEnvironmentAndSendFailure_WhenExecuteAsync_ThenReturnsFailWithoutLastCodeAsync()
     {
         // Arrange
@@ -306,6 +310,7 @@ public class SendCode_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenUserNotFound_WhenExecuteAsync_ThenThrowsNotFoundExceptionAsync()
     {
         // Arrange

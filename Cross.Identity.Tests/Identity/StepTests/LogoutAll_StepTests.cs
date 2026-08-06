@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class LogoutAll_StepTests
 {
@@ -13,6 +12,7 @@ public class LogoutAll_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenRevokesAllAndSetsResultAsync()
     {
         var refreshToken = "refresh-token-value";
@@ -42,6 +42,7 @@ public class LogoutAll_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenPropagatesNotAuthorizedExceptionAsync()
     {
         _jwtTokenService

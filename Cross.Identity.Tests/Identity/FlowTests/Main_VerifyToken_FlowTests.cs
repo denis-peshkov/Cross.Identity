@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -60,6 +59,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidAccessToken_WhenVerifyTokenFlow_ThenReturnsValidWithClaimsAsync()
     {
         var userId = Guid.NewGuid();
@@ -84,6 +84,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEncryptedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidWithClaimsAsync()
     {
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -134,6 +135,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -157,6 +159,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenShortNonEmptyAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
@@ -171,6 +174,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMalformedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
@@ -184,6 +188,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmbeddedVerifyTokenDefinition_WhenParsed_ThenRequiresAccessToken()
     {
         var json = _processDefinitionProvider.GetJson(Flow, FlowOperationEnum.VerifyToken);

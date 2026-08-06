@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -66,6 +65,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailInDevelopmentMode_WhenForgotPasswordFlow_ThenReturnsLastCodeAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
@@ -81,6 +81,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailInProductionMode_WhenForgotPasswordFlow_ThenOmitsLastCodeAsync()
     {
         var configuration = new ConfigurationBuilder()
@@ -115,6 +116,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidEmail_WhenForgotPasswordFlow_ThenThrowsValidationExceptionAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(

@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CodeAuth_StepTests
 {
@@ -17,6 +16,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidCode_WhenExecuteAsync_ThenSetsUserIdAndReturnsOkAsync()
     {
         var email = _faker.Internet.Email();
@@ -55,6 +55,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidCode_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var email = _faker.Internet.Email();
@@ -87,6 +88,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
     {
         var email = _faker.Internet.Email();
@@ -120,6 +122,7 @@ public class CodeAuth_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRelativeKeys_WhenExecuteAsync_ThenQualifiesKeysAndSetsUserIdAsync()
     {
         var phone = _faker.Phone.PhoneNumber("+1##########");

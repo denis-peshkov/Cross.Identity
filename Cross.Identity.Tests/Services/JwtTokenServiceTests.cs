@@ -35,6 +35,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEncryptionKeyNot32Bytes_WhenConstructing_ThenThrowsInvalidOperationException()
     {
         var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -55,6 +56,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSignKeyLessThan32Bytes_WhenConstructing_ThenThrowsInvalidOperationException()
     {
         var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -75,6 +77,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidClaims_WhenGenerateIdToken_ThenReturnsValidToken()
     {
         var claims = new List<Claim> { new(JwtRegisteredClaimNames.Sub, Guid.NewGuid().ToString()) };
@@ -85,6 +88,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidUser_WhenGenerateAccessTokenAsync_ThenPersistsAndReturnsTokenAsync()
     {
         var userId = Guid.NewGuid();
@@ -101,6 +105,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidUser_WhenGenerateRefreshTokenAsync_ThenPersistsAndReturnsTokenAsync()
     {
         var userId = Guid.NewGuid();
@@ -116,6 +121,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidAccessToken_WhenValidateAccessTokenAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -128,6 +134,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAccessTokenEntity_WhenValidateAccessTokenJtiAsync_ThenReflectsRevokedStateAsync()
     {
         var userId = Guid.NewGuid();
@@ -144,6 +151,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredAccessToken_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -159,6 +167,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedAccessToken_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -172,6 +181,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAccessTokenNotInDatabase_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -187,6 +197,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenForgedAccessTokenWithRealJti_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -208,6 +219,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEncryptedAccessToken_WhenValidateAccessTokenAsync_ThenReturnsTrueAsync()
     {
         var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -240,6 +252,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenValidateRefreshTokenAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -252,6 +265,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnknownRefreshToken_WhenValidateRefreshTokenAsync_ThenReturnsFalseAsync()
     {
         var result = await _jwtTokenService.ValidateRefreshTokenAsync("not-a-valid-token-string", CancellationToken.None);
@@ -260,6 +274,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingAccessToken_WhenRevokeAccessTokenAsync_ThenSetsRevokedAtAsync()
     {
         var userId = Guid.NewGuid();
@@ -274,6 +289,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingAccessTokenEntry_WhenRevokeAccessTokenAsync_ThenDoesNotThrowAsync()
     {
         var act = () => _jwtTokenService.RevokeAccessTokenAsync(Guid.NewGuid(), CancellationToken.None);
@@ -282,6 +298,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredAccessTokens_WhenCleanupExpiredAccessTokensAsync_ThenRemovesExpiredTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -298,6 +315,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRefreshTokensPastAbsoluteExpiry_WhenCleanupExpiredRefreshTokensAsync_ThenRemovesTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -314,6 +332,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshTokens_WhenCleanupExpiredRefreshTokensAsync_ThenKeepsTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -328,6 +347,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAccessTokenWithClaim_WhenGetClaimValue_ThenReturnsClaimValueAsync()
     {
         var userId = Guid.NewGuid();
@@ -341,6 +361,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEncryptedAccessToken_WhenGetClaimValue_ThenReturnsClaimValueAsync()
     {
         var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -376,6 +397,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenNullToken_WhenGetClaimValue_ThenThrowsArgumentNullException()
     {
         var act = () => _jwtTokenService.GetClaimValue(null!, "sub");
@@ -384,6 +406,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenTokenWithWrongPartCount_WhenGetClaimValue_ThenThrowsArgumentException()
     {
         var act = () => _jwtTokenService.GetClaimValue("a.b", "sub");
@@ -392,6 +415,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingRefreshToken_WhenGetRefreshTokenAsync_ThenReturnsEntityAsync()
     {
         var userId = Guid.NewGuid();
@@ -405,6 +429,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnknownRefreshToken_WhenGetRefreshTokenAsync_ThenReturnsNullAsync()
     {
         var entity = await _jwtTokenService.GetRefreshTokenAsync("not-a-valid-token", CancellationToken.None);
@@ -413,6 +438,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenActiveRefreshToken_WhenInvalidateRefreshTokenAsync_ThenSetsReplacedByAndRevokedAtAsync()
     {
         var userId = Guid.NewGuid();
@@ -429,6 +455,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingRefreshToken_WhenInvalidateRefreshTokenAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         var act = () => _jwtTokenService.InvalidateRefreshTokenAsync("nonexistent-token", Guid.NewGuid().ToString(), CancellationToken.None);
@@ -438,6 +465,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedRefreshToken_WhenInvalidateRefreshTokenAsync_ThenThrowsConflictExceptionAsync()
     {
         var userId = Guid.NewGuid();
@@ -452,6 +480,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenReplayDetectedRefreshToken_WhenInvalidateRefreshTokenAsync_ThenRevokesEntireFamilyAsync()
     {
         // Theft race: attacker refreshed first (R1 → R2); victim reuses R1 → family must die.
@@ -491,6 +520,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenActiveRefreshToken_WhenEnsureRefreshTokenActiveForRotationAsync_ThenDoesNotThrowAsync()
     {
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>(), CancellationToken.None);
@@ -501,6 +531,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingRefreshToken_WhenEnsureRefreshTokenActiveForRotationAsync_ThenThrowsNotAuthorizedAsync()
     {
         var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync("missing-token", CancellationToken.None);
@@ -510,6 +541,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedRefreshToken_WhenEnsureRefreshTokenActiveForRotationAsync_ThenRevokesFamilyAndThrowsConflictAsync()
     {
         var userId = Guid.NewGuid();
@@ -530,6 +562,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenActiveRefreshToken_WhenRevokeRefreshTokenForLogoutAsync_ThenSetsRevokedAtWithUserLogoutReasonAsync()
     {
         var userId = Guid.NewGuid();
@@ -545,6 +578,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenNullOrEmptyRefreshToken_WhenRevokeRefreshTokenForLogoutAsync_ThenDoesNotThrowAsync()
     {
         var act = async () =>
@@ -557,6 +591,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAlreadyRevokedRefreshToken_WhenRevokeRefreshTokenForLogoutAsync_ThenDoesNotThrowAsync()
     {
         var userId = Guid.NewGuid();
@@ -570,6 +605,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMultipleUserTokens_WhenRevokeAllTokensForLogoutAsync_ThenRevokesAllUserTokensWithUserLogoutAllAsync()
     {
         var userId = Guid.NewGuid();
@@ -595,6 +631,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenNullOrEmptyRefreshToken_WhenRevokeAllTokensForLogoutAsync_ThenDoesNotThrowAsync()
     {
         var act = async () =>
@@ -607,6 +644,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRefreshToken_WhenRevokeAllTokensForLogoutAsync_ThenThrowsNotAuthorizedAsync()
     {
         var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync("not-a-token", CancellationToken.None);
@@ -616,6 +654,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAlreadyRevokedRefreshToken_WhenRevokeAllTokensForLogoutAsync_ThenThrowsNotAuthorizedAsync()
     {
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>(), CancellationToken.None);
@@ -628,6 +667,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenActiveUserTokens_WhenRevokeAllTokensForUserAsync_ThenRevokesAccessAndRefreshTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -651,12 +691,14 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenConfiguredJwtOptions_WhenReadingAccessTokenExpiresInSeconds_ThenReturnsConfiguredLifetime()
     {
         _jwtTokenService.AccessTokenExpiresInSeconds.Should().Be(15 * 60);
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenConfiguredRefreshTokenLifetime_WhenGenerateRefreshTokenAsync_ThenUsesConfiguredRollingLifetimeAsync()
     {
         var userId = Guid.NewGuid();
@@ -673,6 +715,7 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenRotatedRefreshToken_WhenGenerateRefreshTokenAsync_ThenPreservesChainAbsoluteExpiresAtAsync()
     {
         var userId = Guid.NewGuid();

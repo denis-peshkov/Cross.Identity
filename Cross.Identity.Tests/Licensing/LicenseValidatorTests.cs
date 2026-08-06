@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Licensing;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public sealed class LicenseValidatorTests
 {
@@ -15,6 +14,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenUnconfiguredLicense_WhenValidate_ThenDoesNotThrow()
     {
         var act = () => _sut.Validate(new License(), _productInfo);
@@ -22,6 +22,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenExpiredLicense_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense(expiration: DateTimeOffset.UtcNow.AddDays(-1));
@@ -31,6 +32,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenWrongProductType_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense(productType: (ProductTypeEnum)999);
@@ -40,6 +42,7 @@ public sealed class LicenseValidatorTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenValidLicense_WhenValidate_ThenDoesNotThrow()
     {
         var license = CreateConfiguredLicense();

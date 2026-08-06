@@ -25,6 +25,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailNotification_WhenSendAsync_ThenSendsEmailAsync()
     {
         // Arrange
@@ -46,6 +47,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenSmsNotification_WhenSendAsync_ThenSendsSmsAsync()
     {
         // Arrange
@@ -65,6 +67,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         // Arrange — current implementation checks the database record
@@ -96,6 +99,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUsedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -119,6 +123,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenPreviouslyVerifiedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -140,6 +145,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("email", "nobody@example.com", "123456", CancellationToken.None);
@@ -147,6 +153,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -168,6 +175,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPhoneCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
@@ -192,6 +200,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUsedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -215,6 +224,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("phone", "+9999999999", "123456", CancellationToken.None);
@@ -222,6 +232,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -244,6 +255,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMismatchedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -266,6 +278,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenPhoneMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -288,6 +301,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMismatchedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -309,6 +323,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
@@ -330,6 +345,7 @@ public class CodeServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedChannel_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);

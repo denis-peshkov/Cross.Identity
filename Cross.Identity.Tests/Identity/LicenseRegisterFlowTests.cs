@@ -1,6 +1,5 @@
 ﻿// namespace Cross.Identity.Tests.Identity;
 //
-// [Category(TestCategory.UNIT)]
 // [TestFixture]
 // public class LicenseRegisterFlowTests
 // {

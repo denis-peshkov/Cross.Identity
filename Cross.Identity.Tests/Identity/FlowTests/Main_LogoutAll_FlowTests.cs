@@ -1,7 +1,6 @@
 ﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
-[Category(TestCategory.INTEGRATION)]
 internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
@@ -60,6 +59,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -104,6 +104,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRefreshToken_WhenLogoutAllFlow_ThenThrowsNotAuthorizedAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(

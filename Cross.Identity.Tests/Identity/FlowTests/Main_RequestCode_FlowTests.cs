@@ -87,6 +87,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmail_WhenExecuteRequestCodeFlow_ThenSucceedsAsync()
     {
         // Arrange
@@ -116,6 +117,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenSubmittedTtl_WhenExecuteRequestCodeFlow_ThenPersistsMatchingExpiresAtAsync()
     {
         var ttl = TimeSpan.FromMinutes(17);
@@ -141,6 +143,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidEmail_WhenExecuteRequestCodeFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange

@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class SendCode_StepFactoryTests
 {
@@ -34,6 +33,7 @@ public class SendCode_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenEmailChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
@@ -69,6 +69,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSmsChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
@@ -95,6 +96,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenTtlKeyInJson_WhenCreate_ThenBindsTtlKey()
     {
         using var json = JsonDocument.Parse(
@@ -117,6 +119,7 @@ public class SendCode_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingChannel_WhenCreate_ThenThrowsInvalidOperationException()
     {
         // Arrange

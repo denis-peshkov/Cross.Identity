@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class VerifyToken_StepTests
 {
@@ -13,6 +12,7 @@ public class VerifyToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidAccessToken_WhenExecuteAsync_ThenSetsValidAndClaimsAsync()
     {
         var accessToken = "access-token-value";
@@ -50,6 +50,7 @@ public class VerifyToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidAccessToken_WhenExecuteAsync_ThenSetsValidFalseAsync()
     {
         var accessToken = "access-token-value";
@@ -79,6 +80,7 @@ public class VerifyToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMalformedAccessToken_WhenExecuteAsync_ThenSetsValidFalseAsync()
     {
         var accessToken = "not-a-jwt";

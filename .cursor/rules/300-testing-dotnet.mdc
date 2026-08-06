@@ -73,13 +73,25 @@ public async Task GivenValidResume_WhenSubmitResume_ThenReturnsSuccessAsync()
 
 ## Categories (NUnit)
 
-Tag tests with NUnit `[Category(…)]` (or a shared constants class in the test project):
+Put `[Category(…)]` **on each `[Test]` method only** — never on the test class, `[TestFixture]`, or a base class (e.g. `EFTestsBase`). Use the project's `TestCategory` constants when present.
 
 | Category | Purpose |
 |----------|---------|
 | `Unit` | Isolated unit under test; mocks; no real I/O / DB |
 | `Integration` | Components together (e.g. InMemory DB, HTTP mocks, end-to-end in-process flows) |
 | `Functional` | Broader E2E / TestServer / external dependencies (use sparingly) |
+
+Classify by what the **method** does (DB / multi-component → `Integration`; pure logic / mocks only → `Unit`), not by folder or fixture base.
+
+```csharp
+[Test]
+[Category(TestCategory.UNIT)]
+public void GivenValidInput_WhenParse_ThenReturnsValue() { /* … */ }
+
+[Test]
+[Category(TestCategory.INTEGRATION)]
+public async Task GivenPersistedToken_WhenValidate_ThenReturnsTrueAsync() { /* … */ }
+```
 
 ```bash
 dotnet test --filter "Category=Unit"

@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class ExternalLoginComplete_StepTests
 {
@@ -17,6 +16,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenLinkingCompletion_WhenExecuteAsync_ThenSkipsTokenGenerationAsync()
     {
         var userId = Guid.NewGuid();
@@ -39,6 +39,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenSuccessfulLogin_WhenExecuteAsync_ThenIssuesTokensAsync()
     {
         var userId = Guid.NewGuid();
@@ -77,6 +78,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenOAuthError_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
@@ -106,6 +108,7 @@ public class ExternalLoginComplete_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenOAuthErrorWithoutCode_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService

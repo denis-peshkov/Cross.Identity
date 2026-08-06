@@ -99,6 +99,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidCredentials_WhenExecuteTokenFlow_ThenReturnsTokensAsync()
     {
         // Arrange
@@ -135,6 +136,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenReturnsIsInvalidCodeAsync()
     {
         // Arrange
@@ -156,6 +158,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidTokenInput_WhenExecuteTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange

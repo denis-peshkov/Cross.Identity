@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class Logout_StepTests
 {
@@ -13,6 +12,7 @@ public class Logout_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenRevokesAndSetsResultAsync()
     {
         var refreshToken = "refresh-token-value";

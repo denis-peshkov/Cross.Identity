@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class CollectForm_StepFactoryTests
 {
@@ -26,6 +25,7 @@ public class CollectForm_StepFactoryTests
     public void TearDown() => _sp.Dispose();
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenSchemaDefAndPatch_WhenCreateAndExecuteAsync_ThenAppliesPatchAndValidatesAsync()
     {
         using var json = JsonDocument.Parse(
@@ -91,6 +91,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenRequiredFieldMissing_WhenExecuteAsync_ThenReturnsValidationFailureAsync()
     {
         using var json = JsonDocument.Parse(
@@ -124,6 +125,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenMismatchedPasswords_WhenExecuteAsync_ThenReturnsValidationFailureAsync()
     {
         using var json = JsonDocument.Parse(
@@ -164,6 +166,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenKindMismatch_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
@@ -181,6 +184,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSchemaNameWithoutProvider_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
@@ -198,6 +202,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSchemaDefWithoutFields_WhenCreate_ThenThrowsInvalidOperationException()
     {
         using var json = JsonDocument.Parse(
@@ -215,6 +220,7 @@ public class CollectForm_StepFactoryTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenUnknownFieldType_WhenCreate_ThenThrowsArgumentOutOfRangeException()
     {
         using var json = JsonDocument.Parse(

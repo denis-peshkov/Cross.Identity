@@ -1,6 +1,5 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
-[Category(TestCategory.UNIT)]
 [TestFixture]
 public class RefreshToken_StepTests
 {
@@ -19,6 +18,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenSetsAccessAndRefreshTokensAsync()
     {
         var refreshTokenHash = "refresh-token-hash";
@@ -74,6 +74,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -100,6 +101,7 @@ public class RefreshToken_StepTests
     }
 
     [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
