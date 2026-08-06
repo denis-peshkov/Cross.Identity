@@ -119,12 +119,28 @@ Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async A
 
 **Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.
 
+### `IJwtTokenService.GenerateIdTokenAsync` → `GenerateIdToken`
+
+Id-token issuance is in-memory only (sign JWT, no I/O). The fake-async API was removed.
+
+| Was (1.7) | Now (1.8+) |
+|-----------|------------|
+| `Task<string> GenerateIdTokenAsync(...)` | `string GenerateIdToken(...)` |
+
+**Action:** replace `await jwt.GenerateIdTokenAsync(...)` with `jwt.GenerateIdToken(...)`.
+
 ### `IJwtTokenService.ValidateAccessTokenAsync`
 
 | Was (1.7) | Now (1.8+) |
 |-----------|------------|
-| `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
+| `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
 
-Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup. Optional-parameter syntax does **not** fully preserve binary compatibility for interface implementers.
+Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including required `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup.
 
-**Action:** rebuild callers; custom implementations must perform crypto validation (e.g. `ValidateTokenAsync`) before using `jti`.
+**Action:** pass `CancellationToken` at every call site; custom implementations must perform crypto validation (e.g. `ValidateTokenAsync`) before using `jti`.
+
+### `CancellationToken` is required (no `= default`)
+
+On `IJwtTokenService`, `CancellationToken` is required on async methods (including generate/validate/revoke/cleanup helpers). Call sites must pass a token explicitly (e.g. `CancellationToken.None` or `HttpContext.RequestAborted`).
+
+**Action:** update callers and custom `IJwtTokenService` implementations accordingly.

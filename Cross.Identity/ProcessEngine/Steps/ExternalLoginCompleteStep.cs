@@ -67,11 +67,17 @@ internal sealed class ExternalLoginCompleteStep : IStep
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
 
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims).ConfigureAwait(false);
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(
-            userId.UserId,
-            familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString()) }).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService
+            .GenerateRefreshTokenAsync(
+                userId.UserId,
+                familyId,
+                new List<Claim>
+                {
+                    new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString())
+                },
+                cancellationToken)
+            .ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
         ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);

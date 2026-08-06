@@ -53,23 +53,26 @@ internal sealed class RefreshTokenStep : IStep
     {
         // 1) validate the token (revoked reuse → family REPLAY_DETECTED + Conflict)
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, cancellationToken)
-            .ConfigureAwait(false);
+        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
 
         // 2) get UserId from the refresh token
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
         if (oldRefreshToken is null)
+        {
             throw new InvalidOperationException("User not found when refresh token.");
+        }
 
         // 3) get user data
         var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         if (userId == Guid.Empty)
+        {
             throw new InvalidOperationException("Invalid user ID when refresh token.");
+        }
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
         var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
-        var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        var username = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
         // 4) generate AccessToken
         var accessClaims = new List<Claim>()
@@ -77,11 +80,11 @@ internal sealed class RefreshTokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}, cancellationToken).ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
         // 6) Invalidate old RefreshToken

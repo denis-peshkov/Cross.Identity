@@ -76,13 +76,13 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyA, new List<string>(), new List<Claim>());
+            userId, familyA, new List<string>(), new List<Claim>(), CancellationToken.None);
         var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
-            otherUserId, Guid.NewGuid(), new List<Claim>());
+            otherUserId, Guid.NewGuid(), new List<Claim>(), CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
@@ -93,10 +93,10 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["revoked"].Should().Be(true);
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB)).Should().BeFalse();
-        (await _jwtTokenService.ValidateAccessTokenAsync(accessA)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh)).Should().BeTrue();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
 
         var userRefresh = await Context.RefreshTokens.Where(x => x.UserId == userId).ToListAsync();
         userRefresh.Should().OnlyContain(t =>
