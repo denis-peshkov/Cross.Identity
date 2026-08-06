@@ -85,7 +85,7 @@ internal sealed class RefreshTokenStep : IStep
         ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
         // 6) Invalidate old RefreshToken
-        var newJti = await JwtTokenService.GetClaimValueAsync(refreshToken, JwtRegisteredClaimNames.Jti).ConfigureAwait(false);
+        var newJti = JwtTokenService.GetClaimValue(refreshToken, JwtRegisteredClaimNames.Jti);
         ArgumentException.ThrowIfNullOrEmpty(newJti);
         await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
 
