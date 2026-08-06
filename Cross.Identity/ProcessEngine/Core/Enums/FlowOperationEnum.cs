@@ -7,6 +7,7 @@ public enum FlowOperationEnum
 {
     Register,
     Token,
+    VerifyToken,
     RefreshToken,
     RequestCode,
     ChangePassword,

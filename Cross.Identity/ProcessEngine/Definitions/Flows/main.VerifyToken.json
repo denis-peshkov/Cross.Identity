@@ -1,0 +1,28 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "AccessToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+        ]
+      },
+      "next": "verifyToken"
+    },
+    {
+      "kind": "verifyToken",
+      "accessTokenKey": "collectForm.AccessToken",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "valid": "verifyToken.Valid",
+        "user_id": "verifyToken.UserId",
+        "jti": "verifyToken.Jti"
+      },
+      "next": null
+    }
+  ]
+}
