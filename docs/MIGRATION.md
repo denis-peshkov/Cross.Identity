@@ -118,3 +118,13 @@ Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async A
 | `Task<string?> GetClaimValueAsync(...)` | `string? GetClaimValue(...)` |
 
 **Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.
+
+### `IJwtTokenService.ValidateAccessTokenAsync` — optional `CancellationToken`
+
+| Was (1.7) | Now (1.8+) |
+|-----------|------------|
+| `Task<bool> ValidateAccessTokenAsync(string accessToken)` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)` |
+
+Call sites that only pass the token keep compiling against the library. That does **not** fully preserve binary/source compatibility for custom `IJwtTokenService` implementations: the interface member signature changed, so those types must add the parameter and forward it to DB lookups (e.g. `FindAsync` / queries). Existing compiled callers against an older interface assembly still need a rebuild when swapping to 1.8.
+
+**Action:** update custom `IJwtTokenService` implementations to accept `CancellationToken` and pass it through; optional callers may keep omitting the argument.
