@@ -8,8 +8,10 @@ Breaking changes for **Cross.Identity**, grouped by **from → to** package vers
 | `1.5.x` → `1.6.0+` | [From 1.5.x to 1.6.0](#from-15x-to-160) |
 | `1.6.x` → `1.7.0+` | [From 1.6.x to 1.7.0](#from-16x-to-170) |
 
-Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).  
-DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).  
+Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
+
+DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
+
 Release notes mirror: [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec).
 
 When shipping a new breaking change: add a **From X.Y.Z to A.B.C** section (newest first), sync `config.nuspec` `releaseNotes`, prefix the **PR title** with `BREAKING:`.
