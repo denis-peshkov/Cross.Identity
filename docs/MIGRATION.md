@@ -15,9 +15,9 @@ Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
 
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
-Release notes mirror: [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec).
+Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
 
-When shipping a new breaking change: append a **From X.Y.Z to A.B.C** section (chronological order), sync `config.nuspec` `releaseNotes`, prefix the **PR title** with `BREAKING:`.
+When shipping a new breaking change: append a **From X.Y.Z to A.B.C** section (chronological order) and prefix the **PR title** with `BREAKING:`.
 
 ---
 

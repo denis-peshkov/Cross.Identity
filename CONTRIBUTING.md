@@ -48,7 +48,7 @@ This is an identity library. Any change to JWT, refresh tokens, OAuth state, pas
 
 ### Flow contracts are public API
 
-JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/MIGRATION.md` and `config.nuspec` releaseNotes.
+JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` links there and must not duplicate the list).
 
 ### One `kind` per flow
 
@@ -179,7 +179,7 @@ git checkout -b feature/short-description
 
 - Follow directory structure (`Services/`, `ProcessEngine/Steps/`, `Entities/`).
 - Do not touch unrelated files.
-- Breaking change → `docs/MIGRATION.md` + `config.nuspec` releaseNotes.
+- Breaking change → `docs/MIGRATION.md` only (nuspec keeps a link, not a duplicate list).
 
 ### 3. Tests (required)
 
