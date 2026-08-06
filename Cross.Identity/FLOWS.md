@@ -18,6 +18,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 |----------------|------|
 | `*.Register.json` | `Register` |
 | `*.Token.json` | `Token` |
+| `*.VerifyToken.json` | `VerifyToken` |
 | `*.RefreshToken.json` | `RefreshToken` |
 | `*.RequestCode.json` | `RequestCode` |
 | `*.ChangePassword.json` | `ChangePassword` |
@@ -30,18 +31,19 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
 
-### All flow files (13)
+### All flow files (14)
 
 | Flow | Operation | File |
 |------|-----------|------|
-| `main` | ForgotPassword | `main.ForgotPassword.json` |
-| `main` | GetUserId | `main.GetUserId.json` |
-| `main` | RefreshToken | `main.RefreshToken.json` |
 | `main` | Register | `main.Register.json` |
+| `main` | Token | `main.Token.json` |
+| `main` | VerifyToken | `main.VerifyToken.json` |
+| `main` | RefreshToken | `main.RefreshToken.json` |
 | `main` | RequestCode | `main.RequestCode.json` |
 | `main` | ChangePassword | `main.ChangePassword.json` |
 | `main` | ResetPassword | `main.ResetPassword.json` |
-| `main` | Token | `main.Token.json` |
+| `main` | ForgotPassword | `main.ForgotPassword.json` |
+| `main` | GetUserId | `main.GetUserId.json` |
 | `main` | ExternalLogin | `main.ExternalLogin.json` |
 | `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
 | `main` | ExternalLoginUnlink | `main.ExternalLoginUnlink.json` |
@@ -225,6 +227,20 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
+## `main.VerifyToken.json`
+
+**Purpose:** check whether an access token is still valid in storage (not revoked / not expired).
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `AccessToken` (32–2048). → `verifyToken` |
+| `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
+| `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
+
+> Malformed tokens yield `valid: false` (no error). Does not refresh or revoke.
+
+---
+
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
@@ -246,6 +262,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `externalLoginUnlink` | Unlink OAuth provider from current user |
 | `logout` | Revoke current refresh token (`USER_LOGOUT`) |
 | `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
+| `verifyToken` | Validate access token; return `valid` (+ `user_id` / `jti` when valid) |
 
 ### Form validators (`schemaDef.validators`)
 

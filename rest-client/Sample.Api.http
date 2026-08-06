@@ -147,3 +147,13 @@ Content-Type: application/json
 {
   "RefreshToken": "{{REFRESH_TOKEN}}"
 }
+
+###
+# @name main-verify-token
+# Verify access token is still valid in storage (not revoked / not expired).
+POST {{HOST}}/api/identity/main/VerifyToken
+Content-Type: application/json
+
+{
+  "AccessToken": "{{ACCESS_TOKEN}}"
+}
