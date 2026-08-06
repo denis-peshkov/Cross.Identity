@@ -1,12 +1,13 @@
 # Migration guide (NuGet consumers)
 
-Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.7` = all three below).
+Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.8` = all sections below).
 
 | Upgrade path | Section |
 |--------------|---------|
 | `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150) |
 | `1.5.x` → `1.6.0+` | [From 1.5.x to 1.6.0](#from-15x-to-160) |
 | `1.6.x` → `1.7.0+` | [From 1.6.x to 1.7.0](#from-16x-to-170) |
+| `1.7.x` → `1.8.0+` | [From 1.7.x to 1.8.0](#from-17x-to-180) |
 
 Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
 
@@ -14,7 +15,7 @@ DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/READM
 
 Release notes mirror: [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec).
 
-When shipping a new breaking change: add a **From X.Y.Z to A.B.C** section (newest first), sync `config.nuspec` `releaseNotes`, prefix the **PR title** with `BREAKING:`.
+When shipping a new breaking change: append a **From X.Y.Z to A.B.C** section (chronological order), sync `config.nuspec` `releaseNotes`, prefix the **PR title** with `BREAKING:`.
 
 ---
 
@@ -103,3 +104,17 @@ Flow operations stay `ExternalLogin` / `ExternalLoginCallback`. Step **type** na
 | `CompleteExternalLogin` | `ExternalLoginComplete` |
 
 **Action:** update custom flow overrides that reference the old step types; stock `main.ExternalLogin*.json` already use the new names.
+
+---
+
+## From 1.7.x to 1.8.0
+
+### `IJwtTokenService.GetClaimValueAsync` → `GetClaimValue`
+
+Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async API was removed.
+
+| Was (1.7) | Now (1.8+) |
+|-----------|------------|
+| `Task<string?> GetClaimValueAsync(...)` | `string? GetClaimValue(...)` |
+
+**Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.

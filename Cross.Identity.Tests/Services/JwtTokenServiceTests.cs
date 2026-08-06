@@ -275,24 +275,24 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task GivenAccessTokenWithClaim_WhenGetClaimValueAsync_ThenReturnsClaimValueAsync()
+    public async Task GivenAccessTokenWithClaim_WhenGetClaimValue_ThenReturnsClaimValueAsync()
     {
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(),
             new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) });
 
-        var value = await _jwtTokenService.GetClaimValueAsync(token, JwtRegisteredClaimNames.Sub);
+        var value = _jwtTokenService.GetClaimValue(token, JwtRegisteredClaimNames.Sub);
 
         value.Should().Be(userId.ToString());
     }
 
     [Test]
-    public async Task GivenNullToken_WhenGetClaimValueAsync_ThenThrowsArgumentNullExceptionAsync()
+    public void GivenNullToken_WhenGetClaimValue_ThenThrowsArgumentNullException()
     {
-        var act = () => _jwtTokenService.GetClaimValueAsync(null!, "sub");
+        var act = () => _jwtTokenService.GetClaimValue(null!, "sub");
 
-        await act.Should().ThrowAsync<ArgumentNullException>();
+        act.Should().Throw<ArgumentNullException>();
     }
 
     [Test]

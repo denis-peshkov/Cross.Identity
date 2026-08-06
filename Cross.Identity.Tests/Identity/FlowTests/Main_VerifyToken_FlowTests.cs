@@ -91,7 +91,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
             userId, familyId, new List<string>(), new List<Claim>());
 
-        var jti = await _jwtTokenService.GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Jti);
+        var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();
         await _jwtTokenService.RevokeAccessTokenAsync(jtiGuid);
 

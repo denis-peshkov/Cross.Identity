@@ -174,7 +174,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ValidateAccessTokenAsync(string accessToken)
+    public async Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken = default)
     {
         var jwt = _handler.ReadJsonWebToken(accessToken);
         var jti = jwt.GetClaim(JwtRegisteredClaimNames.Jti)?.Value;
@@ -184,7 +184,7 @@ internal class JwtTokenService : IJwtTokenService
             return false; // invalid token
         }
 
-        var entity = await _context.AccessTokens.FindAsync(jtiGuid).ConfigureAwait(false);
+        var entity = await _context.AccessTokens.FindAsync(new object[] { jtiGuid }, cancellationToken).ConfigureAwait(false);
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
@@ -294,7 +294,7 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public Task<string?> GetClaimValueAsync(string token, params string[] claimTypes)
+    public string? GetClaimValue(string token, params string[] claimTypes)
     {
         ArgumentNullException.ThrowIfNull(token);
 
@@ -320,7 +320,7 @@ internal class JwtTokenService : IJwtTokenService
             }
         }
 
-        return Task.FromResult(result);
+        return result;
     }
 
     /// <inheritdoc/>

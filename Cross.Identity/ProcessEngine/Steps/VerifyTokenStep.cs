@@ -27,7 +27,7 @@ internal sealed class VerifyTokenStep : IStep
         var valid = false;
         try
         {
-            valid = await JwtTokenService.ValidateAccessTokenAsync(accessToken).ConfigureAwait(false);
+            valid = await JwtTokenService.ValidateAccessTokenAsync(accessToken, cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -38,17 +38,13 @@ internal sealed class VerifyTokenStep : IStep
 
         if (valid)
         {
-            var sub = await JwtTokenService
-                .GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier)
-                .ConfigureAwait(false);
+            var sub = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
             if (Guid.TryParse(sub, out var userId))
             {
                 ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
             }
 
-            var jti = await JwtTokenService
-                .GetClaimValueAsync(accessToken, JwtRegisteredClaimNames.Jti)
-                .ConfigureAwait(false);
+            var jti = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
             if (!string.IsNullOrEmpty(jti))
             {
                 ctx.Set(BagKey.Qualify(Kind, "Jti"), jti);
