@@ -240,7 +240,7 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 | What changed | Update |
 |--------------|--------|
 | JSON flow / step | `Cross.Identity/FLOWS.md` |
-| Breaking change for consumers | `docs/MIGRATION.md`, `config.nuspec` |
+| Breaking change for consumers | `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
 | New configuration option | `README.md`, XML on options class |
 | OAuth / multi-instance | `FLOWS.md` (briefly), release plan §B |
 | Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + summary script |
