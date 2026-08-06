@@ -21,10 +21,14 @@ internal sealed class PasswordAuthStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>User service for password verification.</summary>
+    /// <summary>
+    /// User service for password verification.
+    /// </summary>
     public required IUserService UserService { get; init; }
 
-    /// <summary>Field used to look up the user (for example, "Email" or "UserName").</summary>
+    /// <summary>
+    /// Field used to look up the user (for example, <c>Email</c>, <c>UserName</c>).
+    /// </summary>
     public required string SelectorField { get; init; }
 
     /// <summary>

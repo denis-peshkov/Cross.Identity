@@ -14,7 +14,7 @@ internal interface IUserService
     /// <summary>
     /// Find a user identifier by selector field.
     /// Allowed <paramref name="selectorField"/> values depend on the implementation
-    /// (at minimum <c>"Email"</c>, <c>"UserName"</c>, and <c>"Phone"</c> are supported).
+    /// (at minimum <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, and <c>"Phone"</c> are supported).
     /// </summary>
     /// <param name="selectorField">Field name to search by (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value (e.g. email address).</param>

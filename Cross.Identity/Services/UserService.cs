@@ -38,24 +38,11 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // map to the expected property name
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
-        string value = selectorValue.ToLowerInvariant();
-
-        return await _context.UsersAccounts
-                   .AsNoTracking()
-                   .Where(u => EF.Property<string>(u, field) == value)
-                   .Select(u => u.Id.ToString())
-                   .FirstOrDefaultAsync(cancellationToken)
-                   .ConfigureAwait(false)
-               ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+        return user.Id.ToString();
     }
 
     public async Task<UserAccountEntity> GetUserByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
@@ -63,39 +50,27 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // map to the expected property name
-        var field = selectorField.ToLowerInvariant() switch
-        {
-            "id" => nameof(UserAccountEntity.Id), // does not work because Guid != String
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+        var field = ResolveSelectorField(selectorField);
+        var userAccounts = _context.UsersAccounts.AsNoTracking();
 
-        var value = selectorValue.ToLowerInvariant();
-
-        var userAccounts = _context.UsersAccounts
-            .AsNoTracking();
         IQueryable<UserAccountEntity> userAccountsFiltered;
+        var displayValue = selectorValue.ToLowerInvariant();
         if (field == nameof(UserAccountEntity.Id))
         {
-            Guid.TryParse(selectorValue, out var id);
-            userAccountsFiltered = userAccounts
-                .Where(u => EF.Property<Guid>(u, field) == id);
+            if (!TryParseUserId(selectorValue, out var id))
+                throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
+
+            userAccountsFiltered = userAccounts.Where(u => u.Id == id);
         }
         else
         {
-            userAccountsFiltered = userAccounts
-                .Where(u => EF.Property<string>(u, field) == value);
+            userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
-        var result = await userAccountsFiltered
-                         .FirstOrDefaultAsync(cancellationToken)
-                         .ConfigureAwait(false)
-                     ?? throw new NotFoundException($"User with given {field} '{value}' not found");
-
-        return result;
+        return await userAccountsFiltered
+                   .FirstOrDefaultAsync(cancellationToken)
+                   .ConfigureAwait(false)
+               ?? throw new NotFoundException($"User with given {field} '{displayValue}' not found");
     }
 
     /// <inheritdoc/>
@@ -111,7 +86,7 @@ internal sealed class UserService : IUserService
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedPhone = phoneRaw is string phone
-            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!)
+            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!) // тут баг, так как что бы правильно отформатировать надо знать не текущий язык а страну номера телефона
             : null;
 
         // 3) Uniqueness
@@ -151,7 +126,7 @@ internal sealed class UserService : IUserService
             ConcurrencyStamp = Guid.NewGuid(),
         };
 
-        await _context.UsersAccounts.AddAsync(user).ConfigureAwait(false);
+        await _context.UsersAccounts.AddAsync(user, cancellationToken).ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -165,30 +140,8 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(password);
 
         // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
-
-        string? value = field switch
-        {
-            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
-                => selectorValue.Trim().ToLowerInvariant(),
-            nameof(UserAccountEntity.PhoneNumber)
-                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
-            _ => selectorValue
-        };
-
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-
-        // 2) Find the user (tracked, without AsNoTracking — so we can update hash/pepper version if needed)
-        var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
-            .ConfigureAwait(false);
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
 
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
             return false;
@@ -243,13 +196,7 @@ internal sealed class UserService : IUserService
         var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
 
         // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
-        var field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+        var field = ResolveSelectorField(selectorField);
 
         var isValid = false;
         var now = DateTime.UtcNow;
@@ -266,10 +213,7 @@ internal sealed class UserService : IUserService
 
         if (isValid)
         {
-            var account = await _context.UsersAccounts
-                .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken)
-                .ConfigureAwait(false);
-
+            var account = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
             if (account != null)
             {
                 if (field == nameof(UserAccountEntity.Email))
@@ -298,32 +242,9 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorValue);
         ArgumentNullException.ThrowIfNull(newPassword);
 
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
-
-        string? value = field switch
-        {
-            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
-                => selectorValue.Trim().ToLowerInvariant(),
-            nameof(UserAccountEntity.PhoneNumber)
-                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
-            _ => selectorValue
-        };
-
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ValidationException("Selector value is invalid.");
-        }
-
-        var user = await _context.UsersAccounts
-                       .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
-                       .ConfigureAwait(false)
-                   ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
         if (!_pepperVault.TryGetCurrentValue(out var pepper) || string.IsNullOrWhiteSpace(pepper))
         {
@@ -340,6 +261,63 @@ internal sealed class UserService : IUserService
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string ResolveSelectorField(string selectorField)
+    {
+        return selectorField.ToLowerInvariant() switch
+        {
+            "id" => nameof(UserAccountEntity.Id),
+            "email" => nameof(UserAccountEntity.Email),
+            "username" => nameof(UserAccountEntity.NormalizedUserName),
+            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
+            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported."),
+        };
+    }
+
+    private static bool TryParseUserId(string selectorValue, out Guid id)
+    {
+        return Guid.TryParse(selectorValue.Trim(), out id) && id != Guid.Empty;
+    }
+
+    private async Task<UserAccountEntity?> FindTrackedUserBySelectorAsync(string field, string selectorValue, CancellationToken cancellationToken)
+    {
+        if (field == nameof(UserAccountEntity.Id))
+        {
+            if (!TryParseUserId(selectorValue, out var id))
+                return null;
+
+            return await _context.UsersAccounts
+                .Where(u => u.Id == id)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var value = field switch
+        {
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
+                => selectorValue.Trim().ToLowerInvariant(),
+            nameof(UserAccountEntity.PhoneNumber)
+                /**
+                 * Кратко: в NormalizeToE164 нужен ISO region (страна), не язык.
+                 * Что имеют в виду | Что передавать                          | Country code | Пример
+                 * EN               |  не регион — язык. Обычно "US" или "GB" | +1 / +44     | зависит от страны
+                 * RU               | "RU"                                    | +7           | 9123456789 → +79123456789
+                 * UA               | "UA"                                    | +380         | 501234567  → +380501234567
+                 * UK               | "GB" (не "UK")                          | +44          | 7911123456 → +447911123456
+                 * RO               | "RO"                                    | +40          | 722123456  → +40722123456
+                 */
+                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode), // тут баг, так как что бы правильно отформатировать надо знать не текущий язык а страну номера телефона
+            _ => selectorValue,
+        };
+
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return await _context.UsersAccounts
+            .Where(u => EF.Property<string>(u, field) == value)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task<bool> TryValidateEmailCodeAsync(

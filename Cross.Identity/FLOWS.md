@@ -119,15 +119,16 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.ChangePassword.json`
 
-**Purpose:** change password by email after validating the current password.
+**Purpose:** change password by user id after validating the current password.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `CurrentPassword` (8–128), `NewPassword` (8–128). → `passwordAuth` |
-| `passwordAuth` | passwordAuth | `selectorField: Email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Email`. `next: null` |
+| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128). → `passwordAuth` |
+| `passwordAuth` | passwordAuth | `selectorField: Id`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
+| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Id`. `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
+> `resetPassword` notifies via `channel` using `selectorKey` as the destination (for `Id` + `email` that is the Guid string, not the account email).
 
 ---
 

@@ -2,12 +2,13 @@
 
 Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.10` = all sections below).
 
-| Upgrade path | Section |
-|--------------|---------|
-| `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150) |
-| `1.5.x` → `1.6.0+` | [From 1.5.x to 1.6.0](#from-15x-to-160) |
-| `1.6.x` → `1.7.0+` | [From 1.6.x to 1.7.0](#from-16x-to-170) |
-| `1.9.x` → `1.10.0+` | [From 1.9.x to 1.10.0](#from-19x-to-1100) |
+| Upgrade path         | Section                                     |
+|----------------------|---------------------------------------------|
+| `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150)    |
+| `1.5.x` → `1.6.0+`   | [From 1.5.x to 1.6.0](#from-15x-to-160)     |
+| `1.6.x` → `1.7.0+`   | [From 1.6.x to 1.7.0](#from-16x-to-170)     |
+| `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
+| `1.10.x` → `1.11.0+` | [From 1.10.x to 1.11.0](#from-110x-to-1110) |
 
 `1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes (additive: `ChangePassword`, `VerifyToken`).
 
@@ -147,3 +148,21 @@ Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no long
 On `IJwtTokenService`, `CancellationToken` is required on async methods (including generate/validate/revoke/cleanup helpers). Some methods that previously had no CT parameter now require one; optional `= default` was removed everywhere on this interface. Call sites must pass a token explicitly (e.g. `CancellationToken.None` or `HttpContext.RequestAborted`).
 
 **Action:** update callers and custom `IJwtTokenService` implementations accordingly.
+
+---
+
+## From 1.10.x to 1.11.0
+
+### `main.ChangePassword` input: `Email` → `UserId`
+
+| Area | Was (1.10) | Now |
+|------|------------|-----|
+| Form fields | `Email`, `CurrentPassword`, `NewPassword` | `UserId` (Guid string), `CurrentPassword`, `NewPassword` |
+| `passwordAuth.selectorField` | `Email` | `Id` |
+| `resetPassword.resolveBy.field` | `Email` | `Id` |
+
+`ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserByAsync` / `GetUserIdByAsync` accept selector `"Id"`.
+
+`resetPassword` still sends the change notification to `selectorKey` as-is (Guid when resolving by `Id`), not to the account email.
+
+**Action:** pass `{ UserId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.

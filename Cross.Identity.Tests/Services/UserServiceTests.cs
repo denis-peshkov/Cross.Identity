@@ -104,6 +104,22 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenExistingUserById_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "test@example.com",
+        });
+
+        var result = await _userService.GetUserIdByAsync("Id", userId.ToString(), CancellationToken.None);
+
+        result.Should().Be(userId.ToString());
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange
@@ -364,6 +380,32 @@ public class UserServiceTests : EFTestsBase
         });
 
         var result = await _userService.ValidateCodeAsync("Phone", phone, "123456", CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenValidPasswordById_WhenValidatePasswordAsync_ThenReturnsTrueAsync()
+    {
+        var userId = Guid.NewGuid();
+        var password = "P@ssw0rd!";
+        var hashed = "$pbkdf2$";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "test@example.com",
+            PasswordPhc = hashed,
+            PasswordPepperVersion = 1,
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "test-pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, hashed, "test-pepper")).Returns(PasswordVerificationEnum.Success);
+
+        var result = await _userService.ValidatePasswordAsync("Id", userId.ToString(), password, CancellationToken.None);
+
         result.Should().BeTrue();
     }
 

@@ -124,4 +124,39 @@ public class PasswordAuth_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<string>("passwordAuth.UserId").Should().Be(userId);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenIdSelector_WhenExecuteAsync_ThenAuthenticatesAndSetsUserIdAsync()
+    {
+        var userId = Guid.NewGuid().ToString();
+        var password = "P@ssw0rd!";
+
+        _userService.Setup(s => s.ValidatePasswordAsync("Id", userId, password, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _userService.Setup(s => s.GetUserIdByAsync("Id", userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+
+        var step = new PasswordAuthStep
+        {
+            Kind = "passwordAuth",
+            UserService = _userService.Object,
+            SelectorField = "Id",
+            SelectorKey = "collectForm.UserId",
+            PasswordKey = "collectForm.CurrentPassword",
+            UserIdKey = "UserId",
+            Next = "resetPassword",
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.UserId", userId);
+        bag.Set("collectForm.CurrentPassword", password);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        bag.Get<string>("passwordAuth.UserId").Should().Be(userId);
+        _userService.Verify(s => s.ValidatePasswordAsync("Id", userId, password, It.IsAny<CancellationToken>()), Times.Once);
+        _userService.Verify(s => s.GetUserIdByAsync("Id", userId, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }
