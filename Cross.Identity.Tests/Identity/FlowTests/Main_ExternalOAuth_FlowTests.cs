@@ -54,6 +54,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<ExternalLoginInitiateStepFactory>();
         AddRegistryStep<ExternalLoginCompleteStepFactory>();
         AddRegistryStep<ExternalLoginUnlinkStepFactory>();
+        AddRegistryStep<ExternalLoginGetAllStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
@@ -136,6 +137,82 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["unlinked"].Should().Be(true);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAuthenticatedUser_WhenExternalLoginGetAll_ThenReturnsAccountEmailAndProvidersAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new ProviderEntity
+        {
+            Name = "Microsoft",
+            Scheme = "microsoft",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        });
+        AddToDb(new ProviderEntity
+        {
+            Name = "GitHub",
+            Scheme = "github",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        });
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "owner@example.com",
+            UserName = "owner",
+            NormalizedUserName = "owner",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        var google = await Context.Providers.SingleAsync(x => x.Name == "Google");
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userId,
+            ProviderId = google.Id,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "linked@gmail.com",
+            AvatarUrl = "https://example.com/avatar.png",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SetAuthenticatedUser(userId);
+
+        _externalLoginService = CreateExternalLoginService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-id",
+                    ClientSecret = "ms-secret",
+                };
+            });
+        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>(),
+            Flow,
+            FlowOperationEnum.ExternalLoginGetAll,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["account_email"].Should().Be("owner@example.com");
+        var providers = payload["providers"].Should().BeAssignableTo<IReadOnlyList<ExternalLoginProviderItemDto>>().Subject;
+        providers.Should().HaveCount(2);
+        providers.Should().NotContain(x => x.Provider == "GitHub");
+
+        var googleRow = providers.Single(x => x.Provider == "Google");
+        googleRow.IsConnected.Should().BeTrue();
+        googleRow.ProviderEmail.Should().Be("linked@gmail.com");
+        googleRow.AvatarUrl.Should().Be("https://example.com/avatar.png");
+
+        var microsoft = providers.Single(x => x.Provider == "Microsoft");
+        microsoft.IsConnected.Should().BeFalse();
     }
 
     [Test]
@@ -297,7 +374,9 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
     }
 
-    private ExternalLoginService CreateExternalLoginService(HttpMessageHandler handler)
+    private ExternalLoginService CreateExternalLoginService(
+        HttpMessageHandler handler,
+        Action<ExternalLoginOptions>? configure = null)
     {
         var options = new ExternalLoginOptions
         {
@@ -312,6 +391,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 },
             },
         };
+        configure?.Invoke(options);
 
         var optionsMock = new Mock<IOptionsSnapshot<ExternalLoginOptions>>();
         optionsMock.Setup(o => o.Value).Returns(options);

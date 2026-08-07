@@ -36,7 +36,7 @@ Consumers register the package with `services.AddCrossIdentity(configuration)` a
 | **Fix** | Regression fix, OAuth state, refresh rotation, flow validation |
 | **Build** | New step/factory, flow JSON, integration tests, Sample.Api improvements |
 | **Review** | PR review, especially auth/JWT/OAuth changes |
-| **Document** | `FLOWS.md`, `docs/MIGRATION.md`, README, release notes in `config.nuspec` |
+| **Document** | `FLOWS.md`, `docs/BREAKING.md`, README, release notes in `config.nuspec` |
 
 ---
 
@@ -48,7 +48,7 @@ This is an identity library. Any change to JWT, refresh tokens, OAuth state, pas
 
 ### Flow contracts are public API
 
-JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` links there and must not duplicate the list).
+JSON in `ProcessEngine/Definitions/Flows/` and `collectResult` behavior are contracts for NuGet consumers. Breaking changes require entries in `docs/BREAKING.md` only (`config.nuspec` `releaseNotes` links there and must not duplicate the list).
 
 ### One `kind` per flow
 
@@ -76,14 +76,14 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 - `Cross.Identity/` — library, steps, services, entities, licensing;
 - `Cross.Identity.Tests/` — unit + integration (flow, OAuth, JWT);
 - `Sample.Api/` — smoke/E2E host example;
-- `Cross.Identity/FLOWS.md`, `docs/MIGRATION.md`, `config.nuspec`;
+- `Cross.Identity/FLOWS.md`, `docs/BREAKING.md`, `config.nuspec`;
 - CI: `.github/workflows/dotnet.yml`, `triage.yml`, `backmerge-master-to-dev.yml`.
 
 ### Out of scope (without maintainer discussion)
 
 - Large process engine architecture refactors “for aesthetics”;
 - New external dependencies without a strong reason;
-- Consumer-breaking changes without a migration guide;
+- Consumer-breaking changes without a `docs/BREAKING.md` entry;
 - Secrets, keys, `.env` in commits.
 
 ### New flow or step
@@ -92,7 +92,7 @@ More details: [`.cursor/rules/`](.cursor/rules/) (for Cursor/IDE).
 2. For a new `kind` — `IStep` + `IStepFactory` + registration in `ServiceCollectionExtensions`
 3. Tests: unit step/factory + integration flow test
 4. Entry in `FLOWS.md`
-5. For public contract changes — `docs/MIGRATION.md`
+5. For public contract changes — `docs/BREAKING.md`
 
 ---
 
@@ -179,7 +179,7 @@ git checkout -b feature/short-description
 
 - Follow directory structure (`Services/`, `ProcessEngine/Steps/`, `Entities/`).
 - Do not touch unrelated files.
-- Breaking change → `docs/MIGRATION.md` only (nuspec keeps a link, not a duplicate list).
+- Breaking change → `docs/BREAKING.md` only (nuspec keeps a link, not a duplicate list).
 
 ### 3. Tests (required)
 
@@ -240,7 +240,7 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 | What changed | Update |
 |--------------|--------|
 | JSON flow / step | `Cross.Identity/FLOWS.md` |
-| Breaking change for consumers | `docs/MIGRATION.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
+| Breaking change for consumers | `docs/BREAKING.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
 | New configuration option | `README.md`, XML on options class |
 | OAuth / multi-instance | `FLOWS.md` (briefly), release plan §B |
 | Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + summary script |

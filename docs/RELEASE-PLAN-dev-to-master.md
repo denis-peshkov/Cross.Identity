@@ -8,7 +8,7 @@
 > **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-07-15)
 > **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **100** items — ✅ **59** (59%) · 🟨 **27** (27%) · ⬜ **14** (14%) · ❌ **0** (0%)
+**Checklist summary:** **98** items — ✅ **58** (59%) · 🟨 **28** (29%) · ⬜ **12** (12%) · ❌ **0** (0%)
 
 ---
 
@@ -342,7 +342,7 @@ dotnet run --project Sample.Api
 | DOC3 | `RefreshToken.md` | ✅ current | — |
 | DOC4 | `config.nuspec` releaseNotes | 🟨 | licensing + OAuth; full breaking list ⬜ |
 | DOC5 | `LICENSE.md` | ✅ | updated (peshkov.biz) |
-| DOC6 | Migration guide for consumers | ⬜ | `docs/MIGRATION.md` not created |
+| DOC6 | Breaking-changes guide for consumers | 🟨 | `docs/BREAKING.md` (renamed from `MIGRATION.md`) |
 | DOC7 | CHANGELOG / GitHub Release | ⬜ | Before release |
 
 ---
@@ -397,7 +397,7 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 | **P0** | No integration flow tests for External OAuth | ✅ `Main_ExternalOAuth_FlowTests` |
 | **P1** | `config.nuspec` — outdated dependencies | ✅ Synchronized with `.csproj` |
 | **P1** | `FLOWS.md` does not match code | ✅ Updated |
-| **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/MIGRATION.md` (file ⬜) |
+| **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/BREAKING.md` |
 | **P1** | OAuth state — multi-instance | ✅ `auth.ExternalLoginStates` instead of `IMemoryCache` |
 | **P2** | License soft-fail in production | Product decision |
 | **P2** | No EF migrations in repo | 🟨 SQL scripts in `Infrastructure/Scripts/` (reference copy); no EF `Migrations/` |
@@ -411,12 +411,12 @@ Execute in order; proceed to the next step after closing the previous one (or an
 
 - ✅ **1. P0 blockers** — `main.ResetPassword.json`, `Main_ResetPassword_FlowTests`, `Main_ExternalOAuth_FlowTests`
 - 🟨 **2. Tests** — `dotnet test` 301/301 ✅ locally; coverage (opencover) ⬜
-- 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
+- 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/BREAKING.md` + CHANGELOG ⬜
 - 🟨 **4. DB** — SQL scripts ✅; staging apply + backfill/rollback runbook ⬜
 - 🟨 **5. E2E Sample.Api** — `rest-client/Sample.Api.http` prepared (10 ops); manual run ⬜
 - 🟨 **6. OAuth** — integration flow tests ✅ (mocked Google); real Google E2E ⬜
 - 🟨 **7. CI** — `dotnet.yml` ✅ on `dev`; SonarCloud QG ✅ on PR #5; triage ✅
-- 🟨 **8. Breaking changes** — described in plan; migration guide + consumer alignment ⬜
+- 🟨 **8. Breaking changes** — described in plan; `docs/BREAKING.md` + consumer alignment ⬜
 - ⬜ **9. Release** — merge into `master`, tag, NuGet publish
 
 ### Minimum go/no-go checklist
@@ -428,6 +428,6 @@ Execute in order; proceed to the next step after closing the previous one (or an
 - ⬜ Refresh rotation + absolute expiry verified manually
 - ⬜ DeveloperMode disabled in prod config
 - ⬜ LicenseKey configured (or consciously soft-fail)
-- 🟨 Breaking changes — in plan; `docs/MIGRATION.md` ⬜
+- 🟨 Breaking changes — in plan; `docs/BREAKING.md` present, consumer alignment ⬜
 - ✅ `config.nuspec` synchronized
 - 🟨 CI green on PR (`dotnet.yml` ✅ on `dev`; repeat after final push)

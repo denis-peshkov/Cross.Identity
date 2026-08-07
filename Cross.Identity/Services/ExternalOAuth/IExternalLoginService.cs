@@ -7,8 +7,13 @@
 /// <item><description><c>ExternalLoginInitiateStep</c> — <see cref="InitiateAsync"/></description></item>
 /// <item><description><c>ExternalLoginCompleteStep</c> — <see cref="CompleteAsync"/></description></item>
 /// <item><description><c>ExternalLoginUnlinkStep</c> — <see cref="UnlinkAsync"/></description></item>
+/// <item><description><c>ExternalLoginGetAllStep</c> — <see cref="GetAllAsync"/></description></item>
 /// </list>
-/// Corresponding flows: <c>main.ExternalLogin</c>, <c>main.ExternalLoginCallback</c>, <c>main.ExternalLoginUnlink</c>.
+/// Corresponding flows:
+/// <c>main.ExternalLogin</c>,
+/// <c>main.ExternalLoginCallback</c>,
+/// <c>main.ExternalLoginUnlink</c>,
+/// <c>main.ExternalLoginGetAll</c>.
 /// OAuth state is persisted in <c>auth.ExternalLoginStates</c> (nonce + TTL) and consumed once on callback.
 /// </summary>
 internal interface IExternalLoginService
@@ -112,5 +117,21 @@ internal interface IExternalLoginService
     /// </exception>
     Task UnlinkAsync(
         string provider,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// List enabled providers and link status for the authenticated user.
+    /// Includes a provider when it is linked, or when credentials are configured in
+    /// <see cref="ExternalLoginOptions"/> (<see cref="ExternalLoginProviderOptions.IsConfigured"/>).
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Account email and provider rows for the current principal.</returns>
+    /// <exception cref="NotAuthorizedException">
+    /// Caller is not authenticated.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Current user account was not found.
+    /// </exception>
+    Task<ExternalLoginOverviewDto> GetAllAsync(
         CancellationToken cancellationToken);
 }

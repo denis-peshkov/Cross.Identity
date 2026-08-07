@@ -17,7 +17,7 @@
     <releaseNotes><![CDATA[
 Cross.Identity: identity and authentication flows, JWT, process engine.
 
-Breaking changes: https://github.com/denis-peshkov/Cross.Identity/blob/master/docs/MIGRATION.md
+Breaking changes: https://github.com/denis-peshkov/Cross.Identity/blob/master/docs/BREAKING.md
 
 Licensing
 - JWT license validation (Peshkov software) on first IFlowExecutor.ExecuteAsync call.

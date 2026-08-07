@@ -1,0 +1,24 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": []
+      },
+      "next": "externalLoginGetAll"
+    },
+    {
+      "kind": "externalLoginGetAll",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "account_email": "externalLoginGetAll.AccountEmail",
+        "providers": "externalLoginGetAll.Providers"
+      },
+      "next": null
+    }
+  ]
+}

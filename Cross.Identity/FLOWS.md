@@ -28,10 +28,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 | `*.ExternalLoginUnlink.json` | `ExternalLoginUnlink` |
+| `*.ExternalLoginGetAll.json` | `ExternalLoginGetAll` |
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
 
-### All flow files (14)
+### All flow files (15)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -47,6 +48,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `main` | ExternalLogin | `main.ExternalLogin.json` |
 | `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
 | `main` | ExternalLoginUnlink | `main.ExternalLoginUnlink.json` |
+| `main` | ExternalLoginGetAll | `main.ExternalLoginGetAll.json` |
 | `main` | Logout | `main.Logout.json` |
 | `main` | LogoutAll | `main.LogoutAll.json` |
 
@@ -200,6 +202,20 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
+## `main.ExternalLoginGetAll.json`
+
+**Purpose:** list enabled OAuth providers and link status for the authenticated user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | No fields (empty schema). → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | Reads principal from `HttpContext`. → `collectResult` |
+| `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
+
+> Requires an authenticated principal. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+
+---
+
 ## `main.Logout.json`
 
 **Purpose:** revoke the current session (presented refresh token).
@@ -261,6 +277,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `externalLoginInitiate` | OAuth redirect URL |
 | `externalLoginComplete` | OAuth callback, issue tokens |
 | `externalLoginUnlink` | Unlink OAuth provider from current user |
+| `externalLoginGetAll` | List OAuth providers + link status for current user |
 | `logout` | Revoke current refresh token (`USER_LOGOUT`) |
 | `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
 | `verifyToken` | Validate access token; return `valid` (+ `user_id` / `jti` when valid) |

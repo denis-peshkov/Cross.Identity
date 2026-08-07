@@ -1,4 +1,4 @@
-# Migration guide (NuGet consumers)
+# Breaking changes (NuGet consumers)
 
 Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.10` = all sections below).
 
@@ -10,9 +10,7 @@ Breaking changes for **Cross.Identity**, grouped by **from → to** package vers
 | `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
 | `1.10.x` → `1.11.0+` | [From 1.10.x to 1.11.0](#from-110x-to-1110) |
 
-`1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes (additive: `ChangePassword`, `VerifyToken`).
-
-Flow contracts: [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md).
+`1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes.
 
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
@@ -59,7 +57,7 @@ Removed demo flows: `game.*`, `shop.*`, `edoctors.*`.
 
 ### Licensing
 
-JWT license validation runs on the first `IFlowExecutor.ExecuteAsync` call.
+JWT license validation runs on the first `IFlowExecutor.ExecuteAsync` call. Calls fail without a valid key.
 
 - `CrossIdentity:LicenseKey` in configuration, or
 - `CrossIdentity__LicenseKey` environment variable
@@ -71,7 +69,6 @@ Reference DDL: `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/`.
 - Prefer `Email` over removed `NormalizedEmail`.
 - `RowVersion` → `ConcurrencyStamp` (`IHasConcurrencyStamp` + interceptor); update host EF mappings and SQL scripts accordingly.
 - `RefreshToken.AbsoluteExpiresAt` — add column and backfill.
-- External logins: `UserExternalLogin` + provider seed (Google, Microsoft, GitHub, Apple).
 
 ### Dependencies
 
@@ -155,14 +152,13 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 
 ### `main.ChangePassword` input: `Email` → `UserId`
 
-| Area | Was (1.10) | Now |
-|------|------------|-----|
+| Area | Was (1.10) | Now (1.11+) |
+|------|------------|-------------|
 | Form fields | `Email`, `CurrentPassword`, `NewPassword` | `UserId` (Guid string), `CurrentPassword`, `NewPassword` |
 | `passwordAuth.selectorField` | `Email` | `Id` |
 | `resetPassword.resolveBy.field` | `Email` | `Id` |
 
-`ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserByAsync` / `GetUserIdByAsync` accept selector `"Id"`.
-
-`resetPassword` still sends the change notification to `selectorKey` as-is (Guid when resolving by `Id`), not to the account email.
+`ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserByAsync` accept selector `"Id"`.
+`GetUserIdByAsync` does **not** — when the selector is already the id, `PasswordAuthStep` writes it to the bag without a lookup.
 
 **Action:** pass `{ UserId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.

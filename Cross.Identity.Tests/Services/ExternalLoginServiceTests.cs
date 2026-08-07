@@ -889,6 +889,84 @@ public class ExternalLoginServiceTests : EFTestsBase
             .WithMessage("*not linked*");
     }
 
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAuthenticatedUser_WhenGetAllAsync_ThenReturnsLinkedAndConfiguredProvidersAsync()
+    {
+        var userId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        SeedProvider("Microsoft");
+        SeedProvider("GitHub");
+        SeedProvider("Apple");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "owner@example.com",
+            UserName = "owner",
+            NormalizedUserName = "owner",
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userId,
+            ProviderId = googleId,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "linked@gmail.com",
+            AvatarUrl = "https://example.com/avatar.png",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SetAuthenticatedUser(userId);
+
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-id",
+                    ClientSecret = "ms-secret",
+                };
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "apple-id",
+                    ClientSecret = "apple-secret",
+                    IsEnabled = false,
+                };
+            });
+
+        var result = await sut.GetAllAsync(CancellationToken.None);
+
+        result.AccountEmail.Should().Be("owner@example.com");
+        result.Providers.Should().HaveCount(2);
+        result.Providers.Should().NotContain(x => x.Provider == "GitHub");
+        result.Providers.Should().NotContain(x => x.Provider == "Apple");
+
+        var google = result.Providers.Single(x => x.Provider == "Google");
+        google.IsConnected.Should().BeTrue();
+        google.ProviderEmail.Should().Be("linked@gmail.com");
+        google.AvatarUrl.Should().Be("https://example.com/avatar.png");
+
+        var microsoft = result.Providers.Single(x => x.Provider == "Microsoft");
+        microsoft.IsConnected.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnauthenticatedUser_WhenGetAllAsync_ThenThrowsNotAuthorizedAsync()
+    {
+        ClearAuthenticatedUser();
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.GetAllAsync(CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Authentication is required*");
+    }
+
     private ExternalLoginService CreateService(
         HttpMessageHandler handler,
         Action<ExternalLoginOptions>? configure = null,

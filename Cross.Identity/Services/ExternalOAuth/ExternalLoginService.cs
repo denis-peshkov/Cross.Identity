@@ -227,6 +227,71 @@ internal sealed class ExternalLoginService : IExternalLoginService
             providerEntity.Name);
     }
 
+    /// <inheritdoc/>
+    public async Task<ExternalLoginOverviewDto> GetAllAsync(CancellationToken cancellationToken)
+    {
+        var userId = TryGetAuthenticatedUserId()
+            ?? throw new NotAuthorizedException("Authentication is required to list external logins.");
+
+        var account = await _identityContext.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => new { x.Email })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException("Current user account was not found.");
+
+        var providers = await _identityContext.Providers
+            .AsNoTracking()
+            .Where(x => x.IsEnabled)
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var connectedLogins = await _identityContext.UsersExternalLogins
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == userId)
+            .Select(x => new { x.ProviderId, x.ProviderEmail, x.AvatarUrl, x.ProfileUrl })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var connectedByProviderId = connectedLogins.ToDictionary(
+            x => x.ProviderId,
+            x => new { x.ProviderEmail, x.AvatarUrl, x.ProfileUrl });
+
+        var result = new List<ExternalLoginProviderItemDto>();
+        foreach (var provider in providers)
+        {
+            var isConnected = connectedByProviderId.ContainsKey(provider.Id);
+            if (!isConnected && !IsProviderConfigured(provider.Name))
+                continue;
+
+            connectedByProviderId.TryGetValue(provider.Id, out var connectedLogin);
+            result.Add(new ExternalLoginProviderItemDto
+            {
+                Provider = provider.Name,
+                DisplayName = provider.Name,
+                IsConnected = isConnected,
+                ProviderEmail = connectedLogin?.ProviderEmail,
+                AvatarUrl = connectedLogin?.AvatarUrl ?? connectedLogin?.ProfileUrl,
+            });
+        }
+
+        return new ExternalLoginOverviewDto
+        {
+            AccountEmail = account.Email,
+            Providers = result,
+        };
+    }
+
+    private bool IsProviderConfigured(string providerName)
+    {
+        if (!_options.Providers.TryGetValue(providerName, out var providerOptions))
+            return false;
+
+        return providerOptions.IsConfigured;
+    }
+
     private string BuildAuthorizationUrl(
         ExternalOAuthProviderDefinition definition,
         ExternalLoginProviderOptions providerOptions,
@@ -523,7 +588,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     private Guid? TryGetAuthenticatedUserId()
     {
-        var user = _httpContextAccessor.HttpContext?.User;
+        var user = _httpContextAccessor.HttpContext?.User; // todo: убрать из библиотеки _httpContextAccessor
         if (user?.Identity?.IsAuthenticated != true)
         {
             return null;

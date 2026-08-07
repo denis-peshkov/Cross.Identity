@@ -51,7 +51,7 @@ body:
       options:
         - "No"
         - "Maybe — needs discussion"
-        - "Yes — needs MIGRATION.md entry"
+        - "Yes — needs BREAKING.md entry"
     validations:
       required: true
 

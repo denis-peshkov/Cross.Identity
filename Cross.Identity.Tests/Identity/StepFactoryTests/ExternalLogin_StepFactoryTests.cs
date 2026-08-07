@@ -95,4 +95,24 @@ public class ExternalLogin_StepFactoryTests
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenValidGetAllJson_WhenCreate_ThenReturnsConfiguredStep()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "externalLoginGetAll",
+              "next": "done"
+            }
+            """);
+
+        var factory = new ExternalLoginGetAllStepFactory();
+        var step = (ExternalLoginGetAllStep)factory.Create(json.RootElement, _sp);
+
+        step.Kind.Should().Be("externalLoginGetAll");
+        step.Next.Should().Be("done");
+        step.ExternalLoginService.Should().NotBeNull();
+    }
 }
