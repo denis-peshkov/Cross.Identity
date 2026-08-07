@@ -16,7 +16,8 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="claims">Claims to include in the token.</param>
     /// <returns>Token string in compact form.</returns>
-    string GenerateIdToken(List<Claim> claims);
+    string GenerateIdToken(
+        List<Claim> claims);
 
     /// <summary>
     /// Issue an access token (JWT) for API authorization and persist its <c>jti</c> in storage.
@@ -26,9 +27,18 @@ public interface IJwtTokenService
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="permissions">Permissions to add as claims.</param>
     /// <param name="claims">Additional token claims.</param>
+    /// <param name="ipAddress">Optional client IP for audit fields on the persisted token.</param>
+    /// <param name="userAgent">Optional User-Agent for audit fields on the persisted token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Access token string in compact form.</returns>
-    Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims, CancellationToken cancellationToken);
+    Task<string> GenerateAccessTokenAsync(
+        Guid userId,
+        Guid familyId,
+        List<string> permissions,
+        List<Claim> claims,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Issue a refresh token (JWT) for session rotation and persist its hash in storage.
@@ -36,9 +46,17 @@ public interface IJwtTokenService
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="claims">Additional refresh-token claims.</param>
+    /// <param name="ipAddress">Optional client IP for audit fields on the persisted token.</param>
+    /// <param name="userAgent">Optional User-Agent for audit fields on the persisted token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token string.</returns>
-    Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims, CancellationToken cancellationToken);
+    Task<string> GenerateRefreshTokenAsync(
+        Guid userId,
+        Guid familyId,
+        List<Claim> claims,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Cryptographically validate an access token (signature, issuer, audience, lifetime;
@@ -49,7 +67,9 @@ public interface IJwtTokenService
     /// <returns>
     /// <c>true</c> if crypto checks and DB status both succeed; otherwise <c>false</c>.
     /// </returns>
-    Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken);
+    Task<bool> ValidateAccessTokenAsync(
+        string accessToken,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Validate an access token by <c>jti</c> without re-parsing/decrypting the token.
@@ -61,7 +81,9 @@ public interface IJwtTokenService
     /// <c>true</c> if the access token with the given <c>jti</c> exists in the DB, is not revoked, and not expired;
     /// otherwise <c>false</c>.
     /// </returns>
-    Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken);
+    Task<bool> ValidateAccessTokenJtiAsync(
+        Guid jti,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Validate a refresh token by its string value.
@@ -70,7 +92,9 @@ public interface IJwtTokenService
     /// <param name="refreshToken">Refresh token string.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>true</c> if the token is valid (not revoked and not expired); otherwise <c>false</c>.</returns>
-    Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
+    Task<bool> ValidateRefreshTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Ensure a refresh token may be used for rotation (exists, not revoked, not expired).
@@ -81,29 +105,37 @@ public interface IJwtTokenService
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
-    Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken);
+    Task EnsureRefreshTokenActiveForRotationAsync(
+        string refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke an access token by <c>jti</c> (mark as revoked in the DB).
     /// </summary>
     /// <param name="jti">JTI (identifier) of the access token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeAccessTokenAsync(Guid jti, CancellationToken cancellationToken);
+    Task RevokeAccessTokenAsync(
+        Guid jti,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Remove expired access tokens from storage by <c>ExpiresAt</c> (run periodically).
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task CleanupExpiredAccessTokensAsync(CancellationToken cancellationToken);
+    Task CleanupExpiredAccessTokensAsync(
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Delete refresh tokens whose chain absolute lifetime (<c>AbsoluteExpiresAt</c>) has expired.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task CleanupExpiredRefreshTokensAsync(CancellationToken cancellationToken);
+    Task CleanupExpiredRefreshTokensAsync(
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Get a claim value from a compact JWT/JWE by type(s). Synchronous.
@@ -115,7 +147,9 @@ public interface IJwtTokenService
     /// Claim types to search. Matching values overwrite; the last match is returned.
     /// </param>
     /// <returns>Claim value, or <c>null</c> if not found / JWE validation fails.</returns>
-    string? GetClaimValue(string token, params string[] claimTypes);
+    string? GetClaimValue(
+        string token,
+        params string[] claimTypes);
 
     /// <summary>
     /// Get a refresh token from storage by its string value.
@@ -124,7 +158,9 @@ public interface IJwtTokenService
     /// <param name="refreshToken">Refresh token string.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token entity, or <c>null</c> if not found.</returns>
-    Task<RefreshTokenEntity?> GetRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
+    Task<RefreshTokenEntity?> GetRefreshTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Invalidate (mark as replaced/revoked) a refresh token
@@ -139,16 +175,25 @@ public interface IJwtTokenService
     /// <param name="newJti">
     /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
-    Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken);
+    Task InvalidateRefreshTokenAsync(
+        string refreshToken,
+        string newJti,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke a refresh token on user logout: mark in the DB so refresh cannot be reused.
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken);
+    Task RevokeRefreshTokenForLogoutAsync(
+        string? refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Logout from all devices: resolve the user from a live refresh token and revoke every
@@ -157,11 +202,15 @@ public interface IJwtTokenService
     /// <param name="refreshToken">
     /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
     /// </param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">
     /// Refresh token is missing in storage, revoked, or expired.
     /// </exception>
-    Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken);
+    Task RevokeAllTokensForLogoutAsync(
+        string? refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke all active access and refresh tokens that share <paramref name="familyId"/>.
@@ -169,8 +218,13 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeRefreshTokenFamilyAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken);
+    Task RevokeRefreshTokenFamilyAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
@@ -178,8 +232,13 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="userId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedByIp</c>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken);
+    Task RevokeAllTokensForUserAsync(
+        Guid userId,
+        RefreshTokenRevokeReason reason,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 }
 
 // /// <summary>

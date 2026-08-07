@@ -32,6 +32,12 @@ internal sealed class TokenStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the code from. May be relative or absolute.</summary>
     public string? CodeKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
+    public required string IpAddressKey { get; init; }
+
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     /// <summary>Step logger.</summary>
     public ILogger Logger { get; set; }
 
@@ -98,10 +104,12 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
         // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

@@ -107,28 +107,16 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnauthenticatedUser_WhenInitiateAsyncWithLinkUserId_ThenThrowsNotAuthorizedAsync()
+    public async Task GivenLinkUserIdWithoutHttpContext_WhenInitiateAsync_ThenPersistsLinkUserIdAsync()
     {
+        var linkUserId = Guid.NewGuid();
         SeedProvider("Google");
-        ClearAuthenticatedUser();
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, Guid.NewGuid(), CancellationToken.None))
-            .Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Authentication is required*");
-    }
+        await sut.InitiateAsync("Google", null, linkUserId, CancellationToken.None);
 
-    [Test]
-    [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMismatchedLinkUserId_WhenInitiateAsync_ThenThrowsNotAuthorizedAsync()
-    {
-        SeedProvider("Google");
-        SetAuthenticatedUser(Guid.NewGuid());
-        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
-
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, Guid.NewGuid(), CancellationToken.None))
-            .Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*does not match the authenticated user*");
+        var state = await Context.ExternalLoginStates.SingleAsync();
+        state.LinkUserId.Should().Be(linkUserId);
     }
 
     [Test]
@@ -396,10 +384,9 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMismatchedAuthenticatedUser_WhenCompleteAsyncForLinking_ThenThrowsNotAuthorizedAsync()
+    public async Task GivenLinkUserIdInState_WhenCompleteAsyncForLinking_ThenLinksWithoutHttpContextPrincipalAsync()
     {
         var ownerUserId = Guid.NewGuid();
-        var attackerUserId = Guid.NewGuid();
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
@@ -414,15 +401,14 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
-        SetAuthenticatedUser(ownerUserId);
         var url = await sut.InitiateAsync("Google", null, ownerUserId, CancellationToken.None);
         var state = ExtractState(url);
 
-        SetAuthenticatedUser(attackerUserId);
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
-            .Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*does not match the authenticated user*");
+        completion.IsLinking.Should().BeTrue();
+        completion.UserId.Should().Be(ownerUserId);
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == ownerUserId)).Should().Be(1);
     }
 
     [Test]
@@ -792,12 +778,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         var jwt = new Mock<IJwtTokenService>();
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
                 userId,
-                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED,
-                It.IsAny<CancellationToken>()))
+                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
-        await sut.UnlinkAsync("Google", CancellationToken.None);
+        await sut.UnlinkAsync("Google", userId, null, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
         var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
@@ -806,23 +791,21 @@ public class ExternalLoginServiceTests : EFTestsBase
         jwt.Verify(
             j => j.RevokeAllTokensForUserAsync(
                 userId,
-                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED,
-                It.IsAny<CancellationToken>()),
+                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnauthenticatedUser_WhenUnlinkAsync_ThenThrowsNotAuthorizedAsync()
+    public async Task GivenEmptyUserId_WhenUnlinkAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");
-        ClearAuthenticatedUser();
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, null, CancellationToken.None))
             .Should()
-            .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Authentication is required*");
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*UserId is required*");
     }
 
     [Test]
@@ -854,7 +837,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*last login method*");
@@ -883,7 +866,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("*not linked*");
@@ -938,7 +921,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 };
             });
 
-        var result = await sut.GetAllAsync(CancellationToken.None);
+        var result = await sut.GetAllAsync(userId, CancellationToken.None);
 
         result.AccountEmail.Should().Be("owner@example.com");
         result.Providers.Should().HaveCount(2);
@@ -956,15 +939,14 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnauthenticatedUser_WhenGetAllAsync_ThenThrowsNotAuthorizedAsync()
+    public async Task GivenEmptyUserId_WhenGetAllAsync_ThenThrowsValidationExceptionAsync()
     {
-        ClearAuthenticatedUser();
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.GetAllAsync(CancellationToken.None))
+        await FluentActions.Invoking(() => sut.GetAllAsync(Guid.Empty, CancellationToken.None))
             .Should()
-            .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Authentication is required*");
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*UserId is required*");
     }
 
     private ExternalLoginService CreateService(
@@ -1002,7 +984,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,
-            _httpContextAccessor,
             jwtTokenService ?? Mock.Of<IJwtTokenService>(),
             provisioner);
     }

@@ -3,7 +3,6 @@
 internal class JwtTokenService : IJwtTokenService
 {
     private readonly IdentityContext _context;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly SymmetricSecurityKey _signingKey;
     private readonly SymmetricSecurityKey _encryptionKey;
     private readonly AuthenticationOptions _options;
@@ -11,11 +10,9 @@ internal class JwtTokenService : IJwtTokenService
 
     public JwtTokenService(
         IdentityContext context,
-        IOptionsSnapshot<AuthenticationOptions> options,
-        IHttpContextAccessor httpContextAccessor)
+        IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
-        _httpContextAccessor = httpContextAccessor;
         _options = options.Value;
 
         // A256KW (key-wrap algorithm) requires exactly 32 bytes (256 bits) for the wrap key.
@@ -63,7 +60,14 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateAccessTokenAsync(Guid userId, Guid familyId, List<string> permissions, List<Claim> claims, CancellationToken cancellationToken)
+    public async Task<string> GenerateAccessTokenAsync(
+        Guid userId,
+        Guid familyId,
+        List<string> permissions,
+        List<Claim> claims,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
 
@@ -108,8 +112,8 @@ internal class JwtTokenService : IJwtTokenService
             ExpiresAt = expiresAt,
             CreatedAt = createdAt,
             DeviceFingerprint = null,
-            UserAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString(),
-            IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
+            UserAgent = userAgent,
+            IpAddress = ipAddress,
         };
 
         // Persist jti in the access-tokens table (blacklist, audit, and revocation)
@@ -121,7 +125,13 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GenerateRefreshTokenAsync(Guid userId, Guid familyId, List<Claim> claims, CancellationToken cancellationToken)
+    public async Task<string> GenerateRefreshTokenAsync(
+        Guid userId,
+        Guid familyId,
+        List<Claim> claims,
+        string? ipAddress,
+        string? userAgent,
+        CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
 
@@ -159,8 +169,8 @@ internal class JwtTokenService : IJwtTokenService
                 AbsoluteExpiresAt = absoluteExpiresAt,
                 CreatedAt = createdAt,
                 DeviceFingerprint = null,
-                UserAgent = _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].ToString(),
-                IpAddress = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString(),
+                UserAgent = userAgent,
+                IpAddress = ipAddress,
             },
             cancellationToken)
             .ConfigureAwait(false);
@@ -251,7 +261,10 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task EnsureRefreshTokenActiveForRotationAsync(string refreshToken, CancellationToken cancellationToken)
+    public async Task EnsureRefreshTokenActiveForRotationAsync(
+        string refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
 
@@ -267,7 +280,7 @@ internal class JwtTokenService : IJwtTokenService
 
         if (entity.RevokedAt is not null)
         {
-            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
+            await HandleRefreshTokenReplayAsync(entity, ipAddress, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
         }
 
@@ -419,7 +432,11 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task InvalidateRefreshTokenAsync(string refreshToken, string newJti, CancellationToken cancellationToken)
+    public async Task InvalidateRefreshTokenAsync(
+        string refreshToken,
+        string newJti,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
         var jti = Guid.Parse(newJti);
@@ -433,14 +450,14 @@ internal class JwtTokenService : IJwtTokenService
         if (entity.RevokedAt is not null)
         {
             // Concurrent refresh or replay of an already rotated token — see REPLAY_DETECTED.
-            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
+            await HandleRefreshTokenReplayAsync(entity, ipAddress, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
         }
 
         entity.ReplacedByTokenId = jti;
         entity.RevokedAt = DateTime.UtcNow;
         entity.RevokeReason = RefreshTokenRevokeReason.ROTATION_REQUIRED;
-        entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        entity.RevokedByIp = ipAddress;
 
         try
         {
@@ -451,15 +468,19 @@ internal class JwtTokenService : IJwtTokenService
             // Another request won the rotation race; treat as reuse and kill the family
             // so a possible attacker-held successor token cannot survive.
             await _context.Entry(entity).ReloadAsync(cancellationToken).ConfigureAwait(false);
-            await HandleRefreshTokenReplayAsync(entity, cancellationToken).ConfigureAwait(false);
+            await HandleRefreshTokenReplayAsync(entity, ipAddress, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
         }
     }
 
     /// <inheritdoc/>
-    public async Task RevokeRefreshTokenFamilyAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
+    public async Task RevokeRefreshTokenFamilyAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
-        await RevokeRefreshTokenFamilyCoreAsync(familyId, reason, cancellationToken).ConfigureAwait(false);
+        await RevokeRefreshTokenFamilyCoreAsync(familyId, reason, ipAddress, cancellationToken).ConfigureAwait(false);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -476,9 +497,12 @@ internal class JwtTokenService : IJwtTokenService
     /// </list>
     /// Legitimate retry / double-refresh can look the same — accepted trade-off.
     /// </remarks>
-    private async Task HandleRefreshTokenReplayAsync(RefreshTokenEntity reusedToken, CancellationToken cancellationToken)
+    private async Task HandleRefreshTokenReplayAsync(
+        RefreshTokenEntity reusedToken,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
-        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        var revokedByIp = ipAddress;
 
         // Audit: the presented token was already revoked (usually ROTATION_REQUIRED); record that reuse was detected.
         reusedToken.RevokeReason = RefreshTokenRevokeReason.REPLAY_DETECTED;
@@ -487,16 +511,21 @@ internal class JwtTokenService : IJwtTokenService
         await RevokeRefreshTokenFamilyCoreAsync(
                 reusedToken.FamilyId,
                 RefreshTokenRevokeReason.REPLAY_DETECTED,
+                ipAddress,
                 cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task RevokeRefreshTokenFamilyCoreAsync(Guid familyId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
+    private async Task RevokeRefreshTokenFamilyCoreAsync(
+        Guid familyId,
+        RefreshTokenRevokeReason reason,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        var revokedByIp = ipAddress;
 
         var refreshTokens = await _context.RefreshTokens
             .Where(x => x.FamilyId == familyId && x.RevokedAt == null)
@@ -524,7 +553,10 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeRefreshTokenForLogoutAsync(string? refreshToken, CancellationToken cancellationToken)
+    public async Task RevokeRefreshTokenForLogoutAsync(
+        string? refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -545,13 +577,16 @@ internal class JwtTokenService : IJwtTokenService
 
         entity.RevokedAt = DateTime.UtcNow;
         entity.RevokeReason = RefreshTokenRevokeReason.USER_LOGOUT;
-        entity.RevokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        entity.RevokedByIp = ipAddress;
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAllTokensForLogoutAsync(string? refreshToken, CancellationToken cancellationToken)
+    public async Task RevokeAllTokensForLogoutAsync(
+        string? refreshToken,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
         {
@@ -575,16 +610,20 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Invalid or expired refresh token.");
         }
 
-        await RevokeAllTokensForUserAsync(entity.UserId, RefreshTokenRevokeReason.USER_LOGOUT_ALL, cancellationToken)
+        await RevokeAllTokensForUserAsync(entity.UserId, RefreshTokenRevokeReason.USER_LOGOUT_ALL, ipAddress, cancellationToken)
             .ConfigureAwait(false);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAllTokensForUserAsync(Guid userId, RefreshTokenRevokeReason reason, CancellationToken cancellationToken)
+    public async Task RevokeAllTokensForUserAsync(
+        Guid userId,
+        RefreshTokenRevokeReason reason,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        var revokedByIp = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+        var revokedByIp = ipAddress;
 
         var refreshTokens = await _context.RefreshTokens
             .Where(x => x.UserId == userId && x.RevokedAt == null)

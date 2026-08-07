@@ -84,7 +84,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `refreshToken` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `refreshToken` |
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
@@ -125,7 +125,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128). → `passwordAuth` |
+| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128); optional `IpAddress`, `UserAgent`. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `selectorField: Id`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Id`. `next: null` |
 
@@ -140,7 +140,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128). → `verifyCode` |
+| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
 
@@ -154,7 +154,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32). Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
+| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
@@ -170,7 +170,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `LinkUserId` enables account linking when present and must match the authenticated principal (`sub` / NameIdentifier); omit for normal sign-in / sign-up.
+> `LinkUserId` enables account linking when present; the host must supply the authenticated user’s id (the library does not read `HttpContext`). Omit for normal sign-in / sign-up.
 
 ---
 
@@ -180,7 +180,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.). → `externalLoginComplete` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.); optional `IpAddress`, `UserAgent`. → `externalLoginComplete` |
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
@@ -190,29 +190,29 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.ExternalLoginUnlink.json`
 
-**Purpose:** unlink an external OAuth provider from the authenticated user.
+**Purpose:** unlink an external OAuth provider from the given user.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32). → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional `IpAddress`, `UserAgent`. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`, `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Requires an authenticated principal (`sub` / NameIdentifier). Removes the matching row from `auth.UsersExternalLogins` for the current user and provider.
+> Host supplies `UserId` from the authenticated principal. Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 
 ---
 
 ## `main.ExternalLoginGetAll.json`
 
-**Purpose:** list enabled OAuth providers and link status for the authenticated user.
+**Purpose:** list enabled OAuth providers and link status for the given user.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | No fields (empty schema). → `externalLoginGetAll` |
-| `externalLoginGetAll` | externalLoginGetAll | Reads principal from `HttpContext`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string). → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
-> Requires an authenticated principal. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+> Host supplies `UserId`. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -222,7 +222,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logout` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `logout` |
 | `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
@@ -236,7 +236,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logoutAll` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `logoutAll` |
 | `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 

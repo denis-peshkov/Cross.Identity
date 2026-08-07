@@ -15,6 +15,9 @@ internal sealed class LogoutAllStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the source refresh token from. May be relative or absolute.</summary>
     public required string RefreshTokenKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
+    public required string IpAddressKey { get; init; }
+
     /// <summary>Service for working with JWT and token entities.</summary>
     public required IJwtTokenService JwtTokenService { get; init; }
 
@@ -22,8 +25,9 @@ internal sealed class LogoutAllStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
 
-        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, ipAddress, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

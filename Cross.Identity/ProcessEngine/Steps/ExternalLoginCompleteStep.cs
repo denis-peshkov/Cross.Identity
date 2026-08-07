@@ -19,6 +19,12 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
     public string? ErrorDescriptionKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
+    public required string IpAddressKey { get; init; }
+
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     public required IJwtTokenService JwtTokenService { get; init; }
@@ -67,7 +73,10 @@ internal sealed class ExternalLoginCompleteStep : IStep
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
 
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
         var refreshToken = await JwtTokenService
             .GenerateRefreshTokenAsync(
                 userId.UserId,
@@ -76,6 +85,8 @@ internal sealed class ExternalLoginCompleteStep : IStep
                 {
                     new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString())
                 },
+                ipAddress,
+                userAgent,
                 cancellationToken)
             .ConfigureAwait(false);
 

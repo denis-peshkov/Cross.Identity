@@ -33,6 +33,8 @@ public class RefreshToken_StepFactoryTests
             {
               "kind": "refreshToken",
               "refreshTokenKey": "RefreshToken",
+              "ipAddressKey": "collectForm.IpAddress",
+              "userAgentKey": "collectForm.UserAgent",
               "next": "done"
             }
             """);
@@ -42,6 +44,8 @@ public class RefreshToken_StepFactoryTests
 
         step.Kind.Should().Be("refreshToken");
         step.RefreshTokenKey.Should().Be("RefreshToken");
+        step.IpAddressKey.Should().Be("collectForm.IpAddress");
+        step.UserAgentKey.Should().Be("collectForm.UserAgent");
         step.Next.Should().Be("done");
         step.JwtTokenService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();

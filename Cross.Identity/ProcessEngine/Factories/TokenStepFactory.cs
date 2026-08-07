@@ -49,6 +49,8 @@ internal sealed class TokenStepFactory : IStepFactory
             SelectorKey     = cfg.Str("selectorKey"),
             PasswordKey     = cfg.StrOpt("passwordKey"),
             CodeKey         = cfg.StrOpt("codeKey"),
+            IpAddressKey    = cfg.Str("ipAddressKey"),
+            UserAgentKey    = cfg.Str("userAgentKey"),
             Next            = cfg.StrOpt("next")
         };
     }

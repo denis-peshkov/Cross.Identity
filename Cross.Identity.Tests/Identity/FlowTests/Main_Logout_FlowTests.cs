@@ -54,7 +54,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -75,9 +75,9 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },

@@ -5,7 +5,9 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 }
         ]
       },
       "next": "refreshToken"
@@ -13,6 +15,8 @@
     {
       "kind": "refreshToken",
       "refreshTokenKey": "collectForm.RefreshToken",
+      "ipAddressKey": "collectForm.IpAddress",
+      "userAgentKey": "collectForm.UserAgent",
       "next": "collectResult"
     },
     {

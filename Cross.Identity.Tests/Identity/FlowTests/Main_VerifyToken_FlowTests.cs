@@ -54,7 +54,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -68,7 +68,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
             userId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },
@@ -109,7 +109,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
 
         var userId = Guid.NewGuid();
@@ -118,7 +118,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
             userId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
         accessToken.Split('.').Length.Should().Be(5);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -141,7 +141,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyId, new List<string>(), new List<Claim>(), CancellationToken.None);
+            userId, familyId, new List<string>(), new List<Claim>(), null, null, CancellationToken.None);
 
         var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();

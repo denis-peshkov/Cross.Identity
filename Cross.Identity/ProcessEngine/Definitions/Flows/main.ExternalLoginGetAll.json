@@ -4,12 +4,15 @@
     {
       "kind": "collectForm",
       "schemaDef": {
-        "fields": []
+        "fields": [
+          { "key": "UserId", "type": "String", "required": true, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" }
+        ]
       },
       "next": "externalLoginGetAll"
     },
     {
       "kind": "externalLoginGetAll",
+      "userIdKey": "collectForm.UserId",
       "next": "collectResult"
     },
     {

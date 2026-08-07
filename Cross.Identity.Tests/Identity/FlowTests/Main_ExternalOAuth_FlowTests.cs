@@ -47,7 +47,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
         });
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, _httpContextAccessor);
+        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
         _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
 
         AddRegistryStep<CollectFormStepFactory>();
@@ -121,13 +121,10 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
         SetAuthenticatedUser(userId);
 
-        // Recreate service so it uses the authenticated HttpContext principal.
-        _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
-        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
-
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
+                ["UserId"] = userId,
                 ["Provider"] = "Google",
             },
             Flow,
@@ -195,7 +192,10 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?>(),
+            new Dictionary<string, object?>
+            {
+                ["UserId"] = userId,
+            },
             Flow,
             FlowOperationEnum.ExternalLoginGetAll,
             CancellationToken.None);
@@ -250,25 +250,25 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMismatchedLinkUserId_WhenExternalLogin_ThenRejectsAsync()
+    public async Task GivenLinkUserId_WhenExternalLogin_ThenAcceptsWithoutMatchingPrincipalAsync()
     {
         var authenticatedUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
         SetAuthenticatedUser(authenticatedUserId);
 
-        await FluentActions.Invoking(() =>
-                _flowExecutor.ExecuteAsync(
-                    new Dictionary<string, object?>
-                    {
-                        ["Provider"] = "Google",
-                        ["LinkUserId"] = otherUserId.ToString(),
-                    },
-                    Flow,
-                    FlowOperationEnum.ExternalLogin,
-                    CancellationToken.None))
-            .Should()
-            .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*does not match the authenticated user*");
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["Provider"] = "Google",
+                ["LinkUserId"] = otherUserId.ToString(),
+            },
+            Flow,
+            FlowOperationEnum.ExternalLogin,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
+        (await Context.ExternalLoginStates.SingleAsync()).LinkUserId.Should().Be(otherUserId);
     }
 
     [Test]
@@ -406,7 +406,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
-            _httpContextAccessor,
             _jwtTokenService);
     }
 

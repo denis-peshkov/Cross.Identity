@@ -8,7 +8,9 @@
           { "key": "Code", "type": "String", "required": false, "min": 1, "max": 2048 },
           { "key": "State", "type": "String", "required": true, "min": 1, "max": 4096 },
           { "key": "Error", "type": "String", "required": false, "max": 256 },
-          { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 }
+          { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 }
         ],
         "validators": [
           { "kind": "requiredIf", "when": { "field": "Error", "equals": "" }, "then": { "name": "Code", "required": true }, "message": "Provide an authorization code or an OAuth error." },
@@ -24,6 +26,8 @@
       "stateKey": "collectForm.State",
       "errorKey": "collectForm.Error",
       "errorDescriptionKey": "collectForm.ErrorDescription",
+      "ipAddressKey": "collectForm.IpAddress",
+      "userAgentKey": "collectForm.UserAgent",
       "next": "collectResult"
     },
     {

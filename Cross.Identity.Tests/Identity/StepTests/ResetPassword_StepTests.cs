@@ -7,7 +7,6 @@ public class ResetPassword_StepTests
     private Mock<IUserService> _userService = null!;
     private Mock<IEmailSenderService> _emailSenderService = null!;
     private Mock<ISmsSenderService> _smsSenderService = null!;
-    private Mock<IHttpContextAccessor> _httpContextAccessor = null!;
     private Mock<ILogger> _logger = null!;
 
     [SetUp]
@@ -17,7 +16,6 @@ public class ResetPassword_StepTests
         _userService = new Mock<IUserService>();
         _emailSenderService = new Mock<IEmailSenderService>();
         _smsSenderService = new Mock<ISmsSenderService>();
-        _httpContextAccessor = new Mock<IHttpContextAccessor>();
         _logger = new Mock<ILogger>();
     }
 
@@ -28,7 +26,7 @@ public class ResetPassword_StepTests
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";
 
-        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ResetPasswordStep
@@ -36,10 +34,10 @@ public class ResetPassword_StepTests
             Kind = "resetPassword",
             SelectorKey = "forgotPassword.email",
             PasswordKey = "forgotPassword.password",
+            IpAddressKey = "IpAddress",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
-            HttpContextAccessor = _httpContextAccessor.Object,
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             ResolveBy = new ResolveBy { Field = "Email" },
@@ -55,7 +53,7 @@ public class ResetPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Email", email, password, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Email", email, password, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _emailSenderService.Verify(
             x => x.SendAsync("", email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
@@ -70,7 +68,7 @@ public class ResetPassword_StepTests
         var password = "P@ssw0rd!";
         var userIdText = userId.ToString();
 
-        _userService.Setup(u => u.SetPasswordAsync("Id", userIdText, password, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.SetPasswordAsync("Id", userIdText, password, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ResetPasswordStep
@@ -78,10 +76,10 @@ public class ResetPassword_StepTests
             Kind = "resetPassword",
             SelectorKey = "collectForm.UserId",
             PasswordKey = "collectForm.NewPassword",
+            IpAddressKey = "IpAddress",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
-            HttpContextAccessor = _httpContextAccessor.Object,
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             ResolveBy = new ResolveBy { Field = "Id" },
@@ -97,7 +95,7 @@ public class ResetPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Id", userIdText, password, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Id", userIdText, password, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _userService.Verify(
             u => u.GetUserByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),

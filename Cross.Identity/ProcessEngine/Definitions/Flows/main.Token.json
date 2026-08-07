@@ -7,7 +7,9 @@
         "fields": [
           { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
           { "key": "Password", "type": "Password", "required": false, "min": 8, "max": 32 },
-          { "key": "Code", "type": "String", "required": false, "min": 4, "max": 32 }
+          { "key": "Code", "type": "String", "required": false, "min": 4, "max": 32 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 }
         ],
         "validators": [
           { "kind": "requiredIf", "when": { "field": "Code", "equals": "" }, "then": { "name": "Password", "required": true }, "message": "Provide a password or a code." },
@@ -22,6 +24,8 @@
       "selectorKey": "collectForm.Email",
       "passwordKey": "collectForm.Password",
       "codeKey": "collectForm.Code",
+      "ipAddressKey": "collectForm.IpAddress",
+      "userAgentKey": "collectForm.UserAgent",
       "channel": "email",
       "resolveBy": { "field": "Email", "required": true, "caseInsensitive": true },
       "accessTokenKey": "AccessToken",

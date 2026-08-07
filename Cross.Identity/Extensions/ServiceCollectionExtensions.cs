@@ -92,7 +92,6 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
         services.AddHttpClient(nameof(ExternalLoginService));
-        services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
 
         return services;

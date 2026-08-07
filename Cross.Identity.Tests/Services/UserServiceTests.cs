@@ -35,8 +35,7 @@ public class UserServiceTests : EFTestsBase
         _jwtTokenService
             .Setup(j => j.RevokeAllTokensForUserAsync(
                 It.IsAny<Guid>(),
-                It.IsAny<RefreshTokenRevokeReason>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<RefreshTokenRevokeReason>(), null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _userService = new UserService(
@@ -562,7 +561,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Hash("newPass", "new-pepper")).Returns("$pbkdf2$new");
 
-        await _userService.SetPasswordAsync("Email", email, "newPass", CancellationToken.None);
+        await _userService.SetPasswordAsync("Email", email, "newPass", null, CancellationToken.None);
 
         var user = await Context.UsersAccounts.FindAsync(userId);
         user.Should().NotBeNull();
@@ -571,7 +570,7 @@ public class UserServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBeNull();
         user.SecurityStamp.Should().NotBe(oldStamp);
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -579,7 +578,7 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
-        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", CancellationToken.None))
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", null, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>();
     }

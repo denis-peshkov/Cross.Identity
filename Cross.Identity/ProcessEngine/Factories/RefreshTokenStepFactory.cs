@@ -30,6 +30,8 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
             UserService           = userService,
             AuthenticationOptions = authenticationOptions,
             RefreshTokenKey       = cfg.Str("refreshTokenKey"),
+            IpAddressKey          = cfg.Str("ipAddressKey"),
+            UserAgentKey          = cfg.Str("userAgentKey"),
             Next                  = cfg.StrOpt("next")
         };
     }

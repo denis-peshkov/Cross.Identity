@@ -17,11 +17,13 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
+    public required string IpAddressKey { get; init; }
+
     public ILogger Logger { get; set; }
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
     public ISmsSenderService SmsSenderService { get; set; }
-    public IHttpContextAccessor HttpContextAccessor { get; set; }
     public required ChannelEnum Channel { get; init; }
     public required ResolveBy ResolveBy { get; init; }
 
@@ -30,10 +32,11 @@ internal sealed class ResetPasswordStep : IStep
     {
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
 
-        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, ipAddress, cancellationToken).ConfigureAwait(false);
 
-        var ip = HttpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
         var subject = "Password changed";
         var textBody = $"Your password was changed at {changedAt} from IP {ip}. If this wasn't you, contact support immediately.";

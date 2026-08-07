@@ -36,6 +36,12 @@ internal sealed class RefreshTokenStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the source refresh token from. May be relative or absolute.</summary>
     public required string RefreshTokenKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
+    public required string IpAddressKey { get; init; }
+
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     /// <summary>Step logger.</summary>
     public required ILogger Logger { get; init; }
 
@@ -53,7 +59,9 @@ internal sealed class RefreshTokenStep : IStep
     {
         // 1) validate the token (revoked reuse → family REPLAY_DETECTED + Conflict)
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, ipAddress, cancellationToken).ConfigureAwait(false);
 
         // 2) get UserId from the refresh token
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
@@ -80,17 +88,17 @@ internal sealed class RefreshTokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId, oldRefreshToken.FamilyId, new List<string>(), accessClaims, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userId, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, userId.ToString())}, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(refreshToken);
 
         // 6) Invalidate old RefreshToken
         var newJti = JwtTokenService.GetClaimValue(refreshToken, JwtRegisteredClaimNames.Jti);
         ArgumentException.ThrowIfNullOrEmpty(newJti);
-        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, ipAddress, cancellationToken).ConfigureAwait(false);
 
         // 7) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

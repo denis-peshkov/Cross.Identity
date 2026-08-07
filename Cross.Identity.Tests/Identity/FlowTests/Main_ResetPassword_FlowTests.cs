@@ -30,7 +30,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
@@ -76,7 +76,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -100,7 +100,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -126,7 +126,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -146,7 +146,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .ThrowAsync<ValidationException>();
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -170,7 +170,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -194,7 +194,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

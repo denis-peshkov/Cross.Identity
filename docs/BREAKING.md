@@ -1,4 +1,4 @@
-# Breaking changes (NuGet consumers)
+﻿# Breaking changes (NuGet consumers)
 
 Breaking changes for **Cross.Identity**, grouped by **from → to** package version. Apply every section in order when skipping releases (e.g. `1.4 → 1.10` = all sections below).
 
@@ -150,11 +150,32 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 
 ## From 1.10.x to 1.11.0
 
+### No `IHttpContextAccessor` / ambient `HttpContext` in the library
+
+Cross.Identity no longer reads `HttpContext` for the authenticated user, client IP, or User-Agent.
+Hosts must pass explicit flow inputs (and matching service parameters). Host ASP.NET still registers
+`IHttpContextAccessor` for its own handlers/cookies.
+
+| Area | Was (1.10) | Now (1.11+) |
+|------|------------|-------------|
+| `JwtTokenService` ctor | `(IdentityContext, IOptionsSnapshot, IHttpContextAccessor)` | `(IdentityContext, IOptionsSnapshot)` |
+| JWT issue/revoke APIs | IP/UA from `HttpContext` | `string? ipAddress` / `string? userAgent` on generate; `string? ipAddress` on invalidate/logout/family/user revoke helpers |
+| `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, string? ipAddress, ct)` |
+| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string? ipAddress, ct)` |
+| `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, ct)` |
+| `InitiateAsync` linking | `LinkUserId` must match authenticated principal | Host-supplied `LinkUserId` is trusted (no principal match) |
+| `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
+
+**Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent` on token/logout/password/OAuth-callback/unlink flows;
+**required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`.
+
+**Action:** fill bags from the host handler (`HttpContext` stays only in the host); update custom `IJwtTokenService` / OAuth callers.
+
 ### `main.ChangePassword` input: `Email` → `UserId`
 
 | Area | Was (1.10) | Now (1.11+) |
 |------|------------|-------------|
-| Form fields | `Email`, `CurrentPassword`, `NewPassword` | `UserId` (Guid string), `CurrentPassword`, `NewPassword` |
+| Form fields | `Email`, `CurrentPassword`, `NewPassword` | `UserId` (Guid string), `CurrentPassword`, `NewPassword` (+ optional `IpAddress` / `UserAgent`) |
 | `passwordAuth.selectorField` | `Email` | `Id` |
 | `resetPassword.resolveBy.field` | `Email` | `Id` |
 

@@ -20,9 +20,15 @@ internal interface IUserService
     /// <param name="selectorValue">Selector value (e.g. email address).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>String user identifier, or <c>null</c> if not found.</returns>
-    Task<string> GetUserIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken);
+    Task<string> GetUserIdByAsync(
+        string selectorField,
+        string selectorValue,
+        CancellationToken cancellationToken);
 
-    Task<UserAccountEntity> GetUserByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken);
+    Task<UserAccountEntity> GetUserByAsync(
+        string selectorField,
+        string selectorValue,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Create a new user from a flat value map.
@@ -32,7 +38,9 @@ internal interface IUserService
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created user identifier.</returns>
-    Task<string> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken);
+    Task<string> CreateUserAsync(
+        IDictionary<string, object?> map,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Verify the password of a user found by selector.
@@ -42,7 +50,11 @@ internal interface IUserService
     /// <param name="password">Password to verify.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>true</c> if the password is correct; otherwise <c>false</c>.</returns>
-    Task<bool> ValidatePasswordAsync(string selectorField, string selectorValue, string password, CancellationToken cancellationToken);
+    Task<bool> ValidatePasswordAsync(
+        string selectorField,
+        string selectorValue,
+        string password,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Verify the password of a user found by selector.
@@ -52,7 +64,11 @@ internal interface IUserService
     /// <param name="code">Code to verify.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns><c>true</c> if the password is correct; otherwise <c>false</c>.</returns>
-    Task<bool> ValidateCodeAsync(string selectorField, string selectorValue, string code, CancellationToken cancellationToken);
+    Task<bool> ValidateCodeAsync(
+        string selectorField,
+        string selectorValue,
+        string code,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Set (or replace) the password of a user found by selector.
@@ -61,6 +77,12 @@ internal interface IUserService
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>
     /// <param name="newPassword">New password.</param>
+    /// <param name="ipAddress">Optional client IP for token revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken);
+    Task SetPasswordAsync(
+        string selectorField,
+        string selectorValue,
+        string newPassword,
+        string? ipAddress,
+        CancellationToken cancellationToken);
 }

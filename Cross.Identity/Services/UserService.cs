@@ -236,7 +236,12 @@ internal sealed class UserService : IUserService
         return isValid;
     }
 
-    public async Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
+    public async Task SetPasswordAsync(
+        string selectorField,
+        string selectorValue,
+        string newPassword,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
@@ -257,7 +262,7 @@ internal sealed class UserService : IUserService
         user.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokeReason.PASSWORD_CHANGED, cancellationToken)
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokeReason.PASSWORD_CHANGED, ipAddress, cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

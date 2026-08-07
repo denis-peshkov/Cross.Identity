@@ -34,7 +34,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.ValidatePasswordAsync("Id", userIdText, CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
             .Setup(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
@@ -70,7 +70,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
             Times.Once);
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -96,7 +96,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("Invalid credentials.");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

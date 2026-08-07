@@ -11,7 +11,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
-    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
@@ -20,7 +19,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
         IHttpClientFactory httpClientFactory,
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
-        IHttpContextAccessor httpContextAccessor,
         IJwtTokenService jwtTokenService,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
@@ -28,7 +26,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
         _httpClientFactory = httpClientFactory;
         _options = options.Value;
         _logger = logger;
-        _httpContextAccessor = httpContextAccessor;
         _jwtTokenService = jwtTokenService;
         _userProvisioner = userProvisioner;
     }
@@ -37,7 +34,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     public async Task<string> InitiateAsync(
         string provider,
         string? returnUrl,
-        Guid? linkUserId,
+        Guid? userId,
         CancellationToken cancellationToken)
     {
         if (!ExternalOAuthProviders.TryGet(provider, out var definition))
@@ -67,13 +64,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new NotFoundException($"Provider '{provider}' is not enabled.");
         }
 
-        if (linkUserId.HasValue)
+        if (userId.HasValue)
         {
-            EnsureLinkUserIdMatchesAuthenticatedPrincipal(linkUserId.Value);
-
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
-                .AnyAsync(x => x.UserAccountId == linkUserId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
+                .AnyAsync(x => x.UserAccountId == userId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
                 .ConfigureAwait(false);
 
             if (alreadyLinked)
@@ -88,7 +83,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = Guid.NewGuid().ToString("N"),
             Provider = providerEntity.Name,
             ReturnUrl = returnUrl,
-            LinkUserId = linkUserId,
+            LinkUserId = userId,
         };
 
         await _identityContext.ExternalLoginStates.AddAsync(new ExternalLoginStateEntity
@@ -126,11 +121,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
         if (isLinking && !payload.LinkUserId.HasValue)
         {
             throw new NotAuthorizedException("Authentication is required to link an external login.");
-        }
-
-        if (payload.LinkUserId.HasValue)
-        {
-            EnsureLinkUserIdMatchesAuthenticatedPrincipal(payload.LinkUserId.Value);
         }
 
         if (!ExternalOAuthProviders.TryGet(payload.Provider, out var definition))
@@ -174,12 +164,15 @@ internal sealed class ExternalLoginService : IExternalLoginService
     }
 
     /// <inheritdoc/>
-    public async Task UnlinkAsync(string provider, CancellationToken cancellationToken)
+    public async Task UnlinkAsync(
+        string provider,
+        Guid userId,
+        string? ipAddress,
+        CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
-
-        var userId = TryGetAuthenticatedUserId()
-            ?? throw new NotAuthorizedException("Authentication is required to unlink an external login.");
+        if (userId == Guid.Empty)
+            throw new ValidationException("UserId is required to unlink an external login.");
 
         var providerEntity = await _identityContext.Providers
             .AsNoTracking()
@@ -216,7 +209,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, cancellationToken)
+            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, ipAddress, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -228,10 +221,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
     }
 
     /// <inheritdoc/>
-    public async Task<ExternalLoginOverviewDto> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<ExternalLoginOverviewDto> GetAllAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var userId = TryGetAuthenticatedUserId()
-            ?? throw new NotAuthorizedException("Authentication is required to list external logins.");
+        if (userId == Guid.Empty)
+            throw new ValidationException("UserId is required to list external logins.");
 
         var account = await _identityContext.UsersAccounts
             .AsNoTracking()
@@ -571,35 +564,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)
         => !string.IsNullOrWhiteSpace(returnUrl)
            && returnUrl.Contains("ExternalLogins", StringComparison.OrdinalIgnoreCase);
-
-    private void EnsureLinkUserIdMatchesAuthenticatedPrincipal(Guid linkUserId)
-    {
-        var authenticatedUserId = TryGetAuthenticatedUserId();
-        if (authenticatedUserId is null)
-        {
-            throw new NotAuthorizedException("Authentication is required to link an external login.");
-        }
-
-        if (authenticatedUserId.Value != linkUserId)
-        {
-            throw new NotAuthorizedException("LinkUserId does not match the authenticated user.");
-        }
-    }
-
-    private Guid? TryGetAuthenticatedUserId()
-    {
-        var user = _httpContextAccessor.HttpContext?.User; // todo: убрать из библиотеки _httpContextAccessor
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            return null;
-        }
-
-        var raw =
-            user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        return Guid.TryParse(raw, out var userId) ? userId : null;
-    }
 
     private static string EncodeState(ExternalLoginStatePayload payload)
         => Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));

@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
 {
@@ -22,6 +22,8 @@ internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
             StateKey             = cfg.Str("stateKey"),
             ErrorKey             = cfg.StrOpt("errorKey"),
             ErrorDescriptionKey  = cfg.StrOpt("errorDescriptionKey"),
+            IpAddressKey         = cfg.Str("ipAddressKey"),
+            UserAgentKey         = cfg.Str("userAgentKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }

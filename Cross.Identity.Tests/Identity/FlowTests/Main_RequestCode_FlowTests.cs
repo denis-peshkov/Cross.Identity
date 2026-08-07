@@ -74,10 +74,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         context.Request.Headers["User-Agent"] = "MyTestUA";
         httpContextAccessor.Setup(x => x.HttpContext).Returns(context);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(
-                Context,
-                optionsSnapshot.Object,
-                httpContextAccessor.Object));
+            new JwtTokenService(Context, optionsSnapshot.Object));
 
         AddToDb(new UserAccountEntity
         {

@@ -12,7 +12,6 @@ public class ResetPassword_StepFactoryTests
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
         sc.AddScoped<IEmailSenderService>(_ => Mock.Of<IEmailSenderService>());
         sc.AddScoped<ISmsSenderService>(_ => Mock.Of<ISmsSenderService>());
-        sc.AddSingleton<IHttpContextAccessor>(_ => new HttpContextAccessor());
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         _sp = sc.BuildServiceProvider();
     }
@@ -31,6 +30,7 @@ public class ResetPassword_StepFactoryTests
               "channel": "email",
               "selectorKey": "forgotPassword.email",
               "passwordKey": "forgotPassword.password",
+              "ipAddressKey": "collectForm.IpAddress",
               "resolveBy": { "field": "Email" },
               "next": "done"
             }
@@ -43,6 +43,7 @@ public class ResetPassword_StepFactoryTests
         step.Channel.Should().Be(ChannelEnum.Email);
         step.SelectorKey.Should().Be("forgotPassword.email");
         step.PasswordKey.Should().Be("forgotPassword.password");
+        step.IpAddressKey.Should().Be("collectForm.IpAddress");
         step.ResolveBy.Field.Should().Be("Email");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
@@ -58,6 +59,7 @@ public class ResetPassword_StepFactoryTests
               "kind": "resetPassword",
               "channel": "email",
               "selectorKey": "email",
+              "ipAddressKey": "collectForm.IpAddress",
               "resolveBy": { "field": "Email" }
             }
             """);
@@ -79,6 +81,7 @@ public class ResetPassword_StepFactoryTests
               "kind": "resetPassword",
               "selectorKey": "email",
               "passwordKey": "password",
+              "ipAddressKey": "collectForm.IpAddress",
               "resolveBy": { "field": "Email" }
             }
             """);
@@ -101,7 +104,8 @@ public class ResetPassword_StepFactoryTests
               "kind": "resetPassword",
               "channel": "email",
               "selectorKey": "email",
-              "passwordKey": "password"
+              "passwordKey": "password",
+              "ipAddressKey": "collectForm.IpAddress"
             }
             """);
 
