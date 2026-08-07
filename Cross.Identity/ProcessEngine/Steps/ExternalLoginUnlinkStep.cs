@@ -18,6 +18,9 @@ internal sealed class ExternalLoginUnlinkStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
     public required string IpAddressKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     /// <inheritdoc/>
@@ -26,8 +29,9 @@ internal sealed class ExternalLoginUnlinkStep : IStep
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
 
-        await ExternalLoginService.UnlinkAsync(provider, userId, ipAddress, cancellationToken).ConfigureAwait(false);
+        await ExternalLoginService.UnlinkAsync(provider, userId, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Unlinked"), true);
 

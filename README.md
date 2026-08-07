@@ -22,11 +22,47 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
 - **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
-- **Security** — password hashing (Argon2), one-time codes, phone normalization.
+- **Security** — password hashing (Argon2), one-time codes; phone inputs must be E.164 (e.g. `+79161234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
 - **Licensing (JWT)** — Peshkov license key check on the first flow call; without a key in dev/test, execution continues with a warning in logs.
+
+## Phone numbers (E.164)
+
+Cross.Identity accepts **only** E.164 phone values, for example `+79161234567`.
+
+- Required shape: leading `+`, then digits only (no spaces, dashes, or parentheses).
+- National formats (`8916…`), missing `+`, and free-form strings are **rejected** (forms, `UserService`, bag lookups).
+
+### Host helper: `PhoneE164`
+
+Public static class for host / external API apps (FluentValidation, request filters, command handlers) before calling Identity flows:
+
+- **File:** [`Cross.Identity/Services/Crypto/PhoneE164.cs`](Cross.Identity/Services/Crypto/PhoneE164.cs)
+- **Namespace:** `Cross.Identity.Services.Crypto`
+
+| Method | Role |
+|--------|------|
+| `IsValid` / `Require` | Check or enforce that the value is already E.164 (what Identity uses internally) |
+| `Normalize` / `NormalizeOrThrow` | Convert free-form / national input to E.164 with an ISO region (`RU`, `US`, …) |
+| `Ensure` | Pass through if already E.164; otherwise normalize with the given region |
+
+Example in a host handler or filter:
+
+```csharp
+using Cross.Identity.Services.Crypto;
+
+// Prefer Ensure when the client may send either E.164 or a national number.
+var phone = PhoneE164.Ensure(dto.Phone, defaultRegion: "RU");
+bag["Phone"] = phone;
+
+// Or only accept E.164 from the client:
+if (!PhoneE164.IsValid(dto.Phone))
+    throw new ValidationException("Phone must be E.164, e.g. +79161234567.");
+```
+
+No DI registration is required — call the static API directly.
 
 ## Requirements
 
@@ -39,7 +75,7 @@ Cross.Identity.slnx
 ├── Cross.Identity/                     # NuGet library
 │   ├── FlowExecutor.cs, IFlowExecutor.cs
 │   ├── Entities/, Infrastructure/      # EF Core (users, tokens, verifications, external login)
-│   ├── Services/                       # User, Code, JwtToken; Crypto/; ExternalOAuth/
+│   ├── Services/                       # User, Code, JwtToken; Crypto/ (PhoneE164.cs); ExternalOAuth/
 │   ├── Licensing/                      # Peshkov JWT license (Accessor, Validator, ProductInfo)
 │   ├── Options/                        # AuthenticationOptions, IdentityServiceConfiguration
 │   ├── Extensions/, Helpers/, Dtos/, Enums/

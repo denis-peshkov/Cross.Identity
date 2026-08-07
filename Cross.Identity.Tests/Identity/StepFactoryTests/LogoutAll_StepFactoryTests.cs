@@ -26,6 +26,8 @@ public class LogoutAll_StepFactoryTests
               "kind": "logoutAll",
               "refreshTokenKey": "RefreshToken",
               "ipAddressKey": "collectForm.IpAddress",
+              "userAgentKey": "collectForm.UserAgent",
+              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -36,6 +38,7 @@ public class LogoutAll_StepFactoryTests
         step.Kind.Should().Be("logoutAll");
         step.RefreshTokenKey.Should().Be("RefreshToken");
         step.IpAddressKey.Should().Be("collectForm.IpAddress");
+        step.UserAgentKey.Should().Be("collectForm.UserAgent");
         step.Next.Should().Be("done");
         step.JwtTokenService.Should().NotBeNull();
     }

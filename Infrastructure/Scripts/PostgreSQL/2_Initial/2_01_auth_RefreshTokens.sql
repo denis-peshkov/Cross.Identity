@@ -9,11 +9,12 @@ CREATE TABLE auth."RefreshTokens"
     "CreatedAt"         timestamp without time zone NOT NULL,
     "ReplacedByTokenId" uuid         NULL,
     "RevokedAt"         timestamp without time zone NULL,
-    "RevokeReason"      smallint     NULL,
-    "RevokedByIp"       varchar(45)  NULL,
-    "DeviceFingerprint" varchar(100) NULL,
-    "UserAgent"         varchar(512) NULL,
-    "IpAddress"         varchar(45)  NULL,
+    "RevokedReason"      smallint     NULL,
+    "RevokedIpAddress"  varchar(45)  NULL,
+    "RevokedUserAgent"  varchar(512) NULL,
+    "CreatedDeviceFingerprint" varchar(100) NULL,
+    "CreatedUserAgent"         varchar(512) NULL,
+    "CreatedIpAddress"         varchar(45)  NULL,
     "ConcurrencyStamp"  uuid         NOT NULL,
 
     CONSTRAINT "PK_RefreshTokens" PRIMARY KEY ("RefreshTokenId")

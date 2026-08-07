@@ -10,7 +10,8 @@
           { "key": "Error", "type": "String", "required": false, "max": 256 },
           { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
-          { "key": "UserAgent", "type": "String", "required": false, "max": 512 }
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ],
         "validators": [
           { "kind": "requiredIf", "when": { "field": "Error", "equals": "" }, "then": { "name": "Code", "required": true }, "message": "Provide an authorization code or an OAuth error." },
@@ -28,6 +29,7 @@
       "errorDescriptionKey": "collectForm.ErrorDescription",
       "ipAddressKey": "collectForm.IpAddress",
       "userAgentKey": "collectForm.UserAgent",
+      "deviceFingerprintKey": "collectForm.DeviceFingerprint",
       "next": "collectResult"
     },
     {

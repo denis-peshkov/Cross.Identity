@@ -163,13 +163,75 @@ Hosts must pass explicit flow inputs (and matching service parameters). Host ASP
 | `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, string? ipAddress, ct)` |
 | `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string? ipAddress, ct)` |
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, ct)` |
-| `InitiateAsync` linking | `LinkUserId` must match authenticated principal | Host-supplied `LinkUserId` is trusted (no principal match) |
+| `InitiateAsync` linking | bag/DB `LinkUserId`; must match authenticated principal | bag/DB/state `UserId`; host-supplied id is trusted (no principal match) |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
-**Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent` on token/logout/password/OAuth-callback/unlink flows;
-**required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`.
+**Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
+token / refresh / OAuth-callback wire `deviceFingerprintKey` into JWT create audit (`CreatedDeviceFingerprint`);
+logout / logoutAll / password reset/change / unlink use `IpAddress` / `UserAgent` for revoke audit;
+**required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`;
+**optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`).
 
-**Action:** fill bags from the host handler (`HttpContext` stays only in the host); update custom `IJwtTokenService` / OAuth callers.
+**Action:** fill bags from the host handler (`HttpContext` stays only in the host); update custom `IJwtTokenService` / OAuth callers; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
+
+### `RevokeReason` → `RevokedReason`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Enum | `RefreshTokenRevokeReason` | `RefreshTokenRevokedReason` |
+| Entity property | `RevokeReason` | `RevokedReason` |
+| DB column (`AccessTokens` / `RefreshTokens`) | `RevokeReason` | `RevokedReason` |
+
+**Action:** rename type/property usages and alter column name on existing databases (DDL scripts under `Infrastructure/Scripts` updated for greenfield).
+
+### Token create audit: `IpAddress` / `UserAgent` / `DeviceFingerprint` → `Created*`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Entity / DB (`AccessTokens` / `RefreshTokens`) | `IpAddress` | `CreatedIpAddress` |
+| | `UserAgent` | `CreatedUserAgent` |
+| | `DeviceFingerprint` | `CreatedDeviceFingerprint` |
+
+Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input). Revoke audit fields stay `RevokedIpAddress` / `RevokedUserAgent`.
+
+**Action:** rename columns on existing databases.
+
+### `RevokedByIp` → `RevokedIpAddress` + `RevokedUserAgent`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Entity / DB | `RevokedByIp` | `RevokedIpAddress` |
+| Entity / DB | — | `RevokedUserAgent` (new) |
+| JWT revoke APIs | `string? ipAddress` | `string? ipAddress, string? userAgent` |
+| `SetPasswordAsync` / `UnlinkAsync` | `ipAddress` | `ipAddress, userAgent` |
+
+Logout / logoutAll / password / unlink flows again accept optional `UserAgent` for revoke audit.
+
+**Action:** pass User-Agent from the host on revoke paths; rename/add DB columns.
+
+### No `IHeadersContextAccessor` in Cross.Identity
+
+`UserService` no longer reads ambient `LanguageCode` from `IHeadersContextAccessor`.
+Cross.Identity no longer depends on `Cross.Headers`.
+
+### Phone numbers: E.164 only
+
+All phone inputs (flow bags, form fields of type `Phone`, `UserService` create/lookup by phone) **must already be E.164**, e.g. `+79161234567`.
+
+- Accepted: `+` + digits only, no spaces/punctuation; number must be a valid E.164 subscriber number.
+- Rejected: national formats (`8916…`), missing `+`, spaces, dashes, parentheses (`+7 (912) …`), and any value that is not already E.164.
+
+The library validates and stores as-is; it does **not** reformat free-form numbers on the way in.
+
+Use the public static helper [`PhoneE164`](../Cross.Identity/Services/Crypto/PhoneE164.cs) (`Cross.Identity.Services.Crypto`) from host / external APIs:
+
+- `IsValid` / `Require` — library entry (already E.164)
+- `Normalize` / `NormalizeOrThrow` / `Ensure` — host-side conversion before `ExecuteAsync`
+
+`IPhoneNormalizer` is removed — use `PhoneE164` instead (no DI).
+
+**Action:** normalize phones in the host before calling Identity (`PhoneE164.Ensure` / `Normalize`); drop Cross.Identity's `Cross.Headers` dependency if used only for Identity.
+
 
 ### `main.ChangePassword` input: `Email` → `UserId`
 

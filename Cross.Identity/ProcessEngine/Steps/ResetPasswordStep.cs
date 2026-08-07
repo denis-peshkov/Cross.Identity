@@ -20,6 +20,9 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
     public required string IpAddressKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     public ILogger Logger { get; set; }
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
@@ -33,8 +36,9 @@ internal sealed class ResetPasswordStep : IStep
         var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
 
-        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, ipAddress, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
         var changedAt = DateTime.UtcNow.ToString("u");

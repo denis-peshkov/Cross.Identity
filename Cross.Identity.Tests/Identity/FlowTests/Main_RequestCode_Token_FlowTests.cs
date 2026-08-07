@@ -13,20 +13,11 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<SendCodeStepFactory>();
         AddRegistryStep<TokenStepFactory>();
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

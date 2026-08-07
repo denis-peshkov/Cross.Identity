@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 internal sealed class ExternalLoginStatePayload
 {
@@ -8,5 +8,5 @@ internal sealed class ExternalLoginStatePayload
 
     public string? ReturnUrl { get; init; }
 
-    public Guid? LinkUserId { get; init; }
+    public Guid? UserId { get; init; }
 }

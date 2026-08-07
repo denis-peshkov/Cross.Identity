@@ -4,7 +4,7 @@ CREATE TABLE [auth].[ExternalLoginStates]
     [Nonce]                NVARCHAR(32)          NOT NULL,
     [Provider]             NVARCHAR(64)          NOT NULL,
     [ReturnUrl]            NVARCHAR(512)         NULL,
-    [LinkUserId]           UNIQUEIDENTIFIER      NULL,
+    [UserId]               UNIQUEIDENTIFIER      NULL,
     [ExpiresAt]            DATETIME2(7)          NOT NULL,
     [CreatedAt]            DATETIME2(7)          NOT NULL,
     [ConcurrencyStamp]     UNIQUEIDENTIFIER      NOT NULL,

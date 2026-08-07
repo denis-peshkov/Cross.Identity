@@ -21,19 +21,10 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<VerifyCodeStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Email", Email, Password, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
         RegisterToServiceProvider<IEmailSenderService, IEmailSenderService>(Mock.Of<IEmailSenderService>());
@@ -76,7 +67,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -100,7 +91,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -126,7 +117,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -146,7 +137,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .ThrowAsync<ValidationException>();
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -170,7 +161,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -194,7 +185,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid or expired verification code*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

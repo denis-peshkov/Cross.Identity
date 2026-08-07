@@ -9,11 +9,12 @@
     [CreatedAt]         DATETIME2(7)     NOT NULL,
     [ReplacedByTokenId] UNIQUEIDENTIFIER NULL,
     [RevokedAt]         DATETIME2(7)     NULL,
-    [RevokeReason]      SMALLINT         NULL,
-    [RevokedByIp]       NVARCHAR(45)     NULL,
-    [DeviceFingerprint] NVARCHAR(100)    NULL,
-    [UserAgent]         NVARCHAR(512)    NULL,
-    [IpAddress]         NVARCHAR(45)     NULL,
+    [RevokedReason]      SMALLINT         NULL,
+    [RevokedIpAddress]  NVARCHAR(45)     NULL,
+    [RevokedUserAgent]  NVARCHAR(512)    NULL,
+    [CreatedDeviceFingerprint] NVARCHAR(100)    NULL,
+    [CreatedUserAgent]         NVARCHAR(512)    NULL,
+    [CreatedIpAddress]         NVARCHAR(45)     NULL,
     [ConcurrencyStamp]  UNIQUEIDENTIFIER NOT NULL,
 
     CONSTRAINT [PK_RefreshTokens] PRIMARY KEY CLUSTERED ([RefreshTokenId] ASC)

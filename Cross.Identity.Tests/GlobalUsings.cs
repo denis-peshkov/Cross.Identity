@@ -22,7 +22,6 @@ global using Bogus;
 global using Bogus.Extensions;
 global using Bogus.Extensions.Extras;
 global using Bogus.Extensions.UnitedStates;
-global using Cross.Headers;
 global using Cross.ErrorHandlers.Exceptions;
 global using Cross.Identity;
 global using Cross.Identity.Dtos;

@@ -85,7 +85,7 @@ internal interface IExternalLoginService
     /// Provider is not supported or not enabled.
     /// </exception>
     /// <exception cref="NotAuthorizedException">
-    /// Linking requires authentication and a matching <c>LinkUserId</c>.
+    /// Linking requires authentication and a matching <c>UserId</c>.
     /// </exception>
     Task<ExternalLoginCompletion> CompleteAsync(
         string code,
@@ -97,13 +97,14 @@ internal interface IExternalLoginService
     /// <summary>
     /// Unlink an external provider from the given user.
     /// Rotates <c>UserAccount.SecurityStamp</c> and revokes all active access/refresh tokens
-    /// with <see cref="RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED"/>.
+    /// with <see cref="RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED"/>.
     /// </summary>
     /// <param name="provider">
     /// Provider name to unlink (for example, <c>Google</c>). Must be enabled and currently linked to the user.
     /// </param>
     /// <param name="userId">Local user account id (supplied by the host from the authenticated principal).</param>
     /// <param name="ipAddress">Optional client IP for revoke audit fields.</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">
     /// Provider is not enabled, or is not linked to the user.
@@ -115,6 +116,7 @@ internal interface IExternalLoginService
         string provider,
         Guid userId,
         string? ipAddress,
+        string? userAgent,
         CancellationToken cancellationToken);
 
     /// <summary>

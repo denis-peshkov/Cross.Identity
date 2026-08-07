@@ -134,7 +134,7 @@ public sealed class RegistryLoaderAndValidatorTests
         var good = new Dictionary<string, object?>
         {
             ["Email"] = "trigger@t.t",
-            ["Phone"] = "+12345678901",
+            ["Phone"] = "+79161234567",
             ["Age"] = "18",
             ["IsActive"] = "true",
             ["BirthDate"] = DateTime.UtcNow.ToString("O"),

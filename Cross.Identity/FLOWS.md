@@ -11,6 +11,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128). Host fills the bag; steps that issue tokens map `deviceFingerprintKey` → `CreatedDeviceFingerprint`, and revoke/password/unlink paths use IP/UA for audit.
 
 ### Operations (`FlowOperationEnum`)
 
@@ -60,7 +61,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128). → `forgotPassword` |
+| `collectForm` | collectForm | `Email` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `forgotPassword` |
 | `forgotPassword` | forgotPassword | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = forgotPassword.LastCode`. `next: null` |
 
@@ -72,7 +73,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`. → `getUserId` |
+| `collectForm` | collectForm | `Email`; optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `getUserId` |
 | `getUserId` | getUserId | `selectorField: Email`, `selectorKey: collectForm.Email`. → `collectResult` |
 | `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
 
@@ -84,7 +85,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `refreshToken` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `refreshToken` |
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
@@ -100,7 +101,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (8–128). → `createUser` |
+| `collectForm` | collectForm | `Email`, `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
@@ -113,7 +114,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan). → `sendCode` |
+| `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
@@ -125,7 +126,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128); optional `IpAddress`, `UserAgent`. → `passwordAuth` |
+| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `selectorField: Id`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Id`. `next: null` |
 
@@ -140,7 +141,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`. → `verifyCode` |
+| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
 
@@ -154,7 +155,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
+| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
@@ -166,11 +167,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `LinkUserId` (opt. Guid string). → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `UserId` (opt. Guid string); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `LinkUserId` enables account linking when present; the host must supply the authenticated user’s id (the library does not read `HttpContext`). Omit for normal sign-in / sign-up.
+> `UserId` enables account linking when present; the host must supply the authenticated user’s id (the library does not read `HttpContext`). Omit for normal sign-in / sign-up.
 
 ---
 
@@ -180,7 +181,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.); optional `IpAddress`, `UserAgent`. → `externalLoginComplete` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginComplete` |
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
@@ -194,7 +195,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional `IpAddress`, `UserAgent`. → `externalLoginUnlink` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginUnlink` |
 | `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`, `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
@@ -208,7 +209,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string). → `externalLoginGetAll` |
+| `collectForm` | collectForm | `UserId` (required Guid string); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginGetAll` |
 | `externalLoginGetAll` | externalLoginGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
@@ -222,7 +223,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `logout` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `logout` |
 | `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
@@ -236,7 +237,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`. → `logoutAll` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `logoutAll` |
 | `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 
@@ -250,7 +251,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `AccessToken` (required, max 2048). → `verifyToken` |
+| `collectForm` | collectForm | `AccessToken` (required, max 2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyToken` |
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
 | `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
 

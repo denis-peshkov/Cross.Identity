@@ -32,7 +32,7 @@ public class UserAccountEntity : IHasConcurrencyStamp
     /// <summary>
     /// Gets or sets a telephone number for the user.
     /// </summary>
-    /// <remarks>store in E.164</remarks>
+    /// <remarks>Must be stored as E.164 only (e.g. +79161234567). Other formats are not accepted.</remarks>
     [ProtectedPersonalData]
     public string? PhoneNumber { get; set; }
 

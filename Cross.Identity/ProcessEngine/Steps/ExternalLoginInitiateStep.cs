@@ -15,7 +15,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
 
     public string? ReturnUrlKey { get; init; }
 
-    public string? LinkUserIdKey { get; init; }
+    public string? UserIdKey { get; init; }
 
     public required IExternalLoginService ExternalLoginService { get; init; }
 
@@ -31,10 +31,10 @@ internal sealed class ExternalLoginInitiateStep : IStep
         }
 
         Guid? linkUserId = null;
-        if (!string.IsNullOrWhiteSpace(LinkUserIdKey))
+        if (!string.IsNullOrWhiteSpace(UserIdKey))
         {
-            if (!TryReadLinkUserId(ctx, LinkUserIdKey, out linkUserId)
-                && !TryReadLinkUserId(ctx, BagKey.Qualify(Kind, LinkUserIdKey), out linkUserId))
+            if (!TryReadUserId(ctx, UserIdKey, out linkUserId)
+                && !TryReadUserId(ctx, BagKey.Qualify(Kind, UserIdKey), out linkUserId))
             {
                 linkUserId = null;
             }
@@ -46,7 +46,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
         return StepResult.Ok(Next);
     }
 
-    private static bool TryReadLinkUserId(Bag ctx, string key, out Guid? linkUserId)
+    private static bool TryReadUserId(Bag ctx, string key, out Guid? linkUserId)
     {
         linkUserId = null;
         if (!ctx.TryGet<object?>(key, out var linkUserIdRaw) || linkUserIdRaw is null)

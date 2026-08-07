@@ -83,7 +83,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = Guid.NewGuid().ToString("N"),
             Provider = providerEntity.Name,
             ReturnUrl = returnUrl,
-            LinkUserId = userId,
+            UserId = userId,
         };
 
         await _identityContext.ExternalLoginStates.AddAsync(new ExternalLoginStateEntity
@@ -91,7 +91,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = payload.Nonce,
             Provider = payload.Provider,
             ReturnUrl = payload.ReturnUrl,
-            LinkUserId = payload.LinkUserId,
+            UserId = payload.UserId,
             CreatedAt = now,
             ExpiresAt = now.Add(_options.StateLifetime),
         }, cancellationToken).ConfigureAwait(false);
@@ -115,10 +115,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         var payload = await ResolveStateAsync(state, cancellationToken).ConfigureAwait(false);
-        var isLinking = payload.LinkUserId.HasValue
+        var isLinking = payload.UserId.HasValue
             || IsExternalLoginLinkReturnUrl(payload.ReturnUrl);
 
-        if (isLinking && !payload.LinkUserId.HasValue)
+        if (isLinking && !payload.UserId.HasValue)
         {
             throw new NotAuthorizedException("Authentication is required to link an external login.");
         }
@@ -150,7 +150,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var userId = await ResolveOrCreateUserAsync(
             providerEntity,
             profile,
-            payload.LinkUserId,
+            payload.UserId,
             cancellationToken).ConfigureAwait(false);
 
         if (_userProvisioner is not null)
@@ -168,6 +168,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         string provider,
         Guid userId,
         string? ipAddress,
+        string? userAgent,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
@@ -209,7 +210,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, ipAddress, cancellationToken)
+            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, ipAddress, userAgent, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -402,7 +403,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = entity.Nonce,
             Provider = entity.Provider,
             ReturnUrl = entity.ReturnUrl,
-            LinkUserId = entity.LinkUserId,
+            UserId = entity.UserId,
         };
 
         _identityContext.ExternalLoginStates.Remove(entity);

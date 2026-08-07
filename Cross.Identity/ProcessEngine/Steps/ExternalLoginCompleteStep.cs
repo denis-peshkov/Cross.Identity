@@ -25,6 +25,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
     public required string UserAgentKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the device fingerprint from. May be relative or absolute.</summary>
+    public required string DeviceFingerprintKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     public required IJwtTokenService JwtTokenService { get; init; }
@@ -75,8 +78,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
         ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
 
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
         var refreshToken = await JwtTokenService
             .GenerateRefreshTokenAsync(
                 userId.UserId,
@@ -87,6 +91,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
                 },
                 ipAddress,
                 userAgent,
+                deviceFingerprint,
                 cancellationToken)
             .ConfigureAwait(false);
 

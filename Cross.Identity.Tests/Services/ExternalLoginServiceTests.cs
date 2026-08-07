@@ -107,7 +107,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenLinkUserIdWithoutHttpContext_WhenInitiateAsync_ThenPersistsLinkUserIdAsync()
+    public async Task GivenUserIdWithoutHttpContext_WhenInitiateAsync_ThenPersistsUserIdAsync()
     {
         var linkUserId = Guid.NewGuid();
         SeedProvider("Google");
@@ -116,7 +116,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         await sut.InitiateAsync("Google", null, linkUserId, CancellationToken.None);
 
         var state = await Context.ExternalLoginStates.SingleAsync();
-        state.LinkUserId.Should().Be(linkUserId);
+        state.UserId.Should().Be(linkUserId);
     }
 
     [Test]
@@ -384,7 +384,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenLinkUserIdInState_WhenCompleteAsyncForLinking_ThenLinksWithoutHttpContextPrincipalAsync()
+    public async Task GivenUserIdInState_WhenCompleteAsyncForLinking_ThenLinksWithoutHttpContextPrincipalAsync()
     {
         var ownerUserId = Guid.NewGuid();
         SeedProvider("Google");
@@ -777,12 +777,11 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var jwt = new Mock<IJwtTokenService>();
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
-                userId,
-                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, null, It.IsAny<CancellationToken>()))
+                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
-        await sut.UnlinkAsync("Google", userId, null, CancellationToken.None);
+        await sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
         var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
@@ -790,8 +789,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBe(oldStamp);
         jwt.Verify(
             j => j.RevokeAllTokensForUserAsync(
-                userId,
-                RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED, null, It.IsAny<CancellationToken>()),
+                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -802,7 +800,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*UserId is required*");
@@ -837,7 +835,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*last login method*");
@@ -866,7 +864,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("*not linked*");
@@ -996,7 +994,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Nonce = payload.Nonce,
             Provider = payload.Provider,
             ReturnUrl = payload.ReturnUrl,
-            LinkUserId = payload.LinkUserId,
+            UserId = payload.UserId,
             CreatedAt = now,
             ExpiresAt = now.Add(lifetime ?? TimeSpan.FromMinutes(10)),
         });

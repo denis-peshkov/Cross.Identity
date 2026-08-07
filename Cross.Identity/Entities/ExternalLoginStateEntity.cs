@@ -7,7 +7,7 @@ public class ExternalLoginStateEntity : IHasConcurrencyStamp
     public string Nonce { get; set; } = null!;
     public string Provider { get; set; } = null!;
     public string? ReturnUrl { get; set; }
-    public Guid? LinkUserId { get; set; }
+    public Guid? UserId { get; set; }
     public DateTime ExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
 

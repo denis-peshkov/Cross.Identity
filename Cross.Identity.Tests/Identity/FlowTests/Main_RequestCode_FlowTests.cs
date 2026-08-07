@@ -12,31 +12,15 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<SendCodeStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(
-            new UserService(
-                Context,
-                Mock.Of<ILogger<UserService>>(),
-                Mock.Of<IPepperVaultProvider>(),
-                Mock.Of<IPasswordHasher>(),
-                Mock.Of<IPhoneNormalizer>(),
-                headersContextAccessor,
-                Mock.Of<IJwtTokenService>()));
+            CreateUserService());
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

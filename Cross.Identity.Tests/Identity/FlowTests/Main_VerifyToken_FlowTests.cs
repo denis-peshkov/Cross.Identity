@@ -16,20 +16,12 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<VerifyTokenStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IdentityContext, IdentityContext>(Context);
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -68,7 +60,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
             userId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },
@@ -118,7 +110,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
             userId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
         accessToken.Split('.').Length.Should().Be(5);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -141,7 +133,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyId, new List<string>(), new List<Claim>(), null, null, CancellationToken.None);
+            userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
 
         var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();

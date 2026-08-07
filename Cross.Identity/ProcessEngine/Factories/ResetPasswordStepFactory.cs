@@ -29,6 +29,7 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
             SelectorKey = cfg.Str("selectorKey"),
             PasswordKey = cfg.Str("passwordKey"),
             IpAddressKey = cfg.Str("ipAddressKey"),
+            UserAgentKey = cfg.Str("userAgentKey"),
             UserService = userService,
             EmailSenderService = emailSenderService,
             SmsSenderService = smsSenderService,

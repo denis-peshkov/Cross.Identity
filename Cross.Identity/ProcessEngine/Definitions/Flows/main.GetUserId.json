@@ -5,7 +5,10 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "Email", "type": "Email", "required": true }
+          { "key": "Email", "type": "Email", "required": true },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "getUserId"

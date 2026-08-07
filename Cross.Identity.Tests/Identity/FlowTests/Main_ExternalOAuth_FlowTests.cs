@@ -24,13 +24,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             HttpContext = new DefaultHttpContext(),
         };
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
         {
@@ -59,8 +52,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -217,7 +209,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMatchingLinkUserId_WhenExternalLogin_ThenAcceptsAsync()
+    public async Task GivenMatchingUserId_WhenExternalLogin_ThenAcceptsAsync()
     {
         var linkUserId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -238,7 +230,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             {
                 ["Provider"] = "Google",
                 ["ReturnUrl"] = "/home",
-                ["LinkUserId"] = linkUserId.ToString(),
+                ["UserId"] = linkUserId.ToString(),
             },
             Flow,
             FlowOperationEnum.ExternalLogin,
@@ -250,7 +242,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenLinkUserId_WhenExternalLogin_ThenAcceptsWithoutMatchingPrincipalAsync()
+    public async Task GivenUserId_WhenExternalLogin_ThenAcceptsWithoutMatchingPrincipalAsync()
     {
         var authenticatedUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
@@ -260,7 +252,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             new Dictionary<string, object?>
             {
                 ["Provider"] = "Google",
-                ["LinkUserId"] = otherUserId.ToString(),
+                ["UserId"] = otherUserId.ToString(),
             },
             Flow,
             FlowOperationEnum.ExternalLogin,
@@ -268,19 +260,19 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
-        (await Context.ExternalLoginStates.SingleAsync()).LinkUserId.Should().Be(otherUserId);
+        (await Context.ExternalLoginStates.SingleAsync()).UserId.Should().Be(otherUserId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidLinkUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
+    public async Task GivenInvalidUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
     {
         await FluentActions.Invoking(() =>
                 _flowExecutor.ExecuteAsync(
                     new Dictionary<string, object?>
                     {
                         ["Provider"] = "Google",
-                        ["LinkUserId"] = "not-a-guid",
+                        ["UserId"] = "not-a-guid",
                     },
                     Flow,
                     FlowOperationEnum.ExternalLogin,

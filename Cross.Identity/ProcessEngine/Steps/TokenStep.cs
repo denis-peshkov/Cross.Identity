@@ -38,6 +38,9 @@ internal sealed class TokenStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
     public required string UserAgentKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the device fingerprint from. May be relative or absolute.</summary>
+    public required string DeviceFingerprintKey { get; init; }
+
     /// <summary>Step logger.</summary>
     public ILogger Logger { get; set; }
 
@@ -46,6 +49,7 @@ internal sealed class TokenStep : IStep
 
     /// <summary>Service for validating credentials and reading the user.</summary>
     public IUserService UserService { get; set; }
+
 
     /// <summary>User lookup settings: which field to search by (for example, "Email" or "Phone").</summary>
     public required ResolveBy ResolveBy { get; init; }
@@ -106,10 +110,11 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimConstants.Username, username);
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
         ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

@@ -48,7 +48,7 @@ Rotation alone rejects a reused refresh token. That is **not** enough when the a
 1. Attacker steals `R1` and refreshes first → gets active `R2`, `R1` revoked.
 2. Victim sends their copy of `R1` → reuse of a revoked refresh.
 3. **Without** family revoke: victim gets conflict / must re-login; attacker keeps live `R2`.
-4. **With** family revoke (`RefreshTokenRevokeReason.REPLAY_DETECTED`): `R2` and access tokens in the same `FamilyId` are revoked too.
+4. **With** family revoke (`RefreshTokenRevokedReason.REPLAY_DETECTED`): `R2` and access tokens in the same `FamilyId` are revoked too.
 
 Implemented in `EnsureRefreshTokenActiveForRotationAsync` / `InvalidateRefreshTokenAsync` → `HandleRefreshTokenReplayAsync`.
 
@@ -87,7 +87,7 @@ if (oldToken is null || oldToken.IsRevoked || oldToken.ExpiresAt < DateTime.UtcN
 
 // mark old as revoked
 oldToken.RevokedAt = DateTime.UtcNow;
-oldToken.RevokedByIp = request.IpAddress;
+oldToken.RevokedIpAddress = request.IpAddress;
 
 // create new
 var newRefreshToken = new RefreshTokenEntity
@@ -152,7 +152,7 @@ Store not just a refresh token, but bind it to a specific device / user-agent / 
 
 For example:
 ```cs
-public string DeviceFingerprint { get; set; } = default!;
+public string CreatedDeviceFingerprint { get; set; } = default!;
 ```
 
 Then even if the token is stolen from another device — it will not work.
@@ -185,15 +185,15 @@ public class RefreshTokenEntity
     public DateTime AbsoluteExpiresAt { get; set; }
     public DateTime? RevokedAt { get; set; }
 
-    public string DeviceFingerprint { get; set; } = default!;
-    public string UserAgent { get; set; } = default!;
-    public string? IpAddress { get; set; }
+    public string CreatedDeviceFingerprint { get; set; } = default!;
+    public string CreatedUserAgent { get; set; } = default!;
+    public string? CreatedIpAddress { get; set; }
 }
 ```
 
 On a refresh request the server compares:
 ```cs
-if (!string.Equals(oldToken.DeviceFingerprint, request.DeviceFingerprint, StringComparison.Ordinal))
+if (!string.Equals(oldToken.CreatedDeviceFingerprint, request.CreatedDeviceFingerprint, StringComparison.Ordinal))
     throw new SecurityException("Device mismatch — refresh token invalid.");
 ```
 

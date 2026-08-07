@@ -1,4 +1,4 @@
-namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
@@ -21,26 +21,17 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<PasswordAuthStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         var userIdText = UserId.ToString();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
             .Setup(s => s.ValidatePasswordAsync("Id", userIdText, CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
             .Setup(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userIdText);
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
         RegisterToServiceProvider<IEmailSenderService, IEmailSenderService>(Mock.Of<IEmailSenderService>());
@@ -70,7 +61,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
             Times.Once);
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -96,7 +87,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("Invalid credentials.");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

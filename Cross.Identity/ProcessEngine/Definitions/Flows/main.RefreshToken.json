@@ -7,7 +7,8 @@
         "fields": [
           { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
-          { "key": "UserAgent", "type": "String", "required": false, "max": 512 }
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "refreshToken"
@@ -17,6 +18,7 @@
       "refreshTokenKey": "collectForm.RefreshToken",
       "ipAddressKey": "collectForm.IpAddress",
       "userAgentKey": "collectForm.UserAgent",
+      "deviceFingerprintKey": "collectForm.DeviceFingerprint",
       "next": "collectResult"
     },
     {

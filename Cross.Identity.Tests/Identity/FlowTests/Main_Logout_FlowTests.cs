@@ -16,20 +16,12 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<LogoutStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IdentityContext, IdentityContext>(Context);
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -75,9 +67,9 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
@@ -93,7 +85,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
         var entityA = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshA))));
-        entityA.RevokeReason.Should().Be(RefreshTokenRevokeReason.USER_LOGOUT);
+        entityA.RevokedReason.Should().Be(RefreshTokenRevokedReason.USER_LOGOUT);
     }
 
     [Test]

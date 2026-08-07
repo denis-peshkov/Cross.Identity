@@ -11,12 +11,6 @@ public static class InMemoryDbHelper
             .Options;
 
         var context = new IdentityContext(options);
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
         context.Database.EnsureCreated();
         return context;
     }

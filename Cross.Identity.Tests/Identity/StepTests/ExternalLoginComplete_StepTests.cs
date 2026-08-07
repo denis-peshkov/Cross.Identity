@@ -34,7 +34,7 @@ public class ExternalLoginComplete_StepTests
         bag.Get<bool>("externalLoginComplete.IsLinking").Should().BeTrue();
         bag.ContainsKey("externalLoginComplete.AccessToken").Should().BeFalse();
         _jwtTokenService.Verify(
-            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, It.IsAny<CancellationToken>()),
+            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -59,10 +59,10 @@ public class ExternalLoginComplete_StepTests
             .ReturnsAsync(user);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _jwtTokenService
-            .Setup(j => j.GenerateAccessTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, It.IsAny<CancellationToken>()))
+            .Setup(j => j.GenerateAccessTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         _jwtTokenService
-            .Setup(j => j.GenerateRefreshTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), null, null, It.IsAny<CancellationToken>()))
+            .Setup(j => j.GenerateRefreshTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
 
         var step = CreateStep();
@@ -94,6 +94,7 @@ public class ExternalLoginComplete_StepTests
             ErrorDescriptionKey = "ErrorDescription",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -126,6 +127,7 @@ public class ExternalLoginComplete_StepTests
             ErrorDescriptionKey = "ErrorDescription",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -148,6 +150,7 @@ public class ExternalLoginComplete_StepTests
             StateKey = "State",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,

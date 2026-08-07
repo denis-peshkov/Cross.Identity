@@ -150,7 +150,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | B7 | State TTL expired → rejection | Unit | ✅ `CompleteAsync_ShouldThrow_WhenStateExpired` |
 | B8 | **New user** — auto-provision | Integration | ✅ callback creates user + external login in DB |
 | B9 | **Existing user** — login by provider+subject | Unit | ✅ `CompleteAsync_ShouldReturnExistingUser_*` |
-| B10 | **Linking:** `LinkUserId` → `is_linking: true` | Unit + Integration | 🟨 unit `CompleteAsync_ShouldLinkProviderToExistingUser`; flow ⬜ |
+| B10 | **Linking:** `UserId` → `is_linking: true` | Unit + Integration | 🟨 unit `CompleteAsync_ShouldLinkProviderToExistingUser`; flow ⬜ |
 | B11 | **Linking without auth** → `NotAuthorizedException` | Unit | ✅ |
 | B12 | Re-linking same provider → `ValidationException` | Unit | ✅ |
 | B13 | Google / Microsoft / GitHub / Apple — profile | Unit / Manual | 🟨 Google in flow tests; others — unit fetch only |
@@ -371,7 +371,7 @@ CREATE TABLE auth.ExternalLoginStates (
   Nonce nvarchar(32) NOT NULL,
   Provider nvarchar(64) NOT NULL,
   ReturnUrl nvarchar(512) NULL,
-  LinkUserId uniqueidentifier NULL,
+  UserId uniqueidentifier NULL,
   ExpiresAt datetime2(7) NOT NULL,
   CreatedAt datetime2(7) NOT NULL,
   CONSTRAINT PK_auth_ExternalLoginStates PRIMARY KEY (ExternalLoginStateId),

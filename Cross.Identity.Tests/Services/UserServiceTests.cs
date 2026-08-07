@@ -6,8 +6,6 @@ public class UserServiceTests : EFTestsBase
     private Mock<ILogger<UserService>> _logger = null!;
     private Mock<IPepperVaultProvider> _pepperVault = null!;
     private Mock<IPasswordHasher> _hasher = null!;
-    private Mock<IPhoneNormalizer> _phoneNormalizer = null!;
-    private Mock<IHeadersContextAccessor> _headersContextAccessor = null!;
     private Mock<IJwtTokenService> _jwtTokenService = null!;
     private UserService _userService = null!;
 
@@ -18,9 +16,6 @@ public class UserServiceTests : EFTestsBase
         _logger = new Mock<ILogger<UserService>>();
         _pepperVault = new Mock<IPepperVaultProvider>();
         _hasher = new Mock<IPasswordHasher>();
-        _phoneNormalizer = new Mock<IPhoneNormalizer>();
-        _headersContextAccessor = new Mock<IHeadersContextAccessor>();
-
         _pepperVault.Setup(p => p.CurrentVersion).Returns((short)1);
         string? pepperValue = "test-pepper";
         _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string v) =>
@@ -28,14 +23,10 @@ public class UserServiceTests : EFTestsBase
             v = pepperValue!;
             return true;
         });
-        _headersContextAccessor.Setup(h => h.LanguageCode).Returns("US");
-        _phoneNormalizer.Setup(p => p.NormalizeToE164(It.IsAny<string>(), It.IsAny<string>())).Returns<string, string>((p, r) => p);
-
         _jwtTokenService = new Mock<IJwtTokenService>();
         _jwtTokenService
             .Setup(j => j.RevokeAllTokensForUserAsync(
-                It.IsAny<Guid>(),
-                It.IsAny<RefreshTokenRevokeReason>(), null, It.IsAny<CancellationToken>()))
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _userService = new UserService(
@@ -43,8 +34,6 @@ public class UserServiceTests : EFTestsBase
             _logger.Object,
             _pepperVault.Object,
             _hasher.Object,
-            _phoneNormalizer.Object,
-            _headersContextAccessor.Object,
             _jwtTokenService.Object);
     }
 
@@ -172,18 +161,34 @@ public class UserServiceTests : EFTestsBase
     public async Task GivenExistingUserByPhone_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         var userId = Guid.NewGuid();
-        var phone = "+1234567890";
+        var phone = "+12125551234";
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             PhoneNumber = phone,
             Email = "test@example.com",
         });
-        _phoneNormalizer.Setup(p => p.NormalizeToE164(phone, "US")).Returns(phone);
-
         var result = await _userService.GetUserIdByAsync("Phone", phone, CancellationToken.None);
 
         result.Should().Be(userId.ToString());
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenNonE164Phone_WhenCreateUserAsync_ThenThrowsArgumentExceptionAsync()
+    {
+        var map = new Dictionary<string, object?>
+        {
+            ["Email"] = "user@example.com",
+            ["UserName"] = "user",
+            ["Phone"] = "89161234567",
+            ["Password"] = "Password1!",
+        };
+
+        await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ArgumentException>()
+            .WithMessage("*E.164*");
     }
 
     [Test]
@@ -364,7 +369,7 @@ public class UserServiceTests : EFTestsBase
     public async Task GivenValidPhoneCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
         var userId = Guid.NewGuid();
-        var phone = "+1234567890";
+        var phone = "+12125551234";
         AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
@@ -561,7 +566,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Hash("newPass", "new-pepper")).Returns("$pbkdf2$new");
 
-        await _userService.SetPasswordAsync("Email", email, "newPass", null, CancellationToken.None);
+        await _userService.SetPasswordAsync("Email", email, "newPass", null, null, CancellationToken.None);
 
         var user = await Context.UsersAccounts.FindAsync(userId);
         user.Should().NotBeNull();
@@ -570,7 +575,7 @@ public class UserServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBeNull();
         user.SecurityStamp.Should().NotBe(oldStamp);
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokeReason.PASSWORD_CHANGED, null, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -578,7 +583,7 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
-        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", null, CancellationToken.None))
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>();
     }

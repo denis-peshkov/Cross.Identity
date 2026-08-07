@@ -16,20 +16,12 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<RefreshTokenStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IdentityContext, IdentityContext>(Context);
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -75,7 +67,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var oldRefreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
@@ -139,7 +131,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
 
         var first = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = r1 },
@@ -163,6 +155,6 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);
-        familyTokens.Should().Contain(t => t.RevokeReason == RefreshTokenRevokeReason.REPLAY_DETECTED);
+        familyTokens.Should().Contain(t => t.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
     }
 }

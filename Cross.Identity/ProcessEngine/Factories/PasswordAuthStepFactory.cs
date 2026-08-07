@@ -10,7 +10,6 @@ internal sealed class PasswordAuthStepFactory : IStepFactory
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
         var userService = sp.GetRequiredService<IUserService>();
-
         return new PasswordAuthStep
         {
             Kind          = Kind,

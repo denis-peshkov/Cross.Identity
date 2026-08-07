@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Enums;
 
-public enum RefreshTokenRevokeReason : short
+public enum RefreshTokenRevokedReason : short
 {
     #region 1. Security reasons (critical)
 

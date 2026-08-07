@@ -12,21 +12,12 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<TokenStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         // Mock IUserService to controllably return successful authentication
         var userServiceMock = new Mock<IUserService>();
         var userId = Guid.NewGuid();
@@ -83,13 +74,13 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
                 It.IsAny<List<string>>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(), null, null, It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         jwtMock
             .Setup(j => j.GenerateRefreshTokenAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(), null, null, It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 

@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Logout from all devices: proves session ownership via refresh token and revokes every
-/// active access/refresh token for that user with <see cref="RefreshTokenRevokeReason.USER_LOGOUT_ALL"/>.
+/// active access/refresh token for that user with <see cref="RefreshTokenRevokedReason.USER_LOGOUT_ALL"/>.
 /// </summary>
 internal sealed class LogoutAllStep : IStep
 {
@@ -18,6 +18,9 @@ internal sealed class LogoutAllStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
     public required string IpAddressKey { get; init; }
 
+    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
+    public required string UserAgentKey { get; init; }
+
     /// <summary>Service for working with JWT and token entities.</summary>
     public required IJwtTokenService JwtTokenService { get; init; }
 
@@ -26,8 +29,9 @@ internal sealed class LogoutAllStep : IStep
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
+        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
 
-        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, ipAddress, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

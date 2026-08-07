@@ -14,20 +14,12 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
         Initialize();
         LicenseCheckExtensions.ResetLicenseCheckForTests();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<GetUserIdStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
 
         AddToDb(new UserAccountEntity
         {

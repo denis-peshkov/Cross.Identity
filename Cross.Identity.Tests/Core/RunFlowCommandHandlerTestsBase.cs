@@ -114,6 +114,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
+
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)
@@ -124,7 +125,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(instance);
     }
 
-    protected UserService CreateUserService(IHeadersContextAccessor headersContextAccessor)
+    protected UserService CreateUserService()
     {
         var pepperVault = new Mock<IPepperVaultProvider>();
         pepperVault.Setup(p => p.CurrentVersion).Returns((short)1);
@@ -142,18 +143,11 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>()))
             .Returns("$pbkdf2-test-hash");
 
-        var phoneNormalizer = new Mock<IPhoneNormalizer>();
-        phoneNormalizer
-            .Setup(p => p.NormalizeToE164(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns<string, string>((phone, _) => phone);
-
         return new UserService(
             Context,
             Mock.Of<ILogger<UserService>>(),
             pepperVault.Object,
             passwordHasher.Object,
-            phoneNormalizer.Object,
-            headersContextAccessor,
             Mock.Of<IJwtTokenService>());
     }
 

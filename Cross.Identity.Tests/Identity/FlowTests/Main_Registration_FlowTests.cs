@@ -12,13 +12,6 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CreateUserStepFactory>();
@@ -26,11 +19,9 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<CollectResultStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {

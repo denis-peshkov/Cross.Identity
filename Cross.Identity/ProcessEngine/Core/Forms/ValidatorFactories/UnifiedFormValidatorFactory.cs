@@ -60,7 +60,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
 
             case FieldTypeEnum.Phone:
                 if (!IsValidPhone(stringValue))
-                    ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid phone number.");
+                    ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid E.164 phone number (e.g. +79161234567).");
                 break;
 
             case FieldTypeEnum.Int:
@@ -198,8 +198,5 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         return s.LastIndexOf('.') > atIndex; // dot must be after @
     }
 
-    private static bool IsValidPhone(string? s)
-        => !string.IsNullOrWhiteSpace(s) &&
-           Regex.IsMatch(s, @"^\+?\d{8,20}$") &&
-           s.Count(char.IsDigit) >= 7;
+    private static bool IsValidPhone(string? s) => PhoneE164.IsValid(s);
 }

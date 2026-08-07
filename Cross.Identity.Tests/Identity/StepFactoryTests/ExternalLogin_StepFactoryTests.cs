@@ -28,7 +28,7 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginInitiate",
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
-              "linkUserIdKey": "LinkUserId",
+              "userIdKey": "UserId",
               "next": "done"
             }
             """);
@@ -39,7 +39,7 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginInitiate");
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
-        step.LinkUserIdKey.Should().Be("LinkUserId");
+        step.UserIdKey.Should().Be("UserId");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
@@ -58,6 +58,7 @@ public class ExternalLogin_StepFactoryTests
               "errorDescriptionKey": "ErrorDescription",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
+              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -72,6 +73,7 @@ public class ExternalLogin_StepFactoryTests
         step.ErrorDescriptionKey.Should().Be("ErrorDescription");
         step.IpAddressKey.Should().Be("collectForm.IpAddress");
         step.UserAgentKey.Should().Be("collectForm.UserAgent");
+        step.DeviceFingerprintKey.Should().Be("collectForm.DeviceFingerprint");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
         step.JwtTokenService.Should().NotBeNull();
@@ -89,6 +91,8 @@ public class ExternalLogin_StepFactoryTests
               "providerKey": "Provider",
               "userIdKey": "UserId",
               "ipAddressKey": "collectForm.IpAddress",
+              "userAgentKey": "collectForm.UserAgent",
+              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);

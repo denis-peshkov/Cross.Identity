@@ -4,7 +4,7 @@ CREATE TABLE `auth`.`ExternalLoginStates`
     `Nonce`                VARCHAR(32)  NOT NULL,
     `Provider`             VARCHAR(64)  NOT NULL,
     `ReturnUrl`            VARCHAR(512) NULL,
-    `LinkUserId`           CHAR(36)     NULL,
+    `UserId`               CHAR(36)     NULL,
     `ExpiresAt`            DATETIME(6)  NOT NULL,
     `CreatedAt`            DATETIME(6)  NOT NULL,
     `ConcurrencyStamp`     CHAR(36)     NOT NULL,

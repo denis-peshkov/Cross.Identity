@@ -13,28 +13,12 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<ForgotPasswordStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(
-            new UserService(
-                Context,
-                Mock.Of<ILogger<UserService>>(),
-                Mock.Of<IPepperVaultProvider>(),
-                Mock.Of<IPasswordHasher>(),
-                Mock.Of<IPhoneNormalizer>(),
-                headersContextAccessor,
-                Mock.Of<IJwtTokenService>()));
+            CreateUserService());
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>

@@ -10,8 +10,6 @@ internal sealed class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly IPepperVaultProvider _pepperVault;
     private readonly IPasswordHasher _hasher;
-    private readonly IPhoneNormalizer _phoneNormalizer;
-    private readonly IHeadersContextAccessor _headersContextAccessor;
     private readonly IJwtTokenService _jwtTokenService;
 
     public UserService(
@@ -19,16 +17,12 @@ internal sealed class UserService : IUserService
         ILogger<UserService> logger,
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
-        IPhoneNormalizer phoneNormalizer,
-        IHeadersContextAccessor headersContextAccessor,
         IJwtTokenService jwtTokenService)
     {
         _context = context;
         _logger = logger;
         _pepperVault = pepperVault;
         _hasher = hasher;
-        _phoneNormalizer = phoneNormalizer;
-        _headersContextAccessor = headersContextAccessor;
         _jwtTokenService = jwtTokenService;
     }
 
@@ -54,7 +48,6 @@ internal sealed class UserService : IUserService
         var userAccounts = _context.UsersAccounts.AsNoTracking();
 
         IQueryable<UserAccountEntity> userAccountsFiltered;
-        var displayValue = selectorValue.ToLowerInvariant();
         if (field == nameof(UserAccountEntity.Id))
         {
             if (!TryParseUserId(selectorValue, out var id))
@@ -64,13 +57,15 @@ internal sealed class UserService : IUserService
         }
         else
         {
+            var displayValue = NormalizeSelectorValue(field, selectorValue)
+                               ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
             userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
         return await userAccountsFiltered
                    .FirstOrDefaultAsync(cancellationToken)
                    .ConfigureAwait(false)
-               ?? throw new NotFoundException($"User with given {field} '{displayValue}' not found");
+               ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
     }
 
     /// <inheritdoc/>
@@ -85,9 +80,10 @@ internal sealed class UserService : IUserService
         // 2) Normalization
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        var normalizedPhone = phoneRaw is string phone
-            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!) // тут баг, так как что бы правильно отформатировать надо знать не текущий язык а страну номера телефона
-            : null;
+        // Phone must already be E.164 (host-normalized); other formats are rejected.
+        string? normalizedPhone = null;
+        if (phoneRaw is string phone && !string.IsNullOrWhiteSpace(phone))
+            normalizedPhone = PhoneE164.Require(phone);
 
         // 3) Uniqueness
         if (normalizedUserName is not null
@@ -113,6 +109,7 @@ internal sealed class UserService : IUserService
         {
             Id = Guid.NewGuid(),
             Email = normalizedEmail,
+            PhoneNumber = normalizedPhone,
             UserName = userNameRaw as string,
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
@@ -241,6 +238,7 @@ internal sealed class UserService : IUserService
         string selectorValue,
         string newPassword,
         string? ipAddress,
+        string? userAgent,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
@@ -262,7 +260,7 @@ internal sealed class UserService : IUserService
         user.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokeReason.PASSWORD_CHANGED, ipAddress, cancellationToken)
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, ipAddress, userAgent, cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -285,7 +283,10 @@ internal sealed class UserService : IUserService
         return Guid.TryParse(selectorValue.Trim(), out id) && id != Guid.Empty;
     }
 
-    private async Task<UserAccountEntity?> FindTrackedUserBySelectorAsync(string field, string selectorValue, CancellationToken cancellationToken)
+    private async Task<UserAccountEntity?> FindTrackedUserBySelectorAsync(
+        string field,
+        string selectorValue,
+        CancellationToken cancellationToken)
     {
         if (field == nameof(UserAccountEntity.Id))
         {
@@ -298,24 +299,7 @@ internal sealed class UserService : IUserService
                 .ConfigureAwait(false);
         }
 
-        var value = field switch
-        {
-            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
-                => selectorValue.Trim().ToLowerInvariant(),
-            nameof(UserAccountEntity.PhoneNumber)
-                /**
-                 * Кратко: в NormalizeToE164 нужен ISO region (страна), не язык.
-                 * Что имеют в виду | Что передавать                          | Country code | Пример
-                 * EN               |  не регион — язык. Обычно "US" или "GB" | +1 / +44     | зависит от страны
-                 * RU               | "RU"                                    | +7           | 9123456789 → +79123456789
-                 * UA               | "UA"                                    | +380         | 501234567  → +380501234567
-                 * UK               | "GB" (не "UK")                          | +44          | 7911123456 → +447911123456
-                 * RO               | "RO"                                    | +40          | 722123456  → +40722123456
-                 */
-                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode), // тут баг, так как что бы правильно отформатировать надо знать не текущий язык а страну номера телефона
-            _ => selectorValue,
-        };
-
+        var value = NormalizeSelectorValue(field, selectorValue);
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
@@ -323,6 +307,18 @@ internal sealed class UserService : IUserService
             .Where(u => EF.Property<string>(u, field) == value)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    private string? NormalizeSelectorValue(string field, string selectorValue)
+    {
+        return field switch
+        {
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
+                => selectorValue.Trim().ToLowerInvariant(),
+            nameof(UserAccountEntity.PhoneNumber)
+                => PhoneE164.Require(selectorValue),
+            _ => selectorValue,
+        };
     }
 
     private async Task<bool> TryValidateEmailCodeAsync(

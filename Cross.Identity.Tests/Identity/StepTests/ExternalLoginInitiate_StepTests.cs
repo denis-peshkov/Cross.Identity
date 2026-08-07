@@ -41,7 +41,7 @@ public class ExternalLoginInitiate_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenGuidOrStringLinkUserId_WhenExecuteAsync_ThenForwardsLinkUserIdAsync()
+    public async Task GivenGuidOrStringUserId_WhenExecuteAsync_ThenForwardsUserIdAsync()
     {
         var linkUserId = Guid.NewGuid();
         _externalLoginService
@@ -52,18 +52,18 @@ public class ExternalLoginInitiate_StepTests
         {
             Kind = "externalLoginInitiate",
             ProviderKey = "Provider",
-            LinkUserIdKey = "LinkUserId",
+            UserIdKey = "UserId",
             ExternalLoginService = _externalLoginService.Object,
         };
 
         var bagWithGuid = new Bag();
         bagWithGuid.Set("externalLoginInitiate.Provider", "Google");
-        bagWithGuid.Set("externalLoginInitiate.LinkUserId", linkUserId);
+        bagWithGuid.Set("externalLoginInitiate.UserId", linkUserId);
         await step.ExecuteAsync(bagWithGuid, CancellationToken.None);
 
         var bagWithString = new Bag();
         bagWithString.Set("externalLoginInitiate.Provider", "Google");
-        bagWithString.Set("LinkUserId", linkUserId.ToString());
+        bagWithString.Set("UserId", linkUserId.ToString());
         await step.ExecuteAsync(bagWithString, CancellationToken.None);
 
         _externalLoginService.Verify(
@@ -73,7 +73,7 @@ public class ExternalLoginInitiate_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenInvalidLinkUserId_WhenExecuteAsync_ThenForwardsNullAsync()
+    public async Task GivenInvalidUserId_WhenExecuteAsync_ThenForwardsNullAsync()
     {
         _externalLoginService
             .Setup(s => s.InitiateAsync("Google", null, null, It.IsAny<CancellationToken>()))
@@ -83,13 +83,13 @@ public class ExternalLoginInitiate_StepTests
         {
             Kind = "externalLoginInitiate",
             ProviderKey = "Provider",
-            LinkUserIdKey = "LinkUserId",
+            UserIdKey = "UserId",
             ExternalLoginService = _externalLoginService.Object,
         };
 
         var bag = new Bag();
         bag.Set("externalLoginInitiate.Provider", "Google");
-        bag.Set("externalLoginInitiate.LinkUserId", "not-a-guid");
+        bag.Set("externalLoginInitiate.UserId", "not-a-guid");
 
         await step.ExecuteAsync(bag, CancellationToken.None);
 

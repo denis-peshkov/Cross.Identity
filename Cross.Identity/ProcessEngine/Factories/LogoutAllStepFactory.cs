@@ -24,6 +24,7 @@ internal sealed class LogoutAllStepFactory : IStepFactory
             JwtTokenService = jwtTokenService,
             RefreshTokenKey = cfg.Str("refreshTokenKey"),
             IpAddressKey    = cfg.Str("ipAddressKey"),
+            UserAgentKey    = cfg.Str("userAgentKey"),
             Next            = cfg.StrOpt("next"),
         };
     }

@@ -13,12 +13,13 @@ public class RefreshTokenEntity : IHasConcurrencyStamp
     public Guid? ReplacedByTokenId { get; set; }
 
     public DateTime? RevokedAt { get; set; }
-    public RefreshTokenRevokeReason? RevokeReason { get; set; }
-    public string? RevokedByIp { get; set; }
+    public RefreshTokenRevokedReason? RevokedReason { get; set; }
+    public string? RevokedIpAddress { get; set; }
+    public string? RevokedUserAgent { get; set; }
 
-    public string? DeviceFingerprint { get; set; }
-    public string? UserAgent { get; set; }
-    public string? IpAddress { get; set; }
+    public string? CreatedDeviceFingerprint { get; set; }
+    public string? CreatedUserAgent { get; set; }
+    public string? CreatedIpAddress { get; set; }
 
     /// <inheritdoc />
     public Guid ConcurrencyStamp { get; set; }

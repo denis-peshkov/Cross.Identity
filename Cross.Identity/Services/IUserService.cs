@@ -15,6 +15,7 @@ internal interface IUserService
     /// Find a user identifier by selector field.
     /// Allowed <paramref name="selectorField"/> values depend on the implementation
     /// (at minimum <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, and <c>"Phone"</c> are supported).
+    /// For <c>Phone</c>, pass an already-valid E.164 value (e.g. <c>+79161234567</c>); other formats are rejected.
     /// </summary>
     /// <param name="selectorField">Field name to search by (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value (e.g. email address).</param>
@@ -33,7 +34,8 @@ internal interface IUserService
     /// <summary>
     /// Create a new user from a flat value map.
     /// Map keys are logical field names (e.g. <c>"Email"</c>, <c>"UserName"</c>, <c>"Phone"</c>, <c>"Password"</c>).
-    /// Optional keys may be omitted.
+    /// Optional keys may be omitted. <c>Phone</c>, when provided, must already be valid E.164
+    /// (e.g. <c>+79161234567</c>); national or free-form numbers are rejected.
     /// </summary>
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
@@ -57,13 +59,13 @@ internal interface IUserService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Verify the password of a user found by selector.
+    /// Verify a one-time code for a user found by selector.
     /// </summary>
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>
     /// <param name="code">Code to verify.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns><c>true</c> if the password is correct; otherwise <c>false</c>.</returns>
+    /// <returns><c>true</c> if the code is correct; otherwise <c>false</c>.</returns>
     Task<bool> ValidateCodeAsync(
         string selectorField,
         string selectorValue,
@@ -78,11 +80,13 @@ internal interface IUserService
     /// <param name="selectorValue">Selector value.</param>
     /// <param name="newPassword">New password.</param>
     /// <param name="ipAddress">Optional client IP for token revoke audit fields.</param>
+    /// <param name="userAgent">Optional User-Agent for token revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SetPasswordAsync(
         string selectorField,
         string selectorValue,
         string newPassword,
         string? ipAddress,
+        string? userAgent,
         CancellationToken cancellationToken);
 }

@@ -9,11 +9,12 @@ CREATE TABLE `auth`.`RefreshTokens`
     `CreatedAt`         DATETIME(6)  NOT NULL,
     `ReplacedByTokenId` CHAR(36)     NULL,
     `RevokedAt`         DATETIME(6)  NULL,
-    `RevokeReason`      SMALLINT     NULL,
-    `RevokedByIp`       VARCHAR(45)  NULL,
-    `DeviceFingerprint` VARCHAR(100) NULL,
-    `UserAgent`         VARCHAR(512) NULL,
-    `IpAddress`         VARCHAR(45)  NULL,
+    `RevokedReason`      SMALLINT     NULL,
+    `RevokedIpAddress`  VARCHAR(45)  NULL,
+    `RevokedUserAgent`  VARCHAR(512) NULL,
+    `CreatedDeviceFingerprint` VARCHAR(100) NULL,
+    `CreatedUserAgent`         VARCHAR(512) NULL,
+    `CreatedIpAddress`         VARCHAR(45)  NULL,
     `ConcurrencyStamp`  CHAR(36)     NOT NULL,
 
     CONSTRAINT `PK_RefreshTokens` PRIMARY KEY (`RefreshTokenId`)

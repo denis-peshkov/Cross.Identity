@@ -4,7 +4,7 @@ CREATE TABLE auth."ExternalLoginStates"
     "Nonce"                varchar(32)  NOT NULL,
     "Provider"             varchar(64)  NOT NULL,
     "ReturnUrl"            varchar(512) NULL,
-    "LinkUserId"           uuid         NULL,
+    "UserId"               uuid         NULL,
     "ExpiresAt"            timestamp without time zone NOT NULL,
     "CreatedAt"            timestamp without time zone NOT NULL,
     "ConcurrencyStamp"     uuid         NOT NULL,

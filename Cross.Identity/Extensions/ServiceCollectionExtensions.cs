@@ -42,7 +42,6 @@ public static class ServiceCollectionExtensions
 
         services.TryAddScoped<IUserService, UserService>();
         services.TryAddSingleton<IPasswordHasher, PasswordHasher>();
-        services.TryAddSingleton<IPhoneNormalizer, PhoneNormalizer>();
         services.Configure<Cross.Identity.Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
         // services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
 

@@ -102,7 +102,7 @@ Content-Type: application/json
   "Provider": "Google",
   "ReturnUrl": "{{HOST}}/swagger"
 }
-# Optional account-link (must match authenticated user): "LinkUserId": "<user-guid>"
+# Optional account-link (must match authenticated user): "UserId": "<user-guid>"
 
 
 ###

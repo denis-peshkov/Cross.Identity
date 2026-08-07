@@ -34,17 +34,17 @@ public class RefreshToken_StepTests
             NormalizedUserName = "user"
         };
 
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValue(newRefreshToken, JwtRegisteredClaimNames.Jti))
             .Returns("new-jti");
-        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newAccessToken);
-        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>(), null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newRefreshToken);
-        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _userService.Setup(u => u.GetUserByAsync("Id", userId.ToString(), It.IsAny<CancellationToken>()))
@@ -56,6 +56,7 @@ public class RefreshToken_StepTests
             RefreshTokenKey = "RefreshToken",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -79,7 +80,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new RefreshTokenStep
@@ -88,6 +89,7 @@ public class RefreshToken_StepTests
             RefreshTokenKey = "RefreshToken",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -108,7 +110,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Refresh token has already been used."));
 
         var step = new RefreshTokenStep
@@ -117,6 +119,7 @@ public class RefreshToken_StepTests
             RefreshTokenKey = "RefreshToken",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,

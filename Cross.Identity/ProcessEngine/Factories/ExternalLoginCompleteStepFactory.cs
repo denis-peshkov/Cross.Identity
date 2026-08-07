@@ -24,6 +24,7 @@ internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
             ErrorDescriptionKey  = cfg.StrOpt("errorDescriptionKey"),
             IpAddressKey         = cfg.Str("ipAddressKey"),
             UserAgentKey         = cfg.Str("userAgentKey"),
+            DeviceFingerprintKey = cfg.Str("deviceFingerprintKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }
