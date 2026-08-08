@@ -78,8 +78,8 @@ public class GetUser_StepFactoryTests
             """
             {
               "kind": "getUserId",
-              "selectorField": "Phone",
-              "selectorKey": "collectForm.Phone"
+              "selectorField": "PhoneNumber",
+              "selectorKey": "collectForm.PhoneNumber"
             }
             """);
 
@@ -89,7 +89,7 @@ public class GetUser_StepFactoryTests
         var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.SelectorField.Should().Be("Phone");
-        step.SelectorKey.Should().Be("collectForm.Phone");
+        step.SelectorField.Should().Be("PhoneNumber");
+        step.SelectorKey.Should().Be("collectForm.PhoneNumber");
     }
 }

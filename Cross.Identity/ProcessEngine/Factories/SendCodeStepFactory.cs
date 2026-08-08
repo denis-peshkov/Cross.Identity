@@ -39,6 +39,8 @@ internal sealed class SendCodeStepFactory : IStepFactory
             Kind                      = Kind,
             Channel                   = channel,
             SelectorKey               = cfg.Str("selectorKey"),
+            PhoneNumberKey            = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey               = cfg.StrOpt("userNameKey"),
             TtlKey                    = cfg.StrOpt("ttlKey"),
             CodeService               = codeService,
             UserService               = userService,

@@ -37,6 +37,8 @@ internal sealed class ForgotPasswordStepFactory : IStepFactory
             Channel                   = channel,
             ResolveBy                 = new ResolveBy { Field = field },
             SelectorKey               = cfg.Str("selectorKey"),
+            PhoneNumberKey            = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey               = cfg.StrOpt("userNameKey"),
             PasswordKey               = string.Empty,
         };
     }

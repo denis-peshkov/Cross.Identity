@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Step that looks up a user and publishes their identifier into the process context (<see cref="Bag"/>).
-/// Looks up the user via <see cref="IUserService"/> by the specified field (Email / UserName / Phone / ...).
+/// Looks up the user via <see cref="IUserService"/> by the specified field (Email / UserName / PhoneNumber / ...).
 /// <para>
 /// Keys:
 /// <list type="bullet">
@@ -23,7 +23,7 @@ internal sealed class GetUserIdStep : IStep
     /// <summary>User service.</summary>
     public required IUserService UserService { get; init; }
 
-    /// <summary>Lookup field name: "Email" | "UserName" | "Phone" | ...</summary>
+    /// <summary>Lookup field name: "Email" | "UserName" | "PhoneNumber" | ...</summary>
     public required string SelectorField { get; init; }
 
     /// <summary>
@@ -32,13 +32,32 @@ internal sealed class GetUserIdStep : IStep
     /// </summary>
     public required string SelectorKey { get; init; }
 
+    /// <summary>
+    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, lookup uses email / phone / user name.
+    /// </summary>
+    public string? PhoneNumberKey { get; init; }
+
+    /// <summary>
+    /// Optional key for user name.
+    /// </summary>
+    public string? UserNameKey { get; init; }
+
     /// <inheritdoc />
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // relative → "{Kind}.{SelectorKey}"
-        var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        string selectorField;
+        string selectorValue;
+        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
+        {
+            (selectorField, selectorValue, _) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
+        }
+        else
+        {
+            selectorField = SelectorField;
+            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        }
 
-        var userId = await UserService.GetUserIdByAsync(SelectorField, selectorValue, cancellationToken).ConfigureAwait(false);
+        var userId = await UserService.GetUserIdByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
         if (userId is null)
             return StepResult.Fail(new KeyNotFoundException("User not found."));
 

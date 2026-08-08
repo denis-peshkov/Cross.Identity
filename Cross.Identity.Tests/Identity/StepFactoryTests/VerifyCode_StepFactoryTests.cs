@@ -39,7 +39,7 @@ public class VerifyCode_StepFactoryTests
 
         // Assert
         step.Kind.Should().Be("verifyCode");
-        step.Channel.Should().Be("email");
+        step.Channel.Should().Be(ChannelEnum.Email);
         step.IdentityKey.Should().Be("collectForm.Email");
         step.CodeKey.Should().Be("collectForm.Code");
         step.Next.Should().Be("token");
@@ -48,15 +48,15 @@ public class VerifyCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenPhoneChannelJson_WhenCreate_ThenReturnsConfiguredStep()
+    public void GivenSmsChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "verifyCode",
-              "channel": "phone",
-              "identityKey": "collectForm.Phone",
+              "channel": "sms",
+              "identityKey": "collectForm.PhoneNumber",
               "codeKey": "collectForm.Code"
             }
             """);
@@ -67,7 +67,7 @@ public class VerifyCode_StepFactoryTests
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.Channel.Should().Be("phone");
+        step.Channel.Should().Be(ChannelEnum.Sms);
     }
 
     [Test]

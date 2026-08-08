@@ -41,18 +41,20 @@ internal sealed class TokenStepFactory : IStepFactory
 
         return new TokenStep
         {
-            Kind            = Kind,
-            Logger          = loggerFactory.CreateLogger(nameof(TokenStep)),
-            JwtTokenService = jwtTokenService,
-            UserService     = userService,
-            ResolveBy       = resolveBy,
-            SelectorKey     = cfg.Str("selectorKey"),
-            PasswordKey     = cfg.StrOpt("passwordKey"),
-            CodeKey         = cfg.StrOpt("codeKey"),
-            IpAddressKey    = cfg.Str("ipAddressKey"),
-            UserAgentKey    = cfg.Str("userAgentKey"),
+            Kind                 = Kind,
+            Logger               = loggerFactory.CreateLogger(nameof(TokenStep)),
+            JwtTokenService      = jwtTokenService,
+            UserService          = userService,
+            ResolveBy            = resolveBy,
+            SelectorKey          = cfg.Str("selectorKey"),
+            PhoneNumberKey       = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey          = cfg.StrOpt("userNameKey"),
+            PasswordKey          = cfg.StrOpt("passwordKey"),
+            CodeKey              = cfg.StrOpt("codeKey"),
+            IpAddressKey         = cfg.Str("ipAddressKey"),
+            UserAgentKey         = cfg.Str("userAgentKey"),
             DeviceFingerprintKey = cfg.Str("deviceFingerprintKey"),
-            Next            = cfg.StrOpt("next")
+            Next                 = cfg.StrOpt("next")
         };
     }
 }

@@ -6,7 +6,7 @@
 /// <para>
 /// Scenario:
 /// <list type="number">
-///   <item><c>collectForm</c> collects Email/Phone and a one-time code and writes them to Bag with its step name prefix (for example, <c>auth-form.Email</c>).</item>
+///   <item><c>collectForm</c> collects Email/PhoneNumber and a one-time code and writes them to Bag with its step name prefix (for example, <c>auth-form.Email</c>).</item>
 ///   <item><c>CodeAuthStep</c> reads identity and code via <see cref="IdentityKey"/> and <see cref="CodeKey"/>:
 ///       if the key is relative (no dot), it is automatically qualified as <c>"{Name}.{key}"</c>;
 ///       if absolute (with a dot), it is used as-is.</item>
@@ -30,8 +30,8 @@ internal sealed class CodeAuthStep : IStep
     /// <summary>User service.</summary>
     public required IUserService UserService { get; init; }
 
-    /// <summary>Verification channel (for example, "email" or "phone").</summary>
-    public required string Channel { get; init; }
+    /// <summary>Verification channel (<see cref="ChannelEnum.Email"/> / <see cref="ChannelEnum.Sms"/>, …).</summary>
+    public required ChannelEnum Channel { get; init; }
 
     /// <summary>
     /// Key in <see cref="Bag"/> to read identity from (for example, <c>"auth-form.Email"</c>).
@@ -45,7 +45,7 @@ internal sealed class CodeAuthStep : IStep
     /// </summary>
     public required string CodeKey { get; init; }
 
-    /// <summary>User lookup settings: which field to search by (for example, "Email" or "Phone").</summary>
+    /// <summary>User lookup settings: which field to search by (for example, "Email" or "PhoneNumber").</summary>
     public required ResolveBy ResolveBy { get; init; }
 
     /// <summary>

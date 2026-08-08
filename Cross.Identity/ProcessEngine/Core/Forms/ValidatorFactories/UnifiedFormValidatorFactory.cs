@@ -39,7 +39,8 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
             return;
         }
 
-        if (!hasValue || value is null) return;
+        // Optional empty values skip type/length checks (cross-field rules handle Email|PhoneNumber, Password|Code, etc.).
+        if (!hasValue || value is null || IsEmpty(value)) return;
 
         // Length check
         if (stringValue is not null)
@@ -58,8 +59,8 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
                     ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid email.");
                 break;
 
-            case FieldTypeEnum.Phone:
-                if (!IsValidPhone(stringValue))
+            case FieldTypeEnum.PhoneNumber:
+                if (!PhoneE164.IsValid(stringValue))
                     ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid E.164 phone number (e.g. +79161234567).");
                 break;
 
@@ -197,6 +198,4 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         if (atIndex <= 0) return false; // @ must not be at the start
         return s.LastIndexOf('.') > atIndex; // dot must be after @
     }
-
-    private static bool IsValidPhone(string? s) => PhoneE164.IsValid(s);
 }

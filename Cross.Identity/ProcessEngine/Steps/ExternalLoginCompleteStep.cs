@@ -64,7 +64,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
         var user = (await UserService.GetUserByAsync("Id", userId.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
+        var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
         var username = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
         var familyId = Guid.NewGuid();

@@ -78,9 +78,9 @@ public class SendCode_StepFactoryTests
             {
               "kind": "sendCode",
               "channel": "sms",
-              "selectorKey": "collectForm.Phone",
+              "selectorKey": "collectForm.PhoneNumber",
               "resolveBy": {
-                "field": "Phone"
+                "field": "PhoneNumber"
               }
             }
             """);
@@ -92,7 +92,7 @@ public class SendCode_StepFactoryTests
 
         // Assert
         step.Channel.Should().Be(ChannelEnum.Sms);
-        step.ResolveBy.Field.Should().Be("Phone");
+        step.ResolveBy.Field.Should().Be("PhoneNumber");
     }
 
     [Test]

@@ -25,18 +25,20 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
 
         return new ResetPasswordStep
         {
-            Kind        = Kind,
-            SelectorKey = cfg.Str("selectorKey"),
-            PasswordKey = cfg.Str("passwordKey"),
-            IpAddressKey = cfg.Str("ipAddressKey"),
-            UserAgentKey = cfg.Str("userAgentKey"),
-            UserService = userService,
+            Kind               = Kind,
+            SelectorKey        = cfg.Str("selectorKey"),
+            PhoneNumberKey     = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey        = cfg.StrOpt("userNameKey"),
+            PasswordKey        = cfg.Str("passwordKey"),
+            IpAddressKey       = cfg.Str("ipAddressKey"),
+            UserAgentKey       = cfg.Str("userAgentKey"),
+            UserService        = userService,
             EmailSenderService = emailSenderService,
-            SmsSenderService = smsSenderService,
-            Channel = channel,
-            ResolveBy   = new ResolveBy { Field = field },
-            Logger      = loggerFactory.CreateLogger<ResetPasswordStep>(),
-            Next        = cfg.StrOpt("next"),
+            SmsSenderService   = smsSenderService,
+            Channel            = channel,
+            ResolveBy          = new ResolveBy { Field = field },
+            Logger             = loggerFactory.CreateLogger<ResetPasswordStep>(),
+            Next               = cfg.StrOpt("next"),
         };
     }
 }

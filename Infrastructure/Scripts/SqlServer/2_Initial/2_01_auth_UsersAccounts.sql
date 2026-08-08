@@ -1,6 +1,7 @@
 CREATE TABLE [auth].[UsersAccounts]
 (
     [UserAccountId]         UNIQUEIDENTIFIER  NOT NULL,
+
     [UserName]              NVARCHAR(200)     NULL,
     [NormalizedUserName]    NVARCHAR(200)     NULL,
     [Email]                 NVARCHAR(200)     NULL,
@@ -18,7 +19,7 @@ CREATE TABLE [auth].[UsersAccounts]
     [ConcurrencyStamp]      UNIQUEIDENTIFIER  NOT NULL,
 
     [EmailConfirmed]        BIT               NOT NULL,
-    [PhoneConfirmed]        BIT               NOT NULL,
+    [PhoneNumberConfirmed]  BIT               NOT NULL,
     [TwoFactorEnabled]      BIT               NOT NULL,
 
     [IsActive]              BIT               NOT NULL,

@@ -5,7 +5,7 @@
 /// JSON parameters:
 /// <list type="bullet">
 /// <item><description><c>name</c> — step name;</description></item>
-/// <item><description><c>channel</c> — verification channel (for example, "email" or "phone");</description></item>
+/// <item><description><c>channel</c> — verification channel (<c>email</c> / <c>sms</c>, …);</description></item>
 /// <item><description><c>identityKey</c> — Bag key for the identifier (email/phone/username);
 ///     if relative (no dot) → read as <c>"{name}.identityKey"</c>;
 ///     if absolute (with a dot), used as-is.</description></item>
@@ -24,14 +24,19 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
     {
         var codeService = sp.GetRequiredService<ICodeService>();
 
+        var channel = cfg.EnumOpt<ChannelEnum>("channel")
+                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
+
         return new VerifyCodeStep
         {
-            Kind        = Kind,
-            Channel     = cfg.Str("channel"),
-            IdentityKey = cfg.Str("identityKey"),
-            CodeKey     = cfg.Str("codeKey"),
-            CodeService = codeService,
-            Next        = cfg.StrOpt("next")
+            Kind           = Kind,
+            Channel        = channel,
+            IdentityKey    = cfg.Str("identityKey"),
+            PhoneNumberKey = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey    = cfg.StrOpt("userNameKey"),
+            CodeKey        = cfg.Str("codeKey"),
+            CodeService    = codeService,
+            Next           = cfg.StrOpt("next")
         };
     }
 }

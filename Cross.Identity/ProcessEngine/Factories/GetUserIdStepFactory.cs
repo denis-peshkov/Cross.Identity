@@ -5,7 +5,7 @@
 /// JSON parameters:
 /// <list type="bullet">
 /// <item><description><c>name</c> — step name;</description></item>
-/// <item><description><c>selectorField</c> — lookup field ("Email" | "UserName" | "Phone" | ...);</description></item>
+/// <item><description><c>selectorField</c> — lookup field ("Email" | "UserName" | "PhoneNumber" | ...);</description></item>
 /// <item><description><c>selectorKey</c> — Bag key to read the selector value from:
 ///   relative (no dot) → will be read as <c>"{name}.selectorKey"</c>,
 ///   absolute (with a dot) is used as-is;</description></item>
@@ -26,11 +26,13 @@ internal sealed class GetUserIdStepFactory : IStepFactory
 
         return new GetUserIdStep
         {
-            Kind          = Kind,
-            UserService   = userService,
-            SelectorField = cfg.Str("selectorField"),
-            SelectorKey   = cfg.Str("selectorKey"),
-            Next          = cfg.StrOpt("next")
+            Kind           = Kind,
+            UserService    = userService,
+            SelectorField  = cfg.Str("selectorField"),
+            SelectorKey    = cfg.Str("selectorKey"),
+            PhoneNumberKey = cfg.StrOpt("phoneNumberKey"),
+            UserNameKey    = cfg.StrOpt("userNameKey"),
+            Next           = cfg.StrOpt("next")
         };
     }
 }

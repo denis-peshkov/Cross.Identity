@@ -488,7 +488,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             UserName = userName,
             NormalizedUserName = userName.Trim().ToLowerInvariant(),
             EmailConfirmed = !string.IsNullOrWhiteSpace(normalizedEmail),
-            PhoneConfirmed = false,
+            PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
             IsActive = true,
             CreatedAt = now,

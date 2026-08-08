@@ -18,7 +18,7 @@ CREATE TABLE auth."UsersAccounts"
     "ConcurrencyStamp"      uuid         NOT NULL,
 
     "EmailConfirmed"        boolean      NOT NULL,
-    "PhoneConfirmed"        boolean      NOT NULL,
+    "PhoneNumberConfirmed"  boolean      NOT NULL,
     "TwoFactorEnabled"      boolean      NOT NULL,
 
     "IsActive"              boolean      NOT NULL,

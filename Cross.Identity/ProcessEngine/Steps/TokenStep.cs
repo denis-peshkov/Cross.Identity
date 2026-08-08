@@ -26,6 +26,16 @@ internal sealed class TokenStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
     public required string SelectorKey { get; init; }
 
+    /// <summary>
+    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, identity is resolved as email / phone / user name.
+    /// </summary>
+    public string? PhoneNumberKey { get; init; }
+
+    /// <summary>
+    /// Optional key for user name. When set with <see cref="PhoneNumberKey"/>, identity is resolved as email / phone / user name.
+    /// </summary>
+    public string? UserNameKey { get; init; }
+
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public string? PasswordKey { get; init; }
 
@@ -51,14 +61,25 @@ internal sealed class TokenStep : IStep
     public IUserService UserService { get; set; }
 
 
-    /// <summary>User lookup settings: which field to search by (for example, "Email" or "Phone").</summary>
+    /// <summary>User lookup settings: which field to search by (for example, "Email" or "PhoneNumber").</summary>
     public required ResolveBy ResolveBy { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) email/login + password or code (absolute keys such as collectForm.Email are not prefixed with the token step Kind)
-        var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        // 1) email/login (or phone) + password or code (absolute keys such as collectForm.Email are not prefixed with the token step Kind)
+        string selectorField;
+        string selectorValue;
+        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
+        {
+            (selectorField, selectorValue, _) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
+        }
+        else
+        {
+            selectorField = ResolveBy.Field;
+            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        }
+
         string? passwordValue = null;
         if (PasswordKey != null)
         {
@@ -75,11 +96,11 @@ internal sealed class TokenStep : IStep
         var validated = false;
         if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
-            validated = await UserService.ValidatePasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
+            validated = await UserService.ValidatePasswordAsync(selectorField, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
         }
         else if (CodeKey != null && !string.IsNullOrEmpty(codeValue))
         {
-            validated = await UserService.ValidateCodeAsync(ResolveBy.Field, selectorValue, codeValue, cancellationToken).ConfigureAwait(false);
+            validated = await UserService.ValidateCodeAsync(selectorField, selectorValue, codeValue, cancellationToken).ConfigureAwait(false);
         }
         if (!validated)
         {
@@ -88,12 +109,12 @@ internal sealed class TokenStep : IStep
         }
 
         // 3) get user data
-        var userAccount = await UserService.GetUserByAsync(ResolveBy.Field, selectorValue, cancellationToken).ConfigureAwait(false);
+        var userAccount = await UserService.GetUserByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
         var user = userAccount.ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var id     = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
+        var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
         var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
         // 4) generate AccessToken

@@ -18,7 +18,7 @@ CREATE TABLE `auth`.`UsersAccounts`
     `ConcurrencyStamp`      CHAR(36)     NOT NULL,
 
     `EmailConfirmed`        TINYINT(1)   NOT NULL,
-    `PhoneConfirmed`        TINYINT(1)   NOT NULL,
+    `PhoneNumberConfirmed`  TINYINT(1)   NOT NULL,
     `TwoFactorEnabled`      TINYINT(1)   NOT NULL,
 
     `IsActive`              TINYINT(1)   NOT NULL,

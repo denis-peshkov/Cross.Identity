@@ -5,11 +5,16 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "Email", "type": "Email", "required": true, "min": 8, "max": 128 },
+          { "key": "Email", "type": "Email", "required": false, "min": 8, "max": 128 },
+          { "key": "PhoneNumber", "type": "PhoneNumber", "required": false, "max": 16 },
+          { "key": "UserName", "type": "String", "required": false, "min": 3, "max": 64 },
           { "key": "Ttl", "type": "TimeSpan", "required": true },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
           { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
           { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
+        ],
+        "validators": [
+          { "kind": "atLeastOneRequired", "fields": ["Email", "PhoneNumber", "UserName"], "message": "Provide an email, phone, or user name." }
         ]
       },
       "next": "sendCode"
@@ -18,6 +23,8 @@
       "kind": "sendCode",
       "channel": "email",
       "selectorKey": "collectForm.Email",
+      "phoneNumberKey": "collectForm.PhoneNumber",
+      "userNameKey": "collectForm.UserName",
       "ttlKey": "collectForm.Ttl",
       "resolveBy": { "field": "Email" },
       "next": "collectResult"

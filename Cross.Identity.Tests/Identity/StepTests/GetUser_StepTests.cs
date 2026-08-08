@@ -48,19 +48,19 @@ public class GetUser_StepTests
     {
         var phone = _faker.Phone.PhoneNumber("+407########");
         var users = new Mock<IUserService>(MockBehavior.Strict);
-        users.Setup(s => s.GetUserIdByAsync("Phone", phone, It.IsAny<CancellationToken>()))
+        users.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
         var step = new GetUserIdStep
         {
             Kind = "lookup",
             UserService = users.Object,
-            SelectorField = "Phone",
-            SelectorKey = "get.Phone",
+            SelectorField = "PhoneNumber",
+            SelectorKey = "get.PhoneNumber",
             Next = null
         };
 
-        var bag = new Bag().Set("get.Phone", phone);
+        var bag = new Bag().Set("get.PhoneNumber", phone);
 
         var res = await step.ExecuteAsync(bag, CancellationToken.None);
 

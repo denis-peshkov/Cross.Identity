@@ -83,7 +83,7 @@ internal sealed class RefreshTokenStep : IStep
             throw new InvalidOperationException("Invalid user ID when refresh token.");
         }
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
+        var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
         var username = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
         // 4) generate AccessToken

@@ -168,28 +168,11 @@ public class UserServiceTests : EFTestsBase
             PhoneNumber = phone,
             Email = "test@example.com",
         });
-        var result = await _userService.GetUserIdByAsync("Phone", phone, CancellationToken.None);
+        var result = await _userService.GetUserIdByAsync("PhoneNumber", phone, CancellationToken.None);
 
         result.Should().Be(userId.ToString());
     }
 
-    [Test]
-    [Category(TestCategory.INTEGRATION)]
-    public async Task GivenNonE164Phone_WhenCreateUserAsync_ThenThrowsArgumentExceptionAsync()
-    {
-        var map = new Dictionary<string, object?>
-        {
-            ["Email"] = "user@example.com",
-            ["UserName"] = "user",
-            ["Phone"] = "89161234567",
-            ["Password"] = "Password1!",
-        };
-
-        await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
-            .Should()
-            .ThrowAsync<ArgumentException>()
-            .WithMessage("*E.164*");
-    }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
@@ -383,7 +366,7 @@ public class UserServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _userService.ValidateCodeAsync("Phone", phone, "123456", CancellationToken.None);
+        var result = await _userService.ValidateCodeAsync("PhoneNumber", phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
     }
 
@@ -613,7 +596,7 @@ public class UserServiceTests : EFTestsBase
         user1.EmailConfirmed = true;
         await ctx1.SaveChangesAsync();
 
-        user2.PhoneConfirmed = true;
+        user2.PhoneNumberConfirmed = true;
         await FluentActions.Invoking(() => ctx2.SaveChangesAsync())
             .Should()
             .ThrowAsync<DbUpdateConcurrencyException>();

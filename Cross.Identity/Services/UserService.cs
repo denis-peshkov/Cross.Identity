@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Basic in-memory implementation of <see cref="IUserService"/>.
-/// Supports creation, lookup by Email/UserName/Phone, and password verification (PBKDF2).
+/// Supports creation, lookup by Email/UserName/PhoneNumber, and password verification (PBKDF2).
 /// </summary>
 internal sealed class UserService : IUserService
 {
@@ -74,16 +74,16 @@ internal sealed class UserService : IUserService
         // 1) Extract fields
         map.TryGetValue("Email", out var emailRaw);
         map.TryGetValue("UserName", out var userNameRaw);
-        map.TryGetValue("Phone", out var phoneRaw);
+        map.TryGetValue("PhoneNumber", out var phoneRaw);
         map.TryGetValue("Password", out var passwordRaw);
 
         // 2) Normalization
         var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        // Phone must already be E.164 (host-normalized); other formats are rejected.
+        // PhoneNumber is expected already E.164 (collectForm / PhoneE164 at the form boundary).
         string? normalizedPhone = null;
         if (phoneRaw is string phone && !string.IsNullOrWhiteSpace(phone))
-            normalizedPhone = PhoneE164.Require(phone);
+            normalizedPhone = phone;
 
         // 3) Uniqueness
         if (normalizedUserName is not null
@@ -115,7 +115,7 @@ internal sealed class UserService : IUserService
             PasswordPhc = passwordPhc,
             PasswordPepperVersion = pepperVersion,
             EmailConfirmed = false,
-            PhoneConfirmed = false,
+            PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
@@ -216,7 +216,7 @@ internal sealed class UserService : IUserService
                 if (field == nameof(UserAccountEntity.Email))
                     account.EmailConfirmed = true;
                 else
-                    account.PhoneConfirmed = true;
+                    account.PhoneNumberConfirmed = true;
             }
         }
 
@@ -316,7 +316,7 @@ internal sealed class UserService : IUserService
             nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
                 => selectorValue.Trim().ToLowerInvariant(),
             nameof(UserAccountEntity.PhoneNumber)
-                => PhoneE164.Require(selectorValue),
+                => selectorValue,
             _ => selectorValue,
         };
     }

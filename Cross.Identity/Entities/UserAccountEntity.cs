@@ -98,7 +98,7 @@ public class UserAccountEntity : IHasConcurrencyStamp
     /// </summary>
     /// <value>True if the telephone number has been confirmed, otherwise false.</value>
     [PersonalData]
-    public bool PhoneConfirmed { get; set; }
+    public bool PhoneNumberConfirmed { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating if two factor authentication is enabled for this user.

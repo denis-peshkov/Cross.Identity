@@ -9,10 +9,10 @@
 /// {
 ///   "kind": "codeAuth",
 ///   "name": "code-auth",
-///   "channel": "phone",
-///   "identityKey": "auth-form.Phone",   // absolute key → read from the "auth-form" step
+///   "channel": "sms",
+///   "identityKey": "auth-form.PhoneNumber",   // absolute key → read from the "auth-form" step
 ///   "codeKey":     "auth-form.Code",    // absolute key → read from the "auth-form" step
-///   "resolveBy": { "field": "Phone" },
+///   "resolveBy": { "field": "PhoneNumber" },
 ///   "userIdKey": "UserId",              // (opt.) relative → saved as "code-auth.UserId"
 ///   "next": "issue"                     // (opt.) null — finish the process
 /// }
@@ -38,7 +38,8 @@ internal sealed class CodeAuthStepFactory : IStepFactory
         var userService = sp.GetRequiredService<IUserService>();
 
         // Required step fields
-        var channel     = cfg.Str("channel");
+        var channel = cfg.EnumOpt<ChannelEnum>("channel")
+                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
         var identityKey = cfg.Str("identityKey");
         var codeKey     = cfg.Str("codeKey");
 

@@ -97,7 +97,7 @@ public sealed class RegistryLoaderAndValidatorTests
             new List<FieldDescriptor>
             {
                 new("Email", FieldTypeEnum.Email, Required: true, Min: 5, Max: 100, Regex: @"^[^@]+@[^@]+\.[^@]+$"),
-                new("Phone", FieldTypeEnum.Phone, Required: false),
+                new("PhoneNumber", FieldTypeEnum.PhoneNumber, Required: false),
                 new("Age", FieldTypeEnum.Int, Required: true),
                 new("IsActive", FieldTypeEnum.Bool, Required: true),
                 new("BirthDate", FieldTypeEnum.Date, Required: true),
@@ -107,11 +107,11 @@ public sealed class RegistryLoaderAndValidatorTests
             new List<IFormSchemaRule>
             {
                 new EqualFieldsRule("Password", "ConfirmPassword", "eq"),
-                new NotEqualFieldsRule("Email", "Phone", "neq"),
+                new NotEqualFieldsRule("Email", "PhoneNumber", "neq"),
                 new OneOfRule("Age", new []{ "18", "30" }, "one"),
-                new RequiredIfRule(("Email", "trigger@t.t"), ("Phone", true), "reqif"),
-                new RequiredIfRule(("ConfirmPassword", ""), ("Phone", true), "reqif-empty"),
-                new RequiredIfRule(("Phone", null), ("ConfirmPassword", true), "reqif-not-empty")
+                new RequiredIfRule(("Email", "trigger@t.t"), ("PhoneNumber", true), "reqif"),
+                new RequiredIfRule(("ConfirmPassword", ""), ("PhoneNumber", true), "reqif-empty"),
+                new RequiredIfRule(("PhoneNumber", null), ("ConfirmPassword", true), "reqif-not-empty")
             });
 
         var validator = new UnifiedFormValidatorFactory().Create(schema);
@@ -119,7 +119,7 @@ public sealed class RegistryLoaderAndValidatorTests
         var bad = new Dictionary<string, object?>
         {
             ["Email"] = "bad",
-            ["Phone"] = "bad-phone",
+            ["PhoneNumber"] = "bad-phone",
             ["Age"] = "17",
             ["IsActive"] = "not-bool",
             ["BirthDate"] = "bad-date",
@@ -134,7 +134,7 @@ public sealed class RegistryLoaderAndValidatorTests
         var good = new Dictionary<string, object?>
         {
             ["Email"] = "trigger@t.t",
-            ["Phone"] = "+79161234567",
+            ["PhoneNumber"] = "+79161234567",
             ["Age"] = "18",
             ["IsActive"] = "true",
             ["BirthDate"] = DateTime.UtcNow.ToString("O"),

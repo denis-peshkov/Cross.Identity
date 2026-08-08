@@ -14,6 +14,16 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
     public required string SelectorKey { get; init; }
 
+    /// <summary>
+    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, identity is resolved as email / phone / user name.
+    /// </summary>
+    public string? PhoneNumberKey { get; init; }
+
+    /// <summary>
+    /// Optional key for user name. Notification delivery requires email or phone (not user name alone).
+    /// </summary>
+    public string? UserNameKey { get; init; }
+
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
@@ -33,12 +43,28 @@ internal sealed class ResetPasswordStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        string selectorField;
+        string selectorValue;
+        ChannelEnum? channel;
+        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
+        {
+            (selectorField, selectorValue, channel) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
+        }
+        else
+        {
+            selectorField = ResolveBy.Field;
+            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+            channel = Channel;
+        }
+
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
         ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
 
-        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selectorField, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+
+        if (channel is null)
+            return StepResult.Ok(Next);
 
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
@@ -48,7 +74,7 @@ internal sealed class ResetPasswordStep : IStep
 
         try
         {
-            switch (Channel)
+            switch (channel.Value)
             {
                 case ChannelEnum.Email:
                     await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);

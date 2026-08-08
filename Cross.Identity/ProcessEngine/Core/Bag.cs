@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Simple property bag for exchanging data between process steps.
-/// Keys should be namespaced: "registration.Email", "auth.Phone", "user.Id", "auth.Token".
+/// Keys should be namespaced: "registration.Email", "auth.PhoneNumber", "user.Id", "auth.Token".
 /// </summary>
 public sealed class Bag : IReadOnlyDictionary<string, object?>
 {

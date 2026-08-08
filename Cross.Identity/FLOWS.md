@@ -12,6 +12,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
 - **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128). Host fills the bag; steps that issue tokens map `deviceFingerprintKey` → `CreatedDeviceFingerprint`, and revoke/password/unlink paths use IP/UA for audit.
+- **Identity (`Email` / `PhoneNumber` / `UserName`):** optional on `Register` (`PhoneNumber`, `UserName` via `createUser.map`). On `Token` / `RequestCode` / `ResetPassword` / `GetUserId` — at least one of `Email|PhoneNumber|UserName`; on `ForgotPassword` — `Email|PhoneNumber` only. Preference Email → PhoneNumber → UserName (`phoneNumberKey` / `userNameKey`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
 
 ### Operations (`FlowOperationEnum`)
 
@@ -61,7 +62,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `forgotPassword` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `forgotPassword` |
 | `forgotPassword` | forgotPassword | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = forgotPassword.LastCode`. `next: null` |
 
@@ -73,7 +74,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`; optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `getUserId` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `getUserId` |
 | `getUserId` | getUserId | `selectorField: Email`, `selectorKey: collectForm.Email`. → `collectResult` |
 | `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
 
@@ -101,7 +102,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `createUser` |
+| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber` (E.164), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
@@ -114,7 +115,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
@@ -141,7 +142,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
 
@@ -155,7 +156,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
 | `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 

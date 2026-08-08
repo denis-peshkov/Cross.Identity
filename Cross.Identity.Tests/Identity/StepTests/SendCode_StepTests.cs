@@ -213,7 +213,7 @@ public class SendCode_StepTests
         var phone = _faker.Phone.PhoneNumber("+1##########");
         var userId = Guid.NewGuid().ToString();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Phone", phone, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
@@ -232,13 +232,13 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Sms,
-            SelectorKey = "collectForm.Phone",
-            ResolveBy = new ResolveBy { Field = "Phone" },
+            SelectorKey = "collectForm.PhoneNumber",
+            ResolveBy = new ResolveBy { Field = "PhoneNumber" },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Phone", phone);
+        bag.Set("collectForm.PhoneNumber", phone);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

@@ -89,28 +89,27 @@ internal sealed class CodeService : ICodeService
     }
 
     /// <inheritdoc />
-    public async Task<bool> VerifyAsync(string channel, string identity, string code, CancellationToken cancellationToken)
+    public async Task<bool> VerifyAsync(ChannelEnum channel, string identity, string code, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(channel);
         ArgumentNullException.ThrowIfNull(identity);
         ArgumentNullException.ThrowIfNull(code);
 
         var now = DateTime.UtcNow;
 
         // Normalize identity based on channel
-        var normalizedIdentity = channel.ToLowerInvariant() switch
+        var normalizedIdentity = channel switch
         {
-            "email" => identity.Trim().ToLowerInvariant(),
-            "phone" => identity.Trim(), // Phone should already be in E.164 format
+            ChannelEnum.Email => identity.Trim().ToLowerInvariant(),
+            ChannelEnum.Sms => identity.Trim(), // PhoneNumber should already be in E.164 format
             _ => identity.Trim()
         };
 
         // Compute code hash (SHA-256, 32 bytes)
         var codeHash = SHA256.HashData(Encoding.UTF8.GetBytes(code));
 
-        switch (channel.ToLowerInvariant())
+        switch (channel)
         {
-            case "email":
+            case ChannelEnum.Email:
                 {
                     // Look up email code
                     var entity = await _context.EmailVerifications
@@ -164,7 +163,7 @@ internal sealed class CodeService : ICodeService
                         return false;
                     }
                 }
-            case "phone":
+            case ChannelEnum.Sms:
                 {
                     // For phone, find the latest unused record
                     var entity = await _context.PhoneVerifications
@@ -175,20 +174,20 @@ internal sealed class CodeService : ICodeService
 
                     if (entity is null)
                     {
-                        _logger.LogWarning("Phone verification code not found for {Phone}", normalizedIdentity);
+                        _logger.LogWarning("PhoneNumber verification code not found for {PhoneNumber}", normalizedIdentity);
                         return false;
                     }
 
                     if (entity.ExpiresAt < now)
                     {
-                        _logger.LogWarning("Phone verification code expired for {Phone}", normalizedIdentity);
+                        _logger.LogWarning("PhoneNumber verification code expired for {PhoneNumber}", normalizedIdentity);
                         return false;
                     }
 
                     // Check attempt count
                     if (entity.Attempts >= entity.MaxAttempts)
                     {
-                        _logger.LogWarning("Phone verification code max attempts exceeded for {Phone}", normalizedIdentity);
+                        _logger.LogWarning("PhoneNumber verification code max attempts exceeded for {PhoneNumber}", normalizedIdentity);
                         return false;
                     }
 
@@ -200,7 +199,7 @@ internal sealed class CodeService : ICodeService
                     {
                         // Wrong code, but attempt already counted
                         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                        _logger.LogWarning("Phone verification code mismatch for {Phone}", normalizedIdentity);
+                        _logger.LogWarning("PhoneNumber verification code mismatch for {PhoneNumber}", normalizedIdentity);
                         return false;
                     }
 
@@ -214,7 +213,7 @@ internal sealed class CodeService : ICodeService
                     }
                     catch (DbUpdateConcurrencyException)
                     {
-                        _logger.LogWarning("Phone verification code already used for {Phone}", normalizedIdentity);
+                        _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedIdentity);
                         return false;
                     }
                 }

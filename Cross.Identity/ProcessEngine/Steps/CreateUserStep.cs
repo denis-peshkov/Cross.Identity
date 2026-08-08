@@ -36,7 +36,7 @@ internal sealed class CreateUserStep : IStep
     /// "map": {
     ///   "Email": "reg-form.Email",
     ///   "UserName": "reg-form.UserName",
-    ///   "Phone": "Phone" // relative → "{Kind}.Phone"
+    ///   "PhoneNumber": "PhoneNumber" // relative → "{Kind}.PhoneNumber"
     /// }
     /// </code>
     /// </para>

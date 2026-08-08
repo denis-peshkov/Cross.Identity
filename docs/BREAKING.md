@@ -82,7 +82,7 @@ Reference DDL: `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/`.
 
 ### Removed operation: `TokenByCode`
 
-OTP exchange is handled by **`Token`** (`main.Token`) with `{ Email|Phone, Code }` (same payload shape as before).
+OTP exchange is handled by **`Token`** (`main.Token`) with `{ Email|PhoneNumber, Code }` (same payload shape as before).
 
 | Area | Was (1.5) | Now (1.6+) |
 |------|-----------|------------|
@@ -194,6 +194,8 @@ logout / logoutAll / password reset/change / unlink use `IpAddress` / `UserAgent
 
 Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input). Revoke audit fields stay `RevokedIpAddress` / `RevokedUserAgent`.
 
+**Identity:** `Email` / `PhoneNumber` / `UserName` on `Token` / `RequestCode` / `ForgotPassword` / `ResetPassword` / `GetUserId` (`phoneNumberKey` / `userNameKey`; preference Email → PhoneNumber → UserName). Optional `PhoneNumber` / `UserName` on `Register`.
+
 **Action:** rename columns on existing databases.
 
 ### `RevokedByIp` → `RevokedIpAddress` + `RevokedUserAgent`
@@ -216,21 +218,32 @@ Cross.Identity no longer depends on `Cross.Headers`.
 
 ### Phone numbers: E.164 only
 
-All phone inputs (flow bags, form fields of type `Phone`, `UserService` create/lookup by phone) **must already be E.164**, e.g. `+79161234567`.
+Phone inputs must be E.164, e.g. `+79161234567`. **`collectForm`** (`type: PhoneNumber`) is the library gate (`PhoneE164`); `UserService` and other steps trust the normalized bag value.
 
 - Accepted: `+` + digits only, no spaces/punctuation; number must be a valid E.164 subscriber number.
 - Rejected: national formats (`8916…`), missing `+`, spaces, dashes, parentheses (`+7 (912) …`), and any value that is not already E.164.
 
 The library validates and stores as-is; it does **not** reformat free-form numbers on the way in.
 
-Use the public static helper [`PhoneE164`](../Cross.Identity/Services/Crypto/PhoneE164.cs) (`Cross.Identity.Services.Crypto`) from host / external APIs:
+Use the public static helper [`PhoneE164`](../Cross.Identity/Helpers/PhoneE164.cs) (`Cross.Identity.Services.Crypto`) from host / external APIs:
 
 - `IsValid` / `Require` — library entry (already E.164)
 - `Normalize` / `NormalizeOrThrow` / `Ensure` — host-side conversion before `ExecuteAsync`
 
 `IPhoneNormalizer` is removed — use `PhoneE164` instead (no DI).
 
-**Action:** normalize phones in the host before calling Identity (`PhoneE164.Ensure` / `Normalize`); drop Cross.Identity's `Cross.Headers` dependency if used only for Identity.
+Bag / form / entity / DB use `PhoneNumber` (`UsersAccounts`, `PhoneVerifications`). Bag / form / `resolveBy` use `PhoneNumber`. Selector alias `phonenumber` still accepted by `UserService`.
+
+**Action:** rely on `collectForm` for flow phones, or normalize in the host with `PhoneE164` when bypassing forms; ensure DB column is `PhoneNumber` on existing databases; drop Cross.Identity's `Cross.Headers` dependency if used only for Identity.
+
+### OTP `channel`: string → `ChannelEnum` (`phone` → `sms`)
+
+`VerifyCodeStep` / `CodeAuthStep` and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
+Flow JSON / custom overrides must use enum names: `email`, `sms` (not `phone`).
+
+`EmailOrPhoneBag.Resolve` returns `(Field, Value, ChannelEnum?)` — phone maps to `ChannelEnum.Sms`.
+
+**Action:** replace `"channel": "phone"` with `"channel": "sms"` in custom `verifyCode` / `codeAuth` steps; update callers of `VerifyAsync`.
 
 
 ### `main.ChangePassword` input: `Email` → `UserId`

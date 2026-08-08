@@ -38,7 +38,7 @@ public class CodeAuth_StepFactoryTests
         var step = (CodeAuthStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("codeAuth");
-        step.Channel.Should().Be("email");
+        step.Channel.Should().Be(ChannelEnum.Email);
         step.IdentityKey.Should().Be("auth-form.Email");
         step.CodeKey.Should().Be("auth-form.Code");
         step.ResolveBy.Field.Should().Be("Email");
@@ -56,10 +56,10 @@ public class CodeAuth_StepFactoryTests
             """
             {
               "kind": "codeAuth",
-              "channel": "phone",
-              "identityKey": "auth-form.Phone",
+              "channel": "sms",
+              "identityKey": "auth-form.PhoneNumber",
               "codeKey": "auth-form.Code",
-              "resolveBy": { "field": "Phone" }
+              "resolveBy": { "field": "PhoneNumber" }
             }
             """);
 
@@ -67,6 +67,7 @@ public class CodeAuth_StepFactoryTests
         var step = (CodeAuthStep)factory.Create(json.RootElement, _sp);
 
         step.UserIdKey.Should().Be("UserId");
+        step.Channel.Should().Be(ChannelEnum.Sms);
     }
 
     [Test]

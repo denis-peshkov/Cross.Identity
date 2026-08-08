@@ -32,7 +32,7 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
             RefreshTokenKey       = cfg.Str("refreshTokenKey"),
             IpAddressKey          = cfg.Str("ipAddressKey"),
             UserAgentKey          = cfg.Str("userAgentKey"),
-            DeviceFingerprintKey = cfg.Str("deviceFingerprintKey"),
+            DeviceFingerprintKey  = cfg.Str("deviceFingerprintKey"),
             Next                  = cfg.StrOpt("next")
         };
     }

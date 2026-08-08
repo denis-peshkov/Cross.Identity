@@ -14,8 +14,8 @@ internal interface IUserService
     /// <summary>
     /// Find a user identifier by selector field.
     /// Allowed <paramref name="selectorField"/> values depend on the implementation
-    /// (at minimum <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, and <c>"Phone"</c> are supported).
-    /// For <c>Phone</c>, pass an already-valid E.164 value (e.g. <c>+79161234567</c>); other formats are rejected.
+    /// (at minimum <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, and <c>"PhoneNumber"</c> are supported).
+    /// For <c>PhoneNumber</c>, pass an already-valid E.164 value (e.g. <c>+79161234567</c>) as produced by <c>collectForm</c>.
     /// </summary>
     /// <param name="selectorField">Field name to search by (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value (e.g. email address).</param>
@@ -33,9 +33,9 @@ internal interface IUserService
 
     /// <summary>
     /// Create a new user from a flat value map.
-    /// Map keys are logical field names (e.g. <c>"Email"</c>, <c>"UserName"</c>, <c>"Phone"</c>, <c>"Password"</c>).
-    /// Optional keys may be omitted. <c>Phone</c>, when provided, must already be valid E.164
-    /// (e.g. <c>+79161234567</c>); national or free-form numbers are rejected.
+    /// Map keys are logical field names (e.g. <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>, <c>"Password"</c>).
+    /// Optional keys may be omitted. <c>PhoneNumber</c>, when provided, must already be valid E.164
+    /// (e.g. <c>+79161234567</c>) as produced by <c>collectForm</c>.
     /// </summary>
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

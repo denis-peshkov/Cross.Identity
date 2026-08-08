@@ -5,8 +5,10 @@
 /// </summary>
 internal sealed class NotificationMessage
 {
+    /// <param name="channel">Delivery channel (e.g. <c>"email"</c> or <c>"phone"</c>).</param>
     public required ChannelEnum Channel { get; init; }
-    public required string Destination { get; init; }      // destination address: email address | phone number
+    /// <param name="destination">Destination (e.g. email address or phone number).</param>
+    public required string Destination { get; init; }      // destination: email address | phone number
     public required string? DestinationName { get; init; } // destination name: FirstName LastName | FullName
     public string Subject { get; private set; } = string.Empty;
     public string TextBody { get; private set; } = string.Empty;

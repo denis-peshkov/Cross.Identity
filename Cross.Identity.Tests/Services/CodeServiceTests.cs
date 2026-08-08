@@ -90,7 +90,7 @@ public class CodeServiceTests : EFTestsBase
         });
 
         // Act
-        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         // Assert
         result.Should().BeTrue();
@@ -117,7 +117,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         result.Should().BeFalse();
     }
@@ -140,15 +140,15 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        (await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
-        (await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync("email", "nobody@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "nobody@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -170,7 +170,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-10)
         });
 
-        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -193,7 +193,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
         var stored = await Context.PhoneVerifications.SingleAsync();
         stored.UsedAt.Should().NotBeNull();
@@ -219,7 +219,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -227,7 +227,7 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync("phone", "+9999999999", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, "+9999999999", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -250,7 +250,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -273,7 +273,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("phone", phone, "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -296,7 +296,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("phone", phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -318,7 +318,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("email", "test@example.com", "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -340,7 +340,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync("email", "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -348,7 +348,7 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedChannel_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync("telegram", "user", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(ChannelEnum.Telegram, "user", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 

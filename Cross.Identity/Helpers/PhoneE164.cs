@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Services.Crypto;
+﻿namespace Cross.Identity.Helpers;
 
 /// <summary>
 /// E.164 phone helpers. Cross.Identity accepts only already-normalized numbers

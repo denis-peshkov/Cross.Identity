@@ -5,7 +5,7 @@
 /// </summary>
 public sealed record ResolveBy
 {
-    /// <summary>Field to look up the user by (e.g. "Email", "Phone", "UserName", "Id").</summary>
+    /// <summary>Field to look up the user by (e.g. "Email", "PhoneNumber", "UserName", "Id").</summary>
     public required string Field { get; init; }
 
     /// <summary>Whether to fail if the user is not found.</summary>

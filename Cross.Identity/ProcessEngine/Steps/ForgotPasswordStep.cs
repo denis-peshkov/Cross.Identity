@@ -32,13 +32,23 @@ internal sealed class ForgotPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
     public required string SelectorKey { get; init; }
 
+    /// <summary>
+    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, destination is resolved as email / phone / user name.
+    /// </summary>
+    public string? PhoneNumberKey { get; init; }
+
+    /// <summary>
+    /// Optional key for user name. OTP delivery requires email or phone (not user name alone).
+    /// </summary>
+    public string? UserNameKey { get; init; }
+
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
     /// <summary>Code lifetime. Defaults to 5 minutes.</summary>
     public TimeSpan Ttl { get; init; } = TimeSpan.FromMinutes(5);
 
-    /// <summary>Code delivery channel (for example, <c>"email"</c> or <c>"phone"</c>).</summary>
+    /// <summary>Code delivery channel (<see cref="ChannelEnum.Email"/> / <see cref="ChannelEnum.Sms"/>, …).</summary>
     public required ChannelEnum Channel { get; set; }
 
     public ResolveBy ResolveBy { get; set; }
@@ -47,22 +57,36 @@ internal sealed class ForgotPasswordStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         // 1) read email or phoneNumber (respecting relative/absolute keys)
-        var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        string selectorValue;
+        ChannelEnum channel;
+        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
+        {
+            ChannelEnum? resolvedChannel;
+            (_, selectorValue, resolvedChannel) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
+            if (resolvedChannel is null)
+                throw new ValidationException("Provide an email or a phone number to reset a password.");
+            channel = resolvedChannel.Value;
+        }
+        else
+        {
+            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+            channel = Channel;
+        }
 
-        var code = Channel == ChannelEnum.Sms
+        var code = channel == ChannelEnum.Sms
             ? CodeGeneratorHelper.GenerateNumericCode()
             : CodeGeneratorHelper.GenerateCode();
 
         var clientUrl = "http://localhost:4000";
 
-        var msg = NotificationMessage.For(Channel, selectorValue)
+        var msg = NotificationMessage.For(channel, selectorValue)
             .WithSubject("Reset your password")
             .WithTextBody($"Please reset your password by clicking <a href=''>here</a>.");
 
         var year = DateTime.UtcNow.Year.ToString();
 
         var url = $"{clientUrl}/reset-password?code={code}";
-        switch (Channel)
+        switch (channel)
         {
             case ChannelEnum.Email:
                 url += $"&email={selectorValue}";

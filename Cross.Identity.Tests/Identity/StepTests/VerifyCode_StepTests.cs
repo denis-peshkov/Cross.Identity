@@ -21,14 +21,14 @@ public class VerifyCode_StepTests
         var email = _faker.Internet.Email();
         var code = "ABC123";
 
-        _codeService.Setup(c => c.VerifyAsync("email", email, code, It.IsAny<CancellationToken>()))
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
-            Channel = "email",
+            Channel = ChannelEnum.Email,
             IdentityKey = "collectForm.Email",
             CodeKey = "collectForm.Code",
             Next = "nextStep"
@@ -44,7 +44,7 @@ public class VerifyCode_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("nextStep");
-        _codeService.Verify(c => c.VerifyAsync("email", email, code, It.IsAny<CancellationToken>()), Times.Once);
+        _codeService.Verify(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -55,14 +55,14 @@ public class VerifyCode_StepTests
         var email = _faker.Internet.Email();
         var code = "INVALID";
 
-        _codeService.Setup(c => c.VerifyAsync("email", email, code, It.IsAny<CancellationToken>()))
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
-            Channel = "email",
+            Channel = ChannelEnum.Email,
             IdentityKey = "collectForm.Email",
             CodeKey = "collectForm.Code",
             Next = null
@@ -78,7 +78,7 @@ public class VerifyCode_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Fail);
         result.Error.Should().BeOfType<NotAuthorizedException>();
-        _codeService.Verify(c => c.VerifyAsync("email", email, code, It.IsAny<CancellationToken>()), Times.Once);
+        _codeService.Verify(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -89,21 +89,21 @@ public class VerifyCode_StepTests
         var phone = _faker.Phone.PhoneNumber("+1##########");
         var code = "123456";
 
-        _codeService.Setup(c => c.VerifyAsync("phone", phone, code, It.IsAny<CancellationToken>()))
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
-            Channel = "phone",
-            IdentityKey = "Phone", // relative key
+            Channel = ChannelEnum.Sms,
+            IdentityKey = "PhoneNumber", // relative key
             CodeKey = "Code", // relative key
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("verifyCode.Phone", phone);
+        bag.Set("verifyCode.PhoneNumber", phone);
         bag.Set("verifyCode.Code", code);
 
         // Act
@@ -111,6 +111,6 @@ public class VerifyCode_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        _codeService.Verify(c => c.VerifyAsync("phone", phone, code, It.IsAny<CancellationToken>()), Times.Once);
+        _codeService.Verify(c => c.VerifyAsync(ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

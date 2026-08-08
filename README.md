@@ -32,37 +32,29 @@ A .NET identity and authentication library: configurable scenarios (registration
 
 Cross.Identity accepts **only** E.164 phone values, for example `+79161234567`.
 
-- Required shape: leading `+`, then digits only (no spaces, dashes, or parentheses).
-- National formats (`8916…`), missing `+`, and free-form strings are **rejected** (forms, `UserService`, bag lookups).
+- Gate: `collectForm` fields with `"type": "PhoneNumber"` — validated via `PhoneE164.IsValid` and stored with `PhoneE164.Require`.
+- Downstream (`UserService`, lookups, OTP) **trust** the bag value and do not re-validate/normalize.
 
 ### Host helper: `PhoneE164`
 
-Public static class for host / external API apps (FluentValidation, request filters, command handlers) before calling Identity flows:
+Use when the host fills the bag **without** going through `collectForm` (or before it):
 
-- **File:** [`Cross.Identity/Services/Crypto/PhoneE164.cs`](Cross.Identity/Services/Crypto/PhoneE164.cs)
+- **File:** [`Cross.Identity/Helpers/PhoneE164.cs`](Cross.Identity/Helpers/PhoneE164.cs)
 - **Namespace:** `Cross.Identity.Services.Crypto`
 
 | Method | Role |
 |--------|------|
-| `IsValid` / `Require` | Check or enforce that the value is already E.164 (what Identity uses internally) |
-| `Normalize` / `NormalizeOrThrow` | Convert free-form / national input to E.164 with an ISO region (`RU`, `US`, …) |
-| `Ensure` | Pass through if already E.164; otherwise normalize with the given region |
-
-Example in a host handler or filter:
+| `IsValid` / `Require` | Check or enforce already-E.164 |
+| `Normalize` / `NormalizeOrThrow` / `Ensure` | Convert national / free-form input to E.164 |
 
 ```csharp
 using Cross.Identity.Services.Crypto;
 
-// Prefer Ensure when the client may send either E.164 or a national number.
-var phone = PhoneE164.Ensure(dto.Phone, defaultRegion: "RU");
-bag["Phone"] = phone;
-
-// Or only accept E.164 from the client:
-if (!PhoneE164.IsValid(dto.Phone))
-    throw new ValidationException("Phone must be E.164, e.g. +79161234567.");
+var phone = PhoneE164.Ensure(dto.PhoneNumber, defaultRegion: "RU");
+bag["PhoneNumber"] = phone;
 ```
 
-No DI registration is required — call the static API directly.
+No DI registration is required.
 
 ## Requirements
 
@@ -73,16 +65,19 @@ No DI registration is required — call the static API directly.
 ```
 Cross.Identity.slnx
 ├── Cross.Identity/                     # NuGet library
-│   ├── FlowExecutor.cs, IFlowExecutor.cs
+│   ├── Dtos/                           #
 │   ├── Entities/, Infrastructure/      # EF Core (users, tokens, verifications, external login)
-│   ├── Services/                       # User, Code, JwtToken; Crypto/ (PhoneE164.cs); ExternalOAuth/
+│   ├── Enums/                          #
+│   ├── Extensions/                     #
+│   ├── Helpers/                        # PhoneE164
 │   ├── Licensing/                      # Peshkov JWT license (Accessor, Validator, ProductInfo)
+│   ├── Services/                       # User, Code, JwtToken; Crypto/, ExternalOAuth/
 │   ├── Options/                        # AuthenticationOptions, IdentityServiceConfiguration
-│   ├── Extensions/, Helpers/, Dtos/, Enums/
 │   ├── ProcessEngine/
 │   │   ├── Core/                       # Bag, StepRegistry, ProcessLoader, Forms/validation
-│   │   ├── Steps/, Factories/          # Steps and their DI factories
-│   │   └── Definitions/                # Flows/*.json, Templates/, Providers/
+│   │   ├── Definitions/                # Flows/*.json, Templates/, Providers/
+│   │   └── Steps/, Factories/          # Steps and their DI factories
+│   ├── FlowExecutor.cs, IFlowExecutor.cs
 │   ├── FLOWS.md                        # Flow and step documentation
 │   └── config.nuspec
 ├── Cross.Identity.Tests/               # NUnit (unit + integration)
