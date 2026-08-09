@@ -34,7 +34,8 @@ public class UserServiceTests : EFTestsBase
             _logger.Object,
             _pepperVault.Object,
             _hasher.Object,
-            _jwtTokenService.Object);
+            _jwtTokenService.Object,
+            Mock.Of<ICommunicationEndpointService>());
     }
 
     [Test]

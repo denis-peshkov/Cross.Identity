@@ -114,4 +114,6 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public Guid CreatedBy { get; set; }
 
     public virtual ICollection<UserExternalLoginEntity> ExternalLogins { get; set; } = new List<UserExternalLoginEntity>();
+
+    public virtual ICollection<UserCommunicationEndpointEntity> CommunicationEndpoints { get; set; } = new List<UserCommunicationEndpointEntity>();
 }

@@ -18,6 +18,7 @@ public class RefreshToken_StepFactoryTests
             mock.Setup(m => m.Value).Returns(new AuthenticationOptions());
             return mock.Object;
         });
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

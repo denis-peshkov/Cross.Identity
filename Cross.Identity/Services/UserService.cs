@@ -11,19 +11,22 @@ internal sealed class UserService : IUserService
     private readonly IPepperVaultProvider _pepperVault;
     private readonly IPasswordHasher _hasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ICommunicationEndpointService _communicationEndpoints;
 
     public UserService(
         IdentityContext context,
         ILogger<UserService> logger,
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        ICommunicationEndpointService communicationEndpoints)
     {
         _context = context;
         _logger = logger;
         _pepperVault = pepperVault;
         _hasher = hasher;
         _jwtTokenService = jwtTokenService;
+        _communicationEndpoints = communicationEndpoints;
     }
 
     /// <inheritdoc/>
@@ -221,6 +224,11 @@ internal sealed class UserService : IUserService
         }
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        if (isValid)
+        {
+            await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        }
 
         if (!isValid)
         {

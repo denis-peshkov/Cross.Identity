@@ -12,6 +12,7 @@ public class ExternalLogin_StepFactoryTests
         sc.AddSingleton<IExternalLoginService>(_ => Mock.Of<IExternalLoginService>());
         sc.AddSingleton<IJwtTokenService>(_ => Mock.Of<IJwtTokenService>());
         sc.AddSingleton<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

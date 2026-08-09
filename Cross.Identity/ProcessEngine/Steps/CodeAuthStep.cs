@@ -34,6 +34,7 @@ internal sealed class CodeAuthStep : IStep
     {
         var selector = Selector.Resolve(ctx);
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
+        // OTP verify uses Email/Sms storage keyed by login field (preferred messenger is send-side only).
         var channel = Selector.ChannelForField(selector.Field) ?? Channel;
 
         var ok = await CodeService.VerifyAsync(channel, selector.Value, code, cancellationToken).ConfigureAwait(false);

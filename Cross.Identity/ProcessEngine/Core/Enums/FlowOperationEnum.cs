@@ -20,4 +20,6 @@ public enum FlowOperationEnum
     ExternalLoginGetAll,
     Logout,
     LogoutAll,
+    CommunicationEndpointsGetAll,
+    CommunicationEndpointSetPreferred,
 }

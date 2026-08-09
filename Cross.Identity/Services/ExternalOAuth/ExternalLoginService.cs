@@ -12,6 +12,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ICommunicationEndpointService _communicationEndpoints;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
     public ExternalLoginService(
@@ -20,6 +21,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
         IJwtTokenService jwtTokenService,
+        ICommunicationEndpointService communicationEndpoints,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;
@@ -27,6 +29,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         _options = options.Value;
         _logger = logger;
         _jwtTokenService = jwtTokenService;
+        _communicationEndpoints = communicationEndpoints;
         _userProvisioner = userProvisioner;
     }
 
@@ -527,6 +530,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.AvatarUrl = profile.AvatarUrl;
             existing.LastUsedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -560,6 +564,38 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        var loginId = await _identityContext.UsersExternalLogins
+            .AsNoTracking()
+            .Where(x => x.ProviderId == providerEntity.Id && x.ProviderUserId == profile.ProviderUserId)
+            .Select(x => x.Id)
+            .FirstAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task SyncProviderEmailEndpointAsync(
+        Guid userId,
+        long externalLoginId,
+        string? providerEmail,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(providerEmail))
+        {
+            return;
+        }
+
+        await _communicationEndpoints
+            .UpsertAsync(
+                userId,
+                ChannelEnum.Email,
+                providerEmail,
+                CommunicationEndpointSource.ExternalProvider,
+                isVerified: true,
+                sourceRefId: externalLoginId,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)

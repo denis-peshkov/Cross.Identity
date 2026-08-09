@@ -24,6 +24,9 @@ internal sealed class SendCodeStep : IStep
     /// <summary>Identity selector (bag keys for field name + value).</summary>
     public required Selector Selector { get; init; }
 
+    /// <summary>Resolves preferred / OTP delivery channel from user endpoints.</summary>
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
+
     /// <summary>
     /// Optional key in <see cref="Bag"/> for a per-request TTL (for example, <c>"collectForm.Ttl"</c>).
     /// </summary>
@@ -36,13 +39,18 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
         var destination = selector.Value;
-        var channel = Selector.ChannelForField(selector.Field) ?? Channel;
+
+        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, destination, cancellationToken).ConfigureAwait(false);
+        if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+            throw new NotFoundException("User not found.");
+
+        var channel = await CommunicationEndpoints
+            .ResolveOtpChannelAsync(userId, selector.Field, destination, Channel, cancellationToken)
+            .ConfigureAwait(false);
         if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             throw new ValidationException("Provide an email or a phone number to send a code.");
 
         var ttl = ResolveTtl(ctx);
-
-        var userId = await UserService.GetUserIdByAsync(selector.Field, destination, cancellationToken).ConfigureAwait(false);
 
         var code = channel == ChannelEnum.Sms
             ? CodeGeneratorHelper.GenerateNumericCode()
@@ -86,7 +94,7 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
-            await CodeService.SendAsync(msg, code, userId, ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, userIdRaw, ttl, cancellationToken).ConfigureAwait(false);
 
             var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
             if (developerMode)

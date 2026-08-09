@@ -19,6 +19,8 @@ public class ForgotPassword_StepFactoryTests
             ContentRootPath = AppContext.BaseDirectory,
         });
         sc.AddScoped<IProcessDefinitionProvider>(_ => Mock.Of<IProcessDefinitionProvider>());
+        sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

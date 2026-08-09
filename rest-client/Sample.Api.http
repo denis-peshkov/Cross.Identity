@@ -157,3 +157,23 @@ Content-Type: application/json
 {
   "AccessToken": "{{ACCESS_TOKEN}}"
 }
+
+###
+# @name main-communication-endpoints-get-all
+# Requires authenticated caller. Lists verified/candidate communication endpoints + preferred flag.
+POST {{HOST}}/api/identity/main/CommunicationEndpointsGetAll
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+
+{}
+
+###
+# @name main-communication-endpoint-set-preferred
+# Requires authenticated caller. Sets the single preferred communication endpoint (must be verified).
+POST {{HOST}}/api/identity/main/CommunicationEndpointSetPreferred
+Content-Type: application/json
+Authorization: Bearer {{ACCESS_TOKEN}}
+
+{
+  "EndpointId": "{{ENDPOINT_ID}}"
+}

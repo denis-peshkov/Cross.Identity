@@ -29,6 +29,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             TtlKey                    = cfg.StrOpt("ttlKey"),
             CodeService               = codeService,
             UserService               = userService,
+            CommunicationEndpoints    = sp.GetRequiredService<ICommunicationEndpointService>(),
             Environment               = hostEnvironment,
             ProcessDefinitionProvider = processDefinitionProvider,
             Logger                    = loggerFactory.CreateLogger(nameof(SendCodeStep)),

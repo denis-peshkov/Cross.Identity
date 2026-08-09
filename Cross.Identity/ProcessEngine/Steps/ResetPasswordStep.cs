@@ -27,6 +27,7 @@ internal sealed class ResetPasswordStep : IStep
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
     public ISmsSenderService SmsSenderService { get; set; }
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
     public required ChannelEnum Channel { get; init; }
 
     /// <inheritdoc/>
@@ -35,7 +36,6 @@ internal sealed class ResetPasswordStep : IStep
         var selector = Selector.Resolve(ctx);
         var selectorField = selector.Field;
         var selectorValue = selector.Value;
-        var channel = Selector.ChannelForField(selector.Field) ?? Channel;
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
@@ -43,8 +43,24 @@ internal sealed class ResetPasswordStep : IStep
 
         await UserService.SetPasswordAsync(selectorField, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
+        var userIdRaw = await UserService.GetUserIdByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
+        if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+            return StepResult.Ok(Next);
+
+        var preferred = await CommunicationEndpoints.GetPreferredAsync(userId, cancellationToken).ConfigureAwait(false);
+        var channel = preferred?.Channel
+                      ?? await CommunicationEndpoints
+                          .ResolveDeliveryChannelAsync(userId, selectorField, selectorValue, Channel, cancellationToken)
+                          .ConfigureAwait(false);
+
+        // Password-change notice: Email/Sms only until messenger senders exist.
+        if (channel is ChannelEnum.Telegram or ChannelEnum.Viber or ChannelEnum.WatsApp)
+            channel = ChannelEnum.Sms;
+
         if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             return StepResult.Ok(Next);
+
+        var notifyAddress = preferred?.Address ?? selectorValue;
 
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
@@ -57,10 +73,10 @@ internal sealed class ResetPasswordStep : IStep
             switch (channel)
             {
                 case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
+                    await EmailSenderService.SendAsync("", notifyAddress, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
                     break;
                 case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(selectorValue, textBody, cancellationToken).ConfigureAwait(false);
+                    await SmsSenderService.SendAsync(notifyAddress, textBody, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }

@@ -93,5 +93,6 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 | `auth.RefreshTokens` | `2_01_auth_RefreshTokens.sql` | `RefreshTokenEntity` |
 | `auth.EmailVerifications` | `2_01_auth_EmailVerifications.sql` | `EmailVerificationEntity` |
 | `auth.PhoneVerifications` | `2_01_auth_PhoneVerifications.sql` | `PhoneVerificationEntity` |
+| `auth.UsersCommunicationEndpoints` | `2_01_auth_UsersCommunicationEndpoints.sql` | `UserCommunicationEndpointEntity` |
 
 When changing the schema, update the EF configuration and the corresponding SQL for **all three** providers.

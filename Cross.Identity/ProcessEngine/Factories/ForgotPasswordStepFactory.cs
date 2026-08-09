@@ -29,6 +29,8 @@ internal sealed class ForgotPasswordStepFactory : IStepFactory
             Environment               = hostEnvironment,
             Logger                    = loggerFactory.CreateLogger<ForgotPasswordStep>(),
             ProcessDefinitionProvider = processDefinitionProvider,
+            UserService               = sp.GetRequiredService<IUserService>(),
+            CommunicationEndpoints    = sp.GetRequiredService<ICommunicationEndpointService>(),
             Channel                   = channel,
             Selector                  = new Selector(),
         };

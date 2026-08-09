@@ -26,11 +26,21 @@ internal sealed class ForgotPasswordStep : IStep
     /// <summary>Default delivery channel when not inferred from selector field.</summary>
     public required ChannelEnum Channel { get; set; }
 
+    public required IUserService UserService { get; init; }
+
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
+
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
-        var channel = Selector.ChannelForField(selector.Field) ?? Channel;
+        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+            throw new NotFoundException("User not found.");
+
+        var channel = await CommunicationEndpoints
+            .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
+            .ConfigureAwait(false);
         if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             throw new ValidationException("Provide an email or a phone number to reset a password.");
 
@@ -82,7 +92,7 @@ internal sealed class ForgotPasswordStep : IStep
         {
             if (!Environment.IsDevelopment())
             {
-                await CodeService.SendAsync(msg, code, "", Ttl, cancellationToken).ConfigureAwait(false);
+                await CodeService.SendAsync(msg, code, userIdRaw, Ttl, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)

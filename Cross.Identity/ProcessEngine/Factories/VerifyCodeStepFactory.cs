@@ -19,7 +19,7 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
         {
             Kind        = Kind,
             Selector    = new Selector(),
-            Channel     = channel,
+            Channel     = channel ?? ChannelEnum.Email,
             CodeKey     = cfg.Str("codeKey"),
             CodeService = codeService,
             Next        = cfg.StrOpt("next")

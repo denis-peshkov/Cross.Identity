@@ -23,5 +23,9 @@ internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAcc
             .WithOne(x => x.UserAccount)
             .HasForeignKey(x => x.UserAccountId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(x => x.CommunicationEndpoints)
+            .WithOne(x => x.UserAccount)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

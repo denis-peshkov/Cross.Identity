@@ -13,6 +13,7 @@ public class ResetPassword_StepFactoryTests
         sc.AddScoped<IEmailSenderService>(_ => Mock.Of<IEmailSenderService>());
         sc.AddScoped<ISmsSenderService>(_ => Mock.Of<ISmsSenderService>());
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

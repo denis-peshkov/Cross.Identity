@@ -10,8 +10,11 @@
 /// </summary>
 public sealed record Selector
 {
-    private string FieldKey => "collectForm.Field";
-    private string ValueKey => "collectForm.Value";
+    /// <summary>Bag key for the resolved identity field name.</summary>
+    public string FieldKey => "collectForm.Field";
+
+    /// <summary>Bag key for the resolved identity value.</summary>
+    public string ValueKey => "collectForm.Value";
 
     /// <summary>Whether to fail if the user is not found (consumers that honor it).</summary>
     public bool Required => true;
@@ -103,11 +106,15 @@ public sealed record Selector
             _ => new Selector { Candidates = new[] { "UserName" } }
         };
 
+    /// <summary>
+    /// Legacy fallback: login field → default channel when no user endpoints are available.
+    /// Prefer <see cref="ICommunicationEndpointService.ResolveDeliveryChannelAsync"/>.
+    /// </summary>
     public static ChannelEnum? ChannelForField(string field)
         => field.ToLowerInvariant() switch
         {
             "email" => ChannelEnum.Email,
-            "phonenumber" => ChannelEnum.Sms,
+            "phonenumber" or "phone" => ChannelEnum.Sms,
             _ => null
         };
 

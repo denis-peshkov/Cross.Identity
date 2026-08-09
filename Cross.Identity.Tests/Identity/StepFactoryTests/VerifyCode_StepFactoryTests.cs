@@ -10,6 +10,8 @@ public class VerifyCode_StepFactoryTests
     {
         var sc = new ServiceCollection();
         sc.AddScoped<ICodeService>(p => Mock.Of<ICodeService>());
+        sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

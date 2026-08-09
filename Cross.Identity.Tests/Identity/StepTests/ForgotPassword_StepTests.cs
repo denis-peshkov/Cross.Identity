@@ -4,6 +4,8 @@
 public class ForgotPassword_StepTests
 {
     private Mock<ILogger> _logger = null!;
+    private Mock<IUserService> _userService = null!;
+    private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
     private Mock<ICodeService> _codeService = null!;
     private IConfiguration _defaultConfiguration = null!;
     private IConfiguration _developerConfiguration = null!;
@@ -17,6 +19,20 @@ public class ForgotPassword_StepTests
     [SetUp]
     public void SetUp()
     {
+        _userService = new Mock<IUserService>();
+        _userService.Setup(u => u.GetUserIdByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync(Guid.NewGuid().ToString());
+        _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.GetPreferredAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CommunicationEndpointDto?)null);
         _faker = new Faker();
         _logger = new Mock<ILogger>();
         _codeService = new Mock<ICodeService>();
@@ -46,6 +62,8 @@ public class ForgotPassword_StepTests
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Configuration = configuration,
             Environment = _environment.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,

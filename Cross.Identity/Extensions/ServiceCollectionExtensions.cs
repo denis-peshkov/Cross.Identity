@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<IRequestInput, RequestInput>();
 
         services.TryAddScoped<IUserService, UserService>();
+        services.TryAddScoped<ICommunicationEndpointService, CommunicationEndpointService>();
         services.TryAddSingleton<IPasswordHasher, PasswordHasher>();
         services.Configure<Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
         // services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
@@ -77,6 +78,8 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, LogoutStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, LogoutAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointsGetAllStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetPreferredStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();

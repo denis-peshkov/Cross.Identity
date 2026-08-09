@@ -5,6 +5,7 @@ public class CodeAuth_StepTests
 {
     private Faker _faker = null!;
     private Mock<ICodeService> _codeService = null!;
+    private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
     private Mock<IUserService> _userService = null!;
 
     private static Selector DefaultSelector { get; } = new();
@@ -12,6 +13,18 @@ public class CodeAuth_StepTests
     [SetUp]
     public void SetUp()
     {
+        _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.GetPreferredAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CommunicationEndpointDto?)null);
         _faker = new Faker();
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();

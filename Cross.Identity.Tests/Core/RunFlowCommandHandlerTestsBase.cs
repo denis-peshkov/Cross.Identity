@@ -43,6 +43,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new LogoutStepFactory());
         _registry.Register(new LogoutAllStepFactory());
         _registry.Register(new VerifyTokenStepFactory());
+        _registry.Register(new CommunicationEndpointsGetAllStepFactory());
+        _registry.Register(new CommunicationEndpointSetPreferredStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -115,6 +117,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
 
+        RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
+            new CommunicationEndpointService(Context, Mock.Of<IHttpContextAccessor>()));
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)
@@ -148,7 +152,8 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             Mock.Of<ILogger<UserService>>(),
             pepperVault.Object,
             passwordHasher.Object,
-            Mock.Of<IJwtTokenService>());
+            Mock.Of<IJwtTokenService>(),
+            Mock.Of<ICommunicationEndpointService>());
     }
 
     /// <summary>

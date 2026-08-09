@@ -26,6 +26,7 @@ public class SendCode_StepFactoryTests
         };
         sc.AddSingleton<IHostEnvironment>(env);
         sc.AddScoped<IProcessDefinitionProvider>(p => Mock.Of<IProcessDefinitionProvider>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

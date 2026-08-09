@@ -5,6 +5,7 @@ public class SendCode_StepTests
 {
     private Faker _faker = null!;
     private Mock<ICodeService> _codeService = null!;
+    private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
     private Mock<IUserService> _userService = null!;
     private Mock<IHostEnvironment> _environment = null!;
     private Mock<IProcessDefinitionProvider> _processDefinitionProvider = null!;
@@ -17,6 +18,18 @@ public class SendCode_StepTests
     [SetUp]
     public void SetUp()
     {
+        _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
+                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+        _communicationEndpoints
+            .Setup(c => c.GetPreferredAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((CommunicationEndpointDto?)null);
         _faker = new Faker();
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();
@@ -73,6 +86,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
             Selector = DefaultSelector,
             Next = "verifyCode"
@@ -131,6 +145,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
             Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
@@ -185,6 +200,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
             Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
@@ -233,6 +249,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Sms,
             Selector = DefaultSelector,
             Next = null
@@ -286,6 +303,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
             Selector = DefaultSelector,
             Next = null
@@ -336,6 +354,7 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
             Selector = DefaultSelector,
             Next = null

@@ -17,6 +17,7 @@ public class CollectForm_StepFactoryTests
         // Fake IRequestInput — we will manually Set(...) before step execution
         sc.AddScoped<IRequestInput, RequestInput>();
 
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
         _faker = new Faker();
     }

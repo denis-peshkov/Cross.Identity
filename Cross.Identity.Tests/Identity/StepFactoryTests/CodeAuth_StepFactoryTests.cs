@@ -11,6 +11,7 @@ public class CodeAuth_StepFactoryTests
         var sc = new ServiceCollection();
         sc.AddScoped<ICodeService>(_ => Mock.Of<ICodeService>());
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 
