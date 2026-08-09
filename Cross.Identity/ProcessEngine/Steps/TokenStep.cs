@@ -43,8 +43,6 @@ internal sealed class TokenStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
-        var selectorField = selector.Field;
-        var selectorValue = selector.Value;
 
         string? passwordValue = null;
         if (PasswordKey != null)
@@ -62,11 +60,11 @@ internal sealed class TokenStep : IStep
         var validated = false;
         if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
-            validated = await UserService.ValidatePasswordAsync(selectorField, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
+            validated = await UserService.ValidatePasswordAsync(selector.Field, selector.Value, passwordValue, cancellationToken).ConfigureAwait(false);
         }
         else if (CodeKey != null && !string.IsNullOrEmpty(codeValue))
         {
-            validated = await UserService.ValidateCodeAsync(selectorField, selectorValue, codeValue, cancellationToken).ConfigureAwait(false);
+            validated = await UserService.ValidateCodeAsync(selector.Field, selector.Value, codeValue, cancellationToken).ConfigureAwait(false);
         }
         if (!validated)
         {
@@ -74,7 +72,7 @@ internal sealed class TokenStep : IStep
             return StepResult.Ok(Next);
         }
 
-        var userAccount = await UserService.GetUserByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
+        var userAccount = await UserService.GetUserByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         var user = userAccount.ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var id     = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;

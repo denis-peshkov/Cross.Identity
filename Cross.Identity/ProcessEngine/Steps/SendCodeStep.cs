@@ -38,14 +38,13 @@ internal sealed class SendCodeStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
-        var destination = selector.Value;
 
-        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, destination, cancellationToken).ConfigureAwait(false);
+        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
             throw new NotFoundException("User not found.");
 
         var channel = await CommunicationEndpoints
-            .ResolveOtpChannelAsync(userId, selector.Field, destination, Channel, cancellationToken)
+            .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
             .ConfigureAwait(false);
         if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             throw new ValidationException("Provide an email or a phone number to send a code.");
@@ -56,7 +55,7 @@ internal sealed class SendCodeStep : IStep
             ? CodeGeneratorHelper.GenerateNumericCode()
             : CodeGeneratorHelper.GenerateCode();
 
-        var msg = NotificationMessage.For(channel, destination)
+        var msg = NotificationMessage.For(channel, selector.Value)
             .WithSubject("Verification Code");
 
         var clientUrl = Configuration["Authentication:ClientUrl"]

@@ -34,23 +34,21 @@ internal sealed class ResetPasswordStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
-        var selectorField = selector.Field;
-        var selectorValue = selector.Value;
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
         ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
 
-        await UserService.SetPasswordAsync(selectorField, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
-        var userIdRaw = await UserService.GetUserIdByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
+        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
             return StepResult.Ok(Next);
 
         var preferred = await CommunicationEndpoints.GetPreferredAsync(userId, cancellationToken).ConfigureAwait(false);
         var channel = preferred?.Channel
                       ?? await CommunicationEndpoints
-                          .ResolveDeliveryChannelAsync(userId, selectorField, selectorValue, Channel, cancellationToken)
+                          .ResolveDeliveryChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
                           .ConfigureAwait(false);
 
         // Password-change notice: Email/Sms only until messenger senders exist.
@@ -60,7 +58,7 @@ internal sealed class ResetPasswordStep : IStep
         if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             return StepResult.Ok(Next);
 
-        var notifyAddress = preferred?.Address ?? selectorValue;
+        var notifyAddress = preferred?.Address ?? selector.Value;
 
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
