@@ -23,8 +23,7 @@ internal sealed class CreateUserStepFactory : IStepFactory
             Kind        = Kind,
             UserService = userService,
             Map         = map,
-            SelectorKey = cfg.Str("selectorKey"),
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId", // relative by default
+            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
             Next        = cfg.StrOpt("next")
         };
     }

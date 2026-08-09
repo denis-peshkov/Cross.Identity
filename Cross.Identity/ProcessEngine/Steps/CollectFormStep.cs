@@ -7,6 +7,7 @@
 /// <item>Validates it via <see cref="Validator"/> (FluentValidation).</item>
 /// <item>Stores values in <see cref="Bag"/> with the <b>step name</b> prefix: <c>"{Name}.{FieldKey}"</c>.</item>
 /// <item>Fields of type <c>PhoneNumber</c> are stored via <see cref="PhoneE164.Require"/> (E.164 only).</item>
+/// <item>Optional <see cref="Selector"/> fills identity <c>Field</c>/<c>Value</c> bag keys for later steps.</item>
 /// </list>
 /// The form schema is defined in the step configuration (see the factory).
 /// </summary>
@@ -26,6 +27,9 @@ internal sealed class CollectFormStep : IStep
 
     /// <summary>Function that fetches incoming data (usually from <see cref="IRequestInput"/>).</summary>
     public required Func<CancellationToken, Task<IDictionary<string, object?>>> FetchIncoming { get; init; }
+
+    /// <summary>Optional identity selector: writes field name + value into bag keys.</summary>
+    public Selector? Selector { get; init; }
 
     /// <inheritdoc />
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -54,6 +58,9 @@ internal sealed class CollectFormStep : IStep
 
             ctx.Set(bagKey, value);
         }
+
+        // 4) optional identity selector slot (candidates → FieldKey / ValueKey)
+        Selector?.Bind(ctx);
 
         return StepResult.Ok(Next);
     }

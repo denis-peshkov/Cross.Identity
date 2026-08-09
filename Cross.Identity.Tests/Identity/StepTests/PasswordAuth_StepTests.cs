@@ -6,6 +6,8 @@ public class PasswordAuth_StepTests
     private Faker _faker = null!;
     private Mock<IUserService> _userService = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -31,15 +33,15 @@ public class PasswordAuth_StepTests
         {
             Kind = "passwordAuth",
             UserService = _userService.Object,
-            SelectorField = "Email",
-            SelectorKey = "collectForm.Email",
+            Selector = DefaultSelector,
             PasswordKey = "collectForm.Password",
             UserIdKey = "UserId",
             Next = "token"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Password", password);
 
         // Act
@@ -68,14 +70,14 @@ public class PasswordAuth_StepTests
         {
             Kind = "passwordAuth",
             UserService = _userService.Object,
-            SelectorField = "Email",
-            SelectorKey = "collectForm.Email",
+            Selector = DefaultSelector,
             PasswordKey = "collectForm.Password",
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Password", password);
 
         // Act
@@ -106,15 +108,15 @@ public class PasswordAuth_StepTests
         {
             Kind = "passwordAuth",
             UserService = _userService.Object,
-            SelectorField = "UserName",
-            SelectorKey = "Email", // relative key
-            PasswordKey = "Password", // relative key
+            Selector = DefaultSelector,
+            PasswordKey = "Password",
             UserIdKey = "UserId",
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("passwordAuth.Email", username);
+        bag.Set("collectForm.Field", "UserName");
+        bag.Set("collectForm.Value", username);
         bag.Set("passwordAuth.Password", password);
 
         // Act
@@ -141,15 +143,15 @@ public class PasswordAuth_StepTests
         {
             Kind = "passwordAuth",
             UserService = _userService.Object,
-            SelectorField = "Id",
-            SelectorKey = "collectForm.UserId",
+            Selector = DefaultSelector,
             PasswordKey = "collectForm.CurrentPassword",
             UserIdKey = "UserId",
             Next = "resetPassword",
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.UserId", userId);
+        bag.Set("collectForm.Field", "Id");
+        bag.Set("collectForm.Value", userId);
         bag.Set("collectForm.CurrentPassword", password);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

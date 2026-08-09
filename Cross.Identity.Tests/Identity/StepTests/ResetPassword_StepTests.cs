@@ -9,6 +9,8 @@ public class ResetPassword_StepTests
     private Mock<ISmsSenderService> _smsSenderService = null!;
     private Mock<ILogger> _logger = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -32,7 +34,7 @@ public class ResetPassword_StepTests
         var step = new ResetPasswordStep
         {
             Kind = "resetPassword",
-            SelectorKey = "forgotPassword.email",
+            Selector = DefaultSelector,
             PasswordKey = "forgotPassword.password",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
@@ -41,12 +43,12 @@ public class ResetPassword_StepTests
             SmsSenderService = _smsSenderService.Object,
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = "done"
         };
 
         var bag = new Bag();
-        bag.Set("forgotPassword.email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("forgotPassword.password", password);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -75,7 +77,7 @@ public class ResetPassword_StepTests
         var step = new ResetPasswordStep
         {
             Kind = "resetPassword",
-            SelectorKey = "collectForm.UserId",
+            Selector = DefaultSelector,
             PasswordKey = "collectForm.NewPassword",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
@@ -84,12 +86,12 @@ public class ResetPassword_StepTests
             SmsSenderService = _smsSenderService.Object,
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
-            ResolveBy = new ResolveBy { Field = "Id" },
             Next = "done",
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.UserId", userIdText);
+        bag.Set("collectForm.Field", "Id");
+        bag.Set("collectForm.Value", userIdText);
         bag.Set("collectForm.NewPassword", password);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

@@ -15,6 +15,9 @@
         ],
         "validators": []
       },
+      "selector": {
+        "candidates": ["Email", "PhoneNumber", "UserName"]
+      },
       "next": "createUser"
     },
     {
@@ -26,14 +29,11 @@
         "UserName": "collectForm.UserName"
       },
       "userIdKey": "UserId",
-      "selectorKey": "collectForm.Email",
       "next": "sendCode"
     },
     {
       "kind": "sendCode",
-      "channel": "email",
-      "selectorKey": "createUser.selectorKey",
-      "resolveBy": { "field": "Email" },
+      "lockChannelAsEmail": true,
       "next": "collectResult"
     },
     {

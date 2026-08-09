@@ -16,14 +16,13 @@
           { "kind": "atLeastOneRequired", "fields": ["Email", "PhoneNumber", "UserName"], "message": "Provide an email, phone, or user name." }
         ]
       },
+      "selector": {
+        "candidates": ["Email", "PhoneNumber", "UserName"]
+      },
       "next": "getUserId"
     },
     {
       "kind": "getUserId",
-      "selectorField": "Email",
-      "selectorKey": "collectForm.Email",
-      "phoneNumberKey": "collectForm.PhoneNumber",
-      "userNameKey": "collectForm.UserName",
       "next": "collectResult"
     },
     {

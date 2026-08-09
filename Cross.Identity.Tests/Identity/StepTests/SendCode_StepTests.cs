@@ -12,6 +12,8 @@ public class SendCode_StepTests
     private IConfiguration _defaultConfiguration = null!;
     private IConfiguration _developerConfiguration = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -72,13 +74,13 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            Selector = DefaultSelector,
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -130,14 +132,14 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
+            Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Ttl", ttl);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -184,14 +186,14 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
+            Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -232,13 +234,13 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Sms,
-            SelectorKey = "collectForm.PhoneNumber",
-            ResolveBy = new ResolveBy { Field = "PhoneNumber" },
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.PhoneNumber", phone);
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -247,7 +249,7 @@ public class SendCode_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         var code = bag.Get<string>("sendCode.LastCode");
         code.Should().NotBeNullOrEmpty();
-        code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits for SMS
+        code.Should().MatchRegex("^[0-9]+$");
     }
 
     [Test]
@@ -285,13 +287,13 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -335,13 +337,13 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         // Act & Assert
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);

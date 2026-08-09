@@ -7,6 +7,8 @@ public class CodeAuth_StepTests
     private Mock<ICodeService> _codeService = null!;
     private Mock<IUserService> _userService = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -34,15 +36,15 @@ public class CodeAuth_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Channel = ChannelEnum.Email,
-            IdentityKey = "auth-form.Email",
+            Selector = DefaultSelector,
             CodeKey = "auth-form.Code",
-            ResolveBy = new ResolveBy { Field = "Email" },
             UserIdKey = "UserId",
             Next = "nextStep"
         };
 
         var bag = new Bag();
-        bag.Set("auth-form.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("auth-form.Code", code);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -70,14 +72,14 @@ public class CodeAuth_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Channel = ChannelEnum.Email,
-            IdentityKey = "auth-form.Email",
+            Selector = DefaultSelector,
             CodeKey = "auth-form.Code",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("auth-form.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("auth-form.Code", code);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -105,14 +107,14 @@ public class CodeAuth_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Channel = ChannelEnum.Email,
-            IdentityKey = "auth-form.Email",
+            Selector = DefaultSelector,
             CodeKey = "auth-form.Code",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("auth-form.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("auth-form.Code", code);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -140,14 +142,14 @@ public class CodeAuth_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Channel = ChannelEnum.Sms,
-            IdentityKey = "PhoneNumber",
+            Selector = DefaultSelector,
             CodeKey = "Code",
-            ResolveBy = new ResolveBy { Field = "PhoneNumber" },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("codeAuth.PhoneNumber", phone);
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
         bag.Set("codeAuth.Code", code);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

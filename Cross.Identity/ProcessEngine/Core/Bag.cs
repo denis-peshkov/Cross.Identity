@@ -29,7 +29,7 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         // Attempt generic conversion (int→decimal, string→int, etc.)
         try
         {
-            return (T)System.Convert.ChangeType(v, typeof(T))!;
+            return (T)Convert.ChangeType(v, typeof(T))!;
         }
         catch
         {
@@ -50,7 +50,7 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
 
             try
             {
-                value = (T)System.Convert.ChangeType(v!, typeof(T))!;
+                value = (T)Convert.ChangeType(v!, typeof(T))!;
                 return true;
             }
             catch

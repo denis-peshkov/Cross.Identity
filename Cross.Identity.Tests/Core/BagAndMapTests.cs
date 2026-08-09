@@ -72,23 +72,103 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenChannelAndJson_WhenResolveByMethods_ThenWork()
+    public void GivenSelectorJson_WhenFromJson_ThenParsesOptions()
     {
-        ResolveBy.DefaultFor(ChannelEnum.Email).Field.Should().Be("Email");
-        ResolveBy.DefaultFor(ChannelEnum.Sms).Field.Should().Be("PhoneNumber");
-        ResolveBy.DefaultFor(ChannelEnum.Telegram).Field.Should().Be("PhoneNumber");
-        ResolveBy.DefaultFor((ChannelEnum)999).Field.Should().Be("UserName");
-
-        using var json = JsonDocument.Parse("""{"field":"Email","required":false,"caseInsensitive":false}""");
-        var parsed = ResolveBy.FromJson(json.RootElement);
-        parsed.Field.Should().Be("Email");
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "required": false,
+              "caseInsensitive": false,
+              "candidates": ["Email", "PhoneNumber"]
+            }
+            """);
+        var parsed = Selector.FromJson(json.RootElement);
+        parsed.FieldKey.Should().Be("collectForm.Field");
+        parsed.ValueKey.Should().Be("collectForm.Value");
         parsed.Required.Should().BeFalse();
         parsed.CaseInsensitive.Should().BeFalse();
+        parsed.Candidates.Should().BeEquivalentTo("Email", "PhoneNumber");
+    }
 
-        using var jsonDefaults = JsonDocument.Parse("""{"field":"UserName"}""");
-        var defaults = ResolveBy.FromJson(jsonDefaults.RootElement);
-        defaults.Required.Should().BeTrue();
-        defaults.CaseInsensitive.Should().BeTrue();
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenEmptySelectorJson_WhenFromJson_ThenUsesDefaults()
+    {
+        using var json = JsonDocument.Parse("{}");
+        var parsed = Selector.FromJson(json.RootElement);
+        parsed.FieldKey.Should().Be("collectForm.Field");
+        parsed.ValueKey.Should().Be("collectForm.Value");
+        parsed.Required.Should().BeTrue();
+        parsed.CaseInsensitive.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenBagWithSelectorValues_WhenResolve_ThenReturnsFieldAndValue()
+    {
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", "test@example.com");
+        var selector = new Selector();
+
+        var (field, value) = selector.Resolve(bag);
+
+        field.Should().Be("Email");
+        value.Should().Be("test@example.com");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenCollectFormSelector_WhenBind_ThenWritesFieldAndValue()
+    {
+        var bag = new Bag().Set("collectForm.UserId", "abc-123");
+        var selector = new Selector
+        {
+            Candidates = new[] { "UserId" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("UserId");
+        bag.Get<string>("collectForm.Value").Should().Be("abc-123");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenCandidatesSelector_WhenBind_ThenUsesFirstNonEmpty()
+    {
+        var bag = new Bag().Set("collectForm.PhoneNumber", "+1234567890");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("PhoneNumber");
+        bag.Get<string>("collectForm.Value").Should().Be("+1234567890");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenChannel_WhenDefaultFor_ThenMapsCandidates()
+    {
+        Selector.DefaultFor(ChannelEnum.Email).Candidates.Should().Equal("Email");
+        Selector.DefaultFor(ChannelEnum.Sms).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.Telegram).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.Viber).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.WatsApp).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor((ChannelEnum)999).Candidates.Should().Equal("UserName");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenFieldName_WhenChannelForField_ThenMapsChannel()
+    {
+        Selector.ChannelForField("Email").Should().Be(ChannelEnum.Email);
+        Selector.ChannelForField("PhoneNumber").Should().Be(ChannelEnum.Sms);
+        Selector.ChannelForField("phone").Should().Be(ChannelEnum.Sms);
+        Selector.ChannelForField("UserName").Should().BeNull();
     }
 
     [Test]

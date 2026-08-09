@@ -26,7 +26,6 @@ public class VerifyCode_StepFactoryTests
             {
               "kind": "verifyCode",
               "channel": "email",
-              "identityKey": "collectForm.Email",
               "codeKey": "collectForm.Code",
               "next": "token"
             }
@@ -40,7 +39,8 @@ public class VerifyCode_StepFactoryTests
         // Assert
         step.Kind.Should().Be("verifyCode");
         step.Channel.Should().Be(ChannelEnum.Email);
-        step.IdentityKey.Should().Be("collectForm.Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.CodeKey.Should().Be("collectForm.Code");
         step.Next.Should().Be("token");
         step.CodeService.Should().NotBeNull();
@@ -56,7 +56,6 @@ public class VerifyCode_StepFactoryTests
             {
               "kind": "verifyCode",
               "channel": "sms",
-              "identityKey": "collectForm.PhoneNumber",
               "codeKey": "collectForm.Code"
             }
             """);
@@ -72,7 +71,7 @@ public class VerifyCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenRelativeKeysJson_WhenCreate_ThenReturnsConfiguredStep()
+    public void GivenRelativeCodeKeyJson_WhenCreate_ThenReturnsConfiguredStep()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -80,7 +79,6 @@ public class VerifyCode_StepFactoryTests
             {
               "kind": "verifyCode",
               "channel": "email",
-              "identityKey": "Email",
               "codeKey": "Code"
             }
             """);
@@ -91,7 +89,7 @@ public class VerifyCode_StepFactoryTests
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.IdentityKey.Should().Be("Email");
         step.CodeKey.Should().Be("Code");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
     }
 }

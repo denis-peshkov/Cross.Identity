@@ -42,7 +42,7 @@ public static class ServiceCollectionExtensions
 
         services.TryAddScoped<IUserService, UserService>();
         services.TryAddSingleton<IPasswordHasher, PasswordHasher>();
-        services.Configure<Cross.Identity.Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
+        services.Configure<Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
         // services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
 
         services.TryAddScoped<ICodeService, CodeService>();

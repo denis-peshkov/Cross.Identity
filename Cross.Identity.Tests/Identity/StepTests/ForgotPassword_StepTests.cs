@@ -12,6 +12,8 @@ public class ForgotPassword_StepTests
     private ForgotPasswordStep _step = null!;
     private Faker _faker = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -40,8 +42,7 @@ public class ForgotPassword_StepTests
         => new()
         {
             Kind = "forgotPassword",
-            SelectorKey = "email",
-            PasswordKey = "password",
+            Selector = DefaultSelector,
             Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             CodeService = _codeService.Object,
@@ -57,7 +58,9 @@ public class ForgotPassword_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var bag = new Bag().Set("forgotPassword.email", email);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
@@ -97,7 +100,9 @@ public class ForgotPassword_StepTests
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
-        var bag = new Bag().Set("forgotPassword.email", phone);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
 
         _step.Channel = ChannelEnum.Sms;
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -113,7 +118,7 @@ public class ForgotPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         var code = bag.Get<string>("forgotPassword.LastCode");
         code.Should().NotBeNullOrEmpty();
-        code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits
+        code.Should().MatchRegex("^[0-9]+$");
     }
 
     [Test]
@@ -121,7 +126,9 @@ public class ForgotPassword_StepTests
     public async Task GivenDeveloperModeDisabled_WhenExecuteAsync_ThenDoesNotSetLastCodeAsync()
     {
         var email = _faker.Internet.Email();
-        var bag = new Bag().Set("forgotPassword.email", email);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         var step = CreateStep(_defaultConfiguration);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -150,7 +157,9 @@ public class ForgotPassword_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var bag = new Bag().Set("forgotPassword.email", email);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
@@ -178,7 +187,9 @@ public class ForgotPassword_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var bag = new Bag().Set("forgotPassword.email", email);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))

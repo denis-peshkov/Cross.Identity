@@ -270,7 +270,7 @@ internal sealed class UserService : IUserService
     {
         return selectorField.ToLowerInvariant() switch
         {
-            "id" => nameof(UserAccountEntity.Id),
+            "id" or "userid" => nameof(UserAccountEntity.Id),
             "email" => nameof(UserAccountEntity.Email),
             "username" => nameof(UserAccountEntity.NormalizedUserName),
             "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),

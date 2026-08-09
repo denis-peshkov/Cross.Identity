@@ -24,13 +24,13 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         var userIdText = UserId.ToString();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.ValidatePasswordAsync("Id", userIdText, CurrentPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.ValidatePasswordAsync("UserId", userIdText, CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, null, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("UserId", userIdText, NewPassword, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
-            .Setup(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetUserIdByAsync("UserId", userIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userIdText);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
@@ -58,10 +58,10 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ChangePassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
+            s => s.ValidatePasswordAsync("UserId", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
             Times.Once);
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, null, null, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("UserId", UserId.ToString(), NewPassword, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -70,7 +70,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
     public async Task GivenInvalidCurrentPassword_WhenChangePasswordFlowRuns_ThenRejectsBeforePasswordChangeAsync()
     {
         _userServiceMock
-            .Setup(s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.ValidatePasswordAsync("UserId", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var input = new Dictionary<string, object?>
@@ -102,10 +102,9 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         string? collectNext = null;
         string? authNext = null;
         string? authPasswordKey = null;
-        string? authSelectorField = null;
-        string? resetPasswordKey = null;
-        string? resetResolveByField = null;
-        var formFieldKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string? collectSelectorField = null;
+                string? resetPasswordKey = null;
+                var formFieldKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var step in steps.EnumerateArray())
         {
@@ -113,6 +112,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             if (string.Equals(kind, "collectForm", StringComparison.OrdinalIgnoreCase))
             {
                 collectNext = step.GetProperty("next").GetString();
+                collectSelectorField = step.GetProperty("selector").GetProperty("candidates")[0].GetString();
                 foreach (var field in step.GetProperty("schemaDef").GetProperty("fields").EnumerateArray())
                 {
                     formFieldKeys.Add(field.GetProperty("key").GetString()!);
@@ -123,13 +123,11 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             {
                 authNext = step.GetProperty("next").GetString();
                 authPasswordKey = step.GetProperty("passwordKey").GetString();
-                authSelectorField = step.GetProperty("selectorField").GetString();
             }
 
             if (string.Equals(kind, "resetPassword", StringComparison.OrdinalIgnoreCase))
             {
                 resetPasswordKey = step.GetProperty("passwordKey").GetString();
-                resetResolveByField = step.GetProperty("resolveBy").GetProperty("field").GetString();
             }
         }
 
@@ -140,9 +138,8 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         formFieldKeys.Should().NotContain("Code");
         collectNext.Should().Be("passwordAuth");
         authNext.Should().Be("resetPassword");
-        authSelectorField.Should().Be("Id");
+        collectSelectorField.Should().Be("UserId");
         authPasswordKey.Should().Be("collectForm.CurrentPassword");
         resetPasswordKey.Should().Be("collectForm.NewPassword");
-        resetResolveByField.Should().Be("Id");
     }
 }

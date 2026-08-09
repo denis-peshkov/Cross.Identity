@@ -3,17 +3,6 @@
 /// <summary>
 /// Step for authenticating a user (by password or code)
 /// and issuing a JWT token pair (access + refresh).
-/// <para>
-/// Keys:
-/// <list type="bullet">
-///   <item><description><see cref="SelectorKey"/>, <see cref="PasswordKey"/>, and <see cref="CodeKey"/>:
-///     if a key is relative (no dot), it is read as <c>"{Kind}.{Key}"</c>;
-///     to read data from another step, specify an absolute key such as <c>"other-step.Field"</c>.</description></item>
-///   <item><description>The result is always written to keys:
-///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserId</c>
-///     (with the <c>{Kind}.</c> prefix for relative access).</description></item>
-/// </list>
-/// </para>
 /// </summary>
 internal sealed class TokenStep : IStep
 {
@@ -23,18 +12,8 @@ internal sealed class TokenStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
-    public required string SelectorKey { get; init; }
-
-    /// <summary>
-    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, identity is resolved as email / phone / user name.
-    /// </summary>
-    public string? PhoneNumberKey { get; init; }
-
-    /// <summary>
-    /// Optional key for user name. When set with <see cref="PhoneNumberKey"/>, identity is resolved as email / phone / user name.
-    /// </summary>
-    public string? UserNameKey { get; init; }
+    /// <summary>Identity selector (bag keys for field name + value).</summary>
+    public required Selector Selector { get; init; }
 
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public string? PasswordKey { get; init; }
@@ -60,25 +39,12 @@ internal sealed class TokenStep : IStep
     /// <summary>Service for validating credentials and reading the user.</summary>
     public IUserService UserService { get; set; }
 
-
-    /// <summary>User lookup settings: which field to search by (for example, "Email" or "PhoneNumber").</summary>
-    public required ResolveBy ResolveBy { get; init; }
-
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // 1) email/login (or phone) + password or code (absolute keys such as collectForm.Email are not prefixed with the token step Kind)
-        string selectorField;
-        string selectorValue;
-        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
-        {
-            (selectorField, selectorValue, _) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
-        }
-        else
-        {
-            selectorField = ResolveBy.Field;
-            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
-        }
+        var selector = Selector.Resolve(ctx);
+        var selectorField = selector.Field;
+        var selectorValue = selector.Value;
 
         string? passwordValue = null;
         if (PasswordKey != null)
@@ -92,7 +58,7 @@ internal sealed class TokenStep : IStep
             ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out codeValue);
         }
 
-        // 2) validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided" — otherwise the code branch does not run.
+        // validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided"
         var validated = false;
         if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
@@ -108,7 +74,6 @@ internal sealed class TokenStep : IStep
             return StepResult.Ok(Next);
         }
 
-        // 3) get user data
         var userAccount = await UserService.GetUserByAsync(selectorField, selectorValue, cancellationToken).ConfigureAwait(false);
         var user = userAccount.ToBag();
         ArgumentNullException.ThrowIfNull(user);
@@ -117,15 +82,11 @@ internal sealed class TokenStep : IStep
         var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
         var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
-        // 4) generate AccessToken
         var familyId = Guid.NewGuid();
         var accessClaims = new List<Claim>
             {
                 new (JwtRegisteredClaimNames.Sub, id.ToString()),
-                // new (JwtRegisteredClaimNames.NameId, id),
-                // new (ClaimTypes.NameIdentifier, id), // NameId ???
             }
-            // .AddIfNotNull(JwtRegisteredClaimNames.Email, email)
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
@@ -134,10 +95,8 @@ internal sealed class TokenStep : IStep
         ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
         var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
-        // 5) generate RefreshToken
         var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
-        // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
         ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
         ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");

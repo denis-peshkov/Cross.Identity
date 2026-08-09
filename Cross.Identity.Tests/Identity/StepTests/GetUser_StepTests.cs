@@ -5,6 +5,8 @@ public class GetUser_StepTests
 {
     private Faker _faker = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -26,12 +28,13 @@ public class GetUser_StepTests
         {
             Kind = "lookup",
             UserService = users.Object,
-            SelectorField = "Email",
-            SelectorKey = "get.Email",
+            Selector = DefaultSelector,
             Next = "done"
         };
 
-        var bag = new Bag().Set("get.Email", email);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         var res = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -55,12 +58,13 @@ public class GetUser_StepTests
         {
             Kind = "lookup",
             UserService = users.Object,
-            SelectorField = "PhoneNumber",
-            SelectorKey = "get.PhoneNumber",
+            Selector = DefaultSelector,
             Next = null
         };
 
-        var bag = new Bag().Set("get.PhoneNumber", phone);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
 
         var res = await step.ExecuteAsync(bag, CancellationToken.None);
 

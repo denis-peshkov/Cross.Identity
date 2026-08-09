@@ -28,12 +28,10 @@ public class ResetPassword_StepFactoryTests
             {
               "kind": "resetPassword",
               "channel": "email",
-              "selectorKey": "forgotPassword.email",
               "passwordKey": "forgotPassword.password",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
               "deviceFingerprintKey": "collectForm.DeviceFingerprint",
-              "resolveBy": { "field": "Email" },
               "next": "done"
             }
             """);
@@ -43,11 +41,11 @@ public class ResetPassword_StepFactoryTests
 
         step.Kind.Should().Be("resetPassword");
         step.Channel.Should().Be(ChannelEnum.Email);
-        step.SelectorKey.Should().Be("forgotPassword.email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.PasswordKey.Should().Be("forgotPassword.password");
         step.IpAddressKey.Should().Be("collectForm.IpAddress");
         step.UserAgentKey.Should().Be("collectForm.UserAgent");
-        step.ResolveBy.Field.Should().Be("Email");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
     }
@@ -61,11 +59,9 @@ public class ResetPassword_StepFactoryTests
             {
               "kind": "resetPassword",
               "channel": "email",
-              "selectorKey": "email",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
-              "resolveBy": { "field": "Email" }
+              "deviceFingerprintKey": "collectForm.DeviceFingerprint"
             }
             """);
 
@@ -84,12 +80,10 @@ public class ResetPassword_StepFactoryTests
             """
             {
               "kind": "resetPassword",
-              "selectorKey": "email",
               "passwordKey": "password",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
-              "resolveBy": { "field": "Email" }
+              "deviceFingerprintKey": "collectForm.DeviceFingerprint"
             }
             """);
 
@@ -101,26 +95,4 @@ public class ResetPassword_StepFactoryTests
             .WithMessage("*channel*");
     }
 
-    [Test]
-    [Category(TestCategory.UNIT)]
-    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
-    {
-        using var json = JsonDocument.Parse(
-            """
-            {
-              "kind": "resetPassword",
-              "channel": "email",
-              "selectorKey": "email",
-              "passwordKey": "password",
-              "ipAddressKey": "collectForm.IpAddress"
-            }
-            """);
-
-        var factory = new ResetPasswordStepFactory();
-
-        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
-            .Should()
-            .Throw<InvalidOperationException>()
-            .WithMessage("*resolveBy*");
-    }
 }

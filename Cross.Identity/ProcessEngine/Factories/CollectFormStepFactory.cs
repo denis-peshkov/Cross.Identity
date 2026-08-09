@@ -62,6 +62,7 @@ internal sealed class CollectFormStepFactory : IStepFactory
             Schema        = schema,
             Validator     = validator,
             FetchIncoming = input.GetAsync,
+            Selector      = Selector.TryFromStepJson(cfg),
             Next          = next
         };
     }

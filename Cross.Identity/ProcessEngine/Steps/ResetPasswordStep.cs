@@ -11,18 +11,8 @@ internal sealed class ResetPasswordStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
-    public required string SelectorKey { get; init; }
-
-    /// <summary>
-    /// Optional key for phone (E.164). When set with <see cref="UserNameKey"/>, identity is resolved as email / phone / user name.
-    /// </summary>
-    public string? PhoneNumberKey { get; init; }
-
-    /// <summary>
-    /// Optional key for user name. Notification delivery requires email or phone (not user name alone).
-    /// </summary>
-    public string? UserNameKey { get; init; }
+    /// <summary>Identity selector (bag keys for field name + value).</summary>
+    public required Selector Selector { get; init; }
 
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
@@ -38,24 +28,14 @@ internal sealed class ResetPasswordStep : IStep
     public IEmailSenderService EmailSenderService { get; set; }
     public ISmsSenderService SmsSenderService { get; set; }
     public required ChannelEnum Channel { get; init; }
-    public required ResolveBy ResolveBy { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        string selectorField;
-        string selectorValue;
-        ChannelEnum? channel;
-        if (EmailOrPhoneBag.IsMultiSelector(PhoneNumberKey, UserNameKey))
-        {
-            (selectorField, selectorValue, channel) = EmailOrPhoneBag.Resolve(ctx, Kind, SelectorKey, PhoneNumberKey, UserNameKey);
-        }
-        else
-        {
-            selectorField = ResolveBy.Field;
-            selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
-            channel = Channel;
-        }
+        var selector = Selector.Resolve(ctx);
+        var selectorField = selector.Field;
+        var selectorValue = selector.Value;
+        var channel = Selector.ChannelForField(selector.Field) ?? Channel;
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
         ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
@@ -63,7 +43,7 @@ internal sealed class ResetPasswordStep : IStep
 
         await UserService.SetPasswordAsync(selectorField, selectorValue, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 
-        if (channel is null)
+        if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
             return StepResult.Ok(Next);
 
         var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
@@ -74,7 +54,7 @@ internal sealed class ResetPasswordStep : IStep
 
         try
         {
-            switch (channel.Value)
+            switch (channel)
             {
                 case ChannelEnum.Email:
                     await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);

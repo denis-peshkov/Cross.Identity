@@ -12,13 +12,12 @@ internal sealed class PasswordAuthStepFactory : IStepFactory
         var userService = sp.GetRequiredService<IUserService>();
         return new PasswordAuthStep
         {
-            Kind          = Kind,
-            UserService   = userService,
-            SelectorField = cfg.Str("selectorField"),
-            SelectorKey   = cfg.Str("selectorKey"),               // may be relative/absolute
-            PasswordKey   = cfg.Str("passwordKey"),               // may be relative/absolute
-            UserIdKey     = cfg.StrOpt("userIdKey") ?? "UserId",  // relative by default → "{Name}.UserId"
-            Next          = cfg.StrOpt("next")
+            Kind        = Kind,
+            UserService = userService,
+            Selector    = new Selector(),
+            PasswordKey = cfg.Str("passwordKey"),
+            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
+            Next        = cfg.StrOpt("next")
         };
     }
 }

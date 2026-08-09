@@ -6,6 +6,8 @@ public class VerifyCode_StepTests
     private Faker _faker = null!;
     private Mock<ICodeService> _codeService = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
     [SetUp]
     public void SetUp()
     {
@@ -29,13 +31,14 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             Channel = ChannelEnum.Email,
-            IdentityKey = "collectForm.Email",
+            Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             Next = "nextStep"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Code", code);
 
         // Act
@@ -63,13 +66,14 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             Channel = ChannelEnum.Email,
-            IdentityKey = "collectForm.Email",
+            Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Code", code);
 
         // Act
@@ -97,13 +101,14 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             Channel = ChannelEnum.Sms,
-            IdentityKey = "PhoneNumber", // relative key
-            CodeKey = "Code", // relative key
+            Selector = DefaultSelector,
+            CodeKey = "Code",
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("verifyCode.PhoneNumber", phone);
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
         bag.Set("verifyCode.Code", code);
 
         // Act

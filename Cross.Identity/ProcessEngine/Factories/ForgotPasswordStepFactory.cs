@@ -20,11 +20,6 @@ internal sealed class ForgotPasswordStepFactory : IStepFactory
         var channel = cfg.EnumOpt<ChannelEnum>("channel")
                       ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
 
-        // resolveBy is optional; if omitted, a sensible default is inferred from the channel
-        if (!cfg.TryGetProperty("resolveBy", out var resolveEl) || resolveEl.ValueKind != JsonValueKind.Object)
-            throw new InvalidOperationException("codeAuth: 'resolveBy' object is required.");
-        var field = resolveEl.Str("field");
-
         return new ForgotPasswordStep
         {
             Kind                      = Kind,
@@ -35,11 +30,7 @@ internal sealed class ForgotPasswordStepFactory : IStepFactory
             Logger                    = loggerFactory.CreateLogger<ForgotPasswordStep>(),
             ProcessDefinitionProvider = processDefinitionProvider,
             Channel                   = channel,
-            ResolveBy                 = new ResolveBy { Field = field },
-            SelectorKey               = cfg.Str("selectorKey"),
-            PhoneNumberKey            = cfg.StrOpt("phoneNumberKey"),
-            UserNameKey               = cfg.StrOpt("userNameKey"),
-            PasswordKey               = string.Empty,
+            Selector                  = new Selector(),
         };
     }
 }

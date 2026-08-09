@@ -34,8 +34,6 @@ public class ForgotPassword_StepFactoryTests
             {
               "kind": "forgotPassword",
               "channel": "email",
-              "selectorKey": "collectForm.Email",
-              "resolveBy": { "field": "Email" },
               "next": "collectResult"
             }
             """);
@@ -44,28 +42,10 @@ public class ForgotPassword_StepFactoryTests
 
         step.Kind.Should().Be("forgotPassword");
         step.Channel.Should().Be(ChannelEnum.Email);
-        step.SelectorKey.Should().Be("collectForm.Email");
-        step.ResolveBy.Field.Should().Be("Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.Next.Should().Be("collectResult");
         step.CodeService.Should().NotBeNull();
     }
 
-    [Test]
-    [Category(TestCategory.UNIT)]
-    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
-    {
-        using var json = JsonDocument.Parse(
-            """
-            {
-              "kind": "forgotPassword",
-              "channel": "email",
-              "selectorKey": "collectForm.Email"
-            }
-            """);
-
-        var act = () => new ForgotPasswordStepFactory().Create(json.RootElement, _sp);
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*resolveBy*");
-    }
 }

@@ -36,7 +36,6 @@ public class CreateUser_StepTests
                 ["Password"] = "collectForm.Password"
             },
             UserIdKey = "UserId",
-            SelectorKey = "collectForm.Email",
             Next = "sendCode"
         };
 
@@ -51,7 +50,6 @@ public class CreateUser_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("sendCode");
         bag.Get<string>("createUser.UserId").Should().Be(userId);
-        bag.Get<string>("createUser.selectorKey").Should().Be(email);
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&
@@ -81,10 +79,9 @@ public class CreateUser_StepTests
             UserService = userService.Object,
             Map = new Dictionary<string, string>
             {
-                ["Email"] = "Email" // relative key
+                ["Email"] = "Email"
             },
             UserIdKey = "UserId",
-            SelectorKey = "Email",
             Next = null
         };
 
@@ -123,16 +120,14 @@ public class CreateUser_StepTests
             Map = new Dictionary<string, string>
             {
                 ["Email"] = "collectForm.Email",
-                ["Password"] = "collectForm.Password" // missing from Bag
+                ["Password"] = "collectForm.Password"
             },
             UserIdKey = "UserId",
-            SelectorKey = "collectForm.Email",
             Next = null
         };
 
         var bag = new Bag();
         bag.Set("collectForm.Email", email);
-        // Password is missing
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);

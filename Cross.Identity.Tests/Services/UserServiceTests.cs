@@ -108,6 +108,22 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenExistingUserByUserId_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "userid-alias@example.com",
+        });
+
+        var result = await _userService.GetUserIdByAsync("UserId", userId.ToString(), CancellationToken.None);
+
+        result.Should().Be(userId.ToString());
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange

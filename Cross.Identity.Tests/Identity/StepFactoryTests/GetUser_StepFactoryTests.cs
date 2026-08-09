@@ -25,8 +25,6 @@ public class GetUser_StepFactoryTests
             """
             {
               "kind": "getUserId",
-              "selectorField": "Email",
-              "selectorKey": "collectForm.Email",
               "next": "token"
             }
             """);
@@ -38,8 +36,8 @@ public class GetUser_StepFactoryTests
 
         // Assert
         step.Kind.Should().Be("getUserId");
-        step.SelectorField.Should().Be("Email");
-        step.SelectorKey.Should().Be("collectForm.Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.Next.Should().Be("token");
         step.UserService.Should().NotBeNull();
     }
@@ -52,34 +50,7 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUserId",
-              "selectorField": "Email",
-              "selectorKey": "collectForm.Email"
-            }
-            """);
-
-        var factory = new GetUserIdStepFactory();
-
-        // Act
-        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
-
-        // Assert — at execution the identifier is written to "{kind}.UserId" (see GetUserIdStep.ExecuteAsync)
-        step.SelectorField.Should().Be("Email");
-        step.SelectorKey.Should().Be("collectForm.Email");
-        step.Next.Should().BeNull();
-    }
-
-    [Test]
-    [Category(TestCategory.UNIT)]
-    public void GivenPhoneSelectorJson_WhenCreate_ThenReturnsConfiguredStep()
-    {
-        // Arrange
-        using var json = JsonDocument.Parse(
-            """
-            {
-              "kind": "getUserId",
-              "selectorField": "PhoneNumber",
-              "selectorKey": "collectForm.PhoneNumber"
+              "kind": "getUserId"
             }
             """);
 
@@ -89,7 +60,30 @@ public class GetUser_StepFactoryTests
         var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.SelectorField.Should().Be("PhoneNumber");
-        step.SelectorKey.Should().Be("collectForm.PhoneNumber");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
+        step.Next.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenMinimalJson_WhenCreate_ThenUsesDefaultSelectorKeys()
+    {
+        // Arrange
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "getUserId"
+            }
+            """);
+
+        var factory = new GetUserIdStepFactory();
+
+        // Act
+        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
+
+        // Assert
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
     }
 }

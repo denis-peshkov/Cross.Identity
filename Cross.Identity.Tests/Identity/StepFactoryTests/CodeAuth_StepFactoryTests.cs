@@ -26,9 +26,7 @@ public class CodeAuth_StepFactoryTests
             {
               "kind": "codeAuth",
               "channel": "email",
-              "identityKey": "auth-form.Email",
               "codeKey": "auth-form.Code",
-              "resolveBy": { "field": "Email" },
               "userIdKey": "UserId",
               "next": "token"
             }
@@ -39,9 +37,9 @@ public class CodeAuth_StepFactoryTests
 
         step.Kind.Should().Be("codeAuth");
         step.Channel.Should().Be(ChannelEnum.Email);
-        step.IdentityKey.Should().Be("auth-form.Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.CodeKey.Should().Be("auth-form.Code");
-        step.ResolveBy.Field.Should().Be("Email");
         step.UserIdKey.Should().Be("UserId");
         step.Next.Should().Be("token");
         step.CodeService.Should().NotBeNull();
@@ -57,9 +55,7 @@ public class CodeAuth_StepFactoryTests
             {
               "kind": "codeAuth",
               "channel": "sms",
-              "identityKey": "auth-form.PhoneNumber",
-              "codeKey": "auth-form.Code",
-              "resolveBy": { "field": "PhoneNumber" }
+              "codeKey": "auth-form.Code"
             }
             """);
 
@@ -70,25 +66,4 @@ public class CodeAuth_StepFactoryTests
         step.Channel.Should().Be(ChannelEnum.Sms);
     }
 
-    [Test]
-    [Category(TestCategory.UNIT)]
-    public void GivenMissingResolveBy_WhenCreate_ThenThrowsInvalidOperationException()
-    {
-        using var json = JsonDocument.Parse(
-            """
-            {
-              "kind": "codeAuth",
-              "channel": "email",
-              "identityKey": "auth-form.Email",
-              "codeKey": "auth-form.Code"
-            }
-            """);
-
-        var factory = new CodeAuthStepFactory();
-
-        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
-            .Should()
-            .Throw<InvalidOperationException>()
-            .WithMessage("*resolveBy*");
-    }
 }

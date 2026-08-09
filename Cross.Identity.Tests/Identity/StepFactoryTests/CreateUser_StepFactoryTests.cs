@@ -30,7 +30,6 @@ public class CreateUser_StepFactoryTests
                 "Password": "collectForm.Password",
                 "FullName": "collectForm.FullName"
               },
-              "selectorKey": "collectForm.Email",
               "userIdKey": "UserId",
               "next": "sendCode"
             }
@@ -44,7 +43,6 @@ public class CreateUser_StepFactoryTests
         // Assert
         step.Kind.Should().Be("createUser");
         step.Next.Should().Be("sendCode");
-        step.SelectorKey.Should().Be("collectForm.Email");
         step.UserIdKey.Should().Be("UserId");
         step.Map.Should().HaveCount(3);
         step.Map["Email"].Should().Be("collectForm.Email");
@@ -64,8 +62,7 @@ public class CreateUser_StepFactoryTests
               "kind": "createUser",
               "map": {
                 "Email": "collectForm.Email"
-              },
-              "selectorKey": "collectForm.Email"
+              }
             }
             """);
 
@@ -75,7 +72,7 @@ public class CreateUser_StepFactoryTests
         var step = (CreateUserStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId"); // default value
+        step.UserIdKey.Should().Be("UserId");
     }
 
     [Test]
@@ -91,7 +88,6 @@ public class CreateUser_StepFactoryTests
                 "Email": "Email",
                 "Password": "Password"
               },
-              "selectorKey": "Email",
               "userIdKey": "UserId"
             }
             """);
@@ -104,6 +100,5 @@ public class CreateUser_StepFactoryTests
         // Assert
         step.Map["Email"].Should().Be("Email");
         step.Map["Password"].Should().Be("Password");
-        step.SelectorKey.Should().Be("Email");
     }
 }

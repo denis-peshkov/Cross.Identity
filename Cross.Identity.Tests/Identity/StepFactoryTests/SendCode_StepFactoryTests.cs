@@ -42,10 +42,6 @@ public class SendCode_StepFactoryTests
             {
               "kind": "sendCode",
               "channel": "email",
-              "selectorKey": "collectForm.Email",
-              "resolveBy": {
-                "field": "Email"
-              },
               "next": "verifyCode"
             }
             """);
@@ -58,8 +54,8 @@ public class SendCode_StepFactoryTests
         // Assert
         step.Kind.Should().Be("sendCode");
         step.Channel.Should().Be(ChannelEnum.Email);
-        step.SelectorKey.Should().Be("collectForm.Email");
-        step.ResolveBy.Field.Should().Be("Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.TtlKey.Should().BeNull();
         step.Next.Should().Be("verifyCode");
         step.CodeService.Should().NotBeNull();
@@ -77,11 +73,7 @@ public class SendCode_StepFactoryTests
             """
             {
               "kind": "sendCode",
-              "channel": "sms",
-              "selectorKey": "collectForm.PhoneNumber",
-              "resolveBy": {
-                "field": "PhoneNumber"
-              }
+              "channel": "sms"
             }
             """);
 
@@ -92,7 +84,8 @@ public class SendCode_StepFactoryTests
 
         // Assert
         step.Channel.Should().Be(ChannelEnum.Sms);
-        step.ResolveBy.Field.Should().Be("PhoneNumber");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
     }
 
     [Test]
@@ -104,11 +97,7 @@ public class SendCode_StepFactoryTests
             {
               "kind": "sendCode",
               "channel": "email",
-              "selectorKey": "collectForm.Email",
-              "ttlKey": "collectForm.Ttl",
-              "resolveBy": {
-                "field": "Email"
-              }
+              "ttlKey": "collectForm.Ttl"
             }
             """);
 
@@ -126,8 +115,7 @@ public class SendCode_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "sendCode",
-              "selectorKey": "collectForm.Email"
+              "kind": "sendCode"
             }
             """);
 
