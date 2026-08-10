@@ -18,15 +18,14 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
         var configuration             = sp.GetRequiredService<IConfiguration>();
 
-        var channel = cfg.EnumOpt<ChannelEnum>("channel")
-                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
-
         return new SendCodeStep
         {
             Kind                      = Kind,
-            Channel                   = channel,
+            Channel                   = cfg.EnumReq<ChannelEnum>("channel"),
             Selector                  = new Selector(),
             TtlKey                    = cfg.StrOpt("ttlKey"),
+            Template                  = cfg.Str("template"),
+            Subject                   = cfg.Str("subject"),
             CodeService               = codeService,
             UserService               = userService,
             CommunicationEndpoints    = sp.GetRequiredService<ICommunicationEndpointService>(),

@@ -37,27 +37,27 @@ public class SendCode_StepFactoryTests
     [Category(TestCategory.UNIT)]
     public void GivenEmailChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "sendCode",
               "channel": "email",
+              "template": "verify",
+              "subject": "Verification Code",
               "next": "verifyCode"
             }
             """);
 
         var factory = new SendCodeStepFactory();
-
-        // Act
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
         step.Kind.Should().Be("sendCode");
         step.Channel.Should().Be(ChannelEnum.Email);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.TtlKey.Should().BeNull();
+        step.Template.Should().Be("verify");
+        step.Subject.Should().Be("Verification Code");
         step.Next.Should().Be("verifyCode");
         step.CodeService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();
@@ -69,21 +69,19 @@ public class SendCode_StepFactoryTests
     [Category(TestCategory.UNIT)]
     public void GivenSmsChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "sendCode",
-              "channel": "sms"
+              "channel": "sms",
+              "template": "verify",
+              "subject": "Verification Code"
             }
             """);
 
         var factory = new SendCodeStepFactory();
-
-        // Act
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
         step.Channel.Should().Be(ChannelEnum.Sms);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
@@ -98,6 +96,8 @@ public class SendCode_StepFactoryTests
             {
               "kind": "sendCode",
               "channel": "email",
+              "template": "verify",
+              "subject": "Verification Code",
               "ttlKey": "collectForm.Ttl"
             }
             """);
@@ -110,22 +110,82 @@ public class SendCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenThrowsInvalidOperationException()
+    public void GivenMissingChannel_WhenCreate_ThenThrowsKeyNotFoundException()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "sendCode"
+              "kind": "sendCode",
+              "template": "verify",
+              "subject": "Verification Code"
             }
             """);
 
         var factory = new SendCodeStepFactory();
 
-        // Act & Assert
         FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
             .Should()
-            .Throw<InvalidOperationException>()
-            .WithMessage("*'channel' is required*");
+            .Throw<KeyNotFoundException>();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenMissingTemplate_WhenCreate_ThenThrowsKeyNotFoundException()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "sendCode",
+              "channel": "email",
+              "subject": "Verification Code"
+            }
+            """);
+
+        var factory = new SendCodeStepFactory();
+
+        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
+            .Should()
+            .Throw<KeyNotFoundException>();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenMissingSubject_WhenCreate_ThenThrowsKeyNotFoundException()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "sendCode",
+              "channel": "email",
+              "template": "verify"
+            }
+            """);
+
+        var factory = new SendCodeStepFactory();
+
+        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
+            .Should()
+            .Throw<KeyNotFoundException>();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenResetOptionsInJson_WhenCreate_ThenBindsTemplateAndSubject()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "sendCode",
+              "channel": "email",
+              "template": "reset",
+              "subject": "Reset your password"
+            }
+            """);
+
+        var factory = new SendCodeStepFactory();
+        var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
+
+        step.Template.Should().Be("reset");
+        step.Subject.Should().Be("Reset your password");
     }
 }

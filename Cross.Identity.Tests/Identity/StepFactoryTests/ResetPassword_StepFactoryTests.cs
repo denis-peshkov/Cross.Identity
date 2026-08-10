@@ -67,7 +67,7 @@ public class ResetPassword_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenThrowsInvalidOperationException()
+    public void GivenMissingChannel_WhenCreate_ThenThrowsKeyNotFoundException()
     {
         using var json = JsonDocument.Parse(
             """
@@ -81,8 +81,7 @@ public class ResetPassword_StepFactoryTests
 
         FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
             .Should()
-            .Throw<InvalidOperationException>()
-            .WithMessage("*channel*");
+            .Throw<KeyNotFoundException>();
     }
 
 }

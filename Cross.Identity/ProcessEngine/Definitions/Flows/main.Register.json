@@ -34,6 +34,8 @@
     {
       "kind": "sendCode",
       "channel": "email",
+      "template": "verify",
+      "subject": "Verification Code",
       "next": "collectResult"
     },
     {

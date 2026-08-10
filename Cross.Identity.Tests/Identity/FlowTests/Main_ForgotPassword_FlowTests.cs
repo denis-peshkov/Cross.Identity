@@ -14,7 +14,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
         Initialize();
 
         AddRegistryStep<CollectFormStepFactory>();
-        AddRegistryStep<ForgotPasswordStepFactory>();
+        AddRegistryStep<SendCodeStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(
@@ -23,9 +23,11 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
                 ["Authentication:DeveloperMode"] = "true",
             })
             .Build();
+        RegisterToServiceProvider<IConfiguration, IConfiguration>(configuration);
         RegisterToServiceProvider<ICodeService, ICodeService>(
             new CodeService(
                 Context,
@@ -71,6 +73,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
                 ["Authentication:DeveloperMode"] = "false",
             })
             .Build();

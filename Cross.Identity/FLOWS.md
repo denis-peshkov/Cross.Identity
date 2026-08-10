@@ -62,9 +62,9 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `forgotPassword` |
-| `forgotPassword` | forgotPassword | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
-| `collectResult` | collectResult | `LastCode = forgotPassword.LastCode`. `next: null` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
+| `sendCode` | sendCode | `channel: email`, `template: reset`, `subject: Reset your password`. → `collectResult` |
+| `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
 
@@ -104,7 +104,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 |------|------|---------|
 | `collectForm` | collectForm | `Email` (required), optional `PhoneNumber` (E.164), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
+| `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
 
 ---
@@ -116,7 +116,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
+| `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
@@ -267,11 +267,10 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `collectForm` | Collect and validate form fields |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP (email/SMS) |
+| `sendCode` | Send OTP (email/SMS); required `channel` / `template` / `subject` (`reset` also adds email/phone to the action URL) |
 | `verifyCode` | Verify OTP |
 | `codeAuth` | Verify OTP + authenticate |
 | `passwordAuth` | Verify email + password |
-| `forgotPassword` | Start password recovery |
 | `resetPassword` | Set new password |
 | `getUserId` | Find user, return `UserId` |
 | `token` | Issue access/refresh tokens |

@@ -32,6 +32,12 @@ internal sealed class SendCodeStep : IStep
     /// </summary>
     public string? TtlKey { get; init; }
 
+    /// <summary>Template name under Definitions/Templates. Defaults to <c>verify</c>.</summary>
+    public required string Template { get; init; }
+
+    /// <summary>Notification subject line. Defaults to <c>Verification Code</c>.</summary>
+    public required string Subject { get; init; }
+
     public IConfiguration Configuration { get; init; }
 
     /// <inheritdoc/>
@@ -50,54 +56,51 @@ internal sealed class SendCodeStep : IStep
             throw new ValidationException("Provide an email or a phone number to send a code.");
 
         var ttl = ResolveTtl(ctx);
-
         var code = channel.GenerateCode();
-
-        var msg = NotificationMessage.For(channel, selector.Value)
-            .WithSubject("Verification Code");
 
         var clientUrl = Configuration["Authentication:ClientUrl"]
             ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
 
+        var actionUrl = BuildActionUrl(clientUrl, code, selector);
         var year = DateTime.UtcNow.Year.ToString();
-        var verificationLink = $"{clientUrl}/reset-password?code={code}";
-        var helpLink = $"{clientUrl}/reset-password?code={code}";
-        var logoLink = $"{clientUrl}/reset-password?code={code}";
+        const string support = "support@peshkov.biz";
+        const string brand = "peshkov.biz";
 
         string Replace(string s) => s
             .Replace("{{company}}", "Peshkov")
-            .Replace("{{site}}", "peshkov.biz")
+            .Replace("{{site}}", brand)
+            .Replace("{{brand}}", brand)
+            .Replace("{{email}}", selector.Value)
             .Replace("{{code}}", code)
-            .Replace("{{verificationLink}}", $"{verificationLink}")
-            .Replace("{{helpLink}}", $"{helpLink}")
-            .Replace("{{logoLink}}", $"{logoLink}")
-            .Replace("{{logoWidth}}", $"34")
-            .Replace("{{logoHeight}}", $"34")
+            .Replace("{{url}}", actionUrl)
+            .Replace("{{verificationLink}}", actionUrl)
+            .Replace("{{helpLink}}", actionUrl)
+            .Replace("{{logoLink}}", actionUrl)
+            .Replace("{{imageLink}}", actionUrl)
+            .Replace("{{logoWidth}}", "34")
+            .Replace("{{logoHeight}}", "34")
+            .Replace("{{imageWidth}}", "34")
+            .Replace("{{imageHeight}}", "34")
             .Replace("{{fullName}}", "Denis Peshkov")
             .Replace("{{expires}}", ttl.ToHumanString())
             .Replace("{{year}}", year)
-            .Replace("{{supportEmail}}", "support@peshkov.biz")
-        ;
+            .Replace("{{support}}", support)
+            .Replace("{{supportEmail}}", support);
 
-        var textTemplate = ProcessDefinitionProvider.GetTemplate("verify", "en", "txt");
-        var htmlTemplate = ProcessDefinitionProvider.GetTemplate("verify", "en", "html");
+        var textTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "txt");
+        var htmlTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "html");
 
-        var textBody = Replace(textTemplate);
-        var htmlBody = Replace(htmlTemplate);
-
-        msg = msg
-            .WithTextBody(textBody)
-            .WithTextHtml(htmlBody);
+        var msg = NotificationMessage.For(channel, selector.Value)
+            .WithSubject(Subject)
+            .WithTextBody(Replace(textTemplate))
+            .WithTextHtml(Replace(htmlTemplate));
 
         try
         {
             await CodeService.SendAsync(msg, code, userIdRaw, ttl, cancellationToken).ConfigureAwait(false);
 
-            var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
-            if (developerMode)
-            {
+            if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code);
-            }
 
             return StepResult.Ok(Next);
         }
@@ -106,6 +109,24 @@ internal sealed class SendCodeStep : IStep
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
             return StepResult.Fail(ex);
         }
+    }
+
+    private string BuildActionUrl(string clientUrl, string code, (string Field, string Value) selector)
+    {
+        var url = $"{clientUrl.TrimEnd('/')}/reset-password?code={Uri.EscapeDataString(code)}";
+
+        // Reset links need identity in the query; verify/register keep code-only URLs.
+        if (!Template.Equals("reset", StringComparison.OrdinalIgnoreCase))
+            return url;
+
+        if (selector.Field.Equals("Email", StringComparison.OrdinalIgnoreCase))
+            return url + $"&email={Uri.EscapeDataString(selector.Value)}";
+
+        if (selector.Field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase)
+            || selector.Field.Equals("Phone", StringComparison.OrdinalIgnoreCase))
+            return url + $"&phone={Uri.EscapeDataString(selector.Value)}";
+
+        return url;
     }
 
     private TimeSpan ResolveTtl(Bag ctx)

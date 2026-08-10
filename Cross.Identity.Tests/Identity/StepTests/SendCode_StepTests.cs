@@ -88,6 +88,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             Next = "verifyCode"
         };
@@ -147,6 +149,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
             Next = "verifyCode"
@@ -202,6 +206,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
             Next = "verifyCode"
@@ -252,6 +258,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Sms,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             Next = null
         };
@@ -306,6 +314,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             Next = null
         };
@@ -357,6 +367,8 @@ public class SendCode_StepTests
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
             Selector = DefaultSelector,
             Next = null
         };
@@ -369,5 +381,62 @@ public class SendCode_StepTests
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
         await act.Should()
             .ThrowAsync<NotFoundException>();
+    }
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenResetTemplate_WhenExecuteAsync_ThenUsesResetCopyAndEmailInUrlAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userId = Guid.NewGuid().ToString();
+
+        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
+            .Returns("Reset {{email}} {{code}} {{url}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "html"))
+            .Returns("<html>{{email}} {{url}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _developerConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Channel = ChannelEnum.Email,
+            Template = "reset",
+            Subject = "Reset your password",
+            Selector = DefaultSelector,
+            Next = "collectResult",
+        };
+
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.Subject == "Reset your password"
+                    && m.TextBody!.Contains(email)
+                    && m.TextBody.Contains("http://localhost:4200/reset-password?code=")
+                    && m.TextBody.Contains("email=")),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

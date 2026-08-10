@@ -16,9 +16,6 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
         var emailSenderService = sp.GetRequiredService<IEmailSenderService>();
         var smsSenderService   = sp.GetRequiredService<ISmsSenderService>();
 
-        var channel = cfg.EnumOpt<ChannelEnum>("channel")
-                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
-
         return new ResetPasswordStep
         {
             Kind                   = Kind,
@@ -28,7 +25,7 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
             EmailSenderService     = emailSenderService,
             SmsSenderService       = smsSenderService,
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
-            Channel                = channel,
+            Channel                = cfg.EnumReq<ChannelEnum>("channel"),
             Logger                 = loggerFactory.CreateLogger<ResetPasswordStep>(),
             Next                   = cfg.StrOpt("next"),
         };

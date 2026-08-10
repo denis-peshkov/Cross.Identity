@@ -15,8 +15,7 @@ internal sealed class TokenStepFactory : IStepFactory
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
 
-        _ = cfg.EnumOpt<ChannelEnum>("channel")
-            ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
+        _ = cfg.EnumReq<ChannelEnum>("channel");
 
         return new TokenStep
         {

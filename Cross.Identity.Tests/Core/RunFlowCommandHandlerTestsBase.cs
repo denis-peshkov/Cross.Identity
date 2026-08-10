@@ -28,7 +28,6 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new CollectFormStepFactory());
         _registry.Register(new CollectResultStepFactory());
         _registry.Register(new CreateUserStepFactory());
-        _registry.Register(new ForgotPasswordStepFactory());
         _registry.Register(new GetUserIdStepFactory());
         _registry.Register(new PasswordAuthStepFactory());
         _registry.Register(new RefreshTokenStepFactory());

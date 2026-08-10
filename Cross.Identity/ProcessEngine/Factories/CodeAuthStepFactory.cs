@@ -14,15 +14,12 @@ internal sealed class CodeAuthStepFactory : IStepFactory
         var codeService = sp.GetRequiredService<ICodeService>();
         var userService = sp.GetRequiredService<IUserService>();
 
-        var channel = cfg.EnumOpt<ChannelEnum>("channel")
-                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
-
         return new CodeAuthStep
         {
             Kind        = Kind,
             CodeService = codeService,
             UserService = userService,
-            Channel     = channel,
+            Channel     = cfg.EnumReq<ChannelEnum>("channel"),
             Selector    = new Selector(),
             CodeKey     = cfg.Str("codeKey"),
             UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
