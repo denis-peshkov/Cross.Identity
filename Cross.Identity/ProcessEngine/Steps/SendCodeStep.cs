@@ -51,9 +51,7 @@ internal sealed class SendCodeStep : IStep
 
         var ttl = ResolveTtl(ctx);
 
-        var code = channel == ChannelEnum.Sms
-            ? CodeGeneratorHelper.GenerateNumericCode()
-            : CodeGeneratorHelper.GenerateCode();
+        var code = channel.GenerateCode();
 
         var msg = NotificationMessage.For(channel, selector.Value)
             .WithSubject("Verification Code");

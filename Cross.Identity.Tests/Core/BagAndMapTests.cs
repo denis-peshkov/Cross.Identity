@@ -161,7 +161,7 @@ public sealed class BagAndMapTests
         Selector.DefaultFor(ChannelEnum.Sms).Candidates.Should().Equal("PhoneNumber");
         Selector.DefaultFor(ChannelEnum.Telegram).Candidates.Should().Equal("PhoneNumber");
         Selector.DefaultFor(ChannelEnum.Viber).Candidates.Should().Equal("PhoneNumber");
-        Selector.DefaultFor(ChannelEnum.WatsApp).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.WhatsApp).Candidates.Should().Equal("PhoneNumber");
         Selector.DefaultFor((ChannelEnum)999).Candidates.Should().Equal("UserName");
     }
 

@@ -47,7 +47,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
-        var normalized = NormalizeAddress(channel, address);
+        var normalized = channel.NormalizeAddress(address);
 
         var entity = await _context.UsersCommunicationEndpoints
             .FirstOrDefaultAsync(
@@ -156,7 +156,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
         if (field is "phone" or "phonenumber")
         {
-            var address = NormalizeAddress(ChannelEnum.Sms, selectorValue);
+            var address = ChannelEnum.Sms.NormalizeAddress(selectorValue);
             var phoneEndpoints = await _context.UsersCommunicationEndpoints
                 .AsNoTracking()
                 .Where(x => x.UserAccountId == userId
@@ -214,7 +214,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
                 cancellationToken)
             .ConfigureAwait(false);
 
-        return channel.ToOtpChannel();
+        return channel.ToEmailOrSms();
     }
 
     /// <inheritdoc />
@@ -292,12 +292,6 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
 
         return userId;
-    }
-
-    internal static string NormalizeAddress(ChannelEnum channel, string address)
-    {
-        var trimmed = address.Trim();
-        return channel == ChannelEnum.Email ? trimmed.ToLowerInvariant() : trimmed;
     }
 
     private static CommunicationEndpointDto ToDto(UserCommunicationEndpointEntity entity)

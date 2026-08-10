@@ -66,7 +66,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
                 new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             }
             .AddIfNotNull(ClaimTypes.Email, user.Email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, user.Email)
+            .AddIfNotNull(ClaimTypes.MobilePhone, user.PhoneNumber)
             .AddIfNotNull(ClaimConstants.Username, user.UserName);
 
         var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));

@@ -54,7 +54,7 @@ internal sealed class ResetPasswordStep : IStep
                           .ResolveDeliveryChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
                           .ConfigureAwait(false);
 
-        channel = channel.ToEmailOrSmsNotification();
+        channel = channel.ToEmailOrSms();
         if (!channel.SupportsOtp())
             return StepResult.Ok(Next);
 

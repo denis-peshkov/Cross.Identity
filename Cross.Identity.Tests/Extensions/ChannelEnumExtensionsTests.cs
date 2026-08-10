@@ -6,7 +6,7 @@ public sealed class ChannelEnumExtensionsTests
     [TestCase(ChannelEnum.Sms, true)]
     [TestCase(ChannelEnum.Telegram, true)]
     [TestCase(ChannelEnum.Viber, true)]
-    [TestCase(ChannelEnum.WatsApp, true)]
+    [TestCase(ChannelEnum.WhatsApp, true)]
     [TestCase(ChannelEnum.Email, false)]
     public void GivenChannel_WhenIsPhoneChannel_ThenReturnsExpected(ChannelEnum channel, bool expected)
     {
@@ -25,17 +25,37 @@ public sealed class ChannelEnumExtensionsTests
     [TestCase(ChannelEnum.Sms, ChannelEnum.Sms)]
     [TestCase(ChannelEnum.Telegram, ChannelEnum.Sms)]
     [TestCase(ChannelEnum.Viber, ChannelEnum.Sms)]
-    [TestCase(ChannelEnum.WatsApp, ChannelEnum.Sms)]
-    public void GivenChannel_WhenToOtpChannel_ThenMapsMessengersToSms(ChannelEnum input, ChannelEnum expected)
+    [TestCase(ChannelEnum.WhatsApp, ChannelEnum.Sms)]
+    public void GivenChannel_WhenToEmailOrSms_ThenMapsPhoneFamilyToSms(ChannelEnum input, ChannelEnum expected)
     {
-        input.ToOtpChannel().Should().Be(expected);
+        input.ToEmailOrSms().Should().Be(expected);
     }
 
-    [TestCase(ChannelEnum.Email, ChannelEnum.Email)]
-    [TestCase(ChannelEnum.Sms, ChannelEnum.Sms)]
-    [TestCase(ChannelEnum.Telegram, ChannelEnum.Sms)]
-    public void GivenChannel_WhenToEmailOrSmsNotification_ThenMapsPhoneFamilyToSms(ChannelEnum input, ChannelEnum expected)
+    [Test]
+    public void GivenEmail_WhenGenerateCode_ThenReturnsAlphanumeric()
     {
-        input.ToEmailOrSmsNotification().Should().Be(expected);
+        var code = ChannelEnum.Email.GenerateCode();
+        code.Should().HaveLength(8);
+        code.Should().MatchRegex("^[A-Z0-9]+$");
+    }
+
+    [Test]
+    public void GivenSms_WhenGenerateCode_ThenReturnsDigits()
+    {
+        var code = ChannelEnum.Sms.GenerateCode();
+        code.Should().HaveLength(6);
+        code.Should().MatchRegex("^[0-9]+$");
+    }
+
+    [Test]
+    public void GivenEmail_WhenNormalizeAddress_ThenLowercases()
+    {
+        ChannelEnum.Email.NormalizeAddress("  User@Example.COM ").Should().Be("user@example.com");
+    }
+
+    [Test]
+    public void GivenSms_WhenNormalizeAddress_ThenTrimsOnly()
+    {
+        ChannelEnum.Sms.NormalizeAddress("  +79161234567 ").Should().Be("+79161234567");
     }
 }

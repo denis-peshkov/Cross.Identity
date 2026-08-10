@@ -5,6 +5,6 @@ public enum ChannelEnum
     Email,
     Sms,
     Telegram,
-    WatsApp,
+    WhatsApp,
     Viber,
 }

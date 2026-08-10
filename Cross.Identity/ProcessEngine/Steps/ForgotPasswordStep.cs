@@ -44,9 +44,7 @@ internal sealed class ForgotPasswordStep : IStep
         if (!channel.SupportsOtp())
             throw new ValidationException("Provide an email or a phone number to reset a password.");
 
-        var code = channel == ChannelEnum.Sms
-            ? CodeGeneratorHelper.GenerateNumericCode()
-            : CodeGeneratorHelper.GenerateCode();
+        var code = channel.GenerateCode();
 
         var clientUrl = "http://localhost:4000";
 
