@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 public sealed class ExternalOAuthProfile
 {

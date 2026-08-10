@@ -91,10 +91,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "existing",
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
@@ -116,7 +118,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         await sut.InitiateAsync("Google", null, linkUserId, CancellationToken.None);
 
         var state = await Context.ExternalLoginStates.SingleAsync();
-        state.UserId.Should().Be(linkUserId);
+        state.UserAccountId.Should().Be(linkUserId);
     }
 
     [Test]
@@ -309,10 +311,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         var sut = CreateService(GoogleSuccessHandler());
@@ -461,10 +465,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = otherUserId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         var sut = CreateService(GoogleSuccessHandler());
@@ -498,11 +504,13 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             DisplayName = "Old Name",
             CreatedAt = DateTime.UtcNow.AddDays(-1),
-            LastUsedAt = DateTime.UtcNow.AddDays(-1),
+            UpdatedAt = DateTime.UtcNow.AddDays(-1),
         });
 
         var sut = CreateService(GoogleSuccessHandler());
@@ -513,7 +521,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var externalLogin = await Context.UsersExternalLogins.SingleAsync();
         externalLogin.DisplayName.Should().Be("Google User");
-        externalLogin.LastUsedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        externalLogin.UpdatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
     }
 
     [Test]
@@ -732,10 +740,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "other-google-id",
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         });
 
         var sut = CreateService(GoogleSuccessHandler());
@@ -768,7 +778,9 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
@@ -826,7 +838,9 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
@@ -893,7 +907,9 @@ public class ExternalLoginServiceTests : EFTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = googleId,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             ProviderEmail = "linked@gmail.com",
             AvatarUrl = "https://example.com/avatar.png",
@@ -995,7 +1011,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Nonce = payload.Nonce,
             Provider = payload.Provider,
             ReturnUrl = payload.ReturnUrl,
-            UserId = payload.UserId,
+            UserAccountId = payload.UserId,
             CreatedAt = now,
             ExpiresAt = now.Add(lifetime ?? TimeSpan.FromMinutes(10)),
         });

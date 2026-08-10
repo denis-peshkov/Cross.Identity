@@ -3,6 +3,7 @@
 internal class JwtTokenService : IJwtTokenService
 {
     private readonly IdentityContext _context;
+    private readonly IAuditService _audit;
     private readonly SymmetricSecurityKey _signingKey;
     private readonly SymmetricSecurityKey _encryptionKey;
     private readonly AuthenticationOptions _options;
@@ -10,9 +11,11 @@ internal class JwtTokenService : IJwtTokenService
 
     public JwtTokenService(
         IdentityContext context,
+        IAuditService audit,
         IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
+        _audit = audit;
         _options = options.Value;
 
         // A256KW (key-wrap algorithm) requires exactly 32 bytes (256 bits) for the wrap key.
@@ -108,17 +111,22 @@ internal class JwtTokenService : IJwtTokenService
         {
             Id = jti,
             FamilyId = familyId,
-            UserId = userId,
+            UserAccountId = userId,
+            UserAccount = null!,
             TokenHash = tokenHash,
             ExpiresAt = expiresAt,
             CreatedAt = createdAt,
-            CreatedDeviceFingerprint = deviceFingerprint,
-            CreatedUserAgent = userAgent,
-            CreatedIpAddress = ipAddress,
         };
 
         // Persist jti in the access-tokens table (blacklist, audit, and revocation)
         await _context.AccessTokens.AddAsync(entity, cancellationToken).ConfigureAwait(false);
+        _audit.RecordTokenIssued(
+            userId,
+            AuditEntityType.AccessToken,
+            jti,
+            ipAddress,
+            userAgent,
+            deviceFingerprint);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -165,17 +173,22 @@ internal class JwtTokenService : IJwtTokenService
             {
                 Id = jti,
                 FamilyId = familyId,
-                UserId = userId,
+                UserAccountId = userId,
+                UserAccount = null!,
                 TokenHash = tokenHash,
                 ExpiresAt = expiresAt,
                 AbsoluteExpiresAt = absoluteExpiresAt,
                 CreatedAt = createdAt,
-                CreatedDeviceFingerprint = deviceFingerprint,
-                CreatedUserAgent = userAgent,
-                CreatedIpAddress = ipAddress,
             },
             cancellationToken)
             .ConfigureAwait(false);
+        _audit.RecordTokenIssued(
+            userId,
+            AuditEntityType.RefreshToken,
+            jti,
+            ipAddress,
+            userAgent,
+            deviceFingerprint);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -303,6 +316,11 @@ internal class JwtTokenService : IJwtTokenService
         if (entry != null)
         {
             entry.RevokedAt = DateTime.UtcNow;
+            _audit.RecordTokenRevoked(
+                entry.UserAccountId,
+                AuditEntityType.AccessToken,
+                entry.Id,
+                reason: null);
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
     }
@@ -462,9 +480,14 @@ internal class JwtTokenService : IJwtTokenService
 
         entity.ReplacedByTokenId = jti;
         entity.RevokedAt = DateTime.UtcNow;
-        entity.RevokedReason = RefreshTokenRevokedReason.ROTATION_REQUIRED;
-        entity.RevokedIpAddress = ipAddress;
-        entity.RevokedUserAgent = userAgent;
+        _audit.RecordTokenRevoked(
+            entity.UserAccountId,
+            AuditEntityType.RefreshToken,
+            entity.Id,
+            RefreshTokenRevokedReason.ROTATION_REQUIRED,
+            ipAddress,
+            userAgent,
+            deviceFingerprint);
 
         try
         {
@@ -513,10 +536,15 @@ internal class JwtTokenService : IJwtTokenService
         string? deviceFingerprint,
         CancellationToken cancellationToken)
     {
-        // Audit: the presented token was already revoked (usually ROTATION_REQUIRED); record that reuse was detected.
-        reusedToken.RevokedReason = RefreshTokenRevokedReason.REPLAY_DETECTED;
-        reusedToken.RevokedIpAddress = ipAddress;
-        reusedToken.RevokedUserAgent = userAgent;
+        // Presented token was already revoked (usually ROTATION_REQUIRED); record reuse detection.
+        _audit.RecordTokenRevoked(
+            reusedToken.UserAccountId,
+            AuditEntityType.RefreshToken,
+            reusedToken.Id,
+            RefreshTokenRevokedReason.REPLAY_DETECTED,
+            ipAddress,
+            userAgent,
+            deviceFingerprint);
 
         await RevokeRefreshTokenFamilyCoreAsync(
                 reusedToken.FamilyId,
@@ -548,10 +576,14 @@ internal class JwtTokenService : IJwtTokenService
         foreach (var token in refreshTokens)
         {
             token.RevokedAt = now;
-            token.RevokedReason = reason;
-            token.RevokedIpAddress = ipAddress;
-            token.RevokedUserAgent = userAgent;
-            token.RevokedDeviceFingerprint = deviceFingerprint;
+            _audit.RecordTokenRevoked(
+                token.UserAccountId,
+                AuditEntityType.RefreshToken,
+                token.Id,
+                reason,
+                ipAddress,
+                userAgent,
+                deviceFingerprint);
         }
 
         var accessTokens = await _context.AccessTokens
@@ -562,10 +594,14 @@ internal class JwtTokenService : IJwtTokenService
         foreach (var token in accessTokens)
         {
             token.RevokedAt = now;
-            token.RevokedReason = reason;
-            token.RevokedIpAddress = ipAddress;
-            token.RevokedUserAgent = userAgent;
-            token.RevokedDeviceFingerprint = deviceFingerprint;
+            _audit.RecordTokenRevoked(
+                token.UserAccountId,
+                AuditEntityType.AccessToken,
+                token.Id,
+                reason,
+                ipAddress,
+                userAgent,
+                deviceFingerprint);
         }
     }
 
@@ -595,10 +631,14 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         entity.RevokedAt = DateTime.UtcNow;
-        entity.RevokedReason = RefreshTokenRevokedReason.USER_LOGOUT;
-        entity.RevokedIpAddress = ipAddress;
-        entity.RevokedUserAgent = userAgent;
-        entity.RevokedDeviceFingerprint = deviceFingerprint;
+        _audit.RecordTokenRevoked(
+            entity.UserAccountId,
+            AuditEntityType.RefreshToken,
+            entity.Id,
+            RefreshTokenRevokedReason.USER_LOGOUT,
+            ipAddress,
+            userAgent,
+            deviceFingerprint);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -633,7 +673,7 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Invalid or expired refresh token.");
         }
 
-        await RevokeAllTokensForUserAsync(entity.UserId, RefreshTokenRevokedReason.USER_LOGOUT_ALL, ipAddress, userAgent, deviceFingerprint, cancellationToken)
+        await RevokeAllTokensForUserAsync(entity.UserAccountId, RefreshTokenRevokedReason.USER_LOGOUT_ALL, ipAddress, userAgent, deviceFingerprint, cancellationToken)
             .ConfigureAwait(false);
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -650,31 +690,39 @@ internal class JwtTokenService : IJwtTokenService
         var now = DateTime.UtcNow;
 
         var refreshTokens = await _context.RefreshTokens
-            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .Where(x => x.UserAccountId == userId && x.RevokedAt == null)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         foreach (var token in refreshTokens)
         {
             token.RevokedAt = now;
-            token.RevokedReason = reason;
-            token.RevokedIpAddress = ipAddress;
-            token.RevokedUserAgent = userAgent;
-            token.RevokedDeviceFingerprint = deviceFingerprint;
+            _audit.RecordTokenRevoked(
+                token.UserAccountId,
+                AuditEntityType.RefreshToken,
+                token.Id,
+                reason,
+                ipAddress,
+                userAgent,
+                deviceFingerprint);
         }
 
         var accessTokens = await _context.AccessTokens
-            .Where(x => x.UserId == userId && x.RevokedAt == null)
+            .Where(x => x.UserAccountId == userId && x.RevokedAt == null)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         foreach (var token in accessTokens)
         {
             token.RevokedAt = now;
-            token.RevokedReason = reason;
-            token.RevokedIpAddress = ipAddress;
-            token.RevokedUserAgent = userAgent;
-            token.RevokedDeviceFingerprint = deviceFingerprint;
+            _audit.RecordTokenRevoked(
+                token.UserAccountId,
+                AuditEntityType.AccessToken,
+                token.Id,
+                reason,
+                ipAddress,
+                userAgent,
+                deviceFingerprint);
         }
     }
 }

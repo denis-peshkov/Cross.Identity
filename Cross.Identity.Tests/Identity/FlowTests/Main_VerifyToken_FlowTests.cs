@@ -46,7 +46,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -101,7 +101,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
 
         var userId = Guid.NewGuid();

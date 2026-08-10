@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Entities;
 
-public class ProviderEntity : IHasConcurrencyStamp
+public class ProviderEntity
 {
     public short Id { get; set; }
 
@@ -8,9 +8,6 @@ public class ProviderEntity : IHasConcurrencyStamp
     public string Scheme { get; set; } = null!;
     public bool IsEnabled { get; set; } = true;
     public DateTime CreatedAt { get; set; }
-
-    /// <inheritdoc />
-    public Guid ConcurrencyStamp { get; set; }
 
     public virtual ICollection<UserExternalLoginEntity> ExternalLogins { get; set; } = new List<UserExternalLoginEntity>();
 }

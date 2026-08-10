@@ -13,6 +13,7 @@ public class IdentityContext : DbContext
     public DbSet<UserExternalLoginEntity> UsersExternalLogins  { get; set; }
     public DbSet<UserCommunicationEndpointEntity> UsersCommunicationEndpoints { get; set; }
     public DbSet<ExternalLoginStateEntity> ExternalLoginStates { get; set; }
+    public DbSet<AuditEntity> Audits { get; set; }
 
     public IdentityContext(DbContextOptions options)
         : base(options)

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
+        services.TryAddScoped<IAuditService, AuditService>();
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
         services.AddHostedService<ExpiredRefreshTokenCleanupHostedService>();
 

@@ -46,7 +46,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -85,7 +85,10 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
         var entityA = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshA))));
-        entityA.RevokedReason.Should().Be(RefreshTokenRevokedReason.USER_LOGOUT);
+        entityA.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == entityA.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT);
     }
 
     [Test]

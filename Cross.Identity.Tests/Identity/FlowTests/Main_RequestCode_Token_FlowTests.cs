@@ -54,7 +54,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         context.Request.Headers["User-Agent"] = "MyTestUA";
         httpContextAccessor.Setup(x => x.HttpContext).Returns(context);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(Context, optionsSnapshot.Object));
+            new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object));
 
         _userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -89,6 +89,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(lastCode),
             TokenLength = (byte)lastCode.Length,
@@ -149,6 +150,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD11111"),
             TokenLength = 8,
@@ -160,6 +162,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(latestCode),
             TokenLength = (byte)latestCode.Length,

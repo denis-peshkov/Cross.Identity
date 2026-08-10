@@ -14,17 +14,20 @@ internal class UserCommunicationEndpointEntityConfiguration : IEntityTypeConfigu
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}");
 
-        builder.HasIndex(x => new { x.UserId, x.Channel, x.Address })
+        builder.HasIndex(x => new { x.UserAccountId, x.Channel, x.Address })
             .IsUnique()
             .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_User_Channel_Address");
 
-        builder.HasIndex(x => x.UserId)
-            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserId");
+        builder.HasIndex(x => x.UserAccountId)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserAccountId");
+
+        builder.HasIndex(x => x.EntityId)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_EntityId");
 
         builder.HasOne(x => x.UserAccount)
             .WithMany(x => x.CommunicationEndpoints)
-            .HasForeignKey(x => x.UserId)
+            .HasForeignKey(x => x.UserAccountId)
             .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_User");
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserAccount");
     }
 }

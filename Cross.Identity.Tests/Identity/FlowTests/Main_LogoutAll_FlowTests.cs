@@ -46,7 +46,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -90,9 +90,10 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
 
-        var userRefresh = await Context.RefreshTokens.Where(x => x.UserId == userId).ToListAsync();
-        userRefresh.Should().OnlyContain(t =>
-            t.RevokedAt != null && t.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
+        var userRefresh = await Context.RefreshTokens.Where(x => x.UserAccountId == userId).ToListAsync();
+        userRefresh.Should().OnlyContain(t => t.RevokedAt != null);
+        Context.Audits.Should().Contain(a =>
+            a.UserAccountId == userId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
     }
 
     [Test]

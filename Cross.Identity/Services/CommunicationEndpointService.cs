@@ -26,7 +26,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     {
         var rows = await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserAccountId == userId)
             .OrderByDescending(x => x.IsPreferred)
             .ThenBy(x => x.Channel)
             .ThenBy(x => x.Address)
@@ -51,7 +51,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         string address,
         CommunicationEndpointSource source,
         bool isVerified,
-        long? sourceRefId = null,
+        Guid? entityId = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
@@ -59,7 +59,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
         var entity = await _context.UsersCommunicationEndpoints
             .FirstOrDefaultAsync(
-                x => x.UserId == userId && x.Channel == channel && x.Address == normalized,
+                x => x.UserAccountId == userId && x.Channel == channel && x.Address == normalized,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -69,12 +69,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             entity = new UserCommunicationEndpointEntity
             {
                 Id = Guid.NewGuid(),
-                UserId = userId,
+                UserAccountId = userId,
+                UserAccount = null!,
                 Channel = channel,
                 Address = normalized,
                 IsVerified = isVerified,
                 Source = source,
-                SourceRefId = sourceRefId,
+                EntityId = entityId,
                 IsPreferred = false,
                 CreatedAt = now,
             };
@@ -84,9 +85,9 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         {
             entity.IsVerified = isVerified || entity.IsVerified;
             entity.Source = source;
-            if (sourceRefId.HasValue)
+            if (entityId.HasValue)
             {
-                entity.SourceRefId = sourceRefId;
+                entity.EntityId = entityId;
             }
 
             entity.UpdatedAt = now;
@@ -95,7 +96,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         if (entity.IsVerified)
         {
             var hasPreferred = await _context.UsersCommunicationEndpoints
-                .AnyAsync(x => x.UserId == userId && x.IsPreferred, cancellationToken)
+                .AnyAsync(x => x.UserAccountId == userId && x.IsPreferred, cancellationToken)
                 .ConfigureAwait(false);
             if (!hasPreferred)
             {
@@ -111,7 +112,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     public async Task SetPreferredAsync(Guid userId, Guid endpointId, CancellationToken cancellationToken = default)
     {
         var entity = await _context.UsersCommunicationEndpoints
-            .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserId == userId, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserAccountId == userId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException("Communication endpoint was not found.");
 
@@ -121,7 +122,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
 
         var others = await _context.UsersCommunicationEndpoints
-            .Where(x => x.UserId == userId && x.IsPreferred && x.Id != endpointId)
+            .Where(x => x.UserAccountId == userId && x.IsPreferred && x.Id != endpointId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -166,7 +167,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             var address = NormalizeAddress(ChannelEnum.Sms, selectorValue);
             var phoneEndpoints = await _context.UsersCommunicationEndpoints
                 .AsNoTracking()
-                .Where(x => x.UserId == userId
+                .Where(x => x.UserAccountId == userId
                             && x.IsVerified
                             && x.Address == address
                             && PhoneChannels.Contains(x.Channel))
@@ -284,7 +285,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     {
         return await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.UserId == userId && x.IsPreferred && x.IsVerified, cancellationToken)
+            .FirstOrDefaultAsync(x => x.UserAccountId == userId && x.IsPreferred && x.IsVerified, cancellationToken)
             .ConfigureAwait(false);
     }
 

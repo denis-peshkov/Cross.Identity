@@ -22,7 +22,7 @@ public interface ICommunicationEndpointService
         string address,
         CommunicationEndpointSource source,
         bool isVerified,
-        long? sourceRefId = null,
+        Guid? entityId = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

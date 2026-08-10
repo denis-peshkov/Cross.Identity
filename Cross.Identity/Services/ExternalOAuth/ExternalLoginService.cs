@@ -91,10 +91,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await _identityContext.ExternalLoginStates.AddAsync(new ExternalLoginStateEntity
         {
+            Id = Guid.NewGuid(),
             Nonce = payload.Nonce,
             Provider = payload.Provider,
             ReturnUrl = payload.ReturnUrl,
-            UserId = payload.UserId,
+            UserAccountId = payload.UserId,
             CreatedAt = now,
             ExpiresAt = now.Add(_options.StateLifetime),
         }, cancellationToken).ConfigureAwait(false);
@@ -406,7 +407,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = entity.Nonce,
             Provider = entity.Provider,
             ReturnUrl = entity.ReturnUrl,
-            UserId = entity.UserId,
+            UserId = entity.UserAccountId,
         };
 
         _identityContext.ExternalLoginStates.Remove(entity);
@@ -528,7 +529,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.ProviderEmail = profile.Email;
             existing.DisplayName = profile.DisplayName;
             existing.AvatarUrl = profile.AvatarUrl;
-            existing.LastUsedAt = DateTime.UtcNow;
+            existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, cancellationToken).ConfigureAwait(false);
             return;
@@ -545,14 +546,17 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await _identityContext.UsersExternalLogins.AddAsync(new UserExternalLoginEntity
         {
+            Id = Guid.NewGuid(),
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = providerEntity.Id,
+            ProviderEntity = null!,
             ProviderUserId = profile.ProviderUserId,
             ProviderEmail = profile.Email,
             DisplayName = profile.DisplayName,
             AvatarUrl = profile.AvatarUrl,
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
         }, cancellationToken).ConfigureAwait(false);
 
         var account = await _identityContext.UsersAccounts
@@ -577,7 +581,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     private async Task SyncProviderEmailEndpointAsync(
         Guid userId,
-        long externalLoginId,
+        Guid externalLoginId,
         string? providerEmail,
         CancellationToken cancellationToken)
     {
@@ -593,7 +597,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 providerEmail,
                 CommunicationEndpointSource.ExternalProvider,
                 isVerified: true,
-                sourceRefId: externalLoginId,
+                entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
     }

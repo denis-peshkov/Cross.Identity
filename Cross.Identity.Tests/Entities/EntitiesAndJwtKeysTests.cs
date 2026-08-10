@@ -26,7 +26,7 @@ public sealed class EntitiesAndJwtKeysTests
 
         var login = new UserExternalLoginEntity
         {
-            Id = 123,
+            Id = Guid.NewGuid(),
             UserAccountId = user.Id,
             UserAccount = user,
             ProviderId = provider.Id,
@@ -41,7 +41,7 @@ public sealed class EntitiesAndJwtKeysTests
             ExpiresAt = DateTime.UtcNow.AddHours(1),
             Scope = "openid profile",
             CreatedAt = DateTime.UtcNow,
-            LastUsedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow
         };
 
         provider.ExternalLogins.Add(login);
@@ -50,6 +50,66 @@ public sealed class EntitiesAndJwtKeysTests
         login.ProviderEntity.Name.Should().Be("Google");
         login.UserAccount.Should().BeSameAs(user);
         login.ProviderEmail.Should().Be("u@example.com");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenAudit_WhenCreated_ThenSetsProperties()
+    {
+        var userId = Guid.NewGuid();
+        var tokenId = Guid.NewGuid();
+        var createdAt = DateTime.UtcNow;
+
+        var audit = new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = createdAt,
+            UserAccountId = userId,
+            UserAccount = null!,
+            Operation = AuditOperation.TokenRevoked,
+            EntityType = AuditEntityType.RefreshToken,
+            EntityId = tokenId.ToString(),
+            RevokedReason = RefreshTokenRevokedReason.USER_LOGOUT,
+            IpAddress = "10.0.0.1",
+            UserAgent = "TestAgent/1.0",
+            DeviceFingerprint = "fp-1",
+            Notes = "Logout from current device",
+        };
+
+        audit.Operation.Should().Be(AuditOperation.TokenRevoked);
+        audit.EntityType.Should().Be(AuditEntityType.RefreshToken);
+        audit.EntityId.Should().Be(tokenId.ToString());
+        audit.RevokedReason.Should().Be(RefreshTokenRevokedReason.USER_LOGOUT);
+        audit.Notes.Should().Be("Logout from current device");
+        audit.UserAccountId.Should().Be(userId);
+        audit.CreatedAt.Should().Be(createdAt);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenAudit_WhenPersisted_ThenRoundTripsThroughIdentityContext()
+    {
+        using var ctx = InMemoryDbHelper.CreateContext();
+        var audit = new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            UserAccountId = Guid.NewGuid(),
+            UserAccount = null!,
+            Operation = AuditOperation.PasswordChanged,
+            EntityType = AuditEntityType.UserAccount,
+            EntityId = Guid.NewGuid().ToString(),
+            IpAddress = "127.0.0.1",
+            Notes = "change-password flow",
+        };
+
+        ctx.Audits.Add(audit);
+        ctx.SaveChanges();
+
+        var loaded = ctx.Audits.Single(a => a.Id == audit.Id);
+        loaded.Operation.Should().Be(AuditOperation.PasswordChanged);
+        loaded.EntityType.Should().Be(AuditEntityType.UserAccount);
+        loaded.Notes.Should().Be("change-password flow");
     }
 
     [Test]

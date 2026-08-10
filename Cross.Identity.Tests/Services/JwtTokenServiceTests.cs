@@ -31,7 +31,7 @@ public class JwtTokenServiceTests : EFTestsBase
             }
         });
 
-        _jwtTokenService = new JwtTokenService(Context, options.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), options.Object);
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class JwtTokenServiceTests : EFTestsBase
             }
         });
 
-        var act = () => new JwtTokenService(Context, options.Object);
+        var act = () => new JwtTokenService(Context, new AuditService(Context), options.Object);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*Jwt.EncryptionKey must be 32 bytes*");
@@ -70,7 +70,7 @@ public class JwtTokenServiceTests : EFTestsBase
             }
         });
 
-        var act = () => new JwtTokenService(Context, options.Object);
+        var act = () => new JwtTokenService(Context, new AuditService(Context), options.Object);
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*Jwt.Key should be at least 32 bytes*");
@@ -99,7 +99,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, permissions, claims, null, null, null, CancellationToken.None);
 
         token.Should().NotBeNullOrEmpty();
-        var entity = await Context.AccessTokens.FirstOrDefaultAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstOrDefaultAsync(x => x.UserAccountId == userId);
         entity.Should().NotBeNull();
         entity!.TokenHash.Should().NotBeNullOrEmpty();
     }
@@ -140,7 +140,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         _ = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
 
         (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, CancellationToken.None)).Should().BeTrue();
 
@@ -157,7 +157,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
         entity.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
         await Context.SaveChangesAsync();
 
@@ -173,7 +173,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        await _jwtTokenService.RevokeAccessTokenAsync((await Context.AccessTokens.FirstAsync(x => x.UserId == userId)).Id, CancellationToken.None);
+        await _jwtTokenService.RevokeAccessTokenAsync((await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId)).Id, CancellationToken.None);
 
         var result = await _jwtTokenService.ValidateAccessTokenAsync(token, CancellationToken.None);
 
@@ -187,7 +187,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
         Context.AccessTokens.Remove(entity);
         await Context.SaveChangesAsync();
 
@@ -205,7 +205,7 @@ public class JwtTokenServiceTests : EFTestsBase
         _ = await _jwtTokenService.GenerateAccessTokenAsync(
             userId, familyId, new List<string>(),
             new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
 
         var forged = CreateJwtSignedWithWrongKey(
             jti: entity.Id,
@@ -237,7 +237,7 @@ public class JwtTokenServiceTests : EFTestsBase
                 RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
             }
         });
-        var encryptedService = new JwtTokenService(Context, options.Object);
+        var encryptedService = new JwtTokenService(Context, new AuditService(Context), options.Object);
 
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
@@ -280,7 +280,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
 
         await _jwtTokenService.RevokeAccessTokenAsync(entity.Id, CancellationToken.None);
 
@@ -304,7 +304,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.AccessTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
         entity.ExpiresAt = DateTime.UtcNow.AddMinutes(-1);
         await Context.SaveChangesAsync();
 
@@ -321,7 +321,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserAccountId == userId);
         entity.AbsoluteExpiresAt = DateTime.UtcNow.AddMinutes(-1);
         await Context.SaveChangesAsync();
 
@@ -338,7 +338,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
-        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserId == userId);
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserAccountId == userId);
 
         await _jwtTokenService.CleanupExpiredRefreshTokensAsync(CancellationToken.None);
 
@@ -379,7 +379,7 @@ public class JwtTokenServiceTests : EFTestsBase
                 RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
             }
         });
-        var encryptedService = new JwtTokenService(Context, options.Object);
+        var encryptedService = new JwtTokenService(Context, new AuditService(Context), options.Object);
 
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
@@ -425,7 +425,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var entity = await _jwtTokenService.GetRefreshTokenAsync(token, CancellationToken.None);
 
         entity.Should().NotBeNull();
-        entity!.UserId.Should().Be(userId);
+        entity!.UserAccountId.Should().Be(userId);
     }
 
     [Test]
@@ -506,17 +506,24 @@ public class JwtTokenServiceTests : EFTestsBase
 
         var r1Entity = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r1))));
-        r1Entity.RevokedReason.Should().Be(RefreshTokenRevokedReason.REPLAY_DETECTED);
+        r1Entity.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == r1Entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
 
         var r2Entity = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r2))));
         r2Entity.RevokedAt.Should().NotBeNull();
-        r2Entity.RevokedReason.Should().Be(RefreshTokenRevokedReason.REPLAY_DETECTED);
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == r2Entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
 
         var accessEntity = await Context.AccessTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(accessInFamily))));
         accessEntity.RevokedAt.Should().NotBeNull();
-        accessEntity.RevokedReason.Should().Be(RefreshTokenRevokedReason.REPLAY_DETECTED);
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == accessEntity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
     }
 
     [Test]
@@ -558,7 +565,10 @@ public class JwtTokenServiceTests : EFTestsBase
         (await _jwtTokenService.ValidateRefreshTokenAsync(r2, CancellationToken.None)).Should().BeFalse();
         var r2Entity = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(r2))));
-        r2Entity.RevokedReason.Should().Be(RefreshTokenRevokedReason.REPLAY_DETECTED);
+        r2Entity.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == r2Entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
     }
 
     [Test]
@@ -574,7 +584,9 @@ public class JwtTokenServiceTests : EFTestsBase
         var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
         var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
         entity.RevokedAt.Should().NotBeNull();
-        entity.RevokedReason.Should().Be(RefreshTokenRevokedReason.USER_LOGOUT);
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT);
     }
 
     [Test]
@@ -625,9 +637,10 @@ public class JwtTokenServiceTests : EFTestsBase
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
 
-        var userTokens = await Context.RefreshTokens.Where(x => x.UserId == userId).ToListAsync();
-        userTokens.Should().OnlyContain(t =>
-            t.RevokedAt != null && t.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
+        var userTokens = await Context.RefreshTokens.Where(x => x.UserAccountId == userId).ToListAsync();
+        userTokens.Should().OnlyContain(t => t.RevokedAt != null);
+        Context.Audits.Should().Contain(a =>
+            a.UserAccountId == userId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
     }
 
     [Test]
@@ -685,9 +698,11 @@ public class JwtTokenServiceTests : EFTestsBase
         (await _jwtTokenService.ValidateRefreshTokenAsync(refreshToken, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
 
-        var userRefresh = await Context.RefreshTokens.SingleAsync(x => x.UserId == userId);
+        var userRefresh = await Context.RefreshTokens.SingleAsync(x => x.UserAccountId == userId);
         userRefresh.RevokedAt.Should().NotBeNull();
-        userRefresh.RevokedReason.Should().Be(RefreshTokenRevokedReason.PASSWORD_CHANGED);
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == userRefresh.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.PASSWORD_CHANGED);
     }
 
     [Test]

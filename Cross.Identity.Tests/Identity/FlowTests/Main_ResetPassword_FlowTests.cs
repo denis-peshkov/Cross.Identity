@@ -247,6 +247,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = Guid.NewGuid(),
+            UserAccount = null!,
             Email = Email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash(code),
             TokenLength = (byte)code.Length,

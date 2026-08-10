@@ -109,8 +109,8 @@ public interface IJwtTokenService
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
@@ -182,8 +182,8 @@ public interface IJwtTokenService
     /// <param name="newJti">
     /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task InvalidateRefreshTokenAsync(
@@ -198,8 +198,8 @@ public interface IJwtTokenService
     /// Revoke a refresh token on user logout: mark in the DB so refresh cannot be reused.
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(
         string? refreshToken,
@@ -215,8 +215,8 @@ public interface IJwtTokenService
     /// <param name="refreshToken">
     /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
     /// </param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">
     /// Refresh token is missing in storage, revoked, or expired.
@@ -234,8 +234,8 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenFamilyAsync(
         Guid familyId,
@@ -251,8 +251,8 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="userId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<c>RevokedIpAddress</c>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<c>RevokedUserAgent</c>).</param>
+    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
+    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeAllTokensForUserAsync(
         Guid userId,

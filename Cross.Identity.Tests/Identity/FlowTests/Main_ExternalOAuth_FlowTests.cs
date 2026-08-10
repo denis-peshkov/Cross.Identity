@@ -40,7 +40,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
         });
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
 
         AddRegistryStep<CollectFormStepFactory>();
@@ -106,7 +106,9 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = provider.Id,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-unlink",
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
@@ -162,7 +164,9 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new UserExternalLoginEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             ProviderId = google.Id,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-1",
             ProviderEmail = "linked@gmail.com",
             AvatarUrl = "https://example.com/avatar.png",
@@ -260,7 +264,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
-        (await Context.ExternalLoginStates.SingleAsync()).UserId.Should().Be(otherUserId);
+        (await Context.ExternalLoginStates.SingleAsync()).UserAccountId.Should().Be(otherUserId);
     }
 
     [Test]

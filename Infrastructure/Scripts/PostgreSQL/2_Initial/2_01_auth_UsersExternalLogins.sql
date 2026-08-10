@@ -13,7 +13,7 @@ CREATE TABLE auth."UsersExternalLogins"
     "ExpiresAt"           timestamp without time zone NULL,
     "Scope"               varchar(500) NULL,
     "CreatedAt"           timestamp without time zone NOT NULL,
-    "LastUsedAt"          timestamp without time zone NULL,
+    "UpdatedAt"          timestamp without time zone NULL,
     "ConcurrencyStamp"    uuid         NOT NULL,
 
     CONSTRAINT "PK_auth_UsersExternalLogins" PRIMARY KEY ("UserExternalLoginId")

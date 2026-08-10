@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.ProcessEngine.Steps;
+namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Refresh token rotation step:
@@ -75,7 +75,7 @@ internal sealed class RefreshTokenStep : IStep
         }
 
         // 3) get user data
-        var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
+        var user = (await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserAccountId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
         ArgumentNullException.ThrowIfNull(user);
         var userId = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         if (userId == Guid.Empty)

@@ -37,7 +37,7 @@ public class RefreshToken_StepTests
         _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
+            .ReturnsAsync(new RefreshTokenEntity { UserAccountId = userId, UserAccount = null!, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValue(newRefreshToken, JwtRegisteredClaimNames.Jti))
             .Returns("new-jti");
         _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))

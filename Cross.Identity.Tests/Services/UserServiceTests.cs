@@ -284,6 +284,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
             TokenLength = 6,
@@ -307,6 +308,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
             TokenLength = 6,
@@ -318,6 +320,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
             TokenLength = 6,
@@ -351,6 +354,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
             TokenLength = 5,
@@ -374,6 +378,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userId,
+            UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
             CodeLength = 6,

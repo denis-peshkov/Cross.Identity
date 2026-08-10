@@ -46,7 +46,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -155,6 +155,8 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);
-        familyTokens.Should().Contain(t => t.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED);
+        Context.Audits.Should().Contain(a =>
+            a.RevokedReason == RefreshTokenRevokedReason.REPLAY_DETECTED
+            && familyTokens.Any(t => t.Id.ToString() == a.EntityId));
     }
 }

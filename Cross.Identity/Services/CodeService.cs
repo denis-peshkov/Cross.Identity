@@ -45,7 +45,9 @@ internal sealed class CodeService : ICodeService
                 }
                 var emailEntity = new EmailVerificationEntity
                 {
+                    Id = Guid.NewGuid(),
                     UserAccountId = id,
+                    UserAccount = null!,
                     Email = destination.ToLowerInvariant(),
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
@@ -64,7 +66,9 @@ internal sealed class CodeService : ICodeService
                 }
                 var phoneEntity = new PhoneVerificationEntity
                 {
+                    Id = Guid.NewGuid(),
                     UserAccountId = id,
+                    UserAccount = null!,
                     PhoneNumber = destination,
                     CodeHash = CodeGeneratorHelper.GenerateHash(code),
                     CodeLength = (byte)code.Length,

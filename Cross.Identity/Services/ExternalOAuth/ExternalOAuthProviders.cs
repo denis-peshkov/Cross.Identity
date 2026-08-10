@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 internal static class ExternalOAuthProviders
 {

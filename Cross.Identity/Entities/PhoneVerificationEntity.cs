@@ -2,10 +2,10 @@
 
 public class PhoneVerificationEntity : IHasConcurrencyStamp
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
 
-    public Guid UserAccountId { get; set; }
-    public virtual UserAccountEntity UserAccount { get; set; } = null!;
+    public required Guid UserAccountId { get; set; }
+    public virtual required UserAccountEntity UserAccount { get; set; }
 
     public string PhoneNumber { get; set; } = null!;
     /// <summary>SHA-256 -> 32 bytes</summary>

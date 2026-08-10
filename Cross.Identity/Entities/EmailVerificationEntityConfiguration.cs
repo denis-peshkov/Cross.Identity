@@ -24,5 +24,11 @@ internal class EmailVerificationEntityConfiguration : IEntityTypeConfiguration<E
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_TokenHash");
         builder.HasIndex(x => x.ExpiresAt)
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_ExpiresAt");
+
+        builder.HasOne(x => x.UserAccount)
+            .WithMany()
+            .HasForeignKey(x => x.UserAccountId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.EmailVerifications)}_UserAccount");
     }
 }

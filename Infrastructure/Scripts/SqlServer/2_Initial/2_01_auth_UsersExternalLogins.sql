@@ -13,7 +13,7 @@ CREATE TABLE [auth].[UsersExternalLogins]
     [ExpiresAt]           DATETIME2(7)          NULL,
     [Scope]               NVARCHAR(500)         NULL,
     [CreatedAt]           DATETIME2(7)          NOT NULL,
-    [LastUsedAt]          DATETIME2(7)          NULL,
+    [UpdatedAt]          DATETIME2(7)          NULL,
     [ConcurrencyStamp]    UNIQUEIDENTIFIER      NOT NULL,
 
     CONSTRAINT [PK_auth_UsersExternalLogins] PRIMARY KEY ([UserExternalLoginId])
