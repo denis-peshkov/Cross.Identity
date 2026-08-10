@@ -10,9 +10,9 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Steps run in a `next` chain; `start` points to the first step.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
-- Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Later steps read via `ClientContext.Read(bag)` (`collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint`) for token audit and revoke/password/unlink paths.
-- **Identity (`Email` / `PhoneNumber` / `UserName`):** optional on `Register` (`PhoneNumber`, `UserName` via `createUser.map`). On `Token` / `RequestCode` / `ResetPassword` / `GetUserId` — at least one of `Email|PhoneNumber|UserName`; on `ForgotPassword` — `Email|PhoneNumber` only. Preference Email → PhoneNumber → UserName (`phoneNumberKey` / `userNameKey`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
+- Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Later steps read via `ClientContext.Read(bag)` for token audit and revoke/password/unlink paths.
+- **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
 
 ### Operations (`FlowOperationEnum`)
 
@@ -33,8 +33,10 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.ExternalLoginGetAll.json` | `ExternalLoginGetAll` |
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
+| `*.CommunicationEndpointsGetAll.json` | `CommunicationEndpointsGetAll` |
+| `*.CommunicationEndpointSetPreferred.json` | `CommunicationEndpointSetPreferred` |
 
-### All flow files (15)
+### All flow files (17)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -53,6 +55,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `main` | ExternalLoginGetAll | `main.ExternalLoginGetAll.json` |
 | `main` | Logout | `main.Logout.json` |
 | `main` | LogoutAll | `main.LogoutAll.json` |
+| `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
+| `main` | CommunicationEndpointSetPreferred | `main.CommunicationEndpointSetPreferred.json` |
 
 ---
 
@@ -62,7 +66,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional client context. `selector.candidates`: Email, PhoneNumber. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `template: reset`, `subject: Reset your password`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
@@ -70,12 +74,12 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.GetUserId.json`
 
-**Purpose:** get `user_id` by email.
+**Purpose:** get `user_id` by identity.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `getUserId` |
-| `getUserId` | getUserId | `selectorField: Email`, `selectorKey: collectForm.Email`. → `collectResult` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `getUserId` |
+| `getUserId` | getUserId | resolves via `Selector`; writes `getUserId.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
 
 ---
@@ -86,7 +90,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `refreshToken` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `refreshToken` |
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
@@ -102,8 +106,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber` (E.164), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
+| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–128); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userIdKey: UserId`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
 
@@ -115,7 +119,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `sendCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
@@ -127,24 +131,23 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (Guid string, 36), `CurrentPassword` (8–128), `NewPassword` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `passwordAuth` |
-| `passwordAuth` | passwordAuth | `selectorField: Id`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.UserId`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Id`. `next: null` |
+| `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword`, `NewPassword`; optional client context. `selector.candidates`: Id. → `passwordAuth` |
+| `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
+| `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.NewPassword`. `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
-> `resetPassword` notifies via `channel` using `selectorKey` as the destination (for `Id` + `email` that is the Guid string, not the account email).
 
 ---
 
 ## `main.ResetPassword.json`
 
-**Purpose:** change password by email after verifying the recovery code.
+**Purpose:** change password after verifying the recovery code.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (8–128), `Password` (8–128); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `codeKey: collectForm.Code`; writes `verifyCode.UserId`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
+| `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.Password`. `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
@@ -152,12 +155,12 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.Token.json`
 
-**Purpose:** tokens by email and password **or** code (at least one required).
+**Purpose:** tokens by identity and password **or** code (at least one credential required).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 4–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
-| `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 4–32); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
+| `token` | token | `passwordKey`, `codeKey`, `channel: email`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
 ---
@@ -168,8 +171,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `UserId` (opt. Guid string); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `userIdKey: collectForm.UserId`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserId` (opt. Guid string); optional client context. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
 > `UserId` enables account linking when present; the host must supply the authenticated user’s id (the library does not read `HttpContext`). Omit for normal sign-in / sign-up.
@@ -182,7 +185,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginComplete` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either); `ErrorDescription` (opt.); optional client context. → `externalLoginComplete` |
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
@@ -196,8 +199,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`, `userIdKey: collectForm.UserId`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
 > Host supplies `UserId` from the authenticated principal. Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
@@ -210,7 +213,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `externalLoginGetAll` |
+| `collectForm` | collectForm | `UserId` (required Guid string); optional client context. → `externalLoginGetAll` |
 | `externalLoginGetAll` | externalLoginGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
@@ -224,7 +227,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `logout` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logout` |
 | `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
@@ -238,7 +241,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `logoutAll` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logoutAll` |
 | `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 
@@ -252,7 +255,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `AccessToken` (required, max 2048); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyToken` |
+| `collectForm` | collectForm | `AccessToken` (required, max 2048); optional client context. → `verifyToken` |
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
 | `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
 
@@ -260,17 +263,41 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ---
 
+## `main.CommunicationEndpointsGetAll.json`
+
+**Purpose:** list communication endpoints for the given user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserId` (required Guid string); optional client context. → `communicationEndpointsGetAll` |
+| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
+| `collectResult` | collectResult | `endpoints`. `next: null` |
+
+---
+
+## `main.CommunicationEndpointSetPreferred.json`
+
+**Purpose:** set the preferred communication endpoint for the given user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserId`, `EndpointId` (Guid strings); optional client context. → `communicationEndpointSetPreferred` |
+| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userIdKey`, `endpointIdKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `preferred`. `next: null` |
+
+---
+
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
 |------|---------|
-| `collectForm` | Collect and validate form fields |
+| `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP (email/SMS); required `channel` / `template` / `subject` (`reset` also adds email/phone to the action URL) |
+| `sendCode` | Send OTP (email/SMS); required `channel` / `template` / `subject` (`reset` also adds email and phone number to the action URL) |
 | `verifyCode` | Verify OTP and write `UserId` to the bag |
-| `passwordAuth` | Verify email + password |
-| `resetPassword` | Set new password |
+| `passwordAuth` | Verify identity + password; writes `UserId` |
+| `resetPassword` | Set new password (identity from `Selector`) |
 | `getUserId` | Find user, return `UserId` |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
@@ -281,6 +308,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `logout` | Revoke current refresh token (`USER_LOGOUT`) |
 | `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
 | `verifyToken` | Validate access token; return `valid` (+ `user_id` / `jti` when valid) |
+| `communicationEndpointsGetAll` | List user communication endpoints |
+| `communicationEndpointSetPreferred` | Set preferred communication endpoint |
 
 ### Form validators (`schemaDef.validators`)
 

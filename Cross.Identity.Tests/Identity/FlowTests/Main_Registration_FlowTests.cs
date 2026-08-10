@@ -35,59 +35,6 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<IEmailSenderService>(),
                 Mock.Of<ISmsSenderService>(),
                 configuration));
-
-        // Load JSON as embedded /ProcessEngine/Definitions/Flows/main.Register.json
-        // AddJson("""
-        //         {
-        //           "start": "collectForm",
-        //           "steps": [
-        //             {
-        //               "kind": "collectForm",
-        //               "schemaDef": {
-        //                 "fields": [
-        //                   { "key": "Email", "type": "Email", "required": true },
-        //                   { "key": "FullName", "type": "String", "required": true, "min": 3, "max": 128 },
-        //                   { "key": "Company", "type": "String", "required": true, "min": 2, "max": 128 },
-        //                   { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
-        //                   { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 },
-        //                   { "key": "AcceptGetEmails", "type": "Bool", "required": false },
-        //                   { "key": "AcceptLicenseTerms", "type": "Bool", "required": true }
-        //                 ],
-        //                 "validators": [
-        //                   { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }
-        //                 ]
-        //               },
-        //               "next": "createUser"
-        //             },
-        //             {
-        //               "kind": "createUser",
-        //               "map": {
-        //                 "Email": "collectForm.Email",
-        //                 "FullName": "collectForm.FullName",
-        //                 "Company": "collectForm.Company",
-        //                 "AcceptGetEmails": "collectForm.AcceptGetEmails",
-        //                 "AcceptLicenseTerms": "collectForm.AcceptLicenseTerms"
-        //               },
-        //               "selectorKey": "collectForm.Email",
-        //               "next": "sendCode"
-        //             },
-        //             {
-        //               "kind": "sendCode",
-        //               "channel": "email",
-        //               "selectorKey": "createUser.selectorKey",
-        //               "resolveBy": { "field": "Email" },
-        //               "next": "collectResult"
-        //             },
-        //             {
-        //               "kind": "collectResult",
-        //               "map": {
-        //                 "LastCode": "sendCode.LastCode"
-        //               },
-        //               "next": null
-        //             }
-        //           ]
-        //         }
-        //         """);
     }
 
     [Test]

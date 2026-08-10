@@ -22,7 +22,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
 - **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
-- **Security** — password hashing (Argon2), one-time codes; phone inputs must be E.164 (e.g. `+79161234567`).
+- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
@@ -30,7 +30,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 
 ## Phone numbers (E.164)
 
-Cross.Identity accepts **only** E.164 phone values, for example `+79161234567`.
+Cross.Identity accepts **only** E.164 phone numbers, for example `+79161234567`.
 
 - Gate: `collectForm` fields with `"type": "PhoneNumber"` — validated via `PhoneE164.IsValid` and stored with `PhoneE164.Require`.
 - Downstream (`UserService`, lookups, OTP) **trust** the bag value and do not re-validate/normalize.
@@ -50,8 +50,8 @@ Use when the host fills the bag **without** going through `collectForm` (or befo
 ```csharp
 using Cross.Identity.Services.Crypto;
 
-var phone = PhoneE164.Ensure(dto.PhoneNumber, defaultRegion: "RU");
-bag["PhoneNumber"] = phone;
+var phoneNumber = PhoneE164.Ensure(dto.PhoneNumber, defaultRegion: "RU");
+bag["PhoneNumber"] = phoneNumber;
 ```
 
 No DI registration is required.

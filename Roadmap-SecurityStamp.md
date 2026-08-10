@@ -70,26 +70,26 @@
 
 ---
 
-## 4. Смена email / phone
+## 4. Смена email / phone number
 
-**Сценарий:** пользователь меняет email или телефон, которыми логинится / получает OTP.
+**Сценарий:** пользователь меняет email или номер телефона, которыми логинится / получает OTP.
 
 **Почему stamp (часто да):**
 
 - это смена identifier + recovery channel;
-- старый email/phone больше не должен открывать старые «подтверждённые» сессии как будто ничего не было;
+- старый email/phone number больше не должен открывать старые «подтверждённые» сессии как будто ничего не было;
 - если украли сессию, смена email без kill sessions оставляет атакующего залогиненным.
 
 **Нюанс:** иногда делают soft-path — stamp только после confirm нового адреса. До confirm старый email ещё «главный».
 
 **Типичный строгий вариант:**
 
-1. confirm нового email/phone
+1. confirm нового email/phone number
 2. обновить поле + `EmailConfirmed`/`PhoneConfirmed`
 3. stamp rotate
 4. revoke all (или хотя бы все кроме текущей сессии — продуктовое решение)
 
-**Сейчас:** confirm флагами через `ValidateCodeAsync` есть, отдельного «change email/phone + stamp» нет. Confirm кода **не** ротирует stamp и **не** ревокает токены (это нормально для first-time verify; для **смены** email — уже слабо).
+**Сейчас:** confirm флагами через `ValidateCodeAsync` есть, отдельного «change email/phone number + stamp» нет. Confirm кода **не** ротирует stamp и **не** ревокает токены (это нормально для first-time verify; для **смены** email — уже слабо).
 
 ---
 
@@ -102,7 +102,7 @@
 | Disable / lock account | yes | yes (`ACCOUNT_DISABLED`) | ❌ API |
 | Admin / logout-all | yes | yes (`ADMIN_REVOKE` / `USER_LOGOUT_ALL`) | ✅ logout-all (`USER_LOGOUT_ALL`); ❌ admin `ADMIN_REVOKE` + stamp |
 | MFA reset / disable | yes | yes (`MFA_RESET`) | ❌ MFA |
-| Change email/phone (after confirm) | usually yes | usually yes | ❌ change-flow |
+| Change email/phone number (after confirm) | usually yes | usually yes | ❌ change-flow |
 | Ordinary profile update (display name) | no | no | — |
 | Pepper rehash on login | no | no | correct |
 

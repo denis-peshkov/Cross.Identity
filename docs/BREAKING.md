@@ -8,7 +8,7 @@ Breaking changes for **Cross.Identity**, grouped by **from → to** package vers
 | `1.5.x` → `1.6.0+`   | [From 1.5.x to 1.6.0](#from-15x-to-160)     |
 | `1.6.x` → `1.7.0+`   | [From 1.6.x to 1.7.0](#from-16x-to-170)     |
 | `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
-| `1.10.x` → `1.11.0+` | [From 1.10.x to 1.11.0](#from-110x-to-1110) |
+| `1.10.x` → `2.0.0+`  | [From 1.10.x to 2.0.0](#from-110x-to-200)   |
 
 `1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes.
 
@@ -148,31 +148,35 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 
 ---
 
-## From 1.10.x to 1.11.0
+## From 1.10.x to 2.0.0
 
-### No `IHttpContextAccessor` / ambient `HttpContext` in the library
+Stock flows: [`FLOWS.md`](../Cross.Identity/FLOWS.md).
+
+### No `IHttpContextAccessor` / ambient `HttpContext` → `ClientContext`
 
 Cross.Identity no longer reads `HttpContext` for the authenticated user, client IP, or User-Agent.
-Hosts must pass explicit flow inputs (and matching service parameters). Host ASP.NET still registers
-`IHttpContextAccessor` for its own handlers/cookies.
+Hosts must pass explicit flow inputs. Host ASP.NET still registers `IHttpContextAccessor` for its own handlers/cookies.
 
-| Area | Was (1.10) | Now (1.11+) |
-|------|------------|-------------|
+Public JWT and related APIs take a single non-nullable [`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs)
+(`IpAddress`, `UserAgent`, `DeviceFingerprint`). Use `ClientContext.Empty` when unknown.
+Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
+(no per-step `ipAddressKey` / `userAgentKey` / `deviceFingerprintKey`).
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
 | `JwtTokenService` ctor | `(IdentityContext, IOptionsSnapshot, IHttpContextAccessor)` | `(IdentityContext, IOptionsSnapshot)` |
-| JWT issue/revoke APIs | IP/UA from `HttpContext` | `string? ipAddress` / `string? userAgent` on generate; `string? ipAddress` on invalidate/logout/family/user revoke helpers |
-| `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, string? ipAddress, ct)` |
-| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string? ipAddress, ct)` |
+| JWT issue / refresh invalidate / logout / logout-all / family / user revoke | IP/UA from `HttpContext` | `ClientContext clientContext` |
+| `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, ClientContext clientContext, ct)` |
+| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, ClientContext clientContext, ct)` |
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, ct)` |
 | `InitiateAsync` linking | bag/DB `LinkUserId`; must match authenticated principal | bag/DB/state `UserId`; host-supplied id is trusted (no principal match) |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
-token / refresh / OAuth-callback wire `deviceFingerprintKey` into JWT create audit (`CreatedDeviceFingerprint`);
-logout / logoutAll / password reset/change / unlink use `IpAddress` / `UserAgent` for revoke audit;
 **required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`;
 **optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`).
 
-**Action:** fill bags from the host handler (`HttpContext` stays only in the host); update custom `IJwtTokenService` / OAuth callers; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
+**Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
 
 ### `RevokeReason` → `RevokedReason`
 
@@ -192,9 +196,7 @@ logout / logoutAll / password reset/change / unlink use `IpAddress` / `UserAgent
 | | `UserAgent` | `CreatedUserAgent` |
 | | `DeviceFingerprint` | `CreatedDeviceFingerprint` |
 
-Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input). Revoke audit fields stay `RevokedIpAddress` / `RevokedUserAgent`.
-
-**Identity:** `Email` / `PhoneNumber` / `UserName` on `Token` / `RequestCode` / `ForgotPassword` / `ResetPassword` / `GetUserId` (`phoneNumberKey` / `userNameKey`; preference Email → PhoneNumber → UserName). Optional `PhoneNumber` / `UserName` on `Register`.
+Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input → `ClientContext`). Revoke audit fields stay `RevokedIpAddress` / `RevokedUserAgent`.
 
 **Action:** rename columns on existing databases.
 
@@ -204,21 +206,21 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input
 |------|-----|-----|
 | Entity / DB | `RevokedByIp` | `RevokedIpAddress` |
 | Entity / DB | — | `RevokedUserAgent` (new) |
-| JWT revoke APIs | `string? ipAddress` | `string? ipAddress, string? userAgent` |
-| `SetPasswordAsync` / `UnlinkAsync` | `ipAddress` | `ipAddress, userAgent` |
 
-Logout / logoutAll / password / unlink flows again accept optional `UserAgent` for revoke audit.
+Revoke paths take audit metadata via `ClientContext` (see above).
 
-**Action:** pass User-Agent from the host on revoke paths; rename/add DB columns.
+**Action:** rename/add DB columns; pass User-Agent (and IP / device fingerprint) through `ClientContext` on revoke paths.
 
 ### No `IHeadersContextAccessor` in Cross.Identity
 
 `UserService` no longer reads ambient `LanguageCode` from `IHeadersContextAccessor`.
 Cross.Identity no longer depends on `Cross.Headers`.
 
+**Action:** drop Cross.Identity's `Cross.Headers` dependency if used only for Identity.
+
 ### Phone numbers: E.164 only
 
-Phone inputs must be E.164, e.g. `+79161234567`. **`collectForm`** (`type: PhoneNumber`) is the library gate (`PhoneE164`); `UserService` and other steps trust the normalized bag value.
+Phone number inputs must be E.164, e.g. `+79161234567`. **`collectForm`** (`type: PhoneNumber`) is the library gate (`PhoneE164`); `UserService` and other steps trust the normalized bag value.
 
 - Accepted: `+` + digits only, no spaces/punctuation; number must be a valid E.164 subscriber number.
 - Rejected: national formats (`8916…`), missing `+`, spaces, dashes, parentheses (`+7 (912) …`), and any value that is not already E.164.
@@ -232,35 +234,88 @@ Use the public static helper [`PhoneE164`](../Cross.Identity/Helpers/PhoneE164.c
 
 `IPhoneNormalizer` is removed — use `PhoneE164` instead (no DI).
 
-Bag / form / entity / DB use `PhoneNumber` (`UsersAccounts`, `PhoneVerifications`). Bag / form / `resolveBy` use `PhoneNumber`. Selector alias `phonenumber` still accepted by `UserService`.
+Bag / form / entity / DB use `PhoneNumber` (`UsersAccounts`, `PhoneVerifications`). Bag / form / `Selector` use `PhoneNumber`. Selector alias `phonenumber` still accepted by `UserService`.
 
-**Action:** rely on `collectForm` for flow phones, or normalize in the host with `PhoneE164` when bypassing forms; ensure DB column is `PhoneNumber` on existing databases; drop Cross.Identity's `Cross.Headers` dependency if used only for Identity.
+**Action:** rely on `collectForm` for flow phone numbers, or normalize in the host with `PhoneE164` when bypassing forms; ensure DB column is `PhoneNumber` on existing databases.
 
 ### OTP `channel`: string → `ChannelEnum` (`phone` → `sms`)
 
-`VerifyCodeStep` and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
+`VerifyCodeStep`, `SendCodeStep`, `ResetPasswordStep`, `TokenStep` (where applicable) and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
 Flow JSON / custom overrides must use enum names: `email`, `sms` (not `phone`).
 
-`Selector.Bind` + `Selector.ChannelForField`: phone → `ChannelEnum.Sms`, email → `ChannelEnum.Email`, user name → no channel.
+`Selector.Bind` + `Selector.ChannelForField`: phone number → `ChannelEnum.Sms`, email → `ChannelEnum.Email`, user name → no channel.
 
-**Action:** replace `"channel": "phone"` with `"channel": "sms"` in custom `verifyCode` steps; update callers of `VerifyAsync`.
+Also: `ChannelEnum.WatsApp` renamed to **`WhatsApp`**.
 
-### `codeAuth` removed → use `verifyCode`
+**Action:** replace `"channel": "phone"` with `"channel": "sms"`; update `WatsApp` / `watsApp` to `WhatsApp`; update callers of `VerifyAsync`.
 
-`CodeAuthStep` / kind `codeAuth` are removed. `verifyCode` verifies the OTP and writes `UserId` (configurable via `userIdKey`, default `UserId`).
+### `Selector` replaces `resolveBy` / `selectorKey` / `phoneNumberKey` / `userNameKey`
 
-**Action:** replace `"kind": "codeAuth"` with `"kind": "verifyCode"`; map bag keys from `codeAuth.*` to `verifyCode.*`.
+Identity is bound once on `collectForm` via `selector.candidates` (first non-empty wins → `collectForm.Field` / `collectForm.Value`).
+Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 
+| Area | Was | Now |
+|------|-----|-----|
+| Flow JSON | `resolveBy`, `selectorKey`, `phoneNumberKey`, `userNameKey` on steps | `collectForm.selector.candidates` only |
+| Steps | per-step identity keys | `new Selector()` + bag Field/Value |
 
-### `main.ChangePassword` input: `Email` → `UserId`
+**Identity on stock flows:** `Email` / `PhoneNumber` / `UserName` on `Token` / `RequestCode` / `ForgotPassword` / `ResetPassword` / `GetUserId` (and optional on `Register`) via `selector.candidates`.
 
-| Area | Was (1.10) | Now (1.11+) |
-|------|------------|-------------|
-| Form fields | `Email`, `CurrentPassword`, `NewPassword` | `UserId` (Guid string), `CurrentPassword`, `NewPassword` (+ optional `IpAddress` / `UserAgent`) |
-| `passwordAuth.selectorField` | `Email` | `Id` |
-| `resetPassword.resolveBy.field` | `Email` | `Id` |
+**Action:** remove obsolete keys from custom flow overrides; ensure `collectForm` declares `selector.candidates` where identity is needed.
+
+### `codeAuth` removed → `verifyCode`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Step kind | `codeAuth` | **`verifyCode`** |
+| Behavior | verify OTP + write UserId | same on `verifyCode` (`userIdKey`, default `UserId`) |
+| Bag | `codeAuth.*` | `verifyCode.*` |
+
+**Action:** replace `"kind": "codeAuth"` with `"kind": "verifyCode"`; remap bag keys.
+
+### `forgotPassword` step removed → `sendCode`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Step kind | `forgotPassword` | **`sendCode`** |
+| Stock flow | `main.ForgotPassword.json` → `forgotPassword` | → `sendCode` with `template: reset`, `subject: Reset your password` |
+| Bag | `forgotPassword.LastCode` | `sendCode.LastCode` |
+
+Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is required for action links in `SendCodeStep`.
+
+**Action:** replace `"kind": "forgotPassword"` with `"kind": "sendCode"` (+ required `template` / `subject`); map `LastCode` keys; set `Authentication:ClientUrl`.
+
+### `sendCode`: `template` and `subject` are required
+
+| Area | Was | Now |
+|------|-----|-----|
+| JSON | optional / implied `verify` | **required** `template` + `subject` (`cfg.Str`) |
+| Register / RequestCode | often omitted | must set `template: verify`, `subject: Verification Code` |
+| ForgotPassword | separate step / `reset` templates | `template: reset`, `subject: Reset your password` |
+
+`template: reset` also appends `email` / `phone` query params (email / phone number) to the action URL; other templates keep code-only URLs.
+
+**Action:** add `template` / `subject` to every custom `sendCode` step.
+
+### `main.ChangePassword` input: `Email` → `Id`
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| Form fields | `Email`, `CurrentPassword`, `NewPassword` | `Id` (Guid string), `CurrentPassword`, `NewPassword` (+ optional client context on `collectForm`) |
+| Identity | `resolveBy` / `selectorKey` on steps | `collectForm.selector.candidates: ["Id"]` + `Selector.Resolve` |
 
 `ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserByAsync` accept selector `"Id"`.
 `GetUserIdByAsync` does **not** — when the selector is already the id, `PasswordAuthStep` writes it to the bag without a lookup.
 
-**Action:** pass `{ UserId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
+**Action:** pass `{ Id, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
+
+### Communication endpoints flows
+
+New operations (stock `main` flows):
+
+- `CommunicationEndpointsGetAll` — list endpoints for `UserId`
+- `CommunicationEndpointSetPreferred` — set preferred endpoint (`UserId` + `EndpointId`)
+
+Host must pass `UserId` in the bag (no ambient auth user).
+
+**Action:** wire routes / clients if you expose these operations; apply matching DDL for communication-endpoint tables (`Infrastructure/Scripts`).
