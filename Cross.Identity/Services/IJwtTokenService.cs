@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Services;
+﻿﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Issues, validates, and revokes JWT access/refresh tokens and related session state in storage.
@@ -27,9 +27,7 @@ public interface IJwtTokenService
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="permissions">Permissions to add as claims.</param>
     /// <param name="claims">Additional token claims.</param>
-    /// <param name="ipAddress">Optional client IP for audit fields on the persisted token.</param>
-    /// <param name="userAgent">Optional User-Agent for audit fields on the persisted token.</param>
-    /// <param name="deviceFingerprint">Optional device fingerprint for audit fields on the persisted token.</param>
+    /// <param name="clientContext">Optional client metadata for audit fields on the persisted token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Access token string in compact form.</returns>
     Task<string> GenerateAccessTokenAsync(
@@ -37,9 +35,7 @@ public interface IJwtTokenService
         Guid familyId,
         List<string> permissions,
         List<Claim> claims,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -48,18 +44,14 @@ public interface IJwtTokenService
     /// <param name="userId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="claims">Additional refresh-token claims.</param>
-    /// <param name="ipAddress">Optional client IP for audit fields on the persisted token.</param>
-    /// <param name="userAgent">Optional User-Agent for audit fields on the persisted token.</param>
-    /// <param name="deviceFingerprint">Optional device fingerprint for audit fields on the persisted token.</param>
+    /// <param name="clientContext">Optional client metadata for audit fields on the persisted token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token string.</returns>
     Task<string> GenerateRefreshTokenAsync(
         Guid userId,
         Guid familyId,
         List<Claim> claims,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -109,16 +101,13 @@ public interface IJwtTokenService
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task EnsureRefreshTokenActiveForRotationAsync(
         string refreshToken,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -182,30 +171,24 @@ public interface IJwtTokenService
     /// <param name="newJti">
     /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task InvalidateRefreshTokenAsync(
         string refreshToken,
         string newJti,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke a refresh token on user logout: mark in the DB so refresh cannot be reused.
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(
         string? refreshToken,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -215,17 +198,14 @@ public interface IJwtTokenService
     /// <param name="refreshToken">
     /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
     /// </param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">
     /// Refresh token is missing in storage, revoked, or expired.
     /// </exception>
     Task RevokeAllTokensForLogoutAsync(
         string? refreshToken,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -234,15 +214,12 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenFamilyAsync(
         Guid familyId,
         RefreshTokenRevokedReason reason,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -251,15 +228,12 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="userId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit (<see cref="AuditEntity.IpAddress"/>).</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit (<see cref="AuditEntity.UserAgent"/>).</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeAllTokensForUserAsync(
         Guid userId,
         RefreshTokenRevokedReason reason,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 }
 

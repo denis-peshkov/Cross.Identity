@@ -1,4 +1,4 @@
-namespace Cross.Identity.Tests.Identity.StepTests;
+﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
 [TestFixture]
 public class CommunicationEndpoints_StepTests
@@ -52,7 +52,7 @@ public class CommunicationEndpoints_StepTests
         var userId = Guid.NewGuid();
         var endpointId = Guid.NewGuid();
         _endpoints
-            .Setup(s => s.SetPreferredAsync(userId, endpointId, "1.2.3.4", "ua", "fp", It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPreferredAsync(userId, endpointId, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new CommunicationEndpointSetPreferredStep
@@ -76,7 +76,7 @@ public class CommunicationEndpoints_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("communicationEndpointSetPreferred.Preferred").Should().BeTrue();
         _endpoints.Verify(
-            s => s.SetPreferredAsync(userId, endpointId, "1.2.3.4", "ua", "fp", It.IsAny<CancellationToken>()),
+            s => s.SetPreferredAsync(userId, endpointId, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

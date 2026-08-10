@@ -23,9 +23,9 @@ internal sealed class LogoutStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        var client = ClientContext.Read(ctx);
+        var clientContext = ClientContext.Read(ctx);
 
-        await JwtTokenService.RevokeRefreshTokenForLogoutAsync(refreshToken, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeRefreshTokenForLogoutAsync(refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

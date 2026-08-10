@@ -67,9 +67,9 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },

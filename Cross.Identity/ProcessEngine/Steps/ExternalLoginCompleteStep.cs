@@ -51,9 +51,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
         var user = await UserService.GetUserByAsync("Id", completion.UserId.ToString(), cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(user);
 
-        var client = ClientContext.Read(ctx);
+        var clientContext = ClientContext.Read(ctx);
         await TokenPairIssuer
-            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, Guid.NewGuid(), client, cancellationToken)
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, Guid.NewGuid(), clientContext, cancellationToken)
             .ConfigureAwait(false);
 
         return StepResult.Ok(Next);

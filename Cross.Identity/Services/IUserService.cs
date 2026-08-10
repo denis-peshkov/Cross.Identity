@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Services;
+﻿﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// User service: creation, lookup, and password operations.
@@ -79,15 +79,12 @@ internal interface IUserService
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>
     /// <param name="newPassword">New password.</param>
-    /// <param name="ipAddress">Optional client IP for token revoke audit fields.</param>
-    /// <param name="userAgent">Optional User-Agent for token revoke audit fields.</param>
+    /// <param name="clientContext">Optional client metadata for token revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SetPasswordAsync(
         string selectorField,
         string selectorValue,
         string newPassword,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 }

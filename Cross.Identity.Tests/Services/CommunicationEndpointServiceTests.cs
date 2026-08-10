@@ -41,7 +41,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         email.IsPreferred.Should().BeTrue();
 
-        await _service.SetPreferredAsync(userId, telegram.Id, "10.0.0.1", "ua", "fp");
+        await _service.SetPreferredAsync(userId, telegram.Id, new ClientContext("10.0.0.1", "ua", "fp"));
 
         var all = await _service.GetAllAsync(userId);
         all.Single(x => x.Id == telegram.Id).IsPreferred.Should().BeTrue();
@@ -63,7 +63,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var ep = await _service.UpsertAsync(
             userId, ChannelEnum.Email, "x@example.com", CommunicationEndpointSource.Manual, isVerified: false);
 
-        var act = () => _service.SetPreferredAsync(userId, ep.Id);
+        var act = () => _service.SetPreferredAsync(userId, ep.Id, ClientContext.Empty);
 
         await act.Should().ThrowAsync<ValidationException>()
             .WithMessage("*verified*");
@@ -79,7 +79,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         await _service.UpsertAsync(userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
         var tg = await _service.UpsertAsync(
             userId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userId, tg.Id);
+        await _service.SetPreferredAsync(userId, tg.Id, ClientContext.Empty);
 
         var channel = await _service.ResolveDeliveryChannelAsync(userId, "PhoneNumber", phone);
 
@@ -95,7 +95,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         var tg = await _service.UpsertAsync(
             userId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userId, tg.Id);
+        await _service.SetPreferredAsync(userId, tg.Id, ClientContext.Empty);
 
         var otp = await _service.ResolveOtpChannelAsync(userId, "PhoneNumber", phone);
 

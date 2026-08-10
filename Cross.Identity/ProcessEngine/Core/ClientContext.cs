@@ -7,6 +7,9 @@
 /// </summary>
 public sealed record ClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
 {
+    /// <summary>Empty client metadata (all fields null).</summary>
+    public static ClientContext Empty { get; } = new(null, null, null);
+
     /// <summary>Bag prefix of collectForm (<c>CollectFormStepFactory.GetKind</c>).</summary>
     public const string CollectFormKind = "collectForm";
 

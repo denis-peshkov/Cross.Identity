@@ -25,15 +25,11 @@ public interface ICommunicationEndpointService
     /// <summary>
     /// Mark a verified endpoint as the only preferred communication target for the user.
     /// </summary>
-    /// <param name="ipAddress">Optional client IP for audit.</param>
-    /// <param name="userAgent">Optional User-Agent for audit.</param>
-    /// <param name="deviceFingerprint">Optional device fingerprint for audit.</param>
+    /// <param name="clientContext">Optional client metadata for audit.</param>
     Task SetPreferredAsync(
         Guid userId,
         Guid endpointId,
-        string? ipAddress = null,
-        string? userAgent = null,
-        string? deviceFingerprint = null,
+        ClientContext clientContext,
         CancellationToken cancellationToken = default);
 
     /// <summary>

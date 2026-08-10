@@ -26,9 +26,9 @@ internal sealed class CommunicationEndpointSetPreferredStep : IStep
         if (raw is null || !Guid.TryParse(raw.ToString(), out var endpointId) || endpointId == Guid.Empty)
             throw new ValidationException("EndpointId is required.");
 
-        var client = ClientContext.Read(ctx);
+        var clientContext = ClientContext.Read(ctx);
         await CommunicationEndpoints
-            .SetPreferredAsync(userId, endpointId, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken)
+            .SetPreferredAsync(userId, endpointId, clientContext, cancellationToken)
             .ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Preferred"), true);
         return StepResult.Ok(Next);

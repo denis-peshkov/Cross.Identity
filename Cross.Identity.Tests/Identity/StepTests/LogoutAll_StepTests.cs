@@ -17,7 +17,7 @@ public class LogoutAll_StepTests
     {
         var refreshToken = "refresh-token-value";
         _jwtTokenService
-            .Setup(j => j.RevokeAllTokensForLogoutAsync(refreshToken, null, null, null, It.IsAny<CancellationToken>()))
+            .Setup(j => j.RevokeAllTokensForLogoutAsync(refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new LogoutAllStep
@@ -40,7 +40,7 @@ public class LogoutAll_StepTests
         result.Next.Should().Be("done");
         bag.Get<bool>("logoutAll.Revoked").Should().BeTrue();
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForLogoutAsync(refreshToken, null, null, null, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForLogoutAsync(refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -49,7 +49,7 @@ public class LogoutAll_StepTests
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenPropagatesNotAuthorizedExceptionAsync()
     {
         _jwtTokenService
-            .Setup(j => j.RevokeAllTokensForLogoutAsync(It.IsAny<string>(), null, null, null, It.IsAny<CancellationToken>()))
+            .Setup(j => j.RevokeAllTokensForLogoutAsync(It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new LogoutAllStep

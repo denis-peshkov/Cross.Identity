@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Services.ExternalOAuth;
+﻿﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
 /// External OAuth login service: start authorization, complete callback, and unlink a provider.
@@ -103,8 +103,7 @@ internal interface IExternalLoginService
     /// Provider name to unlink (for example, <c>Google</c>). Must be enabled and currently linked to the user.
     /// </param>
     /// <param name="userId">Local user account id (supplied by the host from the authenticated principal).</param>
-    /// <param name="ipAddress">Optional client IP for revoke audit fields.</param>
-    /// <param name="userAgent">Optional User-Agent for revoke audit fields.</param>
+    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">
     /// Provider is not enabled, or is not linked to the user.
@@ -115,9 +114,7 @@ internal interface IExternalLoginService
     Task UnlinkAsync(
         string provider,
         Guid userId,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken);
 
     /// <summary>

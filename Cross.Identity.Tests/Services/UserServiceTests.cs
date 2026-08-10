@@ -26,7 +26,7 @@ public class UserServiceTests : EFTestsBase
         _jwtTokenService = new Mock<IJwtTokenService>();
         _jwtTokenService
             .Setup(j => j.RevokeAllTokensForUserAsync(
-                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), null, null, null, It.IsAny<CancellationToken>()))
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         _userService = new UserService(
@@ -571,7 +571,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Hash("newPass", "new-pepper")).Returns("$pbkdf2$new");
 
-        await _userService.SetPasswordAsync("Email", email, "newPass", null, null, null, CancellationToken.None);
+        await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
 
         var user = await Context.UsersAccounts.FindAsync(userId);
         user.Should().NotBeNull();
@@ -580,7 +580,7 @@ public class UserServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBeNull();
         user.SecurityStamp.Should().NotBe(oldStamp);
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, null, null, null, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, ClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -588,7 +588,7 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
-        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", null, null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", ClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>();
     }

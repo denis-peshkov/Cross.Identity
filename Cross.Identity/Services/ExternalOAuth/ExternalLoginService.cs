@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Services.ExternalOAuth;
+﻿﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
 /// External OAuth: initiate/callback, exchange code for provider token, user provisioning.
@@ -171,9 +171,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     public async Task UnlinkAsync(
         string provider,
         Guid userId,
-        string? ipAddress,
-        string? userAgent,
-        string? deviceFingerprint,
+        ClientContext clientContext,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
@@ -215,7 +213,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, ipAddress, userAgent, deviceFingerprint, cancellationToken)
+            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, clientContext, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

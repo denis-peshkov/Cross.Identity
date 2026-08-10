@@ -68,13 +68,13 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyA, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
+            userId, familyA, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
         var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
-            otherUserId, Guid.NewGuid(), new List<Claim>(), null, null, null, CancellationToken.None);
+            otherUserId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },

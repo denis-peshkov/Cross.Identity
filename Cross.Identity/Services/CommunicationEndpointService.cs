@@ -96,9 +96,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     public async Task SetPreferredAsync(
         Guid userId,
         Guid endpointId,
-        string? ipAddress = null,
-        string? userAgent = null,
-        string? deviceFingerprint = null,
+        ClientContext clientContext,
         CancellationToken cancellationToken = default)
     {
         var entity = await _context.UsersCommunicationEndpoints
@@ -134,9 +132,9 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             Operation = AuditOperation.CommunicationEndpointChanged,
             EntityType = AuditEntityType.UserCommunicationEndpoint,
             EntityId = endpointId.ToString(),
-            IpAddress = ipAddress,
-            UserAgent = userAgent,
-            DeviceFingerprint = deviceFingerprint,
+            IpAddress = clientContext.IpAddress,
+            UserAgent = clientContext.UserAgent,
+            DeviceFingerprint = clientContext.DeviceFingerprint,
             Notes = "Preferred communication endpoint updated.",
         });
 

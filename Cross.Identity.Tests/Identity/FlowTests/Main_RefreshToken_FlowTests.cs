@@ -67,7 +67,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var oldRefreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
@@ -131,7 +131,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, null, null, null, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var first = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = r1 },
