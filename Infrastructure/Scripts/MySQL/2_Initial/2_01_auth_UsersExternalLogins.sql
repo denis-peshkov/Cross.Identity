@@ -1,6 +1,6 @@
 CREATE TABLE `auth`.`UsersExternalLogins`
 (
-    `UserExternalLoginId` BIGINT       NOT NULL AUTO_INCREMENT,
+    `UserExternalLoginId` CHAR(36)     NOT NULL,
     `UserAccountId`       CHAR(36)     NOT NULL,
     `ProviderId`          SMALLINT     NOT NULL,
     `ProviderUserId`      VARCHAR(200) NOT NULL,
@@ -13,7 +13,7 @@ CREATE TABLE `auth`.`UsersExternalLogins`
     `ExpiresAt`           DATETIME(6)  NULL,
     `Scope`               VARCHAR(500) NULL,
     `CreatedAt`           DATETIME(6)  NOT NULL,
-    `UpdatedAt`          DATETIME(6)  NULL,
+    `UpdatedAt`           DATETIME(6)  NULL,
     `ConcurrencyStamp`    CHAR(36)     NOT NULL,
 
     CONSTRAINT `PK_auth_UsersExternalLogins` PRIMARY KEY (`UserExternalLoginId`)

@@ -1,5 +1,5 @@
-ALTER TABLE auth."EmailVerifications"
-    ADD CONSTRAINT "FK_auth_EmailVerifications_UserAccount"
+ALTER TABLE auth."Audits"
+    ADD CONSTRAINT "FK_auth_Audits_UserAccount"
         FOREIGN KEY ("UserAccountId")
             REFERENCES auth."UsersAccounts" ("UserAccountId")
             ON DELETE CASCADE;

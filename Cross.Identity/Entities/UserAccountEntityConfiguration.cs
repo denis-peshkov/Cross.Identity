@@ -22,10 +22,12 @@ internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAcc
         builder.HasMany(x => x.ExternalLogins)
             .WithOne(x => x.UserAccount)
             .HasForeignKey(x => x.UserAccountId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersExternalLogins)}_UserAccount");
         builder.HasMany(x => x.CommunicationEndpoints)
             .WithOne(x => x.UserAccount)
             .HasForeignKey(x => x.UserAccountId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserAccount");
     }
 }

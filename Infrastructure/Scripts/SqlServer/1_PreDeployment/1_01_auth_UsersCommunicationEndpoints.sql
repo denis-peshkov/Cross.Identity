@@ -1,12 +1,12 @@
 CREATE TABLE [auth].[UsersCommunicationEndpoints]
 (
     [UserCommunicationEndpointId] UNIQUEIDENTIFIER NOT NULL,
-    [UserId]                      UNIQUEIDENTIFIER NOT NULL,
+    [UserAccountId]               UNIQUEIDENTIFIER NOT NULL,
     [Channel]                     SMALLINT         NOT NULL,
     [Address]                     NVARCHAR(320)    NOT NULL,
     [IsVerified]                  BIT              NOT NULL,
     [Source]                      SMALLINT         NOT NULL,
-    [SourceRefId]                 BIGINT           NULL,
+    [EntityId]                    UNIQUEIDENTIFIER NULL,
     [IsPreferred]                 BIT              NOT NULL,
     [CreatedAt]                   DATETIME2(7)     NOT NULL,
     [UpdatedAt]                   DATETIME2(7)     NULL,
@@ -17,19 +17,18 @@ CREATE TABLE [auth].[UsersCommunicationEndpoints]
 GO
 
 CREATE UNIQUE INDEX [UX_auth_UsersCommunicationEndpoints_User_Channel_Address]
-    ON [auth].[UsersCommunicationEndpoints]([UserId], [Channel], [Address]);
+    ON [auth].[UsersCommunicationEndpoints]([UserAccountId], [Channel], [Address]);
 GO
-CREATE INDEX [IX_auth_UsersCommunicationEndpoints_UserId]
-    ON [auth].[UsersCommunicationEndpoints]([UserId]);
+CREATE INDEX [IX_auth_UsersCommunicationEndpoints_UserAccountId]
+    ON [auth].[UsersCommunicationEndpoints]([UserAccountId]);
 GO
-CREATE UNIQUE INDEX [UX_auth_UsersCommunicationEndpoints_User_Preferred]
-    ON [auth].[UsersCommunicationEndpoints]([UserId])
-    WHERE [IsPreferred] = 1;
+CREATE INDEX [IX_auth_UsersCommunicationEndpoints_EntityId]
+    ON [auth].[UsersCommunicationEndpoints]([EntityId]);
 GO
 
 ALTER TABLE [auth].[UsersCommunicationEndpoints]
-    ADD CONSTRAINT [FK_auth_UsersCommunicationEndpoints_User]
-        FOREIGN KEY ([UserId])
+    ADD CONSTRAINT [FK_auth_UsersCommunicationEndpoints_UserAccount]
+        FOREIGN KEY ([UserAccountId])
             REFERENCES [auth].[UsersAccounts] ([UserAccountId])
             ON DELETE CASCADE;
 GO
