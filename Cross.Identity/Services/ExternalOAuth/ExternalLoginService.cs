@@ -213,7 +213,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, ipAddress, userAgent, cancellationToken)
+            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, ipAddress, userAgent, deviceFingerprint: null, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

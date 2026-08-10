@@ -23,6 +23,8 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
     public required string UserAgentKey { get; init; }
 
+    public required string DeviceFingerprintKey { get; init; }
+
     public ILogger Logger { get; set; }
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
@@ -36,10 +38,11 @@ internal sealed class ResetPasswordStep : IStep
         var selector = Selector.Resolve(ctx);
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
+        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
 
-        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)

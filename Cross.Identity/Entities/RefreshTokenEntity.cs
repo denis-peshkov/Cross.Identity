@@ -16,6 +16,7 @@ public class RefreshTokenEntity : IHasConcurrencyStamp
     public RefreshTokenRevokedReason? RevokedReason { get; set; }
     public string? RevokedIpAddress { get; set; }
     public string? RevokedUserAgent { get; set; }
+    public string? RevokedDeviceFingerprint { get; set; }
 
     public string? CreatedDeviceFingerprint { get; set; }
     public string? CreatedUserAgent { get; set; }

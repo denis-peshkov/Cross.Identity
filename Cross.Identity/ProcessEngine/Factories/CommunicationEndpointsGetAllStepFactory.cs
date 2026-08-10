@@ -10,9 +10,9 @@ internal sealed class CommunicationEndpointsGetAllStepFactory : IStepFactory
     {
         return new CommunicationEndpointsGetAllStep
         {
-            Kind = Kind,
+            Kind                   = Kind,
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
-            Next = cfg.StrOpt("next"),
+            Next                   = cfg.StrOpt("next"),
         };
     }
 }

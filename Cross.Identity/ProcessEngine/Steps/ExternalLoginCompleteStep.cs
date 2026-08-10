@@ -38,19 +38,14 @@ internal sealed class ExternalLoginCompleteStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         // Code may be absent when the provider returned Error (OAuth error redirect).
-        ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out string? code);
+        var code = ctx.Get<string?>(BagKey.Qualify(Kind, CodeKey));
         var state = ctx.Get<string>(BagKey.Qualify(Kind, StateKey));
-        string? error = null;
-        string? errorDescription = null;
-        if (!string.IsNullOrWhiteSpace(ErrorKey))
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, ErrorKey), out error);
-        }
-
-        if (!string.IsNullOrWhiteSpace(ErrorDescriptionKey))
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, ErrorDescriptionKey), out errorDescription);
-        }
+        var error = !string.IsNullOrWhiteSpace(ErrorKey)
+            ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorKey))
+            : null;
+        var errorDescription = !string.IsNullOrWhiteSpace(ErrorDescriptionKey)
+            ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorDescriptionKey))
+            : null;
 
         var userId = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
@@ -76,9 +71,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
 
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
+        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
 
         var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
         var refreshToken = await JwtTokenService

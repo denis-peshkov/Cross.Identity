@@ -777,7 +777,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var jwt = new Mock<IJwtTokenService>();
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
-                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, It.IsAny<CancellationToken>()))
+                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
@@ -789,7 +789,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBe(oldStamp);
         jwt.Verify(
             j => j.RevokeAllTokensForUserAsync(
-                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, It.IsAny<CancellationToken>()),
+                userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

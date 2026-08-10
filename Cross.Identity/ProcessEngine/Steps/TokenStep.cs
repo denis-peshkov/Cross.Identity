@@ -42,21 +42,14 @@ internal sealed class TokenStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
+
         var selector = Selector.Resolve(ctx);
 
-        string? passwordValue = null;
-        if (PasswordKey != null)
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, PasswordKey), out passwordValue);
-        }
+        // 1) email/login + password or code (absolute keys such as collectForm.Email are not prefixed with the token step Kind)
+        var passwordValue = PasswordKey is null ? null : ctx.Get<string?>(BagKey.Qualify(Kind, PasswordKey));
+        var codeValue = CodeKey is null ? null : ctx.Get<string?>(BagKey.Qualify(Kind, CodeKey));
 
-        string? codeValue = null;
-        if (CodeKey != null)
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out codeValue);
-        }
-
-        // validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided"
+        // 2) validation: when PasswordKey is absent from JSON, "" must not be treated as "password provided" — otherwise the code branch does not run.
         var validated = false;
         if (PasswordKey != null && !string.IsNullOrEmpty(passwordValue))
         {
@@ -69,17 +62,19 @@ internal sealed class TokenStep : IStep
         if (!validated)
         {
             ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), true);
-            return StepResult.Ok(Next);
+            return StepResult.Ok(Next); // todo: return StepResult.Fail(); mnust correctly handle the case when the user is not found
         }
 
+        // 3) get user data
         var userAccount = await UserService.GetUserByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         var user = userAccount.ToBag();
         ArgumentNullException.ThrowIfNull(user);
-        var id     = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
+        var id      = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
         var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
         var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
-        var username    = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        var username     = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
 
+        // 4) generate AccessToken
         var familyId = Guid.NewGuid();
         var accessClaims = new List<Claim>
             {
@@ -88,13 +83,15 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, email)
             .AddIfNotNull(ClaimTypes.MobilePhone, phone)
             .AddIfNotNull(ClaimConstants.Username, username);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
+        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
         var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
+        // 5) generate RefreshToken
         var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
+        // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
         ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
         ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");

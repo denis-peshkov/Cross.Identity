@@ -171,7 +171,7 @@ public class SendCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenTtlKeyMissingInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
+    public async Task GivenTtlKeyNullInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
         var userId = Guid.NewGuid().ToString();
@@ -210,6 +210,7 @@ public class SendCode_StepTests
         var bag = new Bag();
         bag.Set("collectForm.Field", "Email");
         bag.Set("collectForm.Value", email);
+        bag.Set("collectForm.Ttl", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 

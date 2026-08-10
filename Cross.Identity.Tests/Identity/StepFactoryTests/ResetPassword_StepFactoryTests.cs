@@ -32,7 +32,7 @@ public class ResetPassword_StepFactoryTests
               "passwordKey": "forgotPassword.password",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
+              "deviceFingerprint": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -47,6 +47,7 @@ public class ResetPassword_StepFactoryTests
         step.PasswordKey.Should().Be("forgotPassword.password");
         step.IpAddressKey.Should().Be("collectForm.IpAddress");
         step.UserAgentKey.Should().Be("collectForm.UserAgent");
+        step.DeviceFingerprintKey.Should().Be("collectForm.DeviceFingerprint");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
     }
@@ -62,7 +63,7 @@ public class ResetPassword_StepFactoryTests
               "channel": "email",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint"
+              "deviceFingerprint": "collectForm.DeviceFingerprint"
             }
             """);
 
@@ -84,7 +85,7 @@ public class ResetPassword_StepFactoryTests
               "passwordKey": "password",
               "ipAddressKey": "collectForm.IpAddress",
               "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint"
+              "deviceFingerprint": "collectForm.DeviceFingerprint"
             }
             """);
 

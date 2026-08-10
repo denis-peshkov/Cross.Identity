@@ -41,7 +41,7 @@ public class ResetPassword_StepTests
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";
 
-        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, null, null, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid().ToString());
@@ -53,6 +53,7 @@ public class ResetPassword_StepTests
             PasswordKey = "forgotPassword.password",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
@@ -66,13 +67,16 @@ public class ResetPassword_StepTests
         bag.Set("collectForm.Field", "Email");
         bag.Set("collectForm.Value", email);
         bag.Set("forgotPassword.password", password);
+        bag.Set("resetPassword.IpAddress", null);
+        bag.Set("resetPassword.UserAgent", null);
+        bag.Set("resetPassword.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Email", email, password, null, null, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Email", email, password, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _emailSenderService.Verify(
             x => x.SendAsync("", email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
@@ -87,7 +91,7 @@ public class ResetPassword_StepTests
         var password = "P@ssw0rd!";
         var userIdText = userId.ToString();
 
-        _userService.Setup(u => u.SetPasswordAsync("Id", userIdText, password, null, null, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.SetPasswordAsync("Id", userIdText, password, null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userService.Setup(u => u.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userIdText);
@@ -99,6 +103,7 @@ public class ResetPassword_StepTests
             PasswordKey = "collectForm.NewPassword",
             IpAddressKey = "IpAddress",
             UserAgentKey = "UserAgent",
+            DeviceFingerprintKey = "DeviceFingerprint",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
@@ -112,13 +117,16 @@ public class ResetPassword_StepTests
         bag.Set("collectForm.Field", "Id");
         bag.Set("collectForm.Value", userIdText);
         bag.Set("collectForm.NewPassword", password);
+        bag.Set("resetPassword.IpAddress", null);
+        bag.Set("resetPassword.UserAgent", null);
+        bag.Set("resetPassword.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Id", userIdText, password, null, null, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Id", userIdText, password, null, null, null, It.IsAny<CancellationToken>()),
             Times.Once);
         _userService.Verify(
             u => u.GetUserByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),

@@ -28,8 +28,8 @@ internal sealed class ExternalLoginUnlinkStep : IStep
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
 
         await ExternalLoginService.UnlinkAsync(provider, userId, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
 

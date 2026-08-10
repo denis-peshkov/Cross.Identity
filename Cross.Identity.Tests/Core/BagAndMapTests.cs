@@ -37,6 +37,9 @@ public sealed class BagAndMapTests
         var miss = () => bag.Get<int>("missing");
         miss.Should().Throw<KeyNotFoundException>();
 
+        var missRef = () => bag.Get<string?>("missing");
+        missRef.Should().Throw<KeyNotFoundException>();
+
         var badCast = () => bag.Get<int>("x");
         badCast.Should().Throw<InvalidCastException>();
 
@@ -72,7 +75,7 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenSelectorJson_WhenFromJson_ThenParsesOptions()
+    public void GivenSelectorJson_WhenFromJson_ThenParsesCandidatesAndKeepsFixedDefaults()
     {
         using var json = JsonDocument.Parse(
             """
@@ -85,8 +88,9 @@ public sealed class BagAndMapTests
         var parsed = Selector.FromJson(json.RootElement);
         parsed.FieldKey.Should().Be("collectForm.Field");
         parsed.ValueKey.Should().Be("collectForm.Value");
-        parsed.Required.Should().BeFalse();
-        parsed.CaseInsensitive.Should().BeFalse();
+        // Required / CaseInsensitive are fixed on Selector (JSON flags are ignored).
+        parsed.Required.Should().BeTrue();
+        parsed.CaseInsensitive.Should().BeTrue();
         parsed.Candidates.Should().BeEquivalentTo("Email", "PhoneNumber");
     }
 

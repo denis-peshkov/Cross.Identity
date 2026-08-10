@@ -118,6 +118,7 @@ public interface IJwtTokenService
         string refreshToken,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -190,6 +191,7 @@ public interface IJwtTokenService
         string newJti,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -203,6 +205,7 @@ public interface IJwtTokenService
         string? refreshToken,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -222,6 +225,7 @@ public interface IJwtTokenService
         string? refreshToken,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -238,6 +242,7 @@ public interface IJwtTokenService
         RefreshTokenRevokedReason reason,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -254,6 +259,7 @@ public interface IJwtTokenService
         RefreshTokenRevokedReason reason,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 }
 

@@ -247,6 +247,7 @@ internal sealed class UserService : IUserService
         string newPassword,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
@@ -268,7 +269,7 @@ internal sealed class UserService : IUserService
         user.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, ipAddress, userAgent, cancellationToken)
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, ipAddress, userAgent, deviceFingerprint, cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

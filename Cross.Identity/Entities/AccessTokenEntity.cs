@@ -21,6 +21,7 @@ public class AccessTokenEntity : IHasConcurrencyStamp
     public RefreshTokenRevokedReason? RevokedReason { get; set; }
     public string? RevokedIpAddress { get; set; }
     public string? RevokedUserAgent { get; set; }
+    public string? RevokedDeviceFingerprint { get; set; }
 
     /// <inheritdoc />
     public Guid ConcurrencyStamp { get; set; }

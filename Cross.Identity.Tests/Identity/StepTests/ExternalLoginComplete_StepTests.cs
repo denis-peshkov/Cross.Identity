@@ -134,6 +134,7 @@ public class ExternalLoginComplete_StepTests
         };
 
         var bag = new Bag();
+        bag.Set("externalLoginComplete.Code", null);
         bag.Set("externalLoginComplete.State", "state");
         bag.Set("externalLoginComplete.Error", "access_denied");
         bag.Set("externalLoginComplete.ErrorDescription", "Denied");
@@ -162,6 +163,9 @@ public class ExternalLoginComplete_StepTests
         var bag = new Bag();
         bag.Set("externalLoginComplete.Code", "code");
         bag.Set("externalLoginComplete.State", "state");
+        bag.Set("externalLoginComplete.IpAddress", null);
+        bag.Set("externalLoginComplete.UserAgent", null);
+        bag.Set("externalLoginComplete.DeviceFingerprint", null);
         return bag;
     }
 }

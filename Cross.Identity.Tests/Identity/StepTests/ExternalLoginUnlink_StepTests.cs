@@ -34,6 +34,8 @@ public class ExternalLoginUnlink_StepTests
         var bag = new Bag();
         bag.Set("externalLoginUnlink.Provider", "Google");
         bag.Set("externalLoginUnlink.UserId", userId);
+        bag.Set("externalLoginUnlink.IpAddress", null);
+        bag.Set("externalLoginUnlink.UserAgent", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 

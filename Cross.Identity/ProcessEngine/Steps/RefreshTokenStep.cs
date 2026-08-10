@@ -62,10 +62,10 @@ internal sealed class RefreshTokenStep : IStep
     {
         // 1) validate the token (revoked reuse → family REPLAY_DETECTED + Conflict)
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey), out var deviceFingerprint);
-        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
+        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
+        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 2) get UserId from the refresh token
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
@@ -102,7 +102,7 @@ internal sealed class RefreshTokenStep : IStep
         // 6) Invalidate old RefreshToken
         var newJti = JwtTokenService.GetClaimValue(refreshToken, JwtRegisteredClaimNames.Jti);
         ArgumentException.ThrowIfNullOrEmpty(newJti);
-        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 7) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

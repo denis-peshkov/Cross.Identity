@@ -33,7 +33,7 @@
     },
     {
       "kind": "sendCode",
-      "lockChannelAsEmail": true,
+      "channel": "email",
       "next": "collectResult"
     },
     {

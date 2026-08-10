@@ -88,5 +88,6 @@ internal interface IUserService
         string newPassword,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 }

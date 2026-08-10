@@ -27,7 +27,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
         string? returnUrl = null;
         if (!string.IsNullOrWhiteSpace(ReturnUrlKey))
         {
-            ctx.TryGet(BagKey.Qualify(Kind, ReturnUrlKey), out returnUrl);
+            returnUrl = ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
         }
 
         Guid? linkUserId = null;

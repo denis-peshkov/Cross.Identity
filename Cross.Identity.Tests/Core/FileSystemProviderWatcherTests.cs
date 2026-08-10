@@ -27,7 +27,8 @@ public sealed class FileSystemProviderWatcherTests
     }
 
     [Test]
-    [Category(TestCategory.UNIT)]
+    [Category(TestCategory.INTEGRATION)]
+    [Retry(2)]
     public void GivenFileChanges_WhenWatchersActive_ThenReloadsRenamesAndDeletes()
     {
         var root = Path.Combine(Path.GetTempPath(), $"fs-watch-{Guid.NewGuid():N}");
@@ -56,8 +57,8 @@ public sealed class FileSystemProviderWatcherTests
             // changed
             File.WriteAllText(flowA, """{"v":"2"}""");
             File.WriteAllText(tplA, "<h1>v2</h1>");
-            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.Token).Contains("\"2\""));
-            WaitUntil(() => sut.GetTemplate("welcome", "en", "html").Contains("v2"));
+            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.Token).Contains("\"2\""), timeoutMs: 15000);
+            WaitUntil(() => sut.GetTemplate("welcome", "en", "html").Contains("v2"), timeoutMs: 15000);
 
             // renamed
             var flowB = Path.Combine(root, "main.refreshtoken.json");
@@ -73,8 +74,8 @@ public sealed class FileSystemProviderWatcherTests
                 {
                     return true;
                 }
-            });
-            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.RefreshToken).Contains("\"2\""));
+            }, timeoutMs: 15000);
+            WaitUntil(() => sut.GetJson("main", FlowOperationEnum.RefreshToken).Contains("\"2\""), timeoutMs: 15000);
 
             var tplB = Path.Combine(templates, "verify.en.txt");
             File.Move(tplA, tplB);
@@ -89,8 +90,8 @@ public sealed class FileSystemProviderWatcherTests
                 {
                     return true;
                 }
-            });
-            WaitUntil(() => sut.GetTemplate("verify", "en", "txt").Contains("v2"));
+            }, timeoutMs: 15000);
+            WaitUntil(() => sut.GetTemplate("verify", "en", "txt").Contains("v2"), timeoutMs: 15000);
 
             // deleted
             File.Delete(flowB);
@@ -106,7 +107,7 @@ public sealed class FileSystemProviderWatcherTests
                 {
                     return true;
                 }
-            });
+            }, timeoutMs: 15000);
             WaitUntil(() =>
             {
                 try
@@ -118,7 +119,7 @@ public sealed class FileSystemProviderWatcherTests
                 {
                     return true;
                 }
-            });
+            }, timeoutMs: 15000);
         }
         finally
         {

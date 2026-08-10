@@ -16,16 +16,15 @@ internal sealed class LogoutStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
-
         return new LogoutStep
         {
-            Kind            = Kind,
-            JwtTokenService = jwtTokenService,
-            RefreshTokenKey = cfg.Str("refreshTokenKey"),
-            IpAddressKey    = cfg.Str("ipAddressKey"),
-            UserAgentKey    = cfg.Str("userAgentKey"),
-            Next            = cfg.StrOpt("next"),
+            Kind                 = Kind,
+            JwtTokenService      = sp.GetRequiredService<IJwtTokenService>(),
+            RefreshTokenKey      = cfg.Str("refreshTokenKey"),
+            IpAddressKey         = cfg.Str("ipAddressKey"),
+            UserAgentKey         = cfg.Str("userAgentKey"),
+            DeviceFingerprintKey = cfg.Str("deviceFingerprint"),
+            Next                 = cfg.StrOpt("next"),
         };
     }
 }

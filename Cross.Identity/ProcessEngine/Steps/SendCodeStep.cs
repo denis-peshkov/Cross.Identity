@@ -117,8 +117,6 @@ internal sealed class SendCodeStep : IStep
         if (string.IsNullOrWhiteSpace(TtlKey))
             return ttlDefault;
 
-        return ctx.TryGet(BagKey.Qualify(Kind, TtlKey), out TimeSpan? ttl) && ttl is not null
-            ? ttl.Value
-            : ttlDefault;
+        return ctx.Get<TimeSpan?>(BagKey.Qualify(Kind, TtlKey)) ?? ttlDefault;
     }
 }

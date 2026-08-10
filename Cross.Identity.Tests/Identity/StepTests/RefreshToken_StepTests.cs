@@ -34,7 +34,7 @@ public class RefreshToken_StepTests
             NormalizedUserName = "user"
         };
 
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
@@ -44,7 +44,7 @@ public class RefreshToken_StepTests
             .ReturnsAsync(newAccessToken);
         _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>(), null, null, null, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newRefreshToken);
-        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", null, null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _userService.Setup(u => u.GetUserByAsync("Id", userId.ToString(), It.IsAny<CancellationToken>()))
@@ -66,6 +66,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", refreshTokenHash);
+        bag.Set("refreshToken.IpAddress", null);
+        bag.Set("refreshToken.UserAgent", null);
+        bag.Set("refreshToken.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -80,7 +83,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, null, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new RefreshTokenStep
@@ -99,6 +102,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "invalid-hash");
+        bag.Set("refreshToken.IpAddress", null);
+        bag.Set("refreshToken.UserAgent", null);
+        bag.Set("refreshToken.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -110,7 +116,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), null, null, null, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Refresh token has already been used."));
 
         var step = new RefreshTokenStep
@@ -129,6 +135,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "already-used-hash");
+        bag.Set("refreshToken.IpAddress", null);
+        bag.Set("refreshToken.UserAgent", null);
+        bag.Set("refreshToken.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 

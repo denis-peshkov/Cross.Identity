@@ -21,6 +21,8 @@ internal sealed class LogoutAllStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
     public required string UserAgentKey { get; init; }
 
+    public required string DeviceFingerprintKey { get; init; }
+
     /// <summary>Service for working with JWT and token entities.</summary>
     public required IJwtTokenService JwtTokenService { get; init; }
 
@@ -28,10 +30,11 @@ internal sealed class LogoutAllStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, IpAddressKey), out var ipAddress);
-        ctx.TryGet<string?>(BagKey.Qualify(Kind, UserAgentKey), out var userAgent);
+        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
+        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
+        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
 
-        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, ipAddress, userAgent, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

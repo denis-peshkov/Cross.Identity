@@ -446,7 +446,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var oldToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
         var newJti = Guid.NewGuid().ToString();
 
-        await _jwtTokenService.InvalidateRefreshTokenAsync(oldToken, newJti, null, null, CancellationToken.None);
+        await _jwtTokenService.InvalidateRefreshTokenAsync(oldToken, newJti, null, null, null, CancellationToken.None);
 
         var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(oldToken)));
         var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
@@ -458,7 +458,7 @@ public class JwtTokenServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingRefreshToken_WhenInvalidateRefreshTokenAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
-        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync("nonexistent-token", Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync("nonexistent-token", Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*Refresh token not found*");
@@ -471,9 +471,9 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
-        await _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        await _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(token, Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
@@ -493,9 +493,9 @@ public class JwtTokenServiceTests : EFTestsBase
         var accessInFamily = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
         var otherFamilyRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(userId, otherFamilyId, new List<Claim>(), null, null, null, CancellationToken.None);
 
-        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
@@ -525,7 +525,7 @@ public class JwtTokenServiceTests : EFTestsBase
     {
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>(), null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(token, null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(token, null, null, null, CancellationToken.None);
 
         await act.Should().NotThrowAsync();
     }
@@ -534,7 +534,7 @@ public class JwtTokenServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingRefreshToken_WhenEnsureRefreshTokenActiveForRotationAsync_ThenThrowsNotAuthorizedAsync()
     {
-        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync("missing-token", null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync("missing-token", null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotAuthorizedException>()
             .WithMessage("*Invalid or expired refresh token*");
@@ -548,9 +548,9 @@ public class JwtTokenServiceTests : EFTestsBase
         var familyId = Guid.NewGuid();
         var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
         var r2 = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
-        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, CancellationToken.None);
+        await _jwtTokenService.InvalidateRefreshTokenAsync(r1, Guid.NewGuid().ToString(), null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(r1, null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(r1, null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
@@ -569,7 +569,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
 
-        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, CancellationToken.None);
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, null, CancellationToken.None);
 
         var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
         var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
@@ -583,8 +583,8 @@ public class JwtTokenServiceTests : EFTestsBase
     {
         var act = async () =>
         {
-            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(null, null, null, CancellationToken.None);
-            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync("   ", null, null, CancellationToken.None);
+            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(null, null, null, null, CancellationToken.None);
+            await _jwtTokenService.RevokeRefreshTokenForLogoutAsync("   ", null, null, null, CancellationToken.None);
         };
 
         await act.Should().NotThrowAsync();
@@ -597,9 +597,9 @@ public class JwtTokenServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
-        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, CancellationToken.None);
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, null, CancellationToken.None);
 
         await act.Should().NotThrowAsync();
     }
@@ -618,7 +618,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyA, new List<string>(), new List<Claim>(), null, null, null, CancellationToken.None);
         var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(otherUserId, Guid.NewGuid(), new List<Claim>(), null, null, null, CancellationToken.None);
 
-        await _jwtTokenService.RevokeAllTokensForLogoutAsync(refreshA, null, null, CancellationToken.None);
+        await _jwtTokenService.RevokeAllTokensForLogoutAsync(refreshA, null, null, null, CancellationToken.None);
 
         (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeFalse();
@@ -636,8 +636,8 @@ public class JwtTokenServiceTests : EFTestsBase
     {
         var act = async () =>
         {
-            await _jwtTokenService.RevokeAllTokensForLogoutAsync(null, null, null, CancellationToken.None);
-            await _jwtTokenService.RevokeAllTokensForLogoutAsync("   ", null, null, CancellationToken.None);
+            await _jwtTokenService.RevokeAllTokensForLogoutAsync(null, null, null, null, CancellationToken.None);
+            await _jwtTokenService.RevokeAllTokensForLogoutAsync("   ", null, null, null, CancellationToken.None);
         };
 
         await act.Should().NotThrowAsync();
@@ -647,7 +647,7 @@ public class JwtTokenServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRefreshToken_WhenRevokeAllTokensForLogoutAsync_ThenThrowsNotAuthorizedAsync()
     {
-        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync("not-a-token", null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync("not-a-token", null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotAuthorizedException>()
             .WithMessage("*Invalid or expired refresh token*");
@@ -658,9 +658,9 @@ public class JwtTokenServiceTests : EFTestsBase
     public async Task GivenAlreadyRevokedRefreshToken_WhenRevokeAllTokensForLogoutAsync_ThenThrowsNotAuthorizedAsync()
     {
         var token = await _jwtTokenService.GenerateRefreshTokenAsync(Guid.NewGuid(), Guid.NewGuid(), new List<Claim>(), null, null, null, CancellationToken.None);
-        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, CancellationToken.None);
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(token, null, null, null, CancellationToken.None);
 
-        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync(token, null, null, CancellationToken.None);
+        var act = () => _jwtTokenService.RevokeAllTokensForLogoutAsync(token, null, null, null, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotAuthorizedException>()
             .WithMessage("*Invalid or expired refresh token*");
@@ -678,7 +678,7 @@ public class JwtTokenServiceTests : EFTestsBase
         var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), null, null, null, CancellationToken.None);
         var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(otherUserId, Guid.NewGuid(), new List<Claim>(), null, null, null, CancellationToken.None);
 
-        await _jwtTokenService.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, null, null, CancellationToken.None);
+        await _jwtTokenService.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, null, null, null, CancellationToken.None);
         await Context.SaveChangesAsync();
 
         (await _jwtTokenService.ValidateAccessTokenAsync(accessToken, CancellationToken.None)).Should().BeFalse();

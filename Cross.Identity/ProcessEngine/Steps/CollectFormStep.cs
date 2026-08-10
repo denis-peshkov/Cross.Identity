@@ -42,21 +42,31 @@ internal sealed class CollectFormStep : IStep
         if (!res.IsValid)
             return StepResult.Fail(new ValidationException(res.Errors));
 
-        // 3) write to Bag with the step name prefix; PhoneNumber → PhoneE164
+        // 3) write to Bag with the step name prefix; PhoneNumber → PhoneE164.
+        // Always materialize every schema field (null when absent) so later steps can use Get<T?>.
         var phoneNumberKeys = new HashSet<string>(
             Schema.Fields.Where(f => f.Type == FieldTypeEnum.PhoneNumber).Select(f => f.Key),
             StringComparer.Ordinal);
+        var schemaKeys = new HashSet<string>(Schema.Fields.Select(f => f.Key), StringComparer.Ordinal);
 
-        foreach (var (k, v) in data)
+        foreach (var field in Schema.Fields)
         {
-            var bagKey = BagKey.Qualify(Kind, k); // "{Kind}.{k}" when the key is relative
-            var value = v;
-            if (phoneNumberKeys.Contains(k) && v is string phoneNumber && !string.IsNullOrWhiteSpace(phoneNumber))
+            data.TryGetValue(field.Key, out var value);
+            if (phoneNumberKeys.Contains(field.Key) && value is string phoneNumber && !string.IsNullOrWhiteSpace(phoneNumber))
             {
                 value = PhoneE164.Require(phoneNumber);
             }
 
-            ctx.Set(bagKey, value);
+            ctx.Set(BagKey.Qualify(Kind, field.Key), value);
+        }
+
+        // Keep any extra incoming keys that are not in the schema.
+        foreach (var (k, v) in data)
+        {
+            if (schemaKeys.Contains(k))
+                continue;
+
+            ctx.Set(BagKey.Qualify(Kind, k), v);
         }
 
         // 4) optional identity selector slot (candidates → FieldKey / ValueKey)
