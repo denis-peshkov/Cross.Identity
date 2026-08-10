@@ -98,10 +98,7 @@ public sealed record Selector
         {
             ChannelEnum.Email => new Selector { Candidates = new[] { "Email" } },
 
-            ChannelEnum.Telegram or
-            ChannelEnum.Viber or
-            ChannelEnum.WatsApp or
-            ChannelEnum.Sms => new Selector { Candidates = new[] { "PhoneNumber" } },
+            _ when channel.IsPhoneChannel() => new Selector { Candidates = new[] { "PhoneNumber" } },
 
             _ => new Selector { Candidates = new[] { "UserName" } }
         };

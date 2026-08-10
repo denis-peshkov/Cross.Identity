@@ -29,7 +29,7 @@ internal sealed class VerifyCodeStep : IStep
         var selector = Selector.Resolve(ctx);
         // OTP verify uses Email/Sms storage keyed by login field (not preferred messenger).
         var channel = Selector.ChannelForField(selector.Field) ?? Channel;
-        if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
+        if (!channel.SupportsOtp())
             throw new ValidationException("Provide an email or a phone number to verify a code.");
 
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));

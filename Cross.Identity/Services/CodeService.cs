@@ -80,10 +80,8 @@ internal sealed class CodeService : ICodeService
                 await _context.PhoneVerifications.AddAsync(phoneEntity, cancellationToken).ConfigureAwait(false);
                 break;
 
-            case ChannelEnum.Telegram:
-            case ChannelEnum.Viber:
-            case ChannelEnum.WatsApp:
             default:
+                // Messenger senders not implemented yet.
                 break;
         }
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

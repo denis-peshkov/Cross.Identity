@@ -41,7 +41,7 @@ internal sealed class ForgotPasswordStep : IStep
         var channel = await CommunicationEndpoints
             .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
             .ConfigureAwait(false);
-        if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
+        if (!channel.SupportsOtp())
             throw new ValidationException("Provide an email or a phone number to reset a password.");
 
         var code = channel == ChannelEnum.Sms

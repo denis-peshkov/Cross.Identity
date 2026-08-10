@@ -2,14 +2,6 @@
 
 internal sealed class CommunicationEndpointService : ICommunicationEndpointService
 {
-    private static readonly ChannelEnum[] PhoneChannels =
-    {
-        ChannelEnum.Sms,
-        ChannelEnum.Telegram,
-        ChannelEnum.Viber,
-        ChannelEnum.WatsApp,
-    };
-
     private readonly IdentityContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -170,7 +162,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
                 .Where(x => x.UserAccountId == userId
                             && x.IsVerified
                             && x.Address == address
-                            && PhoneChannels.Contains(x.Channel))
+                            && ChannelEnumExtensions.PhoneChannels.Contains(x.Channel))
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
@@ -185,8 +177,8 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
                 return phoneEndpoints[0].Channel;
             }
 
-            return fallback is ChannelEnum.Sms or ChannelEnum.Telegram or ChannelEnum.Viber or ChannelEnum.WatsApp
-                ? fallback.Value
+            return fallback is { } phoneFallback && phoneFallback.IsPhoneChannel()
+                ? phoneFallback
                 : ChannelEnum.Sms;
         }
 
@@ -222,14 +214,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
                 cancellationToken)
             .ConfigureAwait(false);
 
-        // OTP persistence currently supports Email + Sms only; messengers fall back to Sms for the same phone.
-        return channel switch
-        {
-            ChannelEnum.Email => ChannelEnum.Email,
-            ChannelEnum.Sms => ChannelEnum.Sms,
-            ChannelEnum.Telegram or ChannelEnum.Viber or ChannelEnum.WatsApp => ChannelEnum.Sms,
-            _ => ChannelEnum.Email,
-        };
+        return channel.ToOtpChannel();
     }
 
     /// <inheritdoc />

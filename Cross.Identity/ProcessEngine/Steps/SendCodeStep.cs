@@ -46,7 +46,7 @@ internal sealed class SendCodeStep : IStep
         var channel = await CommunicationEndpoints
             .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
             .ConfigureAwait(false);
-        if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
+        if (!channel.SupportsOtp())
             throw new ValidationException("Provide an email or a phone number to send a code.");
 
         var ttl = ResolveTtl(ctx);

@@ -54,11 +54,8 @@ internal sealed class ResetPasswordStep : IStep
                           .ResolveDeliveryChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
                           .ConfigureAwait(false);
 
-        // Password-change notice: Email/Sms only until messenger senders exist.
-        if (channel is ChannelEnum.Telegram or ChannelEnum.Viber or ChannelEnum.WatsApp)
-            channel = ChannelEnum.Sms;
-
-        if (channel is not (ChannelEnum.Email or ChannelEnum.Sms))
+        channel = channel.ToEmailOrSmsNotification();
+        if (!channel.SupportsOtp())
             return StepResult.Ok(Next);
 
         var notifyAddress = preferred?.Address ?? selector.Value;
