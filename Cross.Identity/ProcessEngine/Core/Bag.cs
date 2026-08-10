@@ -27,13 +27,21 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         }
 
         // Guid is not handled by Convert.ChangeType from string (form fields are strings).
-        if (typeof(T) == typeof(Guid) && v is string guidText && Guid.TryParse(guidText, out var guid))
-            return (T)(object)guid;
-
-        if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid)
-            && v is string nullableGuidText
-            && Guid.TryParse(nullableGuidText, out var nullableGuid))
-            return (T)(object)nullableGuid;
+        if (v is string text)
+        {
+            if (typeof(T) == typeof(Guid))
+            {
+                if (Guid.TryParse(text, out var guid))
+                    return (T)(object)guid;
+            }
+            else if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid))
+            {
+                // Optional Guid?: empty / invalid → null (e.g. optional link UserId).
+                if (string.IsNullOrWhiteSpace(text) || !Guid.TryParse(text, out var optionalGuid))
+                    return default!;
+                return (T)(object)optionalGuid;
+            }
+        }
 
         // Attempt generic conversion (int→decimal, string→int, etc.)
         try

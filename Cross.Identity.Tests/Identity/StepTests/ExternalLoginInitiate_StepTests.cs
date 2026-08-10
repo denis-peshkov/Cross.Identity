@@ -63,7 +63,7 @@ public class ExternalLoginInitiate_StepTests
 
         var bagWithString = new Bag();
         bagWithString.Set("externalLoginInitiate.Provider", "Google");
-        bagWithString.Set("UserId", linkUserId.ToString());
+        bagWithString.Set("externalLoginInitiate.UserId", linkUserId.ToString());
         await step.ExecuteAsync(bagWithString, CancellationToken.None);
 
         _externalLoginService.Verify(

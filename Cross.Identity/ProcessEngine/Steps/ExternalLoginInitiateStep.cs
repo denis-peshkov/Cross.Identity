@@ -24,48 +24,17 @@ internal sealed class ExternalLoginInitiateStep : IStep
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
 
-        string? returnUrl = null;
-        if (!string.IsNullOrWhiteSpace(ReturnUrlKey))
-        {
-            returnUrl = ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
-        }
+        var returnUrl = string.IsNullOrWhiteSpace(ReturnUrlKey)
+            ? null
+            : ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
 
-        Guid? linkUserId = null;
-        if (!string.IsNullOrWhiteSpace(UserIdKey))
-        {
-            if (!TryReadUserId(ctx, UserIdKey, out linkUserId)
-                && !TryReadUserId(ctx, BagKey.Qualify(Kind, UserIdKey), out linkUserId))
-            {
-                linkUserId = null;
-            }
-        }
+        var linkUserId = string.IsNullOrWhiteSpace(UserIdKey)
+            ? null
+            : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserIdKey));
 
         var url = await ExternalLoginService.InitiateAsync(provider, returnUrl, linkUserId, cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Url"), url);
 
         return StepResult.Ok(Next);
-    }
-
-    private static bool TryReadUserId(Bag ctx, string key, out Guid? linkUserId)
-    {
-        linkUserId = null;
-        if (!ctx.TryGet<object?>(key, out var linkUserIdRaw) || linkUserIdRaw is null)
-        {
-            return false;
-        }
-
-        if (linkUserIdRaw is Guid guid)
-        {
-            linkUserId = guid;
-            return true;
-        }
-
-        if (Guid.TryParse(linkUserIdRaw.ToString(), out var parsed))
-        {
-            linkUserId = parsed;
-            return true;
-        }
-
-        return false;
     }
 }

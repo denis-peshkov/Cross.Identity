@@ -37,6 +37,9 @@ public sealed class BagAndMapTests
 
         bag.Get<Guid>("id").Should().Be(id);
         bag.Get<Guid?>("id").Should().Be(id);
+        new Bag().Set("empty", "").Get<Guid?>("empty").Should().BeNull();
+        new Bag().Set("empty", null).Get<Guid?>("empty").Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").Get<Guid?>("bad").Should().BeNull();
     }
 
     [Test]
