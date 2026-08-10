@@ -151,6 +151,58 @@ public sealed class BagAndMapTests
 
         bag.Get<string>("collectForm.Field").Should().Be("PhoneNumber");
         bag.Get<string>("collectForm.Value").Should().Be("+1234567890");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().Be(ChannelEnum.Sms);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenEmailPhoneAndUserName_WhenBind_ThenPrefersEmail()
+    {
+        var bag = new Bag()
+            .Set("collectForm.Email", "a@b.co")
+            .Set("collectForm.PhoneNumber", "+79161234567")
+            .Set("collectForm.UserName", "alice");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("Email");
+        bag.Get<string>("collectForm.Value").Should().Be("a@b.co");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().Be(ChannelEnum.Email);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenOnlyUserName_WhenBind_ThenWritesUserNameWithoutChannel()
+    {
+        var bag = new Bag().Set("collectForm.UserName", "alice");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("UserName");
+        bag.Get<string>("collectForm.Value").Should().Be("alice");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenNoCandidateValues_WhenBind_ThenThrowsValidationException()
+    {
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        FluentActions.Invoking(() => selector.Bind(new Bag()))
+            .Should().Throw<ValidationException>()
+            .WithMessage("*email, phone, or user name*");
     }
 
     [Test]

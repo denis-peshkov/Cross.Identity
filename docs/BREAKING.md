@@ -241,7 +241,7 @@ Bag / form / entity / DB use `PhoneNumber` (`UsersAccounts`, `PhoneVerifications
 `VerifyCodeStep` / `CodeAuthStep` and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
 Flow JSON / custom overrides must use enum names: `email`, `sms` (not `phone`).
 
-`EmailOrPhoneBag.Resolve` returns `(Field, Value, ChannelEnum?)` — phone maps to `ChannelEnum.Sms`.
+`Selector.Bind` + `Selector.ChannelForField`: phone → `ChannelEnum.Sms`, email → `ChannelEnum.Email`, user name → no channel.
 
 **Action:** replace `"channel": "phone"` with `"channel": "sms"` in custom `verifyCode` / `codeAuth` steps; update callers of `VerifyAsync`.
 

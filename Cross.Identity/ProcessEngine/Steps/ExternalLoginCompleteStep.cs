@@ -38,17 +38,17 @@ internal sealed class ExternalLoginCompleteStep : IStep
             ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorDescriptionKey))
             : null;
 
-        var userId = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
+        var completion = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), userId.UserId);
-        ctx.Set(BagKey.Qualify(Kind, "IsLinking"), userId.IsLinking);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), completion.UserId);
+        ctx.Set(BagKey.Qualify(Kind, "IsLinking"), completion.IsLinking);
 
-        if (userId.IsLinking)
+        if (completion.IsLinking)
         {
             return StepResult.Ok(Next);
         }
 
-        var user = await UserService.GetUserByAsync("Id", userId.UserId.ToString(), cancellationToken).ConfigureAwait(false);
+        var user = await UserService.GetUserByAsync("Id", completion.UserId.ToString(), cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(user);
 
         var familyId = Guid.NewGuid();
@@ -62,14 +62,14 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
         var client = ClientContext.Read(ctx);
 
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(user.Id, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
         var refreshToken = await JwtTokenService
             .GenerateRefreshTokenAsync(
-                userId.UserId,
+                user.Id,
                 familyId,
                 new List<Claim>
                 {
-                    new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString())
+                    new(JwtRegisteredClaimNames.Sub, user.Id.ToString())
                 },
                 client.IpAddress,
                 client.UserAgent,
