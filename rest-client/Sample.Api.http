@@ -160,20 +160,21 @@ Content-Type: application/json
 
 ###
 # @name main-communication-endpoints-get-all
-# Requires authenticated caller. Lists verified/candidate communication endpoints + preferred flag.
+# UserId identifies the account (same pattern as ExternalLoginGetAll).
 POST {{HOST}}/api/identity/main/CommunicationEndpointsGetAll
 Content-Type: application/json
-Authorization: Bearer {{ACCESS_TOKEN}}
 
-{}
+{
+  "UserId": "{{USER_ID}}"
+}
 
 ###
 # @name main-communication-endpoint-set-preferred
-# Requires authenticated caller. Sets the single preferred communication endpoint (must be verified).
+# Sets the single preferred communication endpoint (must be verified).
 POST {{HOST}}/api/identity/main/CommunicationEndpointSetPreferred
 Content-Type: application/json
-Authorization: Bearer {{ACCESS_TOKEN}}
 
 {
+  "UserId": "{{USER_ID}}",
   "EndpointId": "{{ENDPOINT_ID}}"
 }

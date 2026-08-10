@@ -30,6 +30,17 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenGuidString_WhenGetGuid_ThenParses()
+    {
+        var id = Guid.NewGuid();
+        var bag = new Bag().Set("id", id.ToString());
+
+        bag.Get<Guid>("id").Should().Be(id);
+        bag.Get<Guid?>("id").Should().Be(id);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidKey_WhenGet_ThenThrows()
     {
         var bag = new Bag().Set("x", "abc").Set("n", null);

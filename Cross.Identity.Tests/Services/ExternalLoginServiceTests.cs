@@ -999,7 +999,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             optionsMock.Object,
             _logger.Object,
             jwtTokenService ?? Mock.Of<IJwtTokenService>(),
-            new CommunicationEndpointService(Context, Mock.Of<IHttpContextAccessor>()),
+            new CommunicationEndpointService(Context, new AuditService(Context)),
             provisioner);
     }
 

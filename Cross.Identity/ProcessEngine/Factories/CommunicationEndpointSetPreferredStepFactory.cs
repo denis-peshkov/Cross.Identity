@@ -11,6 +11,7 @@ internal sealed class CommunicationEndpointSetPreferredStepFactory : IStepFactor
         return new CommunicationEndpointSetPreferredStep
         {
             Kind                   = Kind,
+            UserIdKey              = cfg.Str("userIdKey"),
             EndpointIdKey          = cfg.Str("endpointIdKey"),
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
             Next                   = cfg.StrOpt("next"),

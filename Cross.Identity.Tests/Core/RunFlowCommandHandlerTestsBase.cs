@@ -118,7 +118,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(env);
 
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
-            new CommunicationEndpointService(Context, Mock.Of<IHttpContextAccessor>()));
+            new CommunicationEndpointService(Context, new AuditService(Context)));
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)

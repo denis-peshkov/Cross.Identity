@@ -5,7 +5,6 @@
 internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
-    private HttpContextAccessor _httpContextAccessor = null!;
     private CommunicationEndpointService _endpoints = null!;
 
     [SetUp]
@@ -14,8 +13,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         base.Setup();
         Initialize();
 
-        _httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
-        _endpoints = new CommunicationEndpointService(Context, _httpContextAccessor);
+        _endpoints = new CommunicationEndpointService(Context, new AuditService(Context));
 
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CommunicationEndpointsGetAllStepFactory>();
@@ -24,27 +22,17 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(_endpoints);
-        RegisterToServiceProvider<IHttpContextAccessor, IHttpContextAccessor>(_httpContextAccessor);
-    }
-
-    private void SetUser(Guid userId)
-    {
-        var identity = new ClaimsIdentity(
-            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
-            authenticationType: "Test");
-        _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
     }
 
     [Test]
-    public async Task CommunicationEndpointsGetAll_WhenAuthenticated_ShouldReturnEndpoints()
+    public async Task CommunicationEndpointsGetAll_WhenUserIdProvided_ShouldReturnEndpoints()
     {
         var userId = Guid.NewGuid();
-        SetUser(userId);
         AddToDb(new UserAccountEntity { Id = userId, Email = "c@example.com", EmailConfirmed = true });
         await _endpoints.SyncAccountContactsAsync(userId);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?>(),
+            new Dictionary<string, object?> { ["UserId"] = userId.ToString() },
             Flow,
             FlowOperationEnum.CommunicationEndpointsGetAll,
             CancellationToken.None);
@@ -58,7 +46,6 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     public async Task CommunicationEndpointSetPreferred_ShouldSwitchPreferred()
     {
         var userId = Guid.NewGuid();
-        SetUser(userId);
         AddToDb(new UserAccountEntity
         {
             Id = userId,
@@ -72,7 +59,13 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         var sms = all.Single(x => x.Channel == ChannelEnum.Sms);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["EndpointId"] = sms.Id.ToString() },
+            new Dictionary<string, object?>
+            {
+                ["UserId"] = userId.ToString(),
+                ["EndpointId"] = sms.Id.ToString(),
+                ["IpAddress"] = "10.0.0.42",
+                ["UserAgent"] = "tests",
+            },
             Flow,
             FlowOperationEnum.CommunicationEndpointSetPreferred,
             CancellationToken.None);
@@ -80,5 +73,9 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["preferred"].Should().Be(true);
         (await _endpoints.GetPreferredAsync(userId))!.Id.Should().Be(sms.Id);
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.CommunicationEndpointChanged
+            && a.IpAddress == "10.0.0.42"
+            && a.UserAgent == "tests");
     }
 }

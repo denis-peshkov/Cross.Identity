@@ -4,22 +4,12 @@
 public class CommunicationEndpointServiceTests : EFTestsBase
 {
     private CommunicationEndpointService _service = null!;
-    private HttpContextAccessor _httpContextAccessor = null!;
 
     [SetUp]
     public override void Setup()
     {
         base.Setup();
-        _httpContextAccessor = new HttpContextAccessor { HttpContext = new DefaultHttpContext() };
-        _service = new CommunicationEndpointService(Context, _httpContextAccessor);
-    }
-
-    private void SetUser(Guid userId)
-    {
-        var identity = new ClaimsIdentity(
-            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
-            authenticationType: "Test");
-        _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
+        _service = new CommunicationEndpointService(Context, new AuditService(Context));
     }
 
     [Test]
@@ -51,11 +41,18 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         email.IsPreferred.Should().BeTrue();
 
-        await _service.SetPreferredAsync(userId, telegram.Id);
+        await _service.SetPreferredAsync(userId, telegram.Id, "10.0.0.1", "ua", "fp");
 
         var all = await _service.GetAllAsync(userId);
         all.Single(x => x.Id == telegram.Id).IsPreferred.Should().BeTrue();
         all.Where(x => x.Id != telegram.Id).Should().OnlyContain(x => !x.IsPreferred);
+
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.CommunicationEndpointChanged
+            && a.EntityId == telegram.Id.ToString()
+            && a.IpAddress == "10.0.0.1"
+            && a.UserAgent == "ua"
+            && a.DeviceFingerprint == "fp");
     }
 
     [Test]
@@ -127,28 +124,5 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         all.Count(x => x.IsPreferred).Should().Be(1);
     }
 
-    [Test]
-    public async Task GetAllForCurrentUser_RequiresAuth()
-    {
-        var act = () => _service.GetAllForCurrentUserAsync();
 
-        await act.Should().ThrowAsync<NotAuthorizedException>();
-    }
-
-    [Test]
-    public async Task SetPreferredForCurrentUser_Works()
-    {
-        var userId = Guid.NewGuid();
-        SetUser(userId);
-        AddToDb(new UserAccountEntity { Id = userId, Email = "u@example.com" });
-        var email = await _service.UpsertAsync(
-            userId, ChannelEnum.Email, "u@example.com", CommunicationEndpointSource.Account, true);
-        var other = await _service.UpsertAsync(
-            userId, ChannelEnum.Sms, "+79161234567", CommunicationEndpointSource.Account, true);
-
-        await _service.SetPreferredForCurrentUserAsync(other.Id);
-
-        (await _service.GetPreferredAsync(userId))!.Id.Should().Be(other.Id);
-        email.Id.Should().NotBe(other.Id);
-    }
 }

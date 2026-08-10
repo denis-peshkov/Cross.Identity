@@ -9,9 +9,6 @@ public interface ICommunicationEndpointService
     /// <summary>List all endpoints for a user.</summary>
     Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(Guid userId, CancellationToken cancellationToken = default);
 
-    /// <summary>List endpoints for the authenticated user.</summary>
-    Task<IReadOnlyList<CommunicationEndpointDto>> GetAllForCurrentUserAsync(CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Upsert an endpoint. When <paramref name="isVerified"/> is true and the user has no preferred
     /// endpoint yet, the new/updated endpoint becomes preferred.
@@ -28,10 +25,16 @@ public interface ICommunicationEndpointService
     /// <summary>
     /// Mark a verified endpoint as the only preferred communication target for the user.
     /// </summary>
-    Task SetPreferredAsync(Guid userId, Guid endpointId, CancellationToken cancellationToken = default);
-
-    /// <summary>Set preferred for the authenticated user.</summary>
-    Task SetPreferredForCurrentUserAsync(Guid endpointId, CancellationToken cancellationToken = default);
+    /// <param name="ipAddress">Optional client IP for audit.</param>
+    /// <param name="userAgent">Optional User-Agent for audit.</param>
+    /// <param name="deviceFingerprint">Optional device fingerprint for audit.</param>
+    Task SetPreferredAsync(
+        Guid userId,
+        Guid endpointId,
+        string? ipAddress = null,
+        string? userAgent = null,
+        string? deviceFingerprint = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Resolve delivery channel for an identity selector (login field + value).

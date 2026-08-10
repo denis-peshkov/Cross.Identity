@@ -403,7 +403,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
             _jwtTokenService,
-            new CommunicationEndpointService(Context, _httpContextAccessor));
+            new CommunicationEndpointService(Context, new AuditService(Context)));
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

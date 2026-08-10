@@ -11,6 +11,7 @@ internal sealed class CommunicationEndpointsGetAllStepFactory : IStepFactory
         return new CommunicationEndpointsGetAllStep
         {
             Kind                   = Kind,
+            UserIdKey              = cfg.Str("userIdKey"),
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
             Next                   = cfg.StrOpt("next"),
         };

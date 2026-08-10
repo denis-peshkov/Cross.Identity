@@ -3,12 +3,12 @@
 internal sealed class CommunicationEndpointService : ICommunicationEndpointService
 {
     private readonly IdentityContext _context;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IAuditService _audit;
 
-    public CommunicationEndpointService(IdentityContext context, IHttpContextAccessor httpContextAccessor)
+    public CommunicationEndpointService(IdentityContext context, IAuditService audit)
     {
         _context = context;
-        _httpContextAccessor = httpContextAccessor;
+        _audit = audit;
     }
 
     /// <inheritdoc />
@@ -26,14 +26,6 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             .ConfigureAwait(false);
 
         return rows.Select(ToDto).ToList();
-    }
-
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<CommunicationEndpointDto>> GetAllForCurrentUserAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var userId = RequireAuthenticatedUserId();
-        return await GetAllAsync(userId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -101,7 +93,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     /// <inheritdoc />
-    public async Task SetPreferredAsync(Guid userId, Guid endpointId, CancellationToken cancellationToken = default)
+    public async Task SetPreferredAsync(
+        Guid userId,
+        Guid endpointId,
+        string? ipAddress = null,
+        string? userAgent = null,
+        string? deviceFingerprint = null,
+        CancellationToken cancellationToken = default)
     {
         var entity = await _context.UsersCommunicationEndpoints
             .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserAccountId == userId, cancellationToken)
@@ -127,14 +125,22 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         entity.IsPreferred = true;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
+        _audit.Record(new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            UserAccountId = userId,
+            UserAccount = null!,
+            Operation = AuditOperation.CommunicationEndpointChanged,
+            EntityType = AuditEntityType.UserCommunicationEndpoint,
+            EntityId = endpointId.ToString(),
+            IpAddress = ipAddress,
+            UserAgent = userAgent,
+            DeviceFingerprint = deviceFingerprint,
+            Notes = "Preferred communication endpoint updated.",
+        });
 
-    /// <inheritdoc />
-    public async Task SetPreferredForCurrentUserAsync(Guid endpointId, CancellationToken cancellationToken = default)
-    {
-        var userId = RequireAuthenticatedUserId();
-        await SetPreferredAsync(userId, endpointId, cancellationToken).ConfigureAwait(false);
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -272,26 +278,6 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UserAccountId == userId && x.IsPreferred && x.IsVerified, cancellationToken)
             .ConfigureAwait(false);
-    }
-
-    private Guid RequireAuthenticatedUserId()
-    {
-        var user = _httpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            throw new NotAuthorizedException("Authentication is required.");
-        }
-
-        var raw =
-            user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (!Guid.TryParse(raw, out var userId) || userId == Guid.Empty)
-        {
-            throw new NotAuthorizedException("Authentication is required.");
-        }
-
-        return userId;
     }
 
     private static CommunicationEndpointDto ToDto(UserCommunicationEndpointEntity entity)

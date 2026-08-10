@@ -26,6 +26,15 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
             throw new InvalidCastException($"Key '{key}' is null, cannot cast to {typeof(T).Name}.");
         }
 
+        // Guid is not handled by Convert.ChangeType from string (form fields are strings).
+        if (typeof(T) == typeof(Guid) && v is string guidText && Guid.TryParse(guidText, out var guid))
+            return (T)(object)guid;
+
+        if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid)
+            && v is string nullableGuidText
+            && Guid.TryParse(nullableGuidText, out var nullableGuid))
+            return (T)(object)nullableGuid;
+
         // Attempt generic conversion (int→decimal, string→int, etc.)
         try
         {
