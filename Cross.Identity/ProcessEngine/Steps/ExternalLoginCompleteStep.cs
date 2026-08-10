@@ -51,36 +51,10 @@ internal sealed class ExternalLoginCompleteStep : IStep
         var user = await UserService.GetUserByAsync("Id", completion.UserId.ToString(), cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(user);
 
-        var familyId = Guid.NewGuid();
-        var accessClaims = new List<Claim>
-            {
-                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            }
-            .AddIfNotNull(ClaimTypes.Email, user.Email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, user.PhoneNumber)
-            .AddIfNotNull(ClaimConstants.Username, user.UserName);
-
         var client = ClientContext.Read(ctx);
-
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(user.Id, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-        var refreshToken = await JwtTokenService
-            .GenerateRefreshTokenAsync(
-                user.Id,
-                familyId,
-                new List<Claim>
-                {
-                    new(JwtRegisteredClaimNames.Sub, user.Id.ToString())
-                },
-                client.IpAddress,
-                client.UserAgent,
-                client.DeviceFingerprint,
-                cancellationToken)
+        await TokenPairIssuer
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, Guid.NewGuid(), client, cancellationToken)
             .ConfigureAwait(false);
-
-        ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
-        ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
-        ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
-        ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
 
         return StepResult.Ok(Next);
     }

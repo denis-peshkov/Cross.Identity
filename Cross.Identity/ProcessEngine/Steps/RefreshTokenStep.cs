@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Steps;
+﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
 /// Refresh token rotation step:
@@ -64,30 +64,16 @@ internal sealed class RefreshTokenStep : IStep
         var user = await UserService.GetUserByAsync(selectorField: "Id", selectorValue: oldRefreshToken.UserAccountId.ToString(), cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(user);
 
-        // 4) generate AccessToken
-        var accessClaims = new List<Claim>()
-            .AddIfNotNull(JwtRegisteredClaimNames.Sub, user.Id.ToString())
-            .AddIfNotNull(ClaimTypes.Email, user.Email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, user.PhoneNumber)
-            .AddIfNotNull(ClaimConstants.Username, user.UserName);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(user.Id, oldRefreshToken.FamilyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-        ArgumentException.ThrowIfNullOrEmpty(accessToken);
-
-        // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(user.Id, oldRefreshToken.FamilyId, new List<Claim>{new (JwtRegisteredClaimNames.Sub, user.Id.ToString())}, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-        ArgumentException.ThrowIfNullOrEmpty(refreshToken);
+        // 4–5) issue new pair into bag
+        await TokenPairIssuer
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, oldRefreshToken.FamilyId, client, cancellationToken)
+            .ConfigureAwait(false);
 
         // 6) Invalidate old RefreshToken
+        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, "RefreshToken"));
         var newJti = JwtTokenService.GetClaimValue(refreshToken, JwtRegisteredClaimNames.Jti);
         ArgumentException.ThrowIfNullOrEmpty(newJti);
         await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-
-        // 7) store the token in Bag
-        ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
-        ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
-        ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
-        ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), user.Id);
 
         return StepResult.Ok(Next);
     }

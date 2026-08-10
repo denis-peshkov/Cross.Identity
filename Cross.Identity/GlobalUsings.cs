@@ -56,6 +56,7 @@ global using Cross.Identity.ProcessEngine.Definitions.Helpers;
 global using Cross.Identity.ProcessEngine.Definitions.Providers;
 global using Cross.Identity.ProcessEngine.Definitions.Providers.Options;
 global using Cross.Identity.ProcessEngine.Factories;
+global using Cross.Identity.ProcessEngine.Helpers;
 global using Cross.Identity.ProcessEngine.Steps;
 global using Cross.Identity.Services;
 global using Cross.Identity.Services.Crypto;

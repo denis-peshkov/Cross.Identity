@@ -60,27 +60,10 @@ internal sealed class TokenStep : IStep
         var userAccount = await UserService.GetUserByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(userAccount);
 
-        // 4) generate AccessToken
-        var familyId = Guid.NewGuid();
-        var accessClaims = new List<Claim>
-            {
-                new (JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()),
-            }
-            .AddIfNotNull(ClaimTypes.Email, userAccount.Email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, userAccount.PhoneNumber)
-            .AddIfNotNull(ClaimConstants.Username, userAccount.UserName);
         var client = ClientContext.Read(ctx);
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userAccount.Id, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-
-        // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userAccount.Id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()) }, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
-
-        // 6) store the token in Bag
-        ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
-        ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
-        ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
-        ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), userAccount.Id);
+        await TokenPairIssuer
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, userAccount, Guid.NewGuid(), client, cancellationToken)
+            .ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), false);
 
         return StepResult.Ok(Next);
