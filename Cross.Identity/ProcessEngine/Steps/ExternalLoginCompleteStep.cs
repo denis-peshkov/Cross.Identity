@@ -57,19 +57,17 @@ internal sealed class ExternalLoginCompleteStep : IStep
             return StepResult.Ok(Next);
         }
 
-        var user = (await UserService.GetUserByAsync("Id", userId.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
-        var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
-        var username = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        var user = await UserService.GetUserByAsync("Id", userId.UserId.ToString(), cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(user);
 
         var familyId = Guid.NewGuid();
         var accessClaims = new List<Claim>
             {
-                new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString()),
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             }
-            .AddIfNotNull(ClaimTypes.Email, email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, phone)
-            .AddIfNotNull(ClaimConstants.Username, username);
+            .AddIfNotNull(ClaimTypes.Email, user.Email)
+            .AddIfNotNull(ClaimTypes.MobilePhone, user.Email)
+            .AddIfNotNull(ClaimConstants.Username, user.UserName);
 
         var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
         var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));

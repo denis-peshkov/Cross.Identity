@@ -67,36 +67,31 @@ internal sealed class TokenStep : IStep
 
         // 3) get user data
         var userAccount = await UserService.GetUserByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        var user = userAccount.ToBag();
-        ArgumentNullException.ThrowIfNull(user);
-        var id      = user.TryGetValue("Id", out var idObj) && Guid.TryParse(idObj?.ToString(), out var guid) ? guid : Guid.Empty;
-        var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("PhoneNumber", out var phoneObj) ? phoneObj?.ToString() : null;
-        var username     = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        ArgumentNullException.ThrowIfNull(userAccount);
 
         // 4) generate AccessToken
         var familyId = Guid.NewGuid();
         var accessClaims = new List<Claim>
             {
-                new (JwtRegisteredClaimNames.Sub, id.ToString()),
+                new (JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()),
             }
-            .AddIfNotNull(ClaimTypes.Email, email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, phone)
-            .AddIfNotNull(ClaimConstants.Username, username);
+            .AddIfNotNull(ClaimTypes.Email, userAccount.Email)
+            .AddIfNotNull(ClaimTypes.MobilePhone, userAccount.PhoneNumber)
+            .AddIfNotNull(ClaimConstants.Username, userAccount.UserName);
         var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
         var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
         var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userAccount.Id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userAccount.Id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
         ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
         ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
         ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), id);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), userAccount.Id);
         ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), false);
 
         return StepResult.Ok(Next);
