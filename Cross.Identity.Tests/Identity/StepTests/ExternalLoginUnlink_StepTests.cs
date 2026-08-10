@@ -17,7 +17,7 @@ public class ExternalLoginUnlink_StepTests
     {
         var userId = Guid.NewGuid();
         _externalLoginService
-            .Setup(s => s.UnlinkAsync("Google", userId, It.IsAny<string?>(), null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.UnlinkAsync("Google", userId, It.IsAny<string?>(), null, null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ExternalLoginUnlinkStep
@@ -25,8 +25,6 @@ public class ExternalLoginUnlink_StepTests
             Kind = "externalLoginUnlink",
             ProviderKey = "Provider",
             UserIdKey = "UserId",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
             ExternalLoginService = _externalLoginService.Object,
             Next = "done",
         };
@@ -34,8 +32,9 @@ public class ExternalLoginUnlink_StepTests
         var bag = new Bag();
         bag.Set("externalLoginUnlink.Provider", "Google");
         bag.Set("externalLoginUnlink.UserId", userId);
-        bag.Set("externalLoginUnlink.IpAddress", null);
-        bag.Set("externalLoginUnlink.UserAgent", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -43,7 +42,7 @@ public class ExternalLoginUnlink_StepTests
         result.Next.Should().Be("done");
         bag.Get<bool>("externalLoginUnlink.Unlinked").Should().BeTrue();
         _externalLoginService.Verify(
-            s => s.UnlinkAsync("Google", userId, It.IsAny<string?>(), null, It.IsAny<CancellationToken>()),
+            s => s.UnlinkAsync("Google", userId, It.IsAny<string?>(), null, null, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

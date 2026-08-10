@@ -26,9 +26,6 @@ public class Logout_StepFactoryTests
             {
               "kind": "logout",
               "refreshTokenKey": "RefreshToken",
-              "ipAddressKey": "collectForm.IpAddress",
-              "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprint": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -38,9 +35,6 @@ public class Logout_StepFactoryTests
 
         step.Kind.Should().Be("logout");
         step.RefreshTokenKey.Should().Be("RefreshToken");
-        step.IpAddressKey.Should().Be("collectForm.IpAddress");
-        step.UserAgentKey.Should().Be("collectForm.UserAgent");
-        step.DeviceFingerprintKey.Should().Be("collectForm.DeviceFingerprint");
         step.Next.Should().Be("done");
         step.JwtTokenService.Should().NotBeNull();
     }

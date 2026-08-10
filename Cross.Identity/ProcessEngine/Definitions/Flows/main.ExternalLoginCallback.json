@@ -27,9 +27,6 @@
       "stateKey": "collectForm.State",
       "errorKey": "collectForm.Error",
       "errorDescriptionKey": "collectForm.ErrorDescription",
-      "ipAddressKey": "collectForm.IpAddress",
-      "userAgentKey": "collectForm.UserAgent",
-      "deviceFingerprintKey": "collectForm.DeviceFingerprint",
       "next": "collectResult"
     },
     {

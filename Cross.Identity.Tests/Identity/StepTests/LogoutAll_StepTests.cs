@@ -24,18 +24,15 @@ public class LogoutAll_StepTests
         {
             Kind = "logoutAll",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             JwtTokenService = _jwtTokenService.Object,
             Next = "done",
         };
 
         var bag = new Bag();
         bag.Set("logoutAll.RefreshToken", refreshToken);
-        bag.Set("logoutAll.IpAddress", null);
-        bag.Set("logoutAll.UserAgent", null);
-        bag.Set("logoutAll.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -59,18 +56,15 @@ public class LogoutAll_StepTests
         {
             Kind = "logoutAll",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             JwtTokenService = _jwtTokenService.Object,
             Next = null,
         };
 
         var bag = new Bag();
         bag.Set("logoutAll.RefreshToken", "bad-token");
-        bag.Set("logoutAll.IpAddress", null);
-        bag.Set("logoutAll.UserAgent", null);
-        bag.Set("logoutAll.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 

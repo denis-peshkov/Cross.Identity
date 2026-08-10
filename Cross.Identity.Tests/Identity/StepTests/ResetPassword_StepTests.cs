@@ -51,9 +51,6 @@ public class ResetPassword_StepTests
             Kind = "resetPassword",
             Selector = DefaultSelector,
             PasswordKey = "forgotPassword.password",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
@@ -67,9 +64,9 @@ public class ResetPassword_StepTests
         bag.Set("collectForm.Field", "Email");
         bag.Set("collectForm.Value", email);
         bag.Set("forgotPassword.password", password);
-        bag.Set("resetPassword.IpAddress", null);
-        bag.Set("resetPassword.UserAgent", null);
-        bag.Set("resetPassword.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -101,9 +98,6 @@ public class ResetPassword_StepTests
             Kind = "resetPassword",
             Selector = DefaultSelector,
             PasswordKey = "collectForm.NewPassword",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             UserService = _userService.Object,
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
@@ -117,9 +111,9 @@ public class ResetPassword_StepTests
         bag.Set("collectForm.Field", "Id");
         bag.Set("collectForm.Value", userIdText);
         bag.Set("collectForm.NewPassword", password);
-        bag.Set("resetPassword.IpAddress", null);
-        bag.Set("resetPassword.UserAgent", null);
-        bag.Set("resetPassword.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 

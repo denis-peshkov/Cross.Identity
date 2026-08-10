@@ -5,7 +5,10 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "EndpointId", "type": "String", "required": true, "min": 36, "max": 36 }
+          { "key": "EndpointId", "type": "String", "required": true, "min": 36, "max": 36 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "communicationEndpointSetPreferred"

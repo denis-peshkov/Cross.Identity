@@ -793,7 +793,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
-        await sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None);
+        await sut.UnlinkAsync("Google", userId, null, null, null, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
         var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
@@ -812,7 +812,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, null, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*UserId is required*");
@@ -849,7 +849,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*last login method*");
@@ -878,7 +878,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, null, null, null, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("*not linked*");

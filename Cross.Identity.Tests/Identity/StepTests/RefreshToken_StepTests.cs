@@ -54,10 +54,6 @@ public class RefreshToken_StepTests
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -66,9 +62,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", refreshTokenHash);
-        bag.Set("refreshToken.IpAddress", null);
-        bag.Set("refreshToken.UserAgent", null);
-        bag.Set("refreshToken.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -90,10 +86,6 @@ public class RefreshToken_StepTests
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -102,9 +94,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "invalid-hash");
-        bag.Set("refreshToken.IpAddress", null);
-        bag.Set("refreshToken.UserAgent", null);
-        bag.Set("refreshToken.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -123,10 +115,6 @@ public class RefreshToken_StepTests
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -135,9 +123,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "already-used-hash");
-        bag.Set("refreshToken.IpAddress", null);
-        bag.Set("refreshToken.UserAgent", null);
-        bag.Set("refreshToken.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 

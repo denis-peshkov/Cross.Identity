@@ -16,9 +16,6 @@
     {
       "kind": "refreshToken",
       "refreshTokenKey": "collectForm.RefreshToken",
-      "ipAddressKey": "collectForm.IpAddress",
-      "userAgentKey": "collectForm.UserAgent",
-      "deviceFingerprintKey": "collectForm.DeviceFingerprint",
       "next": "collectResult"
     },
     {

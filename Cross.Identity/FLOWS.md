@@ -11,7 +11,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128). Host fills the bag; steps that issue tokens map `deviceFingerprintKey` → `CreatedDeviceFingerprint`, and revoke/password/unlink paths use IP/UA for audit.
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Later steps read via `ClientContext.Read(bag)` (`collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint`) for token audit and revoke/password/unlink paths.
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** optional on `Register` (`PhoneNumber`, `UserName` via `createUser.map`). On `Token` / `RequestCode` / `ResetPassword` / `GetUserId` — at least one of `Email|PhoneNumber|UserName`; on `ForgotPassword` — `Email|PhoneNumber` only. Preference Email → PhoneNumber → UserName (`phoneNumberKey` / `userNameKey`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
 
 ### Operations (`FlowOperationEnum`)

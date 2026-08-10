@@ -92,9 +92,6 @@ public class ExternalLoginComplete_StepTests
             StateKey = "State",
             ErrorKey = "Error",
             ErrorDescriptionKey = "ErrorDescription",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -125,9 +122,6 @@ public class ExternalLoginComplete_StepTests
             StateKey = "State",
             ErrorKey = "Error",
             ErrorDescriptionKey = "ErrorDescription",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -149,9 +143,6 @@ public class ExternalLoginComplete_StepTests
             Kind = "externalLoginComplete",
             CodeKey = "Code",
             StateKey = "State",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
@@ -163,9 +154,9 @@ public class ExternalLoginComplete_StepTests
         var bag = new Bag();
         bag.Set("externalLoginComplete.Code", "code");
         bag.Set("externalLoginComplete.State", "state");
-        bag.Set("externalLoginComplete.IpAddress", null);
-        bag.Set("externalLoginComplete.UserAgent", null);
-        bag.Set("externalLoginComplete.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
         return bag;
     }
 }

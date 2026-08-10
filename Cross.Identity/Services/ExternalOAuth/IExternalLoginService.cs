@@ -117,6 +117,7 @@ internal interface IExternalLoginService
         Guid userId,
         string? ipAddress,
         string? userAgent,
+        string? deviceFingerprint,
         CancellationToken cancellationToken);
 
     /// <summary>

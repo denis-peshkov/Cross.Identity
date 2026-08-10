@@ -17,14 +17,6 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
-    public required string IpAddressKey { get; init; }
-
-    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
-    public required string UserAgentKey { get; init; }
-
-    public required string DeviceFingerprintKey { get; init; }
-
     public ILogger Logger { get; set; }
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
@@ -38,11 +30,9 @@ internal sealed class ResetPasswordStep : IStep
         var selector = Selector.Resolve(ctx);
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
-        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
-        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
-        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
+        var client = ClientContext.Read(ctx);
 
-        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
@@ -60,7 +50,7 @@ internal sealed class ResetPasswordStep : IStep
 
         var notifyAddress = preferred?.Address ?? selector.Value;
 
-        var ip = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress;
+        var ip = string.IsNullOrWhiteSpace(client.IpAddress) ? "unknown" : client.IpAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
         var subject = "Password changed";
         var textBody = $"Your password was changed at {changedAt} from IP {ip}. If this wasn't you, contact support immediately.";

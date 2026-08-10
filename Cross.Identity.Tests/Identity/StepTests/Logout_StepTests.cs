@@ -24,18 +24,15 @@ public class Logout_StepTests
         {
             Kind = "logout",
             RefreshTokenKey = "RefreshToken",
-            IpAddressKey = "IpAddress",
-            UserAgentKey = "UserAgent",
-            DeviceFingerprintKey = "DeviceFingerprint",
             JwtTokenService = _jwtTokenService.Object,
             Next = "done",
         };
 
         var bag = new Bag();
         bag.Set("logout.RefreshToken", refreshToken);
-        bag.Set("logout.IpAddress", null);
-        bag.Set("logout.UserAgent", null);
-        bag.Set("logout.DeviceFingerprint", null);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 

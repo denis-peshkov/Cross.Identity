@@ -21,9 +21,6 @@ internal sealed class LogoutAllStepFactory : IStepFactory
             Kind                 = Kind,
             JwtTokenService      = sp.GetRequiredService<IJwtTokenService>(),
             RefreshTokenKey      = cfg.Str("refreshTokenKey"),
-            IpAddressKey         = cfg.Str("ipAddressKey"),
-            UserAgentKey         = cfg.Str("userAgentKey"),
-            DeviceFingerprintKey = cfg.Str("deviceFingerprint"),
             Next                 = cfg.StrOpt("next"),
         };
     }

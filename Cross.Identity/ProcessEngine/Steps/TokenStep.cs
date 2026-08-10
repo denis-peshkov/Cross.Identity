@@ -21,15 +21,6 @@ internal sealed class TokenStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the code from. May be relative or absolute.</summary>
     public string? CodeKey { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
-    public required string IpAddressKey { get; init; }
-
-    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
-    public required string UserAgentKey { get; init; }
-
-    /// <summary>Key in <see cref="Bag"/> to read the device fingerprint from. May be relative or absolute.</summary>
-    public required string DeviceFingerprintKey { get; init; }
-
     /// <summary>Step logger.</summary>
     public ILogger Logger { get; set; }
 
@@ -78,13 +69,11 @@ internal sealed class TokenStep : IStep
             .AddIfNotNull(ClaimTypes.Email, userAccount.Email)
             .AddIfNotNull(ClaimTypes.MobilePhone, userAccount.PhoneNumber)
             .AddIfNotNull(ClaimConstants.Username, userAccount.UserName);
-        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
-        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
-        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userAccount.Id, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var client = ClientContext.Read(ctx);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userAccount.Id, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 5) generate RefreshToken
-        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userAccount.Id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()) }, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var refreshToken = await JwtTokenService.GenerateRefreshTokenAsync(userAccount.Id, familyId, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccount.Id.ToString()) }, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
 
         // 6) store the token in Bag
         ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);

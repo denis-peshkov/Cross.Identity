@@ -19,15 +19,6 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
     public string? ErrorDescriptionKey { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read the client IP from. May be relative or absolute.</summary>
-    public required string IpAddressKey { get; init; }
-
-    /// <summary>Key in <see cref="Bag"/> to read the User-Agent from. May be relative or absolute.</summary>
-    public required string UserAgentKey { get; init; }
-
-    /// <summary>Key in <see cref="Bag"/> to read the device fingerprint from. May be relative or absolute.</summary>
-    public required string DeviceFingerprintKey { get; init; }
-
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     public required IJwtTokenService JwtTokenService { get; init; }
@@ -69,11 +60,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
             .AddIfNotNull(ClaimTypes.MobilePhone, user.PhoneNumber)
             .AddIfNotNull(ClaimConstants.Username, user.UserName);
 
-        var ipAddress = ctx.Get<string?>(BagKey.Qualify(Kind, IpAddressKey));
-        var userAgent = ctx.Get<string?>(BagKey.Qualify(Kind, UserAgentKey));
-        var deviceFingerprint = ctx.Get<string?>(BagKey.Qualify(Kind, DeviceFingerprintKey));
+        var client = ClientContext.Read(ctx);
 
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, ipAddress, userAgent, deviceFingerprint, cancellationToken).ConfigureAwait(false);
+        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, client.IpAddress, client.UserAgent, client.DeviceFingerprint, cancellationToken).ConfigureAwait(false);
         var refreshToken = await JwtTokenService
             .GenerateRefreshTokenAsync(
                 userId.UserId,
@@ -82,9 +71,9 @@ internal sealed class ExternalLoginCompleteStep : IStep
                 {
                     new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString())
                 },
-                ipAddress,
-                userAgent,
-                deviceFingerprint,
+                client.IpAddress,
+                client.UserAgent,
+                client.DeviceFingerprint,
                 cancellationToken)
             .ConfigureAwait(false);
 

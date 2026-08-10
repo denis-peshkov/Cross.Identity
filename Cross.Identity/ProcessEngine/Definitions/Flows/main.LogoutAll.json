@@ -16,9 +16,6 @@
     {
       "kind": "logoutAll",
       "refreshTokenKey": "collectForm.RefreshToken",
-      "ipAddressKey": "collectForm.IpAddress",
-      "userAgentKey": "collectForm.UserAgent",
-      "deviceFingerprint": "collectForm.DeviceFingerprint",
       "next": "collectResult"
     },
     {

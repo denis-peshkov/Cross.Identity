@@ -57,9 +57,6 @@ public class ExternalLogin_StepFactoryTests
               "stateKey": "State",
               "errorKey": "Error",
               "errorDescriptionKey": "ErrorDescription",
-              "ipAddressKey": "collectForm.IpAddress",
-              "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -72,9 +69,6 @@ public class ExternalLogin_StepFactoryTests
         step.StateKey.Should().Be("State");
         step.ErrorKey.Should().Be("Error");
         step.ErrorDescriptionKey.Should().Be("ErrorDescription");
-        step.IpAddressKey.Should().Be("collectForm.IpAddress");
-        step.UserAgentKey.Should().Be("collectForm.UserAgent");
-        step.DeviceFingerprintKey.Should().Be("collectForm.DeviceFingerprint");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
         step.JwtTokenService.Should().NotBeNull();
@@ -91,9 +85,6 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginUnlink",
               "providerKey": "Provider",
               "userIdKey": "UserId",
-              "ipAddressKey": "collectForm.IpAddress",
-              "userAgentKey": "collectForm.UserAgent",
-              "deviceFingerprintKey": "collectForm.DeviceFingerprint",
               "next": "done"
             }
             """);
@@ -104,7 +95,6 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginUnlink");
         step.ProviderKey.Should().Be("Provider");
         step.UserIdKey.Should().Be("UserId");
-        step.IpAddressKey.Should().Be("collectForm.IpAddress");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
