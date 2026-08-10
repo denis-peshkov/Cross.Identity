@@ -11,17 +11,15 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var codeService = sp.GetRequiredService<ICodeService>();
-
-        var channel = cfg.EnumOpt<ChannelEnum>("channel");
-
         return new VerifyCodeStep
         {
             Kind        = Kind,
             Selector    = new Selector(),
-            Channel     = channel ?? ChannelEnum.Email,
+            Channel     = cfg.EnumReq<ChannelEnum>("channel"),
             CodeKey     = cfg.Str("codeKey"),
-            CodeService = codeService,
+            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
+            CodeService = sp.GetRequiredService<ICodeService>(),
+            UserService = sp.GetRequiredService<IUserService>(),
             Next        = cfg.StrOpt("next")
         };
     }

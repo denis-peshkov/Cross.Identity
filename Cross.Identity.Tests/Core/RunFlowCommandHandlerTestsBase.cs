@@ -24,7 +24,6 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceProviderMock = new Mock<IServiceProvider>();
         // Register all step factories, as in the AddCrossIdentity DI extension
         _registry = new StepRegistry();
-        _registry.Register(new CodeAuthStepFactory());
         _registry.Register(new CollectFormStepFactory());
         _registry.Register(new CollectResultStepFactory());
         _registry.Register(new CreateUserStepFactory());

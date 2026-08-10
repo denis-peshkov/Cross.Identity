@@ -143,7 +143,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (required, 8–128), `Password` (8–128); optional `IpAddress`, `UserAgent`, `DeviceFingerprint`. → `verifyCode` |
-| `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
+| `verifyCode` | verifyCode | `channel: email`, `codeKey: collectForm.Code`; writes `verifyCode.UserId`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
@@ -268,8 +268,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
 | `sendCode` | Send OTP (email/SMS); required `channel` / `template` / `subject` (`reset` also adds email/phone to the action URL) |
-| `verifyCode` | Verify OTP |
-| `codeAuth` | Verify OTP + authenticate |
+| `verifyCode` | Verify OTP and write `UserId` to the bag |
 | `passwordAuth` | Verify email + password |
 | `resetPassword` | Set new password |
 | `getUserId` | Find user, return `UserId` |

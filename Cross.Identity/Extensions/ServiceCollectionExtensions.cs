@@ -60,7 +60,6 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(
             new[]
             {
-                ServiceDescriptor.Scoped<IStepFactory, CodeAuthStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CollectFormStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CollectResultStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CreateUserStepFactory>(),

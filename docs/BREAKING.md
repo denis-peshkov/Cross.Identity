@@ -238,12 +238,18 @@ Bag / form / entity / DB use `PhoneNumber` (`UsersAccounts`, `PhoneVerifications
 
 ### OTP `channel`: string → `ChannelEnum` (`phone` → `sms`)
 
-`VerifyCodeStep` / `CodeAuthStep` and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
+`VerifyCodeStep` and `ICodeService.VerifyAsync` take `ChannelEnum` (not `string`).
 Flow JSON / custom overrides must use enum names: `email`, `sms` (not `phone`).
 
 `Selector.Bind` + `Selector.ChannelForField`: phone → `ChannelEnum.Sms`, email → `ChannelEnum.Email`, user name → no channel.
 
-**Action:** replace `"channel": "phone"` with `"channel": "sms"` in custom `verifyCode` / `codeAuth` steps; update callers of `VerifyAsync`.
+**Action:** replace `"channel": "phone"` with `"channel": "sms"` in custom `verifyCode` steps; update callers of `VerifyAsync`.
+
+### `codeAuth` removed → use `verifyCode`
+
+`CodeAuthStep` / kind `codeAuth` are removed. `verifyCode` verifies the OTP and writes `UserId` (configurable via `userIdKey`, default `UserId`).
+
+**Action:** replace `"kind": "codeAuth"` with `"kind": "verifyCode"`; map bag keys from `codeAuth.*` to `verifyCode.*`.
 
 
 ### `main.ChangePassword` input: `Email` → `UserId`

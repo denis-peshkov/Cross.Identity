@@ -5,7 +5,7 @@
 /// Used by steps:
 /// <list type="bullet">
 /// <item><description><c>SendCodeStep</c> — <see cref="SendAsync"/></description></item>
-/// <item><description><c>VerifyCodeStep</c> and <c>CodeAuthStep</c> — <see cref="VerifyAsync"/></description></item>
+/// <item><description><c>VerifyCodeStep</c> — <see cref="VerifyAsync"/></description></item>
 /// </list>
 /// </summary>
 internal interface ICodeService

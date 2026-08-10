@@ -23,6 +23,9 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
+            .Setup(s => s.GetUserIdByAsync("Email", Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid().ToString());
+        _userServiceMock
             .Setup(s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
