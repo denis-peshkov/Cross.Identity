@@ -364,3 +364,12 @@ Host must pass `UserId` in the bag (no ambient auth user).
 **Configuration (defaults):** `Lockout:LockoutEnabled` = `true`, `MaxFailedAccessAttempts` = `5`, `LockoutTimeout` = `00:15:00`. Set `MaxFailedAccessAttempts` to `0` to disable counting.
 
 **Action:** configure `Authentication:Lockout` if defaults do not fit; ensure host still applies rate limits (lockout is per-account, not per-IP).
+
+### `sendCode`: unknown identity → `Invalid credentials.` (not `NotFound`)
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| `SendCodeStep` when user missing | `NotFoundException` (`User not found.` / `User with given … not found`) | `NotAuthorizedException` (`Invalid credentials.`) — no OTP sent |
+| Operational detail | exposed to client | `LogInformation` in `SendCodeStep` (field, identity, underlying reason) |
+
+**Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode.

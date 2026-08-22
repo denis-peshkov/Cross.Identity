@@ -45,9 +45,29 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        string userIdRaw;
+        try
+        {
+            userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        }
+        catch (NotFoundException ex)
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
-            throw new NotFoundException("User not found.");
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: resolved user id is missing or invalid.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
 
         var channel = await CommunicationEndpoints
             .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)

@@ -114,4 +114,19 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
         await act.Should().ThrowAsync<ValidationException>();
     }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnknownEmail_WhenForgotPasswordFlow_ThenReturnsInvalidCredentialsAsync()
+    {
+        var act = () => _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?> { ["Email"] = "unknown@example.com" },
+            Flow,
+            FlowOperationEnum.ForgotPassword,
+            CancellationToken.None);
+
+        await act.Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("Invalid credentials.");
+    }
 }

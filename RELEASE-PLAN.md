@@ -115,8 +115,10 @@ FLOWS.md говорит «OTP не для UserName alone», JSON это **нар
 
 **Исправлено (2.0):** `TokenStep` → `StepResult.Fail(NotAuthorizedException)`; `is_invalid_code` убран из `main.Token` `collectResult`.
 
-### 17. User enumeration в `SendCodeStep`
-`GetUserIdByAsync` → `NotFoundException("User not found.")` на ForgotPassword/RequestCode. Перебор email/phone.
+### 17. ~~User enumeration в `SendCodeStep`~~ ✅ закрыто
+~~`GetUserIdByAsync` → `NotFoundException("User not found.")` на ForgotPassword/RequestCode. Перебор email/phone.~~
+
+**Исправлено (2.0):** неизвестный identity → `StepResult.Fail(NotAuthorizedException("Invalid credentials."))` без отправки кода; деталь (`NotFoundException` message и т.п.) — `LogInformation` в `SendCodeStep`.
 
 ### 18. Messenger-каналы в `SendCode`
 `ChannelEnum.Telegram/Viber/WhatsApp` в `SendAsync` → `default: break` — **молча** ничего не отправляет и не падает. TO-DO в продукте, в коде — тихий no-op.

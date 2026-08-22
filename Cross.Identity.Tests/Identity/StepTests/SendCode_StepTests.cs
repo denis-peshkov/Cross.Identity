@@ -342,13 +342,13 @@ public class SendCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserNotFound_WhenExecuteAsync_ThenThrowsNotFoundExceptionAsync()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsInvalidCredentialsFailureAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException("User not found"));
+            .ThrowsAsync(new NotFoundException($"User with given Email '{email}' not found"));
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -377,10 +377,16 @@ public class SendCode_StepTests
         bag.Set("collectForm.Field", "Email");
         bag.Set("collectForm.Value", email);
 
-        // Act & Assert
-        var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
-        await act.Should()
-            .ThrowAsync<NotFoundException>();
+        // Act
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
     [Test]
     [Category(TestCategory.UNIT)]

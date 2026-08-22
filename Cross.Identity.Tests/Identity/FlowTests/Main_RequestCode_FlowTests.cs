@@ -140,4 +140,21 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
             .ThrowAsync<ValidationException>()
             .WithMessage("*"); // verify that an error message is present
     }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnknownEmail_WhenExecuteRequestCodeFlow_ThenReturnsInvalidCredentialsAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = "unknown@example.com",
+            ["Ttl"] = TimeSpan.FromMinutes(5),
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.RequestCode, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("Invalid credentials.");
+    }
 }
