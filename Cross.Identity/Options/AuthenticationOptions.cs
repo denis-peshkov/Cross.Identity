@@ -33,5 +33,11 @@ public sealed class AuthenticationOptions
         public TimeSpan RefreshTokenExpires { get; set; }
 
         public TimeSpan RefreshTokenAbsoluteExpires { get; set; }
+
+        /// <summary>
+        /// Maximum idle time since <c>LastActivityAt</c> before refresh is rejected with
+        /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/>. <c>Zero</c> disables the check.
+        /// </summary>
+        public TimeSpan RefreshTokenIdleTimeout { get; set; }
     }
 }

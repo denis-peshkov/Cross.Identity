@@ -1004,6 +1004,107 @@ public class JwtTokenServiceTests : EFTestsBase
         await act.Should().NotThrowAsync();
     }
 
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRefreshToken_WhenGenerateRefreshTokenAsync_ThenSetsLastActivityAtAsync()
+    {
+        var userId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
+        entity.LastActivityAt.Should().BeCloseTo(entity.CreatedAt, TimeSpan.FromSeconds(2));
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenIdleTimeoutExceeded_WhenEnsureRefreshTokenActiveForRotationAsync_ThenRevokesFamilyWithSessionExpiredAsync()
+    {
+        var service = CreateJwtTokenServiceWithIdleTimeout(TimeSpan.FromDays(7));
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+        var otherFamilyId = Guid.NewGuid();
+
+        var refreshToken = await service.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var siblingToken = await service.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var otherFamilyToken = await service.GenerateRefreshTokenAsync(
+            userId, otherFamilyId, new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        var entity = await Context.RefreshTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken))));
+        entity.LastActivityAt = DateTime.UtcNow.AddDays(-8);
+        await Context.SaveChangesAsync();
+
+        var act = () => service.EnsureRefreshTokenActiveForRotationAsync(refreshToken, ClientContext.Empty, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*idle timeout*");
+
+        (await service.ValidateRefreshTokenAsync(siblingToken, CancellationToken.None)).Should().BeFalse();
+        (await service.ValidateRefreshTokenAsync(otherFamilyToken, CancellationToken.None)).Should().BeTrue();
+
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.SESSION_EXPIRED);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenIdleTimeoutExceeded_WhenValidateRefreshTokenAsync_ThenReturnsFalseAsync()
+    {
+        var service = CreateJwtTokenServiceWithIdleTimeout(TimeSpan.FromHours(1));
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var token = await service.GenerateRefreshTokenAsync(
+            userId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserAccountId == userId);
+        entity.LastActivityAt = DateTime.UtcNow.AddHours(-2);
+        await Context.SaveChangesAsync();
+
+        (await service.ValidateRefreshTokenAsync(token, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenIdleTimeoutDisabled_WhenLastActivityStale_ThenValidateRefreshTokenAsyncReturnsTrueAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.UserAccountId == userId);
+        entity.LastActivityAt = DateTime.UtcNow.AddDays(-30);
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(token, CancellationToken.None)).Should().BeTrue();
+    }
+
+    private JwtTokenService CreateJwtTokenServiceWithIdleTimeout(TimeSpan idleTimeout)
+    {
+        var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        options.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Jwt = new AuthenticationOptions.JwtOptions
+            {
+                Issuer = "test-issuer",
+                Audience = "test-audience",
+                Key = SignKeyBase64,
+                EncryptionKey = EncKeyBase64,
+                UseEncryption = false,
+                AccessTokenExpires = TimeSpan.FromMinutes(15),
+                RefreshTokenExpires = TimeSpan.FromDays(30),
+                RefreshTokenAbsoluteExpires = TimeSpan.FromDays(90),
+                RefreshTokenIdleTimeout = idleTimeout,
+            },
+        });
+
+        return new JwtTokenService(Context, new AuditService(Context), options.Object);
+    }
+
     private static string CreateJwtSignedWithWrongKey(Guid jti, Guid sub, string issuer, string audience)
     {
         var wrongKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32));

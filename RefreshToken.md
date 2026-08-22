@@ -37,7 +37,7 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
 | Mechanism           | Why it matters                                                                 |
 |---------------------|--------------------------------------------------------------------------------|
 | One-time use        | refresh token can be used only once, then it is replaced                       |
-| Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
+| Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `LastActivityAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
 | Device binding      | Host sets `ClientContext` on login; library stores `Created*` and compares on refresh (see below) |
 | Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
@@ -191,9 +191,9 @@ Good practice — bind up to three dimensions (each optional; only non-empty val
 | `DeviceFingerprint` | `bdb38b8f2c0a6a17884e23f9a7b05c4e` | Validated device id / host-computed hash |
 | `UserAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...` | `HttpContext.Request.Headers.User-Agent` |
 | `IpAddress` | `203.0.113.42` | `RemoteIpAddress` after `ForwardedHeaders` |
-| `IdleTimeout` | sliding window (optional) | Not in stock library |
+| `IdleTimeout` | `Authentication:Jwt:RefreshTokenIdleTimeout` | Compared against `LastActivityAt` on refresh (`SESSION_EXPIRED`) |
 
-**IdleTimeout** — optional product feature (e.g. revoke after 7 days without activity); not implemented in stock Cross.Identity.
+**Idle timeout:** when `RefreshTokenIdleTimeout` is greater than zero, refresh compares `UtcNow` with `LastActivityAt` on the presented token. Exceeded idle revokes the family with `SESSION_EXPIRED`. Each successful login/rotation sets `LastActivityAt = UtcNow` on the new refresh row. Default: disabled (`00:00:00`).
 
 Example code — absolute expiry (`AbsoluteExpiresAt` is preserved across rotation in `GenerateRefreshTokenAsync`):
 ```cs

@@ -120,11 +120,13 @@ public interface IJwtTokenService
     /// <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
     /// <see cref="RefreshTokenRevokedReason.TOKEN_STOLEN"/> when multiple dimensions differ.
+    /// When <c>Authentication:Jwt:RefreshTokenIdleTimeout</c> is set, refresh also fails with
+    /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/> if <c>LastActivityAt</c> is older than the idle window.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
     /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <exception cref="NotAuthorizedException">Token is missing, expired, or session binding failed.</exception>
+    /// <exception cref="NotAuthorizedException">Token is missing, expired, idle timeout exceeded, or session binding failed.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task EnsureRefreshTokenActiveForRotationAsync(
         string refreshToken,

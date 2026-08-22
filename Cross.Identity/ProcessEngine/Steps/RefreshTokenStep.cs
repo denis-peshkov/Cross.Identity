@@ -13,6 +13,7 @@
 /// <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/> (theft race: attacker may hold the newer token).
 /// See <see cref="IJwtTokenService.EnsureRefreshTokenActiveForRotationAsync"/>.
 /// Session binding compares host-supplied <c>collectForm</c> metadata with the family anchor.
+/// Idle timeout is enforced when <c>Authentication:Jwt:RefreshTokenIdleTimeout</c> is set.
 /// </para>
 /// <para>
 /// Keys:

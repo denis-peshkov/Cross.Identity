@@ -13,6 +13,8 @@ public class RefreshTokenEntity : IHasConcurrencyStamp
     public DateTime ExpiresAt { get; set; }
     public DateTime AbsoluteExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
+    /// <summary>Last successful refresh (or login) that issued this token; used for idle timeout.</summary>
+    public DateTime LastActivityAt { get; set; }
 
     /// <summary>Host-supplied IP captured at family start (session binding anchor).</summary>
     public string? CreatedIpAddress { get; set; }
@@ -28,6 +30,3 @@ public class RefreshTokenEntity : IHasConcurrencyStamp
     /// <inheritdoc />
     public Guid ConcurrencyStamp { get; set; }
 }
-
-// ReplacedByTokenId
-// IdleTimeout

@@ -212,6 +212,17 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `
 
 **Action:** run `1_04_auth_RefreshTokens_SessionBinding.sql` on existing databases; greenfield `2_01_auth_RefreshTokens.sql` already includes `Created*`.
 
+### Refresh idle timeout: `LastActivityAt` + `RefreshTokenIdleTimeout`
+
+| Area | Now |
+|------|-----|
+| `RefreshTokenEntity` / `auth.RefreshTokens` | `LastActivityAt` — updated to `UtcNow` on each login/rotation |
+| `Authentication:Jwt:RefreshTokenIdleTimeout` | Max idle time since `LastActivityAt`; `Zero` disables the check |
+
+On refresh, when idle is exceeded, `EnsureRefreshTokenActiveForRotationAsync` revokes the family with `SESSION_EXPIRED`. `ValidateRefreshTokenAsync` returns `false` for idle-expired tokens when the option is enabled.
+
+**Action:** run `1_05_auth_RefreshTokens_LastActivityAt.sql` on existing databases (backfill `LastActivityAt = CreatedAt`); set `RefreshTokenIdleTimeout` in host configuration when required.
+
 ### Revoke audit metadata (`auth.Audits`, not token columns)
 
 | Area | Was | Now |

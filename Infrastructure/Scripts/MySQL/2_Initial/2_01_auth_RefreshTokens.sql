@@ -1,18 +1,19 @@
 CREATE TABLE `auth`.`RefreshTokens`
 (
-    `RefreshTokenId`    CHAR(36)    NOT NULL,
-    `FamilyId`          CHAR(36)    NOT NULL,
-    `UserAccountId`     CHAR(36)    NOT NULL,
-    `TokenHash`         VARCHAR(64) NOT NULL,
-    `ExpiresAt`         DATETIME(6) NOT NULL,
-    `AbsoluteExpiresAt` DATETIME(6) NOT NULL,
-    `CreatedAt`         DATETIME(6) NOT NULL,
+    `RefreshTokenId`           CHAR(36)     NOT NULL,
+    `FamilyId`                 CHAR(36)     NOT NULL,
+    `UserAccountId`            CHAR(36)     NOT NULL,
+    `TokenHash`                VARCHAR(64)  NOT NULL,
+    `ExpiresAt`                DATETIME(6)  NOT NULL,
+    `AbsoluteExpiresAt`        DATETIME(6)  NOT NULL,
+    `CreatedAt`                DATETIME(6)  NOT NULL,
     `CreatedIpAddress`         VARCHAR(64)  NULL,
     `CreatedUserAgent`         VARCHAR(512) NULL,
     `CreatedDeviceFingerprint` VARCHAR(128) NULL,
-    `ReplacedByTokenId` CHAR(36)    NULL,
-    `RevokedAt`         DATETIME(6) NULL,
-    `ConcurrencyStamp`  CHAR(36)    NOT NULL,
+    `LastActivityAt`           DATETIME(6)  NOT NULL,
+    `ReplacedByTokenId`        CHAR(36)     NULL,
+    `RevokedAt`                DATETIME(6)  NULL,
+    `ConcurrencyStamp`         CHAR(36)     NOT NULL,
 
     CONSTRAINT `PK_auth_RefreshTokens` PRIMARY KEY (`RefreshTokenId`)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

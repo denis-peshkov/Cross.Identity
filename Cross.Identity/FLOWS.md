@@ -134,6 +134,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 >
 > **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See [Client context (host)](#client-context-host).
 >
+> **Idle timeout:** when `Authentication:Jwt:RefreshTokenIdleTimeout` is greater than zero, refresh rejects tokens whose `LastActivityAt` is older than the configured window and revokes the family with `SESSION_EXPIRED`. Successful rotation sets `LastActivityAt` on the new refresh row. Default: disabled.
+>
 > **Concurrency interceptor:** `IdentityContext` registers `ConcurrencyStampInterceptor` in `OnConfiguring` (hosts need not call `AddInterceptors`). It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
 
 ---

@@ -176,6 +176,7 @@ internal class JwtTokenService : IJwtTokenService
                 ExpiresAt = expiresAt,
                 AbsoluteExpiresAt = absoluteExpiresAt,
                 CreatedAt = createdAt,
+                LastActivityAt = createdAt,
                 CreatedIpAddress = sessionBinding.IpAddress,
                 CreatedUserAgent = sessionBinding.UserAgent,
                 CreatedDeviceFingerprint = sessionBinding.DeviceFingerprint,
@@ -285,6 +286,7 @@ internal class JwtTokenService : IJwtTokenService
                && entity.ExpiresAt >= DateTime.UtcNow
                && entity.AbsoluteExpiresAt >= DateTime.UtcNow
                && entity.CreatedAt <= DateTime.UtcNow
+               && !IsRefreshTokenIdleExpired(entity)
                && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
     }
 
@@ -347,6 +349,7 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Account is disabled.");
         }
 
+        await EnsureRefreshTokenIdleForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
         await EnsureSessionBindingForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
     }
 
@@ -492,6 +495,57 @@ internal class JwtTokenService : IJwtTokenService
             .ConfigureAwait(false);
 
         return chainAbsolute ?? createdAt.Add(_options.Jwt.RefreshTokenAbsoluteExpires);
+    }
+
+    private bool IsRefreshTokenIdleExpired(RefreshTokenEntity entity)
+    {
+        var idleTimeout = _options.Jwt.RefreshTokenIdleTimeout;
+        if (idleTimeout <= TimeSpan.Zero)
+        {
+            return false;
+        }
+
+        var lastActivity = entity.LastActivityAt == default ? entity.CreatedAt : entity.LastActivityAt;
+        return DateTime.UtcNow - lastActivity > idleTimeout;
+    }
+
+    private async Task EnsureRefreshTokenIdleForRotationAsync(
+        RefreshTokenEntity entity,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
+        if (!IsRefreshTokenIdleExpired(entity))
+        {
+            return;
+        }
+
+        await HandleRefreshTokenIdleExpiredAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task HandleRefreshTokenIdleExpiredAsync(
+        RefreshTokenEntity entity,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
+        _audit.RecordTokenRevoked(
+            entity.UserAccountId,
+            AuditEntityType.RefreshToken,
+            entity.Id,
+            RefreshTokenRevokedReason.SESSION_EXPIRED,
+            clientContext.IpAddress,
+            clientContext.UserAgent,
+            clientContext.DeviceFingerprint);
+
+        entity.RevokedAt = DateTime.UtcNow;
+        await RevokeRefreshTokenFamilyCoreAsync(
+                entity.FamilyId,
+                RefreshTokenRevokedReason.SESSION_EXPIRED,
+                clientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        throw new NotAuthorizedException("Refresh token idle timeout exceeded.");
     }
 
     private async Task<ClientContext> ResolveFamilySessionBindingAsync(
