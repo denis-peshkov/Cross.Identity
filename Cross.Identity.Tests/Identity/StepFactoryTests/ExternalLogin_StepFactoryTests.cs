@@ -30,6 +30,7 @@ public class ExternalLogin_StepFactoryTests
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
               "userIdKey": "UserId",
+              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -41,6 +42,7 @@ public class ExternalLogin_StepFactoryTests
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
         step.UserIdKey.Should().Be("UserId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }

@@ -31,13 +31,59 @@ public class ExternalLoginServiceTests : EFTestsBase
         _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(new ClaimsIdentity());
     }
 
+    private JwtTokenService CreateJwtTokenService()
+    {
+        var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Jwt = new AuthenticationOptions.JwtOptions
+            {
+                Issuer = "http://localhost:5000",
+                Audience = "http://localhost:5000",
+                Key = "tTPm5yP2Q+1m7UQlM3N2AVnleqk7D4HhR0YzF9o5+Xw=",
+                EncryptionKey = "r9lZJcR8CdpqgGgxP1VbUk2OQhlnwFJSwVOrMDyk4Lc=",
+                UseEncryption = false,
+                AccessTokenExpires = TimeSpan.FromMinutes(10),
+                RefreshTokenExpires = TimeSpan.FromMinutes(10),
+                RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
+            },
+        });
+        return new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
+    }
+
+    private static async Task<string> IssueRefreshTokenAsync(IJwtTokenService jwt, Guid userId)
+    {
+        return await jwt.GenerateRefreshTokenAsync(
+            userId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            ClientContext.Empty,
+            CancellationToken.None);
+    }
+
+    private static UserAccountEntity NewUser(Guid id, string email = "user@example.com")
+    {
+        return new UserAccountEntity
+        {
+            Id = id,
+            Email = email,
+            UserName = email,
+            NormalizedUserName = email,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        };
+    }
+
+
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedProvider_WhenInitiateAsync_ThenThrowsNotFoundAsync()
     {
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Unknown", null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.InitiateAsync("Unknown", null, null, null, CancellationToken.None))
             .Should().ThrowAsync<NotFoundException>()
             .WithMessage("*not supported*");
     }
@@ -51,7 +97,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()),
             options => options.Providers.Clear());
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, null, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>()
             .WithMessage("*not configured*");
     }
@@ -65,7 +111,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()),
             options => options.CallbackUrl = string.Empty);
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, null, CancellationToken.None))
             .Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*CallbackUrl*");
     }
@@ -77,7 +123,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google", isEnabled: false);
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, null, null, CancellationToken.None))
             .Should().ThrowAsync<NotFoundException>()
             .WithMessage("*not enabled*");
     }
@@ -99,26 +145,63 @@ public class ExternalLoginServiceTests : EFTestsBase
             UpdatedAt = DateTime.UtcNow,
         });
 
-        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
-        SetAuthenticatedUser(userId);
+        AddToDb(NewUser(userId));
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, userId);
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()), jwtTokenService: jwt);
 
-        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, userId, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, userId, refresh, CancellationToken.None))
             .Should().ThrowAsync<ValidationException>()
             .WithMessage("*already linked*");
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUserIdWithoutHttpContext_WhenInitiateAsync_ThenPersistsUserIdAsync()
+    public async Task GivenValidRefreshToken_WhenInitiateAsyncForLinking_ThenPersistsUserIdAsync()
     {
         var linkUserId = Guid.NewGuid();
         SeedProvider("Google");
-        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+        AddToDb(NewUser(linkUserId));
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, linkUserId);
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()), jwtTokenService: jwt);
 
-        await sut.InitiateAsync("Google", null, linkUserId, CancellationToken.None);
+        await sut.InitiateAsync("Google", null, linkUserId, refresh, CancellationToken.None);
 
         var state = await Context.ExternalLoginStates.SingleAsync();
         state.UserAccountId.Should().Be(linkUserId);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUserIdWithoutRefreshToken_WhenInitiateAsyncForLinking_ThenThrowsNotAuthorizedAsync()
+    {
+        var linkUserId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(NewUser(linkUserId));
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, linkUserId, null, CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*refresh token is required*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMismatchedRefreshToken_WhenInitiateAsyncForLinking_ThenThrowsNotAuthorizedAsync()
+    {
+        var ownerUserId = Guid.NewGuid();
+        var otherUserId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(NewUser(ownerUserId, "owner@example.com"));
+        AddToDb(NewUser(otherUserId, "other@example.com"));
+        var jwt = CreateJwtTokenService();
+        var ownerRefresh = await IssueRefreshTokenAsync(jwt, ownerUserId);
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()), jwtTokenService: jwt);
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, otherUserId, ownerRefresh, CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*does not match*");
     }
 
     [Test]
@@ -128,7 +211,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
-        await sut.InitiateAsync("Google", "/home", null, CancellationToken.None);
+        await sut.InitiateAsync("Google", "/home", null, null, CancellationToken.None);
 
         var state = await Context.ExternalLoginStates.SingleAsync();
         state.Provider.Should().Be("Google");
@@ -143,7 +226,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
 
-        var url = await sut.InitiateAsync("Google", "/home", null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", "/home", null, null, CancellationToken.None);
 
         url.Should().StartWith("https://accounts.google.com/o/oauth2/v2/auth?");
         url.Should().Contain("client_id=google-client");
@@ -170,7 +253,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 };
             });
 
-        var url = await sut.InitiateAsync("Microsoft", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Microsoft", null, null, null, CancellationToken.None);
 
         url.Should().Contain("response_mode=query");
     }
@@ -214,7 +297,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     {
         SeedProvider("Google");
         var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var row = await Context.ExternalLoginStates.SingleAsync();
@@ -254,7 +337,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var provisioner = new Mock<IExternalLoginUserProvisioner>();
         var sut = CreateService(GoogleSuccessHandler(), provisioner: provisioner.Object);
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -281,7 +364,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     {
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -320,7 +403,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -348,7 +431,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -375,9 +458,10 @@ public class ExternalLoginServiceTests : EFTestsBase
             ConcurrencyStamp = Guid.NewGuid(),
         });
 
-        var sut = CreateService(GoogleSuccessHandler());
-        SetAuthenticatedUser(userId);
-        var url = await sut.InitiateAsync("Google", null, userId, CancellationToken.None);
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, userId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
+        var url = await sut.InitiateAsync("Google", null, userId, refresh, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -404,8 +488,10 @@ public class ExternalLoginServiceTests : EFTestsBase
             ConcurrencyStamp = Guid.NewGuid(),
         });
 
-        var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, ownerUserId, CancellationToken.None);
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, ownerUserId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
+        var url = await sut.InitiateAsync("Google", null, ownerUserId, refresh, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -417,18 +503,14 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMissingLinkTargetUser_WhenCompleteAsyncForLinking_ThenThrowsNotFoundAsync()
+    public async Task GivenMissingLinkTargetUser_WhenInitiateAsyncForLinking_ThenThrowsNotFoundAsync()
     {
         var missingUserId = Guid.NewGuid();
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
-        SetAuthenticatedUser(missingUserId);
-        var url = await sut.InitiateAsync("Google", null, missingUserId, CancellationToken.None);
-        var state = ExtractState(url);
 
-        var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
-
-        await act.Should().ThrowAsync<NotFoundException>()
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, missingUserId, null, CancellationToken.None))
+            .Should().ThrowAsync<NotFoundException>()
             .WithMessage("*user account was not found*");
     }
 
@@ -473,9 +555,10 @@ public class ExternalLoginServiceTests : EFTestsBase
             UpdatedAt = DateTime.UtcNow,
         });
 
-        var sut = CreateService(GoogleSuccessHandler());
-        SetAuthenticatedUser(currentUserId);
-        var url = await sut.InitiateAsync("Google", null, currentUserId, CancellationToken.None);
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, currentUserId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
+        var url = await sut.InitiateAsync("Google", null, currentUserId, refresh, CancellationToken.None);
         var state = ExtractState(url);
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -514,7 +597,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -553,7 +636,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 };
             });
 
-        var url = await sut.InitiateAsync("Microsoft", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Microsoft", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -603,7 +686,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 };
             });
 
-        var url = await sut.InitiateAsync("GitHub", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("GitHub", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -624,7 +707,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(handler);
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var act = () => sut.CompleteAsync("bad-code", state, null, null, CancellationToken.None);
@@ -645,7 +728,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(handler);
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -668,7 +751,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(handler);
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -699,7 +782,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 };
             });
 
-        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Apple", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
@@ -749,7 +832,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
 
         var sut = CreateService(GoogleSuccessHandler());
-        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(url);
 
         await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
@@ -998,7 +1081,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,
-            jwtTokenService ?? Mock.Of<IJwtTokenService>(),
+            jwtTokenService ?? CreateJwtTokenService(),
             new CommunicationEndpointService(Context, new AuditService(Context)),
             provisioner);
     }

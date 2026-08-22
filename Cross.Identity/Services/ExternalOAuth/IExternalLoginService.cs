@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
 /// External OAuth login service: start authorization, complete callback, and unlink a provider.
@@ -33,16 +33,24 @@ internal interface IExternalLoginService
     /// </param>
     /// <param name="userId">
     /// When set, starts an account-link flow for that user.
-    /// The host must supply the authenticated user id; the library does not read <c>HttpContext</c>.
+    /// Requires a valid <paramref name="refreshToken"/> for the same user (session proof).
     /// The provider must not already be linked to the user.
+    /// </param>
+    /// <param name="refreshToken">
+    /// Required when <paramref name="userId"/> is set: an active refresh token issued to that user.
+    /// Omit for normal sign-in / sign-up (no <paramref name="userId"/>).
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Full provider authorization URL including opaque <c>state</c>.</returns>
     /// <exception cref="NotFoundException">
-    /// Provider is not supported by the built-in catalog, or is not enabled in <c>auth.Providers</c>.
+    /// Provider is not supported by the built-in catalog, is not enabled in <c>auth.Providers</c>,
+    /// or the link target user account was not found.
     /// </exception>
     /// <exception cref="ValidationException">
     /// Provider credentials are missing/disabled in options, or the provider is already linked when linking.
+    /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Linking requires a valid refresh token matching <paramref name="userId"/>.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// <c>Authentication:ExternalLogin:CallbackUrl</c> is not configured.
@@ -51,6 +59,7 @@ internal interface IExternalLoginService
         string provider,
         string? returnUrl,
         Guid? userId,
+        string? refreshToken,
         CancellationToken cancellationToken);
 
     /// <summary>

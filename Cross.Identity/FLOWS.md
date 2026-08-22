@@ -171,11 +171,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserId` (opt. Guid string); optional client context. → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userIdKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserId` (opt. Guid string), `RefreshToken` (required when `UserId` is set); optional client context. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `UserId` enables account linking when present; the host must supply the authenticated user’s id (the library does not read `HttpContext`). Omit for normal sign-in / sign-up.
+> `UserId` enables account linking when present; the host must supply the authenticated user’s id **and** a valid `RefreshToken` for that user (the library validates the token before starting OAuth). Omit both for normal sign-in / sign-up.
 
 ---
 

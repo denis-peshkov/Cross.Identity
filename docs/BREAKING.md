@@ -169,12 +169,12 @@ Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
 | `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, ClientContext clientContext, ct)` |
 | `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, ClientContext clientContext, ct)` |
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, ct)` |
-| `InitiateAsync` linking | bag/DB `LinkUserId`; must match authenticated principal | bag/DB/state `UserId`; host-supplied id is trusted (no principal match) |
+| `InitiateAsync` linking | bag/DB `LinkUserId`; must match authenticated principal | bag `UserId` + `RefreshToken`; token must belong to that user |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
 **required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`;
-**optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`).
+**optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`); when `UserId` is set, **`RefreshToken` is required** and must belong to that user.
 
 **Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
 

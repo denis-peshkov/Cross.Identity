@@ -227,7 +227,12 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
-        SetAuthenticatedUser(linkUserId);
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            linkUserId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            ClientContext.Empty,
+            CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
@@ -235,6 +240,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 ["Provider"] = "Google",
                 ["ReturnUrl"] = "/home",
                 ["UserId"] = linkUserId.ToString(),
+                ["RefreshToken"] = refreshToken,
             },
             Flow,
             FlowOperationEnum.ExternalLogin,
@@ -246,25 +252,53 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUserId_WhenExternalLogin_ThenAcceptsWithoutMatchingPrincipalAsync()
+    public async Task GivenUserIdWithoutMatchingRefreshToken_WhenExternalLogin_ThenThrowsNotAuthorizedAsync()
     {
-        var authenticatedUserId = Guid.NewGuid();
+        var ownerUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        SetAuthenticatedUser(authenticatedUserId);
-
-        var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?>
+        AddToDb(
+            new UserAccountEntity
             {
-                ["Provider"] = "Google",
-                ["UserId"] = otherUserId.ToString(),
+                Id = ownerUserId,
+                Email = "owner@example.com",
+                UserName = "owner",
+                NormalizedUserName = "owner",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = Guid.Empty,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
             },
-            Flow,
-            FlowOperationEnum.ExternalLogin,
+            new UserAccountEntity
+            {
+                Id = otherUserId,
+                Email = "other@example.com",
+                UserName = "other",
+                NormalizedUserName = "other",
+                CreatedAt = DateTime.UtcNow,
+                CreatedBy = Guid.Empty,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+        var ownerRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
+            ownerUserId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            ClientContext.Empty,
             CancellationToken.None);
 
-        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        payload["url"].Should().BeOfType<string>().Which.Should().Contain("state=");
-        (await Context.ExternalLoginStates.SingleAsync()).UserAccountId.Should().Be(otherUserId);
+        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
+                new Dictionary<string, object?>
+                {
+                    ["Provider"] = "Google",
+                    ["UserId"] = otherUserId.ToString(),
+                    ["RefreshToken"] = ownerRefresh,
+                },
+                Flow,
+                FlowOperationEnum.ExternalLogin,
+                CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*does not match*");
     }
 
     [Test]
@@ -289,7 +323,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenSuccessfulGoogleOAuth_WhenExternalLoginCallback_ThenReturnsTokensAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -318,7 +352,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenOAuthError_WhenExternalLoginCallback_ThenFailsAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
@@ -341,7 +375,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenStateAndErrorWithoutCode_WhenExternalLoginCallback_ThenProcessesErrorAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(

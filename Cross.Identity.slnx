@@ -28,6 +28,7 @@
     <File Path="cross-identity-deploy-key" />
     <File Path="cross-identity-deploy-key.pub" />
     <File Path="GitVersion.yml" />
+    <File Path="RELEASE-PLAN.md" />
     <File Path="Roadmap-SecurityStamp.md" />
     <File Path="TO-DO.md" />
   </Folder>

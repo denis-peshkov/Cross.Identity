@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 /// <summary>
 /// External OAuth: initiate/callback, exchange code for provider token, user provisioning.
@@ -38,6 +38,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         string provider,
         string? returnUrl,
         Guid? userId,
+        string? refreshToken,
         CancellationToken cancellationToken)
     {
         if (!ExternalOAuthProviders.TryGet(provider, out var definition))
@@ -69,6 +70,23 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         if (userId.HasValue)
         {
+            if (userId.Value == Guid.Empty)
+            {
+                throw new ValidationException("UserId is required for account linking.");
+            }
+
+            var accountExists = await _identityContext.UsersAccounts
+                .AsNoTracking()
+                .AnyAsync(x => x.Id == userId.Value, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (!accountExists)
+            {
+                throw new NotFoundException("Current user account was not found.");
+            }
+
+            await EnsureLinkRefreshTokenAsync(userId.Value, refreshToken, cancellationToken).ConfigureAwait(false);
+
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
                 .AnyAsync(x => x.UserAccountId == userId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
@@ -421,6 +439,28 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         return result;
+    }
+
+    private async Task EnsureLinkRefreshTokenAsync(
+        Guid userId,
+        string? refreshToken,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new NotAuthorizedException("A valid refresh token is required to link an external login.");
+        }
+
+        if (!await _jwtTokenService.ValidateRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false))
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        var entity = await _jwtTokenService.GetRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+        if (entity is null || entity.UserAccountId != userId)
+        {
+            throw new NotAuthorizedException("Refresh token does not match the specified user.");
+        }
     }
 
     private async Task<Guid> ResolveOrCreateUserAsync(
