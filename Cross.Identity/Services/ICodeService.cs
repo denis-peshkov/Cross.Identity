@@ -18,6 +18,7 @@ internal interface ICodeService
     /// <param name="userId">User account id.</param>
     /// <param name="ttl">Code lifetime.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="NotSupportedException">Messenger channels (Telegram, Viber, WhatsApp) are not implemented for OTP send.</exception>
     Task SendAsync(NotificationMessage msg, string code, string userId, TimeSpan ttl, CancellationToken cancellationToken);
 
     /// <summary>

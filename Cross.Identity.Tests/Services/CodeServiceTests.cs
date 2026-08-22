@@ -68,6 +68,29 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMessengerChannel_WhenSendAsync_ThenThrowsNotSupportedExceptionAsync()
+    {
+        var message = NotificationMessage.For(ChannelEnum.Telegram, "chat-id")
+            .WithTextBody("Your code is 123456");
+        var ttl = TimeSpan.FromMinutes(5);
+        var userId = Guid.NewGuid().ToString();
+
+        await FluentActions.Invoking(() =>
+                _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotSupportedException>()
+            .WithMessage("*not supported*");
+
+        _emailService.Verify(
+            s => s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        _smsService.Verify(s => s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        Context.EmailVerifications.Should().BeEmpty();
+        Context.PhoneVerifications.Should().BeEmpty();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         // Arrange — current implementation checks the database record

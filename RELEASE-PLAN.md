@@ -120,8 +120,10 @@
 
 **Исправлено (2.0):** неизвестный identity → `StepResult.Fail(NotAuthorizedException("Invalid credentials."))` без отправки кода; деталь (`NotFoundException` message и т.п.) — `LogInformation` в `SendCodeStep`.
 
-### 18. Messenger-каналы в `SendCode`
-`ChannelEnum.Telegram/Viber/WhatsApp` в `SendAsync` → `default: break` — **молча** ничего не отправляет и не падает. TO-DO в продукте, в коде — тихий no-op.
+### 18. ~~Messenger-каналы в `SendCode`~~ ✅ закрыто
+~~`ChannelEnum.Telegram/Viber/WhatsApp` в `SendAsync` → `default: break` — **молча** ничего не отправляет и не падает. TO-DO в продукте, в коде — тихий no-op.~~
+
+**Исправлено (2.0):** `CodeService.SendAsync` → `NotSupportedException` для каналов без OTP (`SupportsOtp` / messenger). `SendCodeStep` уже мапит messenger → SMS через `ResolveOtpChannelAsync`; прямой вызов с Telegram/Viber/WhatsApp не маскируется успехом.
 
 ### 19. `GetClaimValue` для JWS без подписи
 Публичный API: 3-part JWT — parse payload без crypto. В `VerifyTokenStep` перед этим есть `ValidateAccessTokenAsync` — ок. Риск — **misuse** API напрямую.

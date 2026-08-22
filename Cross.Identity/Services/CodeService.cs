@@ -37,6 +37,11 @@ internal sealed class CodeService : ICodeService
         var developerMode = _configuration.GetValue<bool>("Authentication:DeveloperMode");
         var now = DateTime.UtcNow;
 
+        if (!msg.Channel.SupportsOtp())
+        {
+            throw new NotSupportedException($"OTP send via {msg.Channel} is not supported. Use Email or Sms; messenger delivery is not implemented yet.");
+        }
+
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
@@ -89,8 +94,8 @@ internal sealed class CodeService : ICodeService
                 break;
 
             default:
-                // Messenger senders not implemented yet.
-                break;
+                throw new NotSupportedException(
+                    $"OTP send via {msg.Channel} is not supported. Use Email or Sms; messenger delivery is not implemented yet.");
         }
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
