@@ -77,10 +77,12 @@
 
 **Исправлено (2.0):** при resend активные коды для того же email/phone истекают (`ExpiresAt = now`); verify принимает только последнюю неиспользованную непросроченную запись. TTL по-прежнему ограничивает срок жизни каждого кода.
 
-### 12. Refresh rotation без атомарности
-`RefreshTokenStep`: check → issue → invalidate. Между шагами нет транзакции/блокировки внутри библиотеки. Параллельные refresh с одним token — окно с несколькими активными парами; при replay — mass revoke family (DoS сессий).
+### 12. ~~Refresh rotation без атомарности~~ ✅ принято (контракт хоста)
+~~`RefreshTokenStep`: check → issue → invalidate. Между шагами нет транзакции/блокировки внутри библиотеки. Параллельные refresh с одним token — окно с несколькими активными парами; при replay — mass revoke family (DoS сессий).~~
 
-Replay detection есть (`REPLAY_DETECTED`), race window — остаётся.
+**Принято (2.0):** библиотека **не** открывает DB-транзакцию в `RefreshTokenStep`; хост оборачивает refresh (тот же scoped `IdentityContext`) во **внешнюю транзакцию**, чтобы validate + issue + invalidate коммитились вместе. Документация: `FLOWS.md` → `main.RefreshToken.json`, XML на `RefreshTokenStep`.
+
+**Остаётся осознанный edge:** два **параллельных** refresh с одним token — race до commit (две активные пары или `REPLAY_DETECTED` + revoke family). Это не закрывается одной транзакцией на запрос; нужен pessimistic lock / сериализация rotation — вне scope stock-библиотеки. Replay detection (`REPLAY_DETECTED`) — намеренный trade-off против theft race.
 
 ### 13. ~~`ClientContext` полностью client-controlled~~ ✅ принято (контракт хоста)
 ~~`IpAddress`, `UserAgent`, `DeviceFingerprint` из bag/form. Audit, revoke metadata, письма (`ResetPasswordStep`) — **подделываемы** вызывающим кодом. Это не баг контракта 2.0, но forensic/notification integrity слабая.~~
@@ -166,6 +168,6 @@ Obsolete, но всё ещё в коде — слабый алгоритм пр�
 1. **S1–S4:** OTP attempts + `RandomNumberGenerator` + OAuth email policy + logout access revoke *(account linking — ✅)*
 2. **S5–S7:** `IsActive`, единый OTP verify, инвалидация старых кодов
 3. **Контракты:** UserName в flows, password max, `TokenStep` fail vs ok
-4. **Архитектура:** refresh transaction, lockout, 2FA
+4. **Архитектура:** concurrent refresh lock (опционально), 2FA *(refresh transaction — ✅ контракт хоста; lockout — ✅)*
 
 Могу начать с п.1 (OTP + OAuth) — это самый острый блок.
