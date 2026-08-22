@@ -60,7 +60,7 @@ No DI registration is required.
 
 Optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` on stock flows feed token audit and revoke metadata via [`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs).
 
-Cross.Identity **does not** read `HttpContext` in 2.0+. The **host** must set these fields from trusted server-side sources and **overwrite** any client-sent values before `IFlowExecutor.ExecuteAsync`. See [`FLOWS.md`](Cross.Identity/FLOWS.md) — **Client context (host)**.
+**Trusted pipeline (host responsibility).** Cross.Identity is a library: it does **not** read `HttpContext` and does **not** validate the origin of client metadata. The **host** guarantees a trusted pipeline — overwrite any client-sent values with server-side IP, `User-Agent`, and host-computed device fingerprint before `IFlowExecutor.ExecuteAsync`. The library consumes `ClientContext` as already trusted. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — **Client context (host)**.
 
 ```csharp
 using Cross.Identity.ProcessEngine.Core;

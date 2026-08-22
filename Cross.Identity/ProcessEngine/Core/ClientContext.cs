@@ -2,12 +2,19 @@
 
 /// <summary>
 /// HTTP client metadata carried through flows and service APIs.
-/// Flow steps read values via <see cref="Read"/> from <c>collectForm.IpAddress</c>,
-/// <c>collectForm.UserAgent</c>, and <c>collectForm.DeviceFingerprint</c>.
-/// The host must populate these from trusted server-side sources (for example
-/// <c>HttpContext.Connection.RemoteIpAddress</c> and request headers), not from
-/// unvalidated client request bodies. See <c>FLOWS.md</c> — Client context.
 /// </summary>
+/// <remarks>
+/// <para><b>Trusted pipeline (host responsibility).</b> Cross.Identity is a library: it does not read
+/// <c>HttpContext</c> and does not validate where <see cref="IpAddress"/>,
+/// <see cref="UserAgent"/>, or <see cref="DeviceFingerprint"/> came from. The <b>host</b> must
+/// implement a trusted pipeline — overwrite <c>collectForm.*</c> from server-side metadata
+/// (for example <c>RemoteIpAddress</c>, request <c>User-Agent</c>, host-computed device fingerprint)
+/// before <c>IFlowExecutor.ExecuteAsync</c>, and pass the same values into direct service APIs.
+/// The library treats <see cref="ClientContext"/> as already trusted for audit and revoke metadata.</para>
+/// <para>Flow steps read bag values via <see cref="Read"/> from <c>collectForm.IpAddress</c>,
+/// <c>collectForm.UserAgent</c>, and <c>collectForm.DeviceFingerprint</c>.
+/// See <c>FLOWS.md</c> — Client context (host).</para>
+/// </remarks>
 public sealed record ClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
 {
     /// <summary>Empty client metadata (all fields null).</summary>

@@ -161,6 +161,7 @@ Public JWT and related APIs take a single non-nullable [`ClientContext`](../Cros
 (`IpAddress`, `UserAgent`, `DeviceFingerprint`). Use `ClientContext.Empty` when unknown.
 Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
 (no per-step `ipAddressKey` / `userAgentKey` / `deviceFingerprintKey`).
+The host must supply trusted values via the **trusted pipeline** (see below); the library does not validate them.
 
 | Area | Was (1.10) | Now (2.0+) |
 |------|------------|------------|
@@ -183,7 +184,7 @@ Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
 
 **Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
 
-**Host trust (not a library bug):** optional `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` are **host-supplied**. Cross.Identity does not read `HttpContext`. The host must overwrite these keys from server-side metadata (`RemoteIpAddress`, `User-Agent`, host-computed fingerprint) before `ExecuteAsync`. Values copied from the client request body are spoofable and must not be used for security decisions. Details: [`FLOWS.md`](../Cross.Identity/FLOWS.md) — Client context (host).
+**Trusted pipeline (host responsibility, not a library bug):** `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` are **host-supplied**. Cross.Identity does not read `HttpContext` and does not verify metadata. The **host** must implement a trusted pipeline: overwrite these bag keys from server-side sources (`RemoteIpAddress` after `ForwardedHeaders`, request `User-Agent`, host-computed fingerprint) before `ExecuteAsync`, and pass the same values into direct JWT/password/unlink APIs. The library records them in audit and revoke paths as trusted. Do not copy values from the client request body. Details: [`FLOWS.md`](../Cross.Identity/FLOWS.md) — Client context (host).
 
 ### `RevokeReason` → `RevokedReason`
 
