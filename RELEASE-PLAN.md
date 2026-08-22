@@ -4,10 +4,12 @@
 
 ## Критично (безопасность)
 
-### 1. OAuth takeover по email
-`ExternalLoginService.ResolveOrCreateUserAsync`: при логине без `UserId` (link) ищется аккаунт по `profile.Email` и сразу привязывается provider. **Нет проверки**, что email у жертвы подтверждён или что он принадлежит OAuth-субъекту.
+### 1. ~~OAuth takeover по email~~ ✅ закрыто
+~~`ExternalLoginService.ResolveOrCreateUserAsync`: при логине без `UserId` (link) ищется аккаунт по `profile.Email` и сразу привязывается provider. **Нет проверки**, что email у жертвы подтверждён или что он принадлежит OAuth-субъекту.~~
 
-При регистрации жертвы с `victim@corp.com` (email не подтверждён) атакующий логинится через OAuth с тем же email → попадает в чужой аккаунт. Плюс `EmailConfirmed = true` при создании через OAuth.
+~~При регистрации жертвы с `victim@corp.com` (email не подтверждён) атакующий логинится через OAuth с тем же email → попадает в чужой аккаунт. Плюс `EmailConfirmed = true` при создании через OAuth.~~
+
+**Исправлено (2.0):** auto-link по email только при `profile.EmailVerified` (Google `email_verified`, GitHub `verified`). Неподтверждённая локальная регистрация на тот же email не блокирует вход — OAuth подтверждает владение, выставляется `EmailConfirmed = true`. Без verified email у провайдера merge запрещён.
 
 ### 2. ~~Account linking без аутентификации~~ ✅ закрыто
 ~~`main.ExternalLogin.json`: опциональный `UserId` в bag → `ExternalLoginInitiateStep` → state. **Библиотека не проверяет**, что вызывающий — этот пользователь.~~
@@ -40,8 +42,10 @@
 ### 6. `System.Random` для OTP
 `CodeGeneratorHelper.GenerateNumericCode` / `GenerateCode` — не CSPRNG. Для коротких SMS-кодов это слабое место (особенно при массовой выдаче).
 
-### 7. GitHub: email без `verified`
-`FetchGitHubProfileAsync` берёт primary email из `/user/emails` **без** проверки `verified: true`. Усиливает takeover по email (#1).
+### 7. ~~GitHub: email без `verified`~~ ✅ закрыто (вместе с #1)
+~~`FetchGitHubProfileAsync` берёт primary email из `/user/emails` **без** проверки `verified: true`. Усиливает takeover по email (#1).~~
+
+**Исправлено (2.0):** GitHub profile использует только `verified: true` emails (primary verified, иначе первый verified).
 
 ---
 

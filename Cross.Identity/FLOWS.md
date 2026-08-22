@@ -189,6 +189,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
+> OAuth callback resolves the user by existing external login, or — when emails match — only if the provider attests a verified email (`EmailVerified`). An unconfirmed local registration on the same address does not block sign-in: OAuth proves ownership and sets `EmailConfirmed = true`. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserId` + `RefreshToken`.
+>
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
 ---

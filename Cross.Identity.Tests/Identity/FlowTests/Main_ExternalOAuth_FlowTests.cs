@@ -464,6 +464,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 {
                     sub = "google-sub-1",
                     email = "oauth-user@example.com",
+                    email_verified = true,
                     name = "OAuth User",
                     picture = "https://example.com/avatar.png",
                 }),

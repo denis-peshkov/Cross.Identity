@@ -347,6 +347,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
         account.Email.Should().Be("user@example.com");
+        account.EmailConfirmed.Should().BeTrue();
         account.UserName.Should().Be("user@example.com");
 
         var externalLogin = await Context.UsersExternalLogins.SingleAsync();
@@ -414,6 +415,81 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnconfirmedEmailAccount_WhenOAuthWithVerifiedEmail_ThenLinksAndConfirmsEmailAsync()
+    {
+        var existingUserId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = existingUserId,
+            Email = "user@example.com",
+            UserName = "victim",
+            NormalizedUserName = "victim",
+            EmailConfirmed = false,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var sut = CreateService(GoogleSuccessHandler());
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        completion.UserId.Should().Be(existingUserId);
+        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
+        (await Context.UsersAccounts.SingleAsync()).EmailConfirmed.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenConfirmedEmailAccount_WhenOAuthWithUnverifiedEmail_ThenDoesNotLinkAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "user@example.com",
+            UserName = "existing",
+            NormalizedUserName = "existing",
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://oauth2.googleapis.com/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "google-token" }),
+            ["https://openidconnect.googleapis.com/v1/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "google-sub-1",
+                    email = "user@example.com",
+                    email_verified = false,
+                    name = "Google User",
+                }),
+        });
+
+        var sut = CreateService(handler);
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email already exists*");
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMatchingEmailWithoutExternalLogin_WhenCompleteAsync_ThenLinksToExistingUserAsync()
     {
         var userId = Guid.NewGuid();
@@ -424,6 +500,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
+            EmailConfirmed = false,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
@@ -438,6 +515,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         completion.UserId.Should().Be(userId);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == userId)).EmailConfirmed.Should().BeTrue();
     }
 
     [Test]
@@ -666,8 +744,8 @@ public class ExternalLoginServiceTests : EFTestsBase
                 Content = new StringContent(
                     """
                     [
-                      {"email":"secondary@example.com","primary":false},
-                      {"email":"primary@example.com","primary":true}
+                      {"email":"secondary@example.com","primary":false,"verified":true},
+                      {"email":"primary@example.com","primary":true,"verified":true}
                     ]
                     """,
                     Encoding.UTF8,
@@ -692,6 +770,55 @@ public class ExternalLoginServiceTests : EFTestsBase
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
         (await Context.UsersAccounts.SingleAsync()).Email.Should().Be("primary@example.com");
+        completion.UserId.Should().NotBe(Guid.Empty);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenGitHubPrimaryEmailUnverified_WhenCompleteAsync_ThenUsesVerifiedFallbackEmailAsync()
+    {
+        SeedProvider("GitHub");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://github.com/login/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "gh-token" }),
+            ["https://api.github.com/user"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = 42,
+                    login = "octo",
+                }),
+            ["https://api.github.com/user/emails"] = _ => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(
+                    """
+                    [
+                      {"email":"unverified-primary@example.com","primary":true,"verified":false},
+                      {"email":"verified-secondary@example.com","primary":false,"verified":true}
+                    ]
+                    """,
+                    Encoding.UTF8,
+                    "application/json"),
+            },
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["GitHub"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "gh-client",
+                    ClientSecret = "gh-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("GitHub", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        (await Context.UsersAccounts.SingleAsync()).Email.Should().Be("verified-secondary@example.com");
         completion.UserId.Should().NotBe(Guid.Empty);
     }
 
@@ -815,6 +942,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "user",
             NormalizedUserName = "user",
+            EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
@@ -1132,6 +1260,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 {
                     sub = "google-sub-1",
                     email = "user@example.com",
+                    email_verified = true,
                     name = "Google User",
                     picture = "https://example.com/avatar.png",
                 }),
