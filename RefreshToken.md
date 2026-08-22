@@ -37,8 +37,8 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
 | Mechanism           | Why it matters                                                                 |
 |---------------------|--------------------------------------------------------------------------------|
 | One-time use        | refresh token can be used only once, then it is replaced                       |
-| Database storage    | Id, UserId, ExpiresAt, RevokedAt, CreatedAt, CreatedByIp, ReplacedByToken      |
-| Device binding      | on login, save device_id or fingerprint                                        |
+| Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
+| Device binding      | Host sets `ClientContext` on login; library stores `Created*` and compares on refresh (see below) |
 | Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
 ## Replay detection (family revoke + `REPLAY_DETECTED`)
@@ -76,34 +76,7 @@ Implemented in `EnsureRefreshTokenActiveForRotationAsync` / `InvalidateRefreshTo
 
 👉 The old token becomes invalid immediately after use.
 
-Example in code (flow):
-```cs
-// refresh_token_step.cs
-var oldToken = await _context.RefreshTokens
-    .FirstOrDefaultAsync(t => t.Token == request.RefreshToken);
-
-if (oldToken is null || oldToken.IsRevoked || oldToken.ExpiresAt < DateTime.UtcNow)
-    throw new SecurityException("Invalid or expired refresh token");
-
-// mark old as revoked
-oldToken.RevokedAt = DateTime.UtcNow;
-oldToken.RevokedIpAddress = request.IpAddress;
-
-// create new
-var newRefreshToken = new RefreshTokenEntity
-{
-    Id = Guid.NewGuid(),
-    UserId = oldToken.UserId,
-    ExpiresAt = DateTime.UtcNow.AddDays(30),
-    CreatedAt = DateTime.UtcNow,
-    CreatedByIp = request.IpAddress,
-    ReplacedByToken = oldToken.Token
-};
-
-_context.RefreshTokens.Add(newRefreshToken);
-await _context.SaveChangesAsync();
-
-```
+Stock Cross.Identity: `RefreshTokenStep` → `EnsureRefreshTokenActiveForRotationAsync` (validate + session binding) → `TokenPairIssuer` (new pair) → `InvalidateRefreshTokenAsync` (mark old `RevokedAt`, `ReplacedByTokenId`, audit with `ROTATION_REQUIRED`). Reuse of a revoked refresh → `REPLAY_DETECTED` + family revoke. See `JwtTokenService` and `FLOWS.md` — `main.RefreshToken.json`.
 
 Thus:
 - **Access Token** → short-lived (10–30 min), changes frequently.

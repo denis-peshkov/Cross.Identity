@@ -191,33 +191,37 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | Area | Was | Now |
 |------|-----|-----|
 | Enum | `RefreshTokenRevokeReason` | `RefreshTokenRevokedReason` |
-| Entity property | `RevokeReason` | `RevokedReason` |
-| DB column (`AccessTokens` / `RefreshTokens`) | `RevokeReason` | `RevokedReason` |
+| Audit (`AuditEntity` / `auth.Audits`) | `RevokeReason` | `RevokedReason` |
 
-**Action:** rename type/property usages and alter column name on existing databases (DDL scripts under `Infrastructure/Scripts` updated for greenfield).
+`AccessTokens` and `RefreshTokens` store only **`RevokedAt`** on the token row. Revoke **reason** and client metadata are append-only in **`auth.Audits`** (`RevokedReason`, `IpAddress`, `UserAgent`, `DeviceFingerprint`).
 
-### Token create audit: `IpAddress` / `UserAgent` / `DeviceFingerprint` → `Created*`
+**Action:** rename enum/usages; ensure `auth.Audits.RevokedReason` exists on existing databases (greenfield scripts already use `RevokedReason`).
+
+### Session binding: `Created*` on `RefreshTokens` only
+
+| Area | Now |
+|------|-----|
+| `RefreshTokenEntity` / `auth.RefreshTokens` | `CreatedIpAddress`, `CreatedUserAgent`, `CreatedDeviceFingerprint` — family anchor for session binding on refresh |
+| `AccessTokenEntity` / `auth.AccessTokens` | **No** `Created*` columns |
+
+Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `ClientContext`).
+
+**Access token** issue metadata is **not** denormalized on the token row. It is written to **`auth.Audits`** via `AuditService.RecordTokenIssued` (`IpAddress`, `UserAgent`, `DeviceFingerprint`, `EntityId` = access-token jti).
+
+**Refresh token** issue: same audit row **plus** non-empty `ClientContext` values are copied to `Created*` on the refresh row (family anchor inherited on rotation).
+
+**Action:** run `1_04_auth_RefreshTokens_SessionBinding.sql` on existing databases; greenfield `2_01_auth_RefreshTokens.sql` already includes `Created*`.
+
+### Revoke audit metadata (`auth.Audits`, not token columns)
 
 | Area | Was | Now |
 |------|-----|-----|
-| Entity / DB (`AccessTokens` / `RefreshTokens`) | `IpAddress` | `CreatedIpAddress` |
-| | `UserAgent` | `CreatedUserAgent` |
-| | `DeviceFingerprint` | `CreatedDeviceFingerprint` |
+| Token row (`AccessTokens` / `RefreshTokens`) | sometimes `RevokedByIp` in custom schemas | `RevokedAt` only |
+| Audit row on revoke | `RevokedByIp` | `Audits.IpAddress`, `Audits.UserAgent`, `Audits.DeviceFingerprint`, `Audits.RevokedReason` |
 
-Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host input → `ClientContext`). Revoke audit fields stay `RevokedIpAddress` / `RevokedUserAgent`.
+Revoke paths pass metadata via `ClientContext` → `RecordTokenRevoked`. There are **no** `RevokedIpAddress` / `RevokedUserAgent` columns on token entities.
 
-**Action:** rename columns on existing databases.
-
-### `RevokedByIp` → `RevokedIpAddress` + `RevokedUserAgent`
-
-| Area | Was | Now |
-|------|-----|-----|
-| Entity / DB | `RevokedByIp` | `RevokedIpAddress` |
-| Entity / DB | — | `RevokedUserAgent` (new) |
-
-Revoke paths take audit metadata via `ClientContext` (see above).
-
-**Action:** rename/add DB columns; pass User-Agent (and IP / device fingerprint) through `ClientContext` on revoke paths.
+**Action:** pass IP, User-Agent, and device fingerprint through `ClientContext` on revoke paths; query `auth.Audits` for forensic detail.
 
 ### No `IHeadersContextAccessor` in Cross.Identity
 

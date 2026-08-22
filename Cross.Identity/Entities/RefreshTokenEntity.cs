@@ -14,11 +14,11 @@ public class RefreshTokenEntity : IHasConcurrencyStamp
     public DateTime AbsoluteExpiresAt { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    /// <summary>Trusted client IP captured at family start (see session binding).</summary>
+    /// <summary>Host-supplied IP captured at family start (session binding anchor).</summary>
     public string? CreatedIpAddress { get; set; }
-    /// <summary>Trusted User-Agent captured at family start (see session binding).</summary>
+    /// <summary>Host-supplied User-Agent captured at family start (session binding anchor).</summary>
     public string? CreatedUserAgent { get; set; }
-    /// <summary>Trusted device fingerprint captured at family start (see session binding).</summary>
+    /// <summary>Host-supplied device fingerprint captured at family start (session binding anchor).</summary>
     public string? CreatedDeviceFingerprint { get; set; }
 
     public Guid? ReplacedByTokenId { get; set; }
