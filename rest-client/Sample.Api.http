@@ -119,12 +119,12 @@ Content-Type: application/json
 
 ###
 # @name main-external-login-unlink
-# Requires authenticated caller (Bearer ACCESS_TOKEN with sub = current user).
 POST {{HOST}}/api/identity/main/ExternalLoginUnlink
 Content-Type: application/json
-Authorization: Bearer {{ACCESS_TOKEN}}
 
 {
+  "UserId": "{{USER_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}",
   "Provider": "Google"
 }
 
@@ -160,12 +160,12 @@ Content-Type: application/json
 
 ###
 # @name main-communication-endpoints-get-all
-# UserId identifies the account (same pattern as ExternalLoginGetAll).
 POST {{HOST}}/api/identity/main/CommunicationEndpointsGetAll
 Content-Type: application/json
 
 {
-  "UserId": "{{USER_ID}}"
+  "UserId": "{{USER_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}"
 }
 
 ###
@@ -176,5 +176,6 @@ Content-Type: application/json
 
 {
   "UserId": "{{USER_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}",
   "EndpointId": "{{ENDPOINT_ID}}"
 }

@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 internal class JwtTokenService : IJwtTokenService
 {
@@ -269,6 +269,29 @@ internal class JwtTokenService : IJwtTokenService
                && entity.ExpiresAt >= DateTime.UtcNow
                && entity.AbsoluteExpiresAt >= DateTime.UtcNow
                && entity.CreatedAt <= DateTime.UtcNow;
+    }
+
+    /// <inheritdoc/>
+    public async Task EnsureRefreshTokenBelongsToUserAsync(
+        string? refreshToken,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            throw new NotAuthorizedException("A valid refresh token is required.");
+        }
+
+        if (!await ValidateRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false))
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        var entity = await GetRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+        if (entity is null || entity.UserAccountId != userId)
+        {
+            throw new NotAuthorizedException("Refresh token does not match the specified user.");
+        }
     }
 
     /// <inheritdoc/>

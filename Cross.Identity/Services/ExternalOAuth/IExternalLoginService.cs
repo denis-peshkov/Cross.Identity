@@ -112,6 +112,7 @@ internal interface IExternalLoginService
     /// Provider name to unlink (for example, <c>Google</c>). Must be enabled and currently linked to the user.
     /// </param>
     /// <param name="userId">Local user account id (supplied by the host from the authenticated principal).</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userId"/> (session proof).</param>
     /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">
@@ -120,9 +121,13 @@ internal interface IExternalLoginService
     /// <exception cref="ValidationException">
     /// Unlinking would leave the user with no login method (no password and no other external logins).
     /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Refresh token is missing, invalid, or does not match <paramref name="userId"/>.
+    /// </exception>
     Task UnlinkAsync(
         string provider,
         Guid userId,
+        string refreshToken,
         ClientContext clientContext,
         CancellationToken cancellationToken);
 
@@ -132,12 +137,17 @@ internal interface IExternalLoginService
     /// <see cref="ExternalLoginOptions"/> (<see cref="ExternalLoginProviderOptions.IsConfigured"/>).
     /// </summary>
     /// <param name="userId">Local user account id (supplied by the host from the authenticated principal).</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userId"/> (session proof).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Account email and provider rows for the user.</returns>
     /// <exception cref="NotFoundException">
     /// User account was not found.
     /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Refresh token is missing, invalid, or does not match <paramref name="userId"/>.
+    /// </exception>
     Task<ExternalLoginOverviewDto> GetAllAsync(
         Guid userId,
+        string refreshToken,
         CancellationToken cancellationToken);
 }

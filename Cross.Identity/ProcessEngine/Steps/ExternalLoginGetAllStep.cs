@@ -13,13 +13,16 @@ internal sealed class ExternalLoginGetAllStep : IStep
 
     public required string UserIdKey { get; init; }
 
+    public required string RefreshTokenKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
-        var overview = await ExternalLoginService.GetAllAsync(userId, cancellationToken).ConfigureAwait(false);
+        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
+        var overview = await ExternalLoginService.GetAllAsync(userId, refreshToken, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "AccountEmail"), overview.AccountEmail);
         ctx.Set(BagKey.Qualify(Kind, "Providers"), overview.Providers);

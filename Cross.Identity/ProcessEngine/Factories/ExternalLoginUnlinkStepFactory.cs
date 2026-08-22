@@ -16,6 +16,7 @@ internal sealed class ExternalLoginUnlinkStepFactory : IStepFactory
             ExternalLoginService = externalLoginService,
             ProviderKey          = cfg.Str("providerKey"),
             UserIdKey            = cfg.Str("userIdKey"),
+            RefreshTokenKey      = cfg.Str("refreshTokenKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }

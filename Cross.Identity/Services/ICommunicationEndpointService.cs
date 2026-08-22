@@ -7,7 +7,10 @@
 public interface ICommunicationEndpointService
 {
     /// <summary>List all endpoints for a user.</summary>
-    Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(
+        Guid userId,
+        string refreshToken,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Upsert an endpoint. When <paramref name="isVerified"/> is true and the user has no preferred
@@ -29,6 +32,7 @@ public interface ICommunicationEndpointService
     Task SetPreferredAsync(
         Guid userId,
         Guid endpointId,
+        string refreshToken,
         ClientContext clientContext,
         CancellationToken cancellationToken = default);
 

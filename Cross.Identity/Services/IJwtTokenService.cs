@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Issues, validates, and revokes JWT access/refresh tokens and related session state in storage.
@@ -90,6 +90,21 @@ public interface IJwtTokenService
     /// <returns><c>true</c> if the token is valid (not revoked and not expired); otherwise <c>false</c>.</returns>
     Task<bool> ValidateRefreshTokenAsync(
         string refreshToken,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Ensures the refresh token is present, valid, and issued to <paramref name="userId"/>
+    /// (session proof for user-scoped flow operations).
+    /// </summary>
+    /// <param name="refreshToken">Refresh token string from the authenticated session.</param>
+    /// <param name="userId">User account id the caller claims to act on.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <exception cref="NotAuthorizedException">
+    /// Token is missing, invalid, expired, or belongs to another user.
+    /// </exception>
+    Task EnsureRefreshTokenBelongsToUserAsync(
+        string? refreshToken,
+        Guid userId,
         CancellationToken cancellationToken);
 
     /// <summary>

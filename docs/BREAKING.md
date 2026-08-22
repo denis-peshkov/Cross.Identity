@@ -167,13 +167,15 @@ Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
 | `JwtTokenService` ctor | `(IdentityContext, IOptionsSnapshot, IHttpContextAccessor)` | `(IdentityContext, IOptionsSnapshot)` |
 | JWT issue / refresh invalidate / logout / logout-all / family / user revoke | IP/UA from `HttpContext` | `ClientContext clientContext` |
 | `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, ClientContext clientContext, ct)` |
-| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, ClientContext clientContext, ct)` |
-| `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, ct)` |
-| `InitiateAsync` linking | bag/DB `LinkUserId`; must match authenticated principal | bag `UserId` + `RefreshToken`; token must belong to that user |
+| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string refreshToken, ClientContext clientContext, ct)` |
+| `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, string refreshToken, ct)` |
+| `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
+| `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, ClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, ClientContext, ct)` |
+| User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserId` trusted without session proof | bag `UserId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
-**required** `UserId` on `ExternalLoginUnlink` / `ExternalLoginGetAll`;
+**required** `UserId` + **`RefreshToken`** on `ExternalLoginUnlink` / `ExternalLoginGetAll` / `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`;
 **optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`); when `UserId` is set, **`RefreshToken` is required** and must belong to that user.
 
 **Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.

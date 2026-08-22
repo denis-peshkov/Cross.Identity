@@ -15,6 +15,8 @@ internal sealed class ExternalLoginUnlinkStep : IStep
 
     public required string UserIdKey { get; init; }
 
+    public required string RefreshTokenKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     /// <inheritdoc/>
@@ -22,9 +24,10 @@ internal sealed class ExternalLoginUnlinkStep : IStep
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var clientContext = ClientContext.Read(ctx);
 
-        await ExternalLoginService.UnlinkAsync(provider, userId, clientContext, cancellationToken).ConfigureAwait(false);
+        await ExternalLoginService.UnlinkAsync(provider, userId, refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Unlinked"), true);
 

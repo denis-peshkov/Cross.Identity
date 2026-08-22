@@ -13,14 +13,17 @@ internal sealed class CommunicationEndpointsGetAllStep : IStep
 
     public required string UserIdKey { get; init; }
 
+    public required string RefreshTokenKey { get; init; }
+
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
 
-        var endpoints = await CommunicationEndpoints.GetAllAsync(userId, cancellationToken).ConfigureAwait(false);
+        var endpoints = await CommunicationEndpoints.GetAllAsync(userId, refreshToken, cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Endpoints"), endpoints);
         return StepResult.Ok(Next);
     }

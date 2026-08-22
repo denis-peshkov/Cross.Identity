@@ -16,14 +16,14 @@
 
 **Исправлено (2.0):** при linking обязателен `RefreshToken` того же пользователя (`requiredIf` в `main.ExternalLogin.json`, `EnsureLinkRefreshTokenAsync` в `ExternalLoginService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
 
-### 3. IDOR на flows с `UserId` из bag
-То же для:
-- `ExternalLoginUnlink` / `ExternalLoginGetAll`
-- `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`
+### 3. ~~IDOR на flows с `UserId` из bag~~ ✅ закрыто
+~~То же для:~~
+~~- `ExternalLoginUnlink` / `ExternalLoginGetAll`~~
+~~- `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`~~
 
-Библиотека **не делает authz** — только доверяет `UserId` из input. Без проверки bearer на хосте — отвязка OAuth, чтение/смена endpoints чужого пользователя.
+~~Библиотека **не делает authz** — только доверяет `UserId` из input. Без проверки bearer на хосте — отвязка OAuth, чтение/смена endpoints чужого пользователя.~~
 
-В 2.0 это осознанный контракт («host must pass UserId»), но **дыра по умолчанию**, если хост не защищает endpoint.
+**Исправлено (2.0):** на всех перечисленных flows обязателен `RefreshToken`, принадлежащий `UserId` (`EnsureRefreshTokenBelongsToUserAsync` в `IJwtTokenService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
 
 ### 4. Brute-force OTP в `CodeService.VerifyAsync`
 Поиск: `Email == identity && TokenHash == codeHash`. При неверном коде строка **не находится** → `Attempts` **не растёт** → `MaxAttempts` не работает.

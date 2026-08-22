@@ -85,7 +85,9 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 throw new NotFoundException("Current user account was not found.");
             }
 
-            await EnsureLinkRefreshTokenAsync(userId.Value, refreshToken, cancellationToken).ConfigureAwait(false);
+            await _jwtTokenService
+                .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId.Value, cancellationToken)
+                .ConfigureAwait(false);
 
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
@@ -189,12 +191,17 @@ internal sealed class ExternalLoginService : IExternalLoginService
     public async Task UnlinkAsync(
         string provider,
         Guid userId,
+        string refreshToken,
         ClientContext clientContext,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
         if (userId == Guid.Empty)
             throw new ValidationException("UserId is required to unlink an external login.");
+
+        await _jwtTokenService
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .ConfigureAwait(false);
 
         var providerEntity = await _identityContext.Providers
             .AsNoTracking()
@@ -243,10 +250,17 @@ internal sealed class ExternalLoginService : IExternalLoginService
     }
 
     /// <inheritdoc/>
-    public async Task<ExternalLoginOverviewDto> GetAllAsync(Guid userId, CancellationToken cancellationToken)
+    public async Task<ExternalLoginOverviewDto> GetAllAsync(
+        Guid userId,
+        string refreshToken,
+        CancellationToken cancellationToken)
     {
         if (userId == Guid.Empty)
             throw new ValidationException("UserId is required to list external logins.");
+
+        await _jwtTokenService
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .ConfigureAwait(false);
 
         var account = await _identityContext.UsersAccounts
             .AsNoTracking()
@@ -439,28 +453,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         return result;
-    }
-
-    private async Task EnsureLinkRefreshTokenAsync(
-        Guid userId,
-        string? refreshToken,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            throw new NotAuthorizedException("A valid refresh token is required to link an external login.");
-        }
-
-        if (!await _jwtTokenService.ValidateRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false))
-        {
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
-        }
-
-        var entity = await _jwtTokenService.GetRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
-        if (entity is null || entity.UserAccountId != userId)
-        {
-            throw new NotAuthorizedException("Refresh token does not match the specified user.");
-        }
     }
 
     private async Task<Guid> ResolveOrCreateUserAsync(

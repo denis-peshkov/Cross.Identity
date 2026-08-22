@@ -871,12 +871,14 @@ public class ExternalLoginServiceTests : EFTestsBase
         SetAuthenticatedUser(userId);
 
         var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), userId, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
                 userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
-        await sut.UnlinkAsync("Google", userId, ClientContext.Empty, CancellationToken.None);
+        await sut.UnlinkAsync("Google", userId, "session-refresh-token", ClientContext.Empty, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
         var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
@@ -895,7 +897,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, "session-refresh-token", ClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*UserId is required*");
@@ -930,9 +932,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
         SetAuthenticatedUser(userId);
 
-        var sut = CreateService(GoogleSuccessHandler());
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, userId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, refresh, ClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*last login method*");
@@ -959,9 +963,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
         SetAuthenticatedUser(userId);
 
-        var sut = CreateService(GoogleSuccessHandler());
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, userId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userId, refresh, ClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("*not linked*");
@@ -1001,6 +1007,8 @@ public class ExternalLoginServiceTests : EFTestsBase
         });
         SetAuthenticatedUser(userId);
 
+        var jwt = CreateJwtTokenService();
+        var refresh = await IssueRefreshTokenAsync(jwt, userId);
         var sut = CreateService(
             GoogleSuccessHandler(),
             options =>
@@ -1016,9 +1024,10 @@ public class ExternalLoginServiceTests : EFTestsBase
                     ClientSecret = "apple-secret",
                     IsEnabled = false,
                 };
-            });
+            },
+            jwtTokenService: jwt);
 
-        var result = await sut.GetAllAsync(userId, CancellationToken.None);
+        var result = await sut.GetAllAsync(userId, refresh, CancellationToken.None);
 
         result.AccountEmail.Should().Be("owner@example.com");
         result.Providers.Should().HaveCount(2);
@@ -1040,7 +1049,7 @@ public class ExternalLoginServiceTests : EFTestsBase
     {
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.GetAllAsync(Guid.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.GetAllAsync(Guid.Empty, "session-refresh-token", CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*UserId is required*");
@@ -1082,7 +1091,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             optionsMock.Object,
             _logger.Object,
             jwtTokenService ?? CreateJwtTokenService(),
-            new CommunicationEndpointService(Context, new AuditService(Context)),
+            new CommunicationEndpointService(Context, new AuditService(Context), jwtTokenService ?? CreateJwtTokenService()),
             provisioner);
     }
 

@@ -199,11 +199,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userIdKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Host supplies `UserId` from the authenticated principal. Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+> Host supplies `UserId` and a valid `RefreshToken` for that user (session proof). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 
 ---
 
@@ -213,11 +213,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string); optional client context. → `externalLoginGetAll` |
-| `externalLoginGetAll` | externalLoginGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required); optional client context. → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
-> Host supplies `UserId`. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+> Host supplies `UserId` and a valid `RefreshToken` for that user. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -269,8 +269,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string); optional client context. → `communicationEndpointsGetAll` |
-| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userIdKey: collectForm.UserId`. → `collectResult` |
+| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required); optional client context. → `communicationEndpointsGetAll` |
+| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `endpoints`. `next: null` |
 
 ---
@@ -281,8 +281,8 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId`, `EndpointId` (Guid strings); optional client context. → `communicationEndpointSetPreferred` |
-| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userIdKey`, `endpointIdKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserId`, `RefreshToken`, `EndpointId` (required); optional client context. → `communicationEndpointSetPreferred` |
+| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userIdKey`, `endpointIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `preferred`. `next: null` |
 
 ---

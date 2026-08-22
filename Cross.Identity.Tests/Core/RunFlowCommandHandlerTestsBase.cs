@@ -115,8 +115,14 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
 
+        var jwtMock = new Mock<IJwtTokenService>();
+        jwtMock
+            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
+
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
-            new CommunicationEndpointService(Context, new AuditService(Context)));
+            new CommunicationEndpointService(Context, new AuditService(Context), jwtMock.Object));
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)

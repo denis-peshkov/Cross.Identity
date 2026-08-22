@@ -64,6 +64,16 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
     }
 
+    private async Task<string> IssueRefreshTokenAsync(Guid userId)
+    {
+        return await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            ClientContext.Empty,
+            CancellationToken.None);
+    }
+
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenGoogleProvider_WhenExternalLogin_ThenReturnsAuthorizationUrlAsync()
@@ -114,11 +124,13 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             ConcurrencyStamp = Guid.NewGuid(),
         });
         SetAuthenticatedUser(userId);
+        var refresh = await IssueRefreshTokenAsync(userId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
                 ["UserId"] = userId,
+                ["RefreshToken"] = refresh,
                 ["Provider"] = "Google",
             },
             Flow,
@@ -186,11 +198,13 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 };
             });
         RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+        var refresh = await IssueRefreshTokenAsync(userId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
                 ["UserId"] = userId,
+                ["RefreshToken"] = refresh,
             },
             Flow,
             FlowOperationEnum.ExternalLoginGetAll,
@@ -437,7 +451,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
             _jwtTokenService,
-            new CommunicationEndpointService(Context, new AuditService(Context)));
+            new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService));
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

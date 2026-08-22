@@ -16,19 +16,22 @@ internal sealed class CommunicationEndpointSetPreferredStep : IStep
 
     public required string EndpointIdKey { get; init; }
 
+    public required string RefreshTokenKey { get; init; }
+
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var raw = ctx.Get<object?>(BagKey.Qualify(Kind, EndpointIdKey));
         if (raw is null || !Guid.TryParse(raw.ToString(), out var endpointId) || endpointId == Guid.Empty)
             throw new ValidationException("EndpointId is required.");
 
         var clientContext = ClientContext.Read(ctx);
         await CommunicationEndpoints
-            .SetPreferredAsync(userId, endpointId, clientContext, cancellationToken)
+            .SetPreferredAsync(userId, endpointId, refreshToken, clientContext, cancellationToken)
             .ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Preferred"), true);
         return StepResult.Ok(Next);

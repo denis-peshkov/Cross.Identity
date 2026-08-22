@@ -87,6 +87,7 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginUnlink",
               "providerKey": "Provider",
               "userIdKey": "UserId",
+              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -97,6 +98,7 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginUnlink");
         step.ProviderKey.Should().Be("Provider");
         step.UserIdKey.Should().Be("UserId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
@@ -110,6 +112,7 @@ public class ExternalLogin_StepFactoryTests
             {
               "kind": "externalLoginGetAll",
               "userIdKey": "UserId",
+              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -119,6 +122,7 @@ public class ExternalLogin_StepFactoryTests
 
         step.Kind.Should().Be("externalLoginGetAll");
         step.UserIdKey.Should().Be("UserId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
