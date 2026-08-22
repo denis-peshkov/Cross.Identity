@@ -41,8 +41,10 @@
 
 **Исправлено (2.0):** `RevokeRefreshTokenForLogoutAsync` отзывает access tokens той же `FamilyId` с `USER_LOGOUT`; другие сессии пользователя не затрагиваются.
 
-### 6. `System.Random` для OTP
-`CodeGeneratorHelper.GenerateNumericCode` / `GenerateCode` — не CSPRNG. Для коротких SMS-кодов это слабое место (особенно при массовой выдаче).
+### 6. ~~`System.Random` для OTP~~ ✅ закрыто
+~~`CodeGeneratorHelper.GenerateNumericCode` / `GenerateCode` — не CSPRNG. Для коротких SMS-кодов это слабое место (особенно при массовой выдаче).~~
+
+**Исправлено (2.0):** OTP генерируется через `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper`.
 
 ### 7. ~~GitHub: email без `verified`~~ ✅ закрыто (вместе с #1)
 ~~`FetchGitHubProfileAsync` берёт primary email из `/user/emails` **без** проверки `verified: true`. Усиливает takeover по email (#1).~~
