@@ -342,3 +342,12 @@ New operations (stock `main` flows):
 Host must pass `UserId` in the bag (no ambient auth user).
 
 **Action:** wire routes / clients if you expose these operations; apply matching DDL for communication-endpoint tables (`Infrastructure/Scripts`).
+
+### `main.Token`: invalid credentials → exception (not `is_invalid_code`)
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| `TokenStep` on bad password/code | `StepResult.Ok`, bag `token.IsInvalidCode = true`, flow continues to `collectResult` | `StepResult.Fail(NotAuthorizedException)` — flow aborts |
+| `collectResult` fields | included `is_invalid_code` | removed; success response is tokens only |
+
+**Action:** map `NotAuthorizedException` to 401 on the host (same as `ChangePassword` / `ResetPassword` verify); stop checking `is_invalid_code` in Token flow clients.

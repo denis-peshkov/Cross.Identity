@@ -7,7 +7,5 @@ public static class IdentityConstants
     public static string IdToken => "id_token";
     public static string UserId => "user_id";
 
-    public static string IsInvalidCode => "is_invalid_code";
-
     public static string RequestPatchBody => "RequestPatchBody";
 }

@@ -107,11 +107,10 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         // verify that collectResult returned tokens in OAuth2 format
         var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "is_invalid_code");
+        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_id");
         dict["access_token"].Should().NotBeNull();
         dict["refresh_token"].Should().NotBeNull();
         dict["token_type"].Should().Be("Bearer");
-        dict["is_invalid_code"].Should().Be(false);
 
         // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
@@ -126,7 +125,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenReturnsIsInvalidCodeAsync()
+    public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -135,15 +134,12 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
             ["Password"] = "WrongPass1",
         };
 
-        // Act
-        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Token, CancellationToken.None);
-
-        // Assert
-        var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        dict.Should().ContainKey("is_invalid_code");
-        dict["is_invalid_code"].Should().Be(true);
-        dict.Should().NotContainKey("access_token");
-        dict.Should().NotContainKey("refresh_token");
+        // Act & Assert
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Token, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("Invalid credentials.");
     }
 
     [Test]

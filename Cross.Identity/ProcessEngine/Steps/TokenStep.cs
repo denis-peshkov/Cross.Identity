@@ -52,8 +52,10 @@ internal sealed class TokenStep : IStep
         }
         if (!validated)
         {
-            ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), true);
-            return StepResult.Ok(Next); // todo: return StepResult.Fail(); mnust correctly handle the case when the user is not found
+            if (CodeKey != null && !string.IsNullOrEmpty(codeValue))
+                return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
+
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
         // 3) get user data
@@ -64,7 +66,6 @@ internal sealed class TokenStep : IStep
         await TokenPairIssuer
             .IssueTokenPairAsync(JwtTokenService, ctx, Kind, userAccount, Guid.NewGuid(), clientContext, cancellationToken)
             .ConfigureAwait(false);
-        ctx.Set(BagKey.Qualify(Kind, "IsInvalidCode"), false);
 
         return StepResult.Ok(Next);
     }

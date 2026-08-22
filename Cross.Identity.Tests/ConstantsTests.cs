@@ -32,7 +32,6 @@ public class ConstantsTests
         IdentityConstants.RefreshToken.Should().Be("refresh_token");
         IdentityConstants.IdToken.Should().Be("id_token");
         IdentityConstants.UserId.Should().Be("user_id");
-        IdentityConstants.IsInvalidCode.Should().Be("is_invalid_code");
     }
 
     [Test]

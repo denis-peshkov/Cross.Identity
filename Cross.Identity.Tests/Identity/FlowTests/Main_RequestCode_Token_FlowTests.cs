@@ -113,7 +113,6 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         tokens.Should().ContainKey("access_token");
         tokens.Should().ContainKey("refresh_token");
         tokens.Should().ContainKey("user_id");
-        tokens["is_invalid_code"].Should().Be(false);
         tokens["user_id"].Should().Be(_userId);
     }
 
@@ -183,7 +182,6 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
             CancellationToken.None);
 
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        tokens["is_invalid_code"].Should().Be(false);
         tokens.Should().ContainKey("access_token");
     }
 }

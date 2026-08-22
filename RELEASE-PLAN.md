@@ -106,8 +106,10 @@ FLOWS.md говорит «OTP не для UserName alone», JSON это **нар
 
 **Исправлено (2.0):** `max: 32` для всех полей `type: Password` в stock flows (`Register`, `Token`, `ResetPassword`, `ChangePassword`).
 
-### 16. `TokenStep` при неверных credentials → `Ok`
-`IsInvalidCode=true`, `StepResult.Ok` (есть `// todo`). `PasswordAuthStep` бросает `NotAuthorizedException`. Разная семантика; хост без проверки флага может считать login успешным.
+### 16. ~~`TokenStep` при неверных credentials → `Ok`~~ ✅ закрыто
+~~`IsInvalidCode=true`, `StepResult.Ok` (есть `// todo`). `PasswordAuthStep` бросает `NotAuthorizedException`. Разная семантика; хост без проверки флага может считать login успешным.~~
+
+**Исправлено (2.0):** `TokenStep` → `StepResult.Fail(NotAuthorizedException)`; `is_invalid_code` убран из `main.Token` `collectResult`.
 
 ### 17. User enumeration в `SendCodeStep`
 `GetUserIdByAsync` → `NotFoundException("User not found.")` на ForgotPassword/RequestCode. Перебор email/phone.

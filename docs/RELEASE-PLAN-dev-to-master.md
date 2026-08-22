@@ -226,7 +226,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | F1 | `main.Token` — password OR code (validation `atLeastOneRequired`) | Integration | ✅ |
 | F2 | `main.Token` — code only | Integration | ✅ |
 | F3 | RequestCode → Token end-to-end scenario | Integration | ✅ |
-| F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
+| F4 | Invalid credentials → `NotAuthorizedException` (no `is_invalid_code`) | Integration | ✅ `Main_Token_FlowTests` |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
 | F6 | `MaxAttempts` exceeded (3) | Unit | ✅ `CodeServiceTests` |
 
