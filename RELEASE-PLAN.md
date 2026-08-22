@@ -136,8 +136,10 @@
 
 **Исправлено (2.0):** только `SecurityTokenException` / `ArgumentException` / `FormatException` → `Valid = false`, `StepResult.Ok`. Остальные ошибки (DB, конфиг и т.д.) не маскируются как invalid token — пробрасываются через `StepResult.Fail` / исключение executor.
 
-### 22. Sync-over-async
-`GetClaimValueFromJweToken` → `ValidateTokenAsync(...).GetAwaiter().GetResult()`. Риск deadlock в sync context.
+### 22. ~~Sync-over-async~~ ✅ принято (осознанный trade-off)
+~~`GetClaimValueFromJweToken` → `ValidateTokenAsync(...).GetAwaiter().GetResult()`. Теоретический deadlock при «липком» `SynchronizationContext` (legacy ASP.NET, UI).~~
+
+**Принято (2.0):** sync `GetClaimValue` для JWE оставляем — отдельный async API не добавляем. В типичном хосте (**ASP.NET Core**, без request-scoped `SynchronizationContext`) deadlock практически не воспроизводится. Основной сценарий — JWS refresh (`RefreshTokenStep`, 3 части) без async I/O; JWE access в `VerifyTokenStep` уже проходит `ValidateAccessTokenAsync` до `GetClaimValue`. Риск — блокировка worker thread на decrypt при редком sync-вызове JWE; для stock flows допустимо.
 
 ### 23. `PasswordAlgoEnum.SHA256`
 Obsolete, но всё ещё в коде — слабый алгоритм при старой конфигурации.
