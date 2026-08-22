@@ -283,6 +283,7 @@ public class CodeServiceTests : EFTestsBase
 
         var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
+        (await Context.PhoneVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
 
     [Test]
@@ -330,6 +331,7 @@ public class CodeServiceTests : EFTestsBase
 
         var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
 
     [Test]
@@ -353,6 +355,60 @@ public class CodeServiceTests : EFTestsBase
 
         var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenWrongIdentity_WhenVerifyAsync_ThenDoesNotIncrementAttemptsAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "victim@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = "victim@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "attacker@example.com", "123456", CancellationToken.None);
+
+        result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRepeatedWrongEmailCode_WhenVerifyAsync_ThenBlocksAfterMaxAttemptsAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong1", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong2", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong3", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+
+        var stored = await Context.EmailVerifications.SingleAsync();
+        stored.Attempts.Should().Be(3);
+        stored.UsedAt.Should().BeNull();
     }
 
     [Test]

@@ -27,12 +27,12 @@
 
 **Исправлено (2.0):** на всех перечисленных flows обязателен `RefreshToken`, принадлежащий `UserId` (`EnsureRefreshTokenBelongsToUserAsync` в `IJwtTokenService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
 
-### 4. Brute-force OTP в `CodeService.VerifyAsync`
-Поиск: `Email == identity && TokenHash == codeHash`. При неверном коде строка **не находится** → `Attempts` **не растёт** → `MaxAttempts` не работает.
+### 4. ~~Brute-force OTP в `CodeService.VerifyAsync`~~ ✅ закрыто
+~~Поиск: `Email == identity && TokenHash == codeHash`. При неверном коде строка **не находится** → `Attempts` **не растёт** → `MaxAttempts` не работает.~~
 
-`ResetPassword` / `VerifyCodeStep` идут через `CodeService`. Для 6-значного SMS — неограниченный перебор.
+~~`ResetPassword` / `VerifyCodeStep` идут через `CodeService`. Для 6-значного SMS — неограниченный перебор.~~
 
-В `UserService.TryValidateEmailCodeAsync` (путь `TokenStep` с code) логика **правильная**: сначала последняя запись по userId, потом сравнение hash и `Attempts++`.
+**Исправлено (2.0):** поиск по email/phone (последняя активная запись); `Attempts++` только при совпадении identity и неверном коде; чужой identity не трогает счётчик. Логика как в `UserService.TryValidate*CodeAsync`.
 
 ### 5. ~~Logout не убивает access token~~ ✅ закрыто
 ~~`RevokeRefreshTokenForLogoutAsync` — revoke **только refresh**. Access tokens той же сессии живут до `ExpiresAt`.~~

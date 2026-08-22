@@ -106,122 +106,125 @@ internal sealed class CodeService : ICodeService
             _ => identity.Trim()
         };
 
-        // Compute code hash (SHA-256, 32 bytes)
-        var codeHash = SHA256.HashData(Encoding.UTF8.GetBytes(code));
-
         switch (channel)
         {
             case ChannelEnum.Email:
-                {
-                    // Look up email code
-                    var entity = await _context.EmailVerifications
-                        .Where(x => x.Email == normalizedIdentity && x.TokenHash == codeHash && x.UsedAt == null)
-                        .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (entity is null)
-                    {
-                        _logger.LogWarning("Email verification code not found for {Email}", normalizedIdentity);
-                        return false;
-                    }
-
-                    if (entity.ExpiresAt < now)
-                    {
-                        _logger.LogWarning("Email verification code expired for {Email}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Check attempt count
-                    if (entity.Attempts >= entity.MaxAttempts)
-                    {
-                        _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Increment attempt counter (even for wrong code)
-                    entity.Attempts++;
-
-                    // Verify code hash
-                    if (!entity.TokenHash.SequenceEqual(codeHash))
-                    {
-                        // Wrong code, but attempt already counted
-                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                        _logger.LogWarning("Email verification code mismatch for {Email}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Correct code — mark as used
-                    entity.UsedAt = now;
-
-                    try
-                    {
-                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                        return true;
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        _logger.LogWarning("Email verification code already used for {Email}", normalizedIdentity);
-                        return false;
-                    }
-                }
+                return await VerifyEmailAsync(normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             case ChannelEnum.Sms:
-                {
-                    // For phone, find the latest unused record
-                    var entity = await _context.PhoneVerifications
-                        .Where(x => x.PhoneNumber == normalizedIdentity && x.CodeHash == codeHash && x.UsedAt == null)
-                        .OrderByDescending(x => x.CreatedAt)
-                        .FirstOrDefaultAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (entity is null)
-                    {
-                        _logger.LogWarning("PhoneNumber verification code not found for {PhoneNumber}", normalizedIdentity);
-                        return false;
-                    }
-
-                    if (entity.ExpiresAt < now)
-                    {
-                        _logger.LogWarning("PhoneNumber verification code expired for {PhoneNumber}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Check attempt count
-                    if (entity.Attempts >= entity.MaxAttempts)
-                    {
-                        _logger.LogWarning("PhoneNumber verification code max attempts exceeded for {PhoneNumber}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Increment attempt counter (even for wrong code)
-                    entity.Attempts++;
-
-                    // Verify code hash
-                    if (!entity.CodeHash.SequenceEqual(codeHash))
-                    {
-                        // Wrong code, but attempt already counted
-                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                        _logger.LogWarning("PhoneNumber verification code mismatch for {PhoneNumber}", normalizedIdentity);
-                        return false;
-                    }
-
-                    // Correct code — mark as used
-                    entity.UsedAt = now;
-
-                    try
-                    {
-                        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-                        return true;
-                    }
-                    catch (DbUpdateConcurrencyException)
-                    {
-                        _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedIdentity);
-                        return false;
-                    }
-                }
+                return await VerifyPhoneAsync(normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             default:
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);
                 return false;
+        }
+    }
+
+    private async Task<bool> VerifyEmailAsync(
+        string normalizedEmail,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        // Look up the latest active email verification for this identity (hash is checked below).
+        var entity = await _context.EmailVerifications
+            .Where(x => x.Email == normalizedEmail && x.ExpiresAt >= now && x.UsedAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null)
+        {
+            _logger.LogWarning("Email verification code not found for {Email}", normalizedEmail);
+            return false;
+        }
+
+        // Check attempt count
+        if (entity.Attempts >= entity.MaxAttempts)
+        {
+            _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedEmail);
+            return false;
+        }
+
+        // Verify code hash
+        var matches = entity.TokenLength == code.Length
+                      && entity.TokenHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            // Wrong code for this identity — increment attempt counter
+            entity.Attempts++;
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogWarning("Email verification code mismatch for {Email}", normalizedEmail);
+            return false;
+        }
+
+        // Correct code — mark as used
+        entity.UsedAt = now;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            _logger.LogWarning("Email verification code already used for {Email}", normalizedEmail);
+            return false;
+        }
+    }
+
+    private async Task<bool> VerifyPhoneAsync(
+        string normalizedPhone,
+        string code,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        // For phone, find the latest unused record for this identity (hash is checked below).
+        var entity = await _context.PhoneVerifications
+            .Where(x => x.PhoneNumber == normalizedPhone && x.ExpiresAt >= now && x.UsedAt == null)
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null)
+        {
+            _logger.LogWarning("PhoneNumber verification code not found for {PhoneNumber}", normalizedPhone);
+            return false;
+        }
+
+        // Check attempt count
+        if (entity.Attempts >= entity.MaxAttempts)
+        {
+            _logger.LogWarning("PhoneNumber verification code max attempts exceeded for {PhoneNumber}", normalizedPhone);
+            return false;
+        }
+
+        // Verify code hash
+        var matches = entity.CodeLength == code.Length
+                      && entity.CodeHash.SequenceEqual(CodeGeneratorHelper.GenerateHash(code));
+
+        if (!matches)
+        {
+            // Wrong code for this identity — increment attempt counter
+            entity.Attempts++;
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            _logger.LogWarning("PhoneNumber verification code mismatch for {PhoneNumber}", normalizedPhone);
+            return false;
+        }
+
+        // Correct code — mark as used
+        entity.UsedAt = now;
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedPhone);
+            return false;
         }
     }
 }
