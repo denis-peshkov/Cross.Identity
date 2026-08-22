@@ -56,6 +56,25 @@ bag["PhoneNumber"] = phoneNumber;
 
 No DI registration is required.
 
+## Client context (`ClientContext`)
+
+Optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` on stock flows feed token audit and revoke metadata via [`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs).
+
+Cross.Identity **does not** read `HttpContext` in 2.0+. The **host** must set these fields from trusted server-side sources and **overwrite** any client-sent values before `IFlowExecutor.ExecuteAsync`. See [`FLOWS.md`](Cross.Identity/FLOWS.md) — **Client context (host)**.
+
+```csharp
+using Cross.Identity.ProcessEngine.Core;
+
+var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
+
+// Trusted metadata — set on the server, not from the request body
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
+
+await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
+```
+
 ## Requirements
 
 - .NET 8.0

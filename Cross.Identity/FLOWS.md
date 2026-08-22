@@ -11,8 +11,32 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Later steps read via `ClientContext.Read(bag)` for token audit and revoke/password/unlink paths.
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Steps read via `ClientContext.Read(bag)` for token audit, revoke, password change, and unlink paths. **Host responsibility:** the library does not read `HttpContext`; the host must set these bag keys from trusted server-side metadata before `ExecuteAsync` (see [Client context (host)](#client-context-host) below).
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
+
+### Client context (host)
+
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. `IpAddress`, `UserAgent`, and `DeviceFingerprint` are ordinary optional `collectForm` fields; `ClientContext.Read(bag)` only reads what the host put in the bag.
+
+**The host is responsible for trust:**
+
+| Field | Set from (trusted) | Do not use |
+|-------|-------------------|------------|
+| `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
+| `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
+| `collectForm.DeviceFingerprint` | Host-computed value (cookie, SDK, server session) if you use one | Arbitrary client input |
+
+**Recommended pattern** in the API handler, **after** building the flow input dictionary and **before** `IFlowExecutor.ExecuteAsync`:
+
+1. Read IP and User-Agent from `HttpContext` on the server.
+2. **Overwrite** `collectForm.IpAddress`, `collectForm.UserAgent`, `collectForm.DeviceFingerprint` in the bag (even if the client sent values in the request body).
+3. For direct service calls (`SetPasswordAsync`, `UnlinkAsync`, JWT APIs), pass `new ClientContext(ip, userAgent, deviceFingerprint)` or `ClientContext.Empty` — same trusted sources.
+
+**Usage notes:**
+
+- Audit columns (`CreatedIpAddress`, `RevokedIpAddress`, …) reflect whatever the host passed; treat them as **forensic hints**, not proof for automated block/revoke unless the host guarantees trusted ingestion.
+- Notification templates (e.g. reset password) may include IP/UA from `ClientContext`; misleading values only appear if the host forwards untrusted bag input.
+- Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAddress` is correct; do not parse forwarding headers inside the library.
 
 ### Operations (`FlowOperationEnum`)
 

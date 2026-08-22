@@ -183,6 +183,8 @@ Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
 
 **Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
 
+**Host trust (not a library bug):** optional `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` are **host-supplied**. Cross.Identity does not read `HttpContext`. The host must overwrite these keys from server-side metadata (`RemoteIpAddress`, `User-Agent`, host-computed fingerprint) before `ExecuteAsync`. Values copied from the client request body are spoofable and must not be used for security decisions. Details: [`FLOWS.md`](../Cross.Identity/FLOWS.md) — Client context (host).
+
 ### `RevokeReason` → `RevokedReason`
 
 | Area | Was | Now |

@@ -80,8 +80,10 @@
 
 Replay detection есть (`REPLAY_DETECTED`), race window — остаётся.
 
-### 13. `ClientContext` полностью client-controlled
-`IpAddress`, `UserAgent`, `DeviceFingerprint` из bag/form. Audit, revoke metadata, письма (`ResetPasswordStep`) — **подделываемы** вызывающим кодом. Это не баг контракта 2.0, но forensic/notification integrity слабая.
+### 13. ~~`ClientContext` полностью client-controlled~~ ✅ принято (контракт хоста)
+~~`IpAddress`, `UserAgent`, `DeviceFingerprint` из bag/form. Audit, revoke metadata, письма (`ResetPasswordStep`) — **подделываемы** вызывающим кодом. Это не баг контракта 2.0, но forensic/notification integrity слабая.~~
+
+**Принято (2.0):** библиотека намеренно не читает `HttpContext`; доверенные `IpAddress` / `UserAgent` / `DeviceFingerprint` задаёт **хост** (перезапись `collectForm.*` перед `ExecuteAsync`). Документация: `FLOWS.md` → Client context (host), `README.md`, `BREAKING.md`.
 
 ---
 

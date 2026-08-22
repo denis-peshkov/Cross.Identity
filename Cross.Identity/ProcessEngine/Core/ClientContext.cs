@@ -1,9 +1,12 @@
 ﻿namespace Cross.Identity.ProcessEngine.Core;
 
 /// <summary>
-/// HTTP client metadata from the flow bag.
-/// Populated by collectForm fields IpAddress / UserAgent / DeviceFingerprint;
-/// later steps read via <see cref="Read"/>.
+/// HTTP client metadata carried through flows and service APIs.
+/// Flow steps read values via <see cref="Read"/> from <c>collectForm.IpAddress</c>,
+/// <c>collectForm.UserAgent</c>, and <c>collectForm.DeviceFingerprint</c>.
+/// The host must populate these from trusted server-side sources (for example
+/// <c>HttpContext.Connection.RemoteIpAddress</c> and request headers), not from
+/// unvalidated client request bodies. See <c>FLOWS.md</c> — Client context.
 /// </summary>
 public sealed record ClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
 {
