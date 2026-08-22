@@ -413,6 +413,27 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenResentEmailCode_WhenVerifyAsyncWithPreviousCode_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "test@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        var ttl = TimeSpan.FromMinutes(5);
+        var message = NotificationMessage.For(ChannelEnum.Email, email)
+            .WithSubject("Test")
+            .WithTextBody("body");
+
+        await _codeService.SendAsync(message, "OLD-CODE", userId.ToString(), ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "NEW-CODE", userId.ToString(), ttl, CancellationToken.None);
+
+        (await _codeService.VerifyAsync(ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
+
+        (await Context.EmailVerifications.CountAsync(x => x.UsedAt != null)).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInactiveUser_WhenVerifyAsync_ThenReturnsFalseWithoutIncrementingAttemptsAsync()
     {
         var userId = Guid.NewGuid();

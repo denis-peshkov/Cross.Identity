@@ -35,6 +35,7 @@ internal sealed class CodeService : ICodeService
             : throw new ArgumentException("Invalid user id", nameof(userId));
 
         var developerMode = _configuration.GetValue<bool>("Authentication:DeveloperMode");
+        var now = DateTime.UtcNow;
 
         switch (msg.Channel)
         {
@@ -43,18 +44,22 @@ internal sealed class CodeService : ICodeService
                 {
                     await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 }
+
+                var normalizedEmail = destination.ToLowerInvariant();
+                await SupersedeActiveEmailVerificationsAsync(normalizedEmail, now, cancellationToken).ConfigureAwait(false);
+
                 var emailEntity = new EmailVerificationEntity
                 {
                     Id = Guid.NewGuid(),
                     UserAccountId = id,
                     UserAccount = null!,
-                    Email = destination.ToLowerInvariant(),
+                    Email = normalizedEmail,
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = now,
                 };
                 await _context.EmailVerifications.AddAsync(emailEntity, cancellationToken).ConfigureAwait(false);
                 break;
@@ -64,6 +69,9 @@ internal sealed class CodeService : ICodeService
                 {
                     await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 }
+
+                await SupersedeActivePhoneVerificationsAsync(destination, now, cancellationToken).ConfigureAwait(false);
+
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     Id = Guid.NewGuid(),
@@ -75,7 +83,7 @@ internal sealed class CodeService : ICodeService
                     Attempts = 0,
                     MaxAttempts = 3,
                     ExpiresAt = DateTimeOffset.UtcNow.Add(ttl).UtcDateTime,
-                    CreatedAt = DateTime.UtcNow,
+                    CreatedAt = now,
                 };
                 await _context.PhoneVerifications.AddAsync(phoneEntity, cancellationToken).ConfigureAwait(false);
                 break;
@@ -237,6 +245,38 @@ internal sealed class CodeService : ICodeService
         {
             _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedPhone);
             return false;
+        }
+    }
+
+    private async Task SupersedeActiveEmailVerificationsAsync(
+        string normalizedEmail,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var active = await _context.EmailVerifications
+            .Where(x => x.Email == normalizedEmail && x.UsedAt == null && x.ExpiresAt > now)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var verification in active)
+        {
+            verification.ExpiresAt = now;
+        }
+    }
+
+    private async Task SupersedeActivePhoneVerificationsAsync(
+        string phoneNumber,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var active = await _context.PhoneVerifications
+            .Where(x => x.PhoneNumber == phoneNumber && x.UsedAt == null && x.ExpiresAt > now)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var verification in active)
+        {
+            verification.ExpiresAt = now;
         }
     }
 

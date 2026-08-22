@@ -63,18 +63,17 @@
 ### 9. Lockout не реализован
 `LockoutEnd`, `LockoutEnabled`, `AccessFailedCount` в entity — **мертвые колонки**. Брутфорс пароля не ограничен на уровне библиотеки.
 
-### 10. Два несовместимых пути верификации OTP
-| Путь | Где | Поведение |
-|------|-----|-----------|
-| `UserService.ValidateCodeAsync` | `TokenStep` | По `userId`, attempts работают |
-| `CodeService.VerifyAsync` | `VerifyCodeStep`, reset | По identity+hash в WHERE, attempts сломаны |
+### 10. ~~Два несовместимых пути верификации OTP~~ ✅ закрыто (вместе с #4)
+~~| Путь | Где | Поведение |~~
+~~| `UserService.ValidateCodeAsync` | `TokenStep` | По `userId`, attempts работают |~~
+~~| `CodeService.VerifyAsync` | `VerifyCodeStep`, reset | По identity+hash в WHERE, attempts сломаны |~~
 
-Один продукт — два разных security-профиля.
+**Исправлено (2.0):** `CodeService.VerifyAsync` — поиск по identity, `Attempts++` при неверном коде; логика согласована с `UserService`.
 
-### 11. Старые OTP остаются валидными
-`CodeService.SendAsync` **добавляет** новую запись, старые не инвалидирует. Любой неиспользованный непросроченный код с тем же hash (или перехваченный ранее) проходит после «запросить новый код».
+### 11. ~~Старые OTP остаются валидными~~ ✅ закрыто
+~~`CodeService.SendAsync` **добавляет** новую запись, старые не инвалидирует.~~
 
-`UserService` берёт **последнюю** запись по userId — там лучше, но `CodeService` — нет.
+**Исправлено (2.0):** при resend активные коды для того же email/phone истекают (`ExpiresAt = now`); verify принимает только последнюю неиспользованную непросроченную запись. TTL по-прежнему ограничивает срок жизни каждого кода.
 
 ### 12. Refresh rotation без атомарности
 `RefreshTokenStep`: check → issue → invalidate. Между шагами нет транзакции/блокировки внутри библиотеки. Параллельные refresh с одним token — окно с несколькими активными парами; при replay — mass revoke family (DoS сессий).
