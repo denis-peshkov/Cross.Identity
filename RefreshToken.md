@@ -146,25 +146,42 @@ if (DateTime.UtcNow > oldToken.AbsoluteExpiresAt)
 
 This guarantees that after, say, 90 days even an active user must log in again.
 
-#### 2. Device binding
+#### 2. Device binding (session binding)
 
-Store not just a refresh token, but bind it to a specific device / user-agent / IP.
+Store not just a refresh token, but bind the token **family** to metadata captured at login.
 
-For example:
+Cross.Identity persists host-supplied metadata on `RefreshTokenEntity`:
+
 ```cs
-public string CreatedDeviceFingerprint { get; set; } = default!;
+public string? CreatedIpAddress { get; set; }
+public string? CreatedUserAgent { get; set; }
+public string? CreatedDeviceFingerprint { get; set; }
 ```
 
-Then even if the token is stolen from another device — it will not work.
+On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `ClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See `FLOWS.md` — Client context (host).
 
-(In production, libraries like FingerprintJS are usually used, which do this more reliably.)
+**Host vs library**
 
-You end up with a hash string, for example:
+Cross.Identity is a library; it does not read `HttpContext` or the HTTP body. The **host Web API**:
+
+1. Receives the client request (optional `deviceFingerprint` in JSON, headers, SDK token, etc.).
+2. Derives trusted metadata (validate or compute fingerprint; `RemoteIpAddress` + `ForwardedHeaders`; request `User-Agent`).
+3. Puts them into the flow bag before `ExecuteAsync`:
+
+```csharp
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // validated / host-computed
 ```
-"bdb38b8f2c0a6a17884e23f9a7b05c4e"
-```
 
-On login the client sends deviceFingerprint:
+4. On **login and every refresh** — the same sources. The library reads `ClientContext.Read(bag)` and stores or compares `Created*`.
+
+Do **not** copy `IpAddress` / `UserAgent` blindly from the client JSON into `collectForm` (spoofable). `DeviceFingerprint` should be host-validated (cookie, server session, signed SDK payload), not an arbitrary client string.
+
+**Example API (host)**
+
+The mobile app may send a fingerprint to **your** API:
+
 ```http
 POST /api/v1/auth/token
 {
@@ -174,46 +191,38 @@ POST /api/v1/auth/token
 }
 ```
 
-The server saves this DeviceFingerprint in RefreshTokenEntity:
-```cs
-public class RefreshTokenEntity
-{
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
-    public string Token { get; set; } = default!;
-    public DateTime ExpiresAt { get; set; }
-    public DateTime AbsoluteExpiresAt { get; set; }
-    public DateTime? RevokedAt { get; set; }
+The host handler validates or recomputes that value, then calls Cross.Identity with `collectForm.DeviceFingerprint` set from the **trusted** result — not by forwarding the raw body field into the library unchanged.
 
-    public string CreatedDeviceFingerprint { get; set; } = default!;
-    public string CreatedUserAgent { get; set; } = default!;
-    public string? CreatedIpAddress { get; set; }
-}
+(In production, fingerprint libraries such as FingerprintJS are often used on the client; the host still decides what to trust and store.)
+
+Example hash string:
+
+```
+"bdb38b8f2c0a6a17884e23f9a7b05c4e"
 ```
 
-On a refresh request the server compares:
-```cs
-if (!string.Equals(oldToken.CreatedDeviceFingerprint, request.CreatedDeviceFingerprint, StringComparison.Ordinal))
-    throw new SecurityException("Device mismatch — refresh token invalid.");
-```
+**For mobile (iOS/Android)**
 
-For Mobile (iOS/Android)
+The fingerprint is usually formed as:
 
-There the fingerprint is usually formed as:
 ```js
 device_id = hash(Manufacturer + Model + OSVersion + InstallID)
 ```
 
-And stored in Secure Storage (Keychain / Keystore).
-Good practice — store not one but two fields:
+Stored in Secure Storage (Keychain / Keystore). The app sends it to the host API; the host validates and passes it into `ClientContext`.
 
-| Field             | Example value                                                                      | Purpose                          |
-|-------------------|------------------------------------------------------------------------------------|----------------------------------|
-| DeviceFingerprint | "bdb38b8f2c0a6a17884e23f9a7b05c4e"                                                 | persistent device hash           |
-| UserAgent         | "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)..."                               | human-readable description       |
-| IdleTimeout       | (sliding window) — optional (e.g. 7 days without activity → invalidate)          |                                  |
+Good practice — bind up to three dimensions (each optional; only non-empty values are checked):
 
-Example code:
+| Field | Example value | Host source |
+|-------|---------------|-------------|
+| `DeviceFingerprint` | `bdb38b8f2c0a6a17884e23f9a7b05c4e` | Validated device id / host-computed hash |
+| `UserAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...` | `HttpContext.Request.Headers.User-Agent` |
+| `IpAddress` | `203.0.113.42` | `RemoteIpAddress` after `ForwardedHeaders` |
+| `IdleTimeout` | sliding window (optional) | Not in stock library |
+
+**IdleTimeout** — optional product feature (e.g. revoke after 7 days without activity); not implemented in stock Cross.Identity.
+
+Example code — absolute expiry (`AbsoluteExpiresAt` is preserved across rotation in `GenerateRefreshTokenAsync`):
 ```cs
 if (oldToken.AbsoluteExpiresAt < DateTime.UtcNow)
 {
