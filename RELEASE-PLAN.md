@@ -85,6 +85,11 @@ Replay detection есть (`REPLAY_DETECTED`), race window — остаётся.
 
 **Принято (2.0):** **trusted pipeline** — ответственность **хоста**; библиотека не читает `HttpContext` и считает `ClientContext` / `collectForm.*` уже доверенными. Хост перезаписывает `IpAddress` / `UserAgent` / `DeviceFingerprint` из server-side metadata перед `ExecuteAsync`. Документация: `FLOWS.md` → Client context (host), `README.md`, `BREAKING.md`, XML на `ClientContext`.
 
+### 13b. ~~Session binding на refresh не реализован~~ ✅ закрыто
+~~Enum `DEVICE_MISMATCH` / `IP_MISMATCH` / `USER_AGENT_MISMATCH` / `TOKEN_STOLEN` без сравнения при rotation.~~
+
+**Исправлено (2.0):** колонки `Created*` на `RefreshTokens`; при refresh сравнение `ClientContext` (то, что хост положил из запроса клиента) с family anchor. Без опций в `appsettings` — проверяется каждое поле, зафиксированное при старте сессии. PreDeployment `1_04_auth_RefreshTokens_SessionBinding.sql` (3 провайдера).
+
 ---
 
 ## Средний (противоречия / баги контрактов)

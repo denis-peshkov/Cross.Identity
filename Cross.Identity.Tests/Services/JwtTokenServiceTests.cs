@@ -833,6 +833,177 @@ public class JwtTokenServiceTests : EFTestsBase
             .WithMessage("*Account is disabled*");
     }
 
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenClientContext_WhenGenerateRefreshTokenAsync_ThenPersistsSessionBindingAsync()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var context = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), context, CancellationToken.None);
+
+        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
+        entity.CreatedIpAddress.Should().Be("10.0.0.1");
+        entity.CreatedUserAgent.Should().Be("Agent/1.0");
+        entity.CreatedDeviceFingerprint.Should().Be("fp-abc");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRotatedFamily_WhenGenerateRefreshTokenAsync_ThenInheritsFamilySessionBindingAsync()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var loginContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var refreshContext = new ClientContext("10.0.0.2", "Agent/2.0", "fp-xyz");
+
+        _ = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), loginContext, CancellationToken.None);
+        var secondToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), refreshContext, CancellationToken.None);
+
+        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(secondToken)));
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.TokenHash == hash);
+        entity.CreatedIpAddress.Should().Be("10.0.0.1");
+        entity.CreatedUserAgent.Should().Be("Agent/1.0");
+        entity.CreatedDeviceFingerprint.Should().Be("fp-abc");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenDeviceBinding_WhenFingerprintMismatchOnRefresh_ThenRevokesFamilyWithDeviceMismatchAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+        var otherFamilyId = Guid.NewGuid();
+        var issueContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var mismatchContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-stolen");
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+        var siblingToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+        var otherFamilyToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, otherFamilyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Session binding validation failed*");
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(siblingToken, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateRefreshTokenAsync(otherFamilyToken, CancellationToken.None)).Should().BeTrue();
+
+        var entity = await Context.RefreshTokens.SingleAsync(x =>
+            x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken))));
+        entity.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == entity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.DEVICE_MISMATCH);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenIpBinding_WhenIpMismatchOnRefresh_ThenRevokesFamilyWithIpMismatchAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+        var issueContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var mismatchContext = new ClientContext("10.0.0.9", "Agent/1.0", "fp-abc");
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Session binding validation failed*");
+
+        Context.Audits.Should().Contain(a =>
+            a.RevokedReason == RefreshTokenRevokedReason.IP_MISMATCH);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUserAgentBinding_WhenUserAgentMismatchOnRefresh_ThenRevokesFamilyWithUserAgentMismatchAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+        var issueContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var mismatchContext = new ClientContext("10.0.0.1", "Agent/9.0", "fp-abc");
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Session binding validation failed*");
+
+        Context.Audits.Should().Contain(a =>
+            a.RevokedReason == RefreshTokenRevokedReason.USER_AGENT_MISMATCH);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMultipleBindings_WhenMultipleMismatchOnRefresh_ThenRevokesFamilyWithTokenStolenAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+        var issueContext = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var mismatchContext = new ClientContext("10.0.0.9", "Agent/1.0", "fp-stolen");
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>();
+
+        Context.Audits.Should().Contain(a =>
+            a.RevokedReason == RefreshTokenRevokedReason.TOKEN_STOLEN);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMatchingClientContext_WhenRefresh_ThenDoesNotThrowAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var context = new ClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, Guid.NewGuid(), new List<Claim>(), context, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, context, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLegacyTokenWithoutBinding_WhenMismatch_ThenDoesNotThrowAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var familyId = Guid.NewGuid();
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, familyId, new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(
+            refreshToken, new ClientContext(null, null, "fp-any"), CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
     private static string CreateJwtSignedWithWrongKey(Guid jti, Guid sub, string issuer, string audience)
     {
         var wrongKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(RandomNumberGenerator.GetBytes(32));

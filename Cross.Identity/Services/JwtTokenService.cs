@@ -148,6 +148,7 @@ internal class JwtTokenService : IJwtTokenService
         var createdAt = DateTime.UtcNow;
         var expiresAt = createdAt.Add(_options.Jwt.RefreshTokenExpires);
         var absoluteExpiresAt = await ResolveRefreshTokenAbsoluteExpiresAtAsync(familyId, createdAt, cancellationToken).ConfigureAwait(false);
+        var sessionBinding = await ResolveFamilySessionBindingAsync(familyId, clientContext, cancellationToken).ConfigureAwait(false);
 
         var descriptor = new SecurityTokenDescriptor
         {
@@ -175,6 +176,9 @@ internal class JwtTokenService : IJwtTokenService
                 ExpiresAt = expiresAt,
                 AbsoluteExpiresAt = absoluteExpiresAt,
                 CreatedAt = createdAt,
+                CreatedIpAddress = sessionBinding.IpAddress,
+                CreatedUserAgent = sessionBinding.UserAgent,
+                CreatedDeviceFingerprint = sessionBinding.DeviceFingerprint,
             },
             cancellationToken)
             .ConfigureAwait(false);
@@ -342,6 +346,8 @@ internal class JwtTokenService : IJwtTokenService
         {
             throw new NotAuthorizedException("Account is disabled.");
         }
+
+        await EnsureSessionBindingForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -486,6 +492,124 @@ internal class JwtTokenService : IJwtTokenService
             .ConfigureAwait(false);
 
         return chainAbsolute ?? createdAt.Add(_options.Jwt.RefreshTokenAbsoluteExpires);
+    }
+
+    private async Task<ClientContext> ResolveFamilySessionBindingAsync(
+        Guid familyId,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
+        var anchor = await _context.RefreshTokens
+            .AsNoTracking()
+            .Where(x => x.FamilyId == familyId)
+            .OrderBy(x => x.CreatedAt)
+            .Select(x => new { x.CreatedIpAddress, x.CreatedUserAgent, x.CreatedDeviceFingerprint })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (anchor is null
+            || (string.IsNullOrWhiteSpace(anchor.CreatedIpAddress)
+                && string.IsNullOrWhiteSpace(anchor.CreatedUserAgent)
+                && string.IsNullOrWhiteSpace(anchor.CreatedDeviceFingerprint)))
+        {
+            return clientContext;
+        }
+
+        return new ClientContext(anchor.CreatedIpAddress, anchor.CreatedUserAgent, anchor.CreatedDeviceFingerprint);
+    }
+
+    private async Task EnsureSessionBindingForRotationAsync(
+        RefreshTokenEntity entity,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
+        var anchor = await ResolveFamilySessionBindingAsync(entity.FamilyId, clientContext, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(anchor.IpAddress)
+            && string.IsNullOrWhiteSpace(anchor.UserAgent)
+            && string.IsNullOrWhiteSpace(anchor.DeviceFingerprint))
+        {
+            return;
+        }
+
+        var deviceMismatch = IsSessionBindingMismatch(anchor.DeviceFingerprint, clientContext.DeviceFingerprint);
+        var ipMismatch = IsSessionBindingMismatch(anchor.IpAddress, clientContext.IpAddress);
+        var userAgentMismatch = IsSessionBindingMismatch(anchor.UserAgent, clientContext.UserAgent);
+
+        if (!deviceMismatch && !ipMismatch && !userAgentMismatch)
+        {
+            return;
+        }
+
+        var reason = ResolveSessionBindingMismatchReason(deviceMismatch, ipMismatch, userAgentMismatch);
+        await HandleSessionBindingMismatchAsync(entity, reason, clientContext, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static RefreshTokenRevokedReason ResolveSessionBindingMismatchReason(
+        bool deviceMismatch,
+        bool ipMismatch,
+        bool userAgentMismatch)
+    {
+        var mismatchCount = (deviceMismatch ? 1 : 0) + (ipMismatch ? 1 : 0) + (userAgentMismatch ? 1 : 0);
+        if (mismatchCount >= 2)
+        {
+            return RefreshTokenRevokedReason.TOKEN_STOLEN;
+        }
+
+        if (deviceMismatch)
+        {
+            return RefreshTokenRevokedReason.DEVICE_MISMATCH;
+        }
+
+        if (ipMismatch)
+        {
+            return RefreshTokenRevokedReason.IP_MISMATCH;
+        }
+
+        return RefreshTokenRevokedReason.USER_AGENT_MISMATCH;
+    }
+
+    private static bool IsSessionBindingMismatch(string? anchorValue, string? currentValue)
+    {
+        if (string.IsNullOrWhiteSpace(anchorValue))
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentValue))
+        {
+            return true;
+        }
+
+        return !string.Equals(anchorValue, currentValue, StringComparison.Ordinal);
+    }
+
+    private async Task HandleSessionBindingMismatchAsync(
+        RefreshTokenEntity entity,
+        RefreshTokenRevokedReason reason,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
+        _audit.RecordTokenRevoked(
+            entity.UserAccountId,
+            AuditEntityType.RefreshToken,
+            entity.Id,
+            reason,
+            clientContext.IpAddress,
+            clientContext.UserAgent,
+            clientContext.DeviceFingerprint);
+
+        entity.RevokedAt = DateTime.UtcNow;
+        await RevokeRefreshTokenFamilyCoreAsync(
+                entity.FamilyId,
+                reason,
+                clientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        throw new NotAuthorizedException("Session binding validation failed.");
     }
 
     /// <inheritdoc/>

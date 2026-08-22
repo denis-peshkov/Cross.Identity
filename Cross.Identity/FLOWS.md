@@ -11,40 +11,37 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Steps read via `ClientContext.Read(bag)` for token audit, revoke, password change, and unlink paths. **Trusted pipeline is the host’s responsibility** — the library does not read `HttpContext` and treats bag values as trusted (see [Client context (host)](#client-context-host)).
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Host forwards client-supplied values; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
 
 ### Client context (host)
 
-Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. `IpAddress`, `UserAgent`, and `DeviceFingerprint` are ordinary optional `collectForm` fields; `ClientContext.Read(bag)` only reads what the host put in the bag.
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. `IpAddress`, `UserAgent`, and `DeviceFingerprint` are optional `collectForm` fields; `ClientContext.Read(bag)` reads whatever the host put in the bag.
 
-**Trusted pipeline contract**
+**Session binding (refresh)**
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host** | Guarantees a **trusted pipeline**: every flow invocation and direct service call receives `ClientContext` values from server-side metadata, never copied blindly from the client request body. |
-| **Cross.Identity (library)** | Consumes `ClientContext` as-is for token audit (`Created*`), revoke audit (`Revoked*`), password/unlink flows, and notification templates. Does **not** re-validate IP/UA/fingerprint and does **not** read `HttpContext`. |
+| **Client** | Sends `IpAddress`, `UserAgent`, `DeviceFingerprint` in the request body when the product uses binding (typically `DeviceFingerprint` from SDK). |
+| **Host** | Forwards client-supplied values into `collectForm.*` on **login and every refresh** — same fields, same source. |
+| **Cross.Identity** | Stores non-empty values as `Created*` on the refresh-token family anchor; on refresh compares current `ClientContext` with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). A dimension is checked only if it was captured at family start. |
 
-If the host implements the trusted pipeline, audit fields and host-side policy (for example `DEVICE_MISMATCH` / `IP_MISMATCH` on refresh) are meaningful. If the host forwards client-controlled form fields, audit and emails may be misleading — that is a **host integration bug**, not a library defect.
+If the client did not send a field at login, that dimension is not bound. If it was sent at login but missing or different on refresh → mismatch.
 
-| Field | Set from (trusted) | Do not use |
-|-------|-------------------|------------|
-| `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
-| `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
-| `collectForm.DeviceFingerprint` | Host-computed value (cookie, SDK, server session) if you use one | Arbitrary client input |
+**Audit / notifications (host choice)**
 
-**Recommended pattern** in the API handler, **after** building the flow input dictionary and **before** `IFlowExecutor.ExecuteAsync`:
+For password-reset emails and revoke audit rows the host may pass server-derived IP (`RemoteIpAddress` after `ForwardedHeaders`) instead of client body fields. That does not change session binding: binding always uses the same `collectForm` values the host supplied on login and refresh.
 
-1. Read IP and User-Agent from `HttpContext` on the server.
-2. **Overwrite** `collectForm.IpAddress`, `collectForm.UserAgent`, `collectForm.DeviceFingerprint` in the bag (even if the client sent values in the request body).
-3. For direct service calls (`SetPasswordAsync`, `UnlinkAsync`, JWT APIs), pass `new ClientContext(ip, userAgent, deviceFingerprint)` or `ClientContext.Empty` — same trusted sources.
+**Recommended handler pattern** before `IFlowExecutor.ExecuteAsync`:
 
-**Library usage notes:**
+```csharp
+// Session binding: forward what the client sent (example)
+bag["collectForm.DeviceFingerprint"] = request.DeviceFingerprint;
+bag["collectForm.UserAgent"] = request.UserAgent ?? httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.IpAddress"] = request.ClientIp ?? httpContext.Connection.RemoteIpAddress?.ToString();
+```
 
-- Audit columns (`CreatedIpAddress`, `RevokedIpAddress`, …) record whatever the host passed under the trusted-pipeline contract.
-- Notification templates (e.g. reset password) may include IP/UA from `ClientContext`.
-- Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAddress` is correct; do not parse forwarding headers inside the library.
-- Reserved revoke reasons such as `DEVICE_MISMATCH` / `IP_MISMATCH` are for **host or product** policy when metadata is trusted; the stock library does not auto-revoke on fingerprint/IP mismatch.
+Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` when using server IP for audit or optional client IP claims.
 
 ### Operations (`FlowOperationEnum`)
 
@@ -127,6 +124,8 @@ If the host implements the trusted pipeline, audit fields and host-side policy (
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
+>
+> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares client-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See [Client context (host)](#client-context-host).
 >
 > **Concurrency interceptor:** `IdentityContext` registers `ConcurrencyStampInterceptor` in `OnConfiguring` (hosts need not call `AddInterceptors`). It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
 

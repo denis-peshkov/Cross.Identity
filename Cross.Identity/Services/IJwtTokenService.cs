@@ -114,11 +114,17 @@ public interface IJwtTokenService
     /// If the token exists but is already revoked, this is treated as refresh-token reuse:
     /// the entire family is revoked with <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/>
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
+    /// When session metadata was captured at family start, refresh compares the current
+    /// <see cref="ClientContext"/> (client-supplied <c>collectForm</c> fields) with the family anchor.
+    /// Mismatch revokes the family with <see cref="RefreshTokenRevokedReason.DEVICE_MISMATCH"/>,
+    /// <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>,
+    /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
+    /// <see cref="RefreshTokenRevokedReason.TOKEN_STOLEN"/> when multiple dimensions differ.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
     /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <exception cref="NotAuthorizedException">Token is missing or expired.</exception>
+    /// <exception cref="NotAuthorizedException">Token is missing, expired, or session binding failed.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task EnsureRefreshTokenActiveForRotationAsync(
         string refreshToken,
