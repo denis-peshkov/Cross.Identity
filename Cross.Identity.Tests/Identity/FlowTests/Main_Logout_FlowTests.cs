@@ -70,6 +70,10 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
             userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
             userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+        var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, familyA, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+        var accessB = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
@@ -82,6 +86,8 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
         (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeTrue();
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessB, CancellationToken.None)).Should().BeTrue();
 
         var entityA = await Context.RefreshTokens.SingleAsync(x =>
             x.TokenHash == Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshA))));

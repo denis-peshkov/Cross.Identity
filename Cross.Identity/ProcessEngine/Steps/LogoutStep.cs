@@ -1,8 +1,8 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Logout current session: revokes the presented refresh token with
-/// <see cref="RefreshTokenRevokedReason.USER_LOGOUT"/>.
+/// Logout current session: revokes the presented refresh token and access tokens in the same
+/// family with <see cref="RefreshTokenRevokedReason.USER_LOGOUT"/>.
 /// Missing or already-revoked tokens are a no-op (idempotent).
 /// </summary>
 internal sealed class LogoutStep : IStep

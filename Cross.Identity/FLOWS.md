@@ -233,7 +233,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
-> Revokes the refresh token with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
+> Revokes the refresh token and access tokens in the same session (family) with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
 
 ---
 

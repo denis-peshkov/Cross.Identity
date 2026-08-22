@@ -593,6 +593,17 @@ internal class JwtTokenService : IJwtTokenService
                 clientContext.DeviceFingerprint);
         }
 
+        await RevokeAccessTokensForFamilyCoreAsync(familyId, now, reason, clientContext, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task RevokeAccessTokensForFamilyCoreAsync(
+        Guid familyId,
+        DateTime revokedAt,
+        RefreshTokenRevokedReason reason,
+        ClientContext clientContext,
+        CancellationToken cancellationToken)
+    {
         var accessTokens = await _context.AccessTokens
             .Where(x => x.FamilyId == familyId && x.RevokedAt == null)
             .ToListAsync(cancellationToken)
@@ -600,7 +611,7 @@ internal class JwtTokenService : IJwtTokenService
 
         foreach (var token in accessTokens)
         {
-            token.RevokedAt = now;
+            token.RevokedAt = revokedAt;
             _audit.RecordTokenRevoked(
                 token.UserAccountId,
                 AuditEntityType.AccessToken,
@@ -635,7 +646,8 @@ internal class JwtTokenService : IJwtTokenService
             return;
         }
 
-        entity.RevokedAt = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        entity.RevokedAt = now;
         _audit.RecordTokenRevoked(
             entity.UserAccountId,
             AuditEntityType.RefreshToken,
@@ -644,6 +656,14 @@ internal class JwtTokenService : IJwtTokenService
             clientContext.IpAddress,
             clientContext.UserAgent,
             clientContext.DeviceFingerprint);
+
+        await RevokeAccessTokensForFamilyCoreAsync(
+                entity.FamilyId,
+                now,
+                RefreshTokenRevokedReason.USER_LOGOUT,
+                clientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

@@ -130,7 +130,7 @@ Content-Type: application/json
 
 ###
 # @name main-logout
-# Logout current session: revokes the presented refresh token (USER_LOGOUT). Idempotent.
+# Logout current session: revokes the presented refresh token and access tokens in the same family (USER_LOGOUT). Idempotent.
 POST {{HOST}}/api/identity/main/Logout
 Content-Type: application/json
 

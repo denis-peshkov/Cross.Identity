@@ -34,10 +34,12 @@
 
 В `UserService.TryValidateEmailCodeAsync` (путь `TokenStep` с code) логика **правильная**: сначала последняя запись по userId, потом сравнение hash и `Attempts++`.
 
-### 5. Logout не убивает access token
-`RevokeRefreshTokenForLogoutAsync` — revoke **только refresh**. Access tokens той же сессии живут до `ExpiresAt`.
+### 5. ~~Logout не убивает access token~~ ✅ закрыто
+~~`RevokeRefreshTokenForLogoutAsync` — revoke **только refresh**. Access tokens той же сессии живут до `ExpiresAt`.~~
 
-`LogoutAll` вызывает `RevokeAllTokensForUserAsync` и revoke access — **несимметрично**: single logout слабее, чем ожидает пользователь.
+~~`LogoutAll` вызывает `RevokeAllTokensForUserAsync` и revoke access — **несимметрично**: single logout слабее, чем ожидает пользователь.~~
+
+**Исправлено (2.0):** `RevokeRefreshTokenForLogoutAsync` отзывает access tokens той же `FamilyId` с `USER_LOGOUT`; другие сессии пользователя не затрагиваются.
 
 ### 6. `System.Random` для OTP
 `CodeGeneratorHelper.GenerateNumericCode` / `GenerateCode` — не CSPRNG. Для коротких SMS-кодов это слабое место (особенно при массовой выдаче).

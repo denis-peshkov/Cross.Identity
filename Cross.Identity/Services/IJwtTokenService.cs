@@ -196,7 +196,7 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Revoke a refresh token on user logout: mark in the DB so refresh cannot be reused.
+    /// Revoke a refresh token on user logout and invalidate access tokens in the same session (family).
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
     /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>

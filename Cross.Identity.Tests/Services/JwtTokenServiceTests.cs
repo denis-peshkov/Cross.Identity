@@ -590,6 +590,30 @@ public class JwtTokenServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenActiveRefreshAndAccessToken_WhenRevokeRefreshTokenForLogoutAsync_ThenRevokesAccessTokensInSameFamilyAsync()
+    {
+        var userId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var otherFamilyId = Guid.NewGuid();
+
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(userId, familyId, new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var otherAccessToken = await _jwtTokenService.GenerateAccessTokenAsync(userId, otherFamilyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        await _jwtTokenService.RevokeRefreshTokenForLogoutAsync(refreshToken, ClientContext.Empty, CancellationToken.None);
+
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessToken, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(otherAccessToken, CancellationToken.None)).Should().BeTrue();
+
+        var accessEntity = await Context.AccessTokens.SingleAsync(x => x.FamilyId == familyId);
+        accessEntity.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == accessEntity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT);
+    }
+
+    [Test]
     [Category(TestCategory.UNIT)]
     public async Task GivenNullOrEmptyRefreshToken_WhenRevokeRefreshTokenForLogoutAsync_ThenDoesNotThrowAsync()
     {
