@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Basic in-memory implementation of <see cref="IUserService"/>.
@@ -93,10 +93,14 @@ internal sealed class UserService : IUserService
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("UserName already exists.");
         if (normalizedEmail is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.Email == normalizedEmail, cancellationToken).ConfigureAwait(false))
+            && await _context.UsersAccounts.AnyAsync(
+                u => u.Email == normalizedEmail && u.EmailConfirmed,
+                cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Email already exists.");
         if (normalizedPhone is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
+            && await _context.UsersAccounts.AnyAsync(
+                u => u.PhoneNumber == normalizedPhone && u.PhoneNumberConfirmed,
+                cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("PhoneNumber already exists.");
 
         // 4) Password hash (PHC) + current pepper version
@@ -217,9 +221,27 @@ internal sealed class UserService : IUserService
             if (account != null)
             {
                 if (field == nameof(UserAccountEntity.Email))
+                {
+                    var normalizedEmail = account.Email
+                        ?? throw new InvalidOperationException("Email is required to confirm email.");
+                    await UserAccountContactGuard.EnsureNoOtherConfirmedEmailAsync(
+                        _context,
+                        account.Id,
+                        normalizedEmail,
+                        cancellationToken).ConfigureAwait(false);
                     account.EmailConfirmed = true;
-                else
+                }
+                else if (field == nameof(UserAccountEntity.PhoneNumber))
+                {
+                    var normalizedPhone = account.PhoneNumber
+                        ?? throw new InvalidOperationException("PhoneNumber is required to confirm phone.");
+                    await UserAccountContactGuard.EnsureNoOtherConfirmedPhoneAsync(
+                        _context,
+                        account.Id,
+                        normalizedPhone,
+                        cancellationToken).ConfigureAwait(false);
                     account.PhoneNumberConfirmed = true;
+                }
             }
         }
 

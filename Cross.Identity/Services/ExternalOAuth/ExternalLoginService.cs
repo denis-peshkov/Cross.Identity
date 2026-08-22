@@ -494,14 +494,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(normalizedEmail))
         {
-            var existingUserId = await _identityContext.UsersAccounts
+            var confirmedUserId = await _identityContext.UsersAccounts
                 .AsNoTracking()
-                .Where(x => x.Email == normalizedEmail)
+                .Where(x => x.Email == normalizedEmail && x.EmailConfirmed)
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (existingUserId != Guid.Empty)
+            if (confirmedUserId != Guid.Empty)
             {
                 if (!profile.EmailVerified)
                 {
@@ -509,27 +509,25 @@ internal sealed class ExternalLoginService : IExternalLoginService
                         "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
                 }
 
-                await ConfirmEmailFromOAuthAsync(existingUserId, cancellationToken).ConfigureAwait(false);
-                return existingUserId;
+                return confirmedUserId;
+            }
+
+            if (!profile.EmailVerified)
+            {
+                var squatExists = await _identityContext.UsersAccounts
+                    .AsNoTracking()
+                    .AnyAsync(x => x.Email == normalizedEmail && !x.EmailConfirmed, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (squatExists)
+                {
+                    throw new ValidationException(
+                        "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
+                }
             }
         }
 
         return await CreateUserAsync(profile, cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task ConfirmEmailFromOAuthAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        var account = await _identityContext.UsersAccounts
-            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (account is null || account.EmailConfirmed)
-        {
-            return;
-        }
-
-        account.EmailConfirmed = true;
-        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<Guid> CreateUserAsync(ExternalOAuthProfile profile, CancellationToken cancellationToken)

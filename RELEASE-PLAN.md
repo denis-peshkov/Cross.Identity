@@ -9,7 +9,7 @@
 
 ~~При регистрации жертвы с `victim@corp.com` (email не подтверждён) атакующий логинится через OAuth с тем же email → попадает в чужой аккаунт. Плюс `EmailConfirmed = true` при создании через OAuth.~~
 
-**Исправлено (2.0):** auto-link по email только при `profile.EmailVerified` (Google `email_verified`, GitHub `verified`). Неподтверждённая локальная регистрация на тот же email не блокирует вход — OAuth подтверждает владение, выставляется `EmailConfirmed = true`. Без verified email у провайдера merge запрещён.
+**Исправлено (2.0):** auto-link по email только при `profile.EmailVerified` к **подтверждённому** локальному аккаунту. Уникальность email и phone в БД — только среди `EmailConfirmed` / `PhoneNumberConfirmed = true`; неподтверждённые регистрации не блокируют владельца.
 
 ### 2. ~~Account linking без аутентификации~~ ✅ закрыто
 ~~`main.ExternalLogin.json`: опциональный `UserId` в bag → `ExternalLoginInitiateStep` → state. **Библиотека не проверяет**, что вызывающий — этот пользователь.~~

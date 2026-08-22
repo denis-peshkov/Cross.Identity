@@ -79,7 +79,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 | bool | `BIT` | `boolean` | `TINYINT(1)` |
 | byte[] hash | `BINARY(32)` | `bytea` | `BINARY(32)` |
 | Identity | `IDENTITY` | `GENERATED … AS IDENTITY` | `AUTO_INCREMENT` |
-| Unique nullable | filtered unique index | unique (NULLs distinct) | unique (multiple NULLs OK) |
+| Unique nullable | filtered unique index | unique WHERE confirmed | expression unique index |
 
 ## EF mapping
 

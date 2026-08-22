@@ -415,16 +415,16 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedEmailAccount_WhenOAuthWithVerifiedEmail_ThenLinksAndConfirmsEmailAsync()
+    public async Task GivenUnconfirmedEmailSquat_WhenOAuthWithVerifiedEmail_ThenCreatesConfirmedAccountAsync()
     {
-        var existingUserId = Guid.NewGuid();
+        var squatterUserId = Guid.NewGuid();
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
-            Id = existingUserId,
+            Id = squatterUserId,
             Email = "user@example.com",
-            UserName = "victim",
-            NormalizedUserName = "victim",
+            UserName = "squatter",
+            NormalizedUserName = "squatter",
             EmailConfirmed = false,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = Guid.Empty,
@@ -438,10 +438,12 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        completion.UserId.Should().Be(existingUserId);
-        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
+        completion.UserId.Should().NotBe(squatterUserId);
+        (await Context.UsersAccounts.CountAsync()).Should().Be(2);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
-        (await Context.UsersAccounts.SingleAsync()).EmailConfirmed.Should().BeTrue();
+        var oauthAccount = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
+        oauthAccount.EmailConfirmed.Should().BeTrue();
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == squatterUserId)).EmailConfirmed.Should().BeFalse();
     }
 
     [Test]
@@ -500,7 +502,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
-            EmailConfirmed = false,
+            EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
             CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
@@ -515,7 +517,6 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         completion.UserId.Should().Be(userId);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
-        (await Context.UsersAccounts.SingleAsync(x => x.Id == userId)).EmailConfirmed.Should().BeTrue();
     }
 
     [Test]

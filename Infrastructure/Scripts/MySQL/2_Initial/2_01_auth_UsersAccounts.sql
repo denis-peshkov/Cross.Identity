@@ -35,7 +35,7 @@ CREATE UNIQUE INDEX `UX_auth_UsersAccounts_UserName`
     ON `auth`.`UsersAccounts` (`NormalizedUserName`);
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Email`
-    ON `auth`.`UsersAccounts` (`Email`);
+    ON `auth`.`UsersAccounts` ((IF(`EmailConfirmed`, `Email`, NULL)));
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Phone`
-    ON `auth`.`UsersAccounts` (`PhoneNumber`);
+    ON `auth`.`UsersAccounts` ((IF(`PhoneNumberConfirmed`, `PhoneNumber`, NULL)));

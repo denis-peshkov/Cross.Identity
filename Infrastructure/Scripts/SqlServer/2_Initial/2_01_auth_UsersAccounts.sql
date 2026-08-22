@@ -38,9 +38,9 @@ CREATE UNIQUE INDEX [UX_auth_UsersAccounts_UserName]
 GO
 CREATE UNIQUE INDEX [UX_auth_UsersAccounts_Email]
     ON [auth].[UsersAccounts]([Email])
-    WHERE [Email] IS NOT NULL;
+    WHERE [Email] IS NOT NULL AND [EmailConfirmed] = 1;
 GO
 CREATE UNIQUE INDEX [UX_auth_UsersAccounts_Phone]
     ON [auth].[UsersAccounts]([PhoneNumber])
-    WHERE [PhoneNumber] IS NOT NULL;
+    WHERE [PhoneNumber] IS NOT NULL AND [PhoneNumberConfirmed] = 1;
 GO

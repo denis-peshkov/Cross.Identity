@@ -68,14 +68,14 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    public async Task GivenConfirmedEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
-        // Arrange
         var email = "existing@example.com";
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
             Email = email,
+            EmailConfirmed = true,
         });
 
         var map = new Dictionary<string, object?>
@@ -84,11 +84,84 @@ public class UserServiceTests : EFTestsBase
             ["Password"] = "P@ssw0rd!"
         };
 
-        // Act & Assert
         await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
             .Should()
             .ThrowAsync<InvalidOperationException>()
             .WithMessage("*Email already exists*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnconfirmedEmailSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
+    {
+        var email = "victim@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = Guid.NewGuid(),
+            Email = email,
+            EmailConfirmed = false,
+        });
+
+        var map = new Dictionary<string, object?>
+        {
+            ["Email"] = email,
+            ["Password"] = "P@ssw0rd!"
+        };
+
+        var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        userId.Should().NotBeNullOrEmpty();
+        (await Context.UsersAccounts.CountAsync(x => x.Email == email)).Should().Be(2);
+        (await Context.UsersAccounts.CountAsync(x => x.Email == email && x.EmailConfirmed)).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenConfirmedPhone_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    {
+        var phone = "+79161234567";
+        AddToDb(new UserAccountEntity
+        {
+            Id = Guid.NewGuid(),
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = true,
+        });
+
+        var map = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = phone,
+            ["Password"] = "P@ssw0rd!"
+        };
+
+        await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
+            .Should()
+            .ThrowAsync<InvalidOperationException>()
+            .WithMessage("*PhoneNumber already exists*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnconfirmedPhoneSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
+    {
+        var phone = "+79161234567";
+        AddToDb(new UserAccountEntity
+        {
+            Id = Guid.NewGuid(),
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = false,
+        });
+
+        var map = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = phone,
+            ["Password"] = "P@ssw0rd!"
+        };
+
+        var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        userId.Should().NotBeNullOrEmpty();
+        (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone)).Should().Be(2);
+        (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone && x.PhoneNumberConfirmed)).Should().Be(0);
     }
 
     [Test]
