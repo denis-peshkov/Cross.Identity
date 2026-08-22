@@ -247,9 +247,17 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     private void SeedEmailCode(string code, DateTime expiresAt, DateTime? usedAt = null)
     {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = Email.ToLowerInvariant(),
+            EmailConfirmed = true,
+            IsActive = true,
+        });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = Guid.NewGuid(),
+            UserAccountId = userId,
             UserAccount = null!,
             Email = Email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash(code),

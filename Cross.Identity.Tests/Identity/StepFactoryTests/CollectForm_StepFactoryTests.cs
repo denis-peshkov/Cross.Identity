@@ -42,7 +42,7 @@ public class CollectForm_StepFactoryTests
               },
               "schemaPatch": {
                 "add": [
-                  { "key": "OtpCode", "type": "String", "required": true, "min": 4, "max": 8 }
+                  { "key": "OtpCode", "type": "String", "required": true, "min": 6, "max": 12 }
                 ],
                 "override": [
                   { "key": "Password", "min": 12 }

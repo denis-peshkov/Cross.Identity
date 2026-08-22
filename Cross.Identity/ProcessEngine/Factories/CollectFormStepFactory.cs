@@ -18,7 +18,7 @@
 ///     "fields": [ { "key": "Email", "type": "Email" } ]
 ///   },
 ///   "schemaPatch": {
-///     "add": [ { "key": "OtpCode", "type": "String", "required": true, "min": 4, "max": 8 } ],
+///     "add": [ { "key": "OtpCode", "type": "String", "required": true, "min": 6, "max": 12 } ],
 ///     "override": [ { "key": "Email", "regex": "^[^@]+@example\\.com$" } ],
 ///     "remove": [ "LegacyField" ],
 ///     "rename": [ { "from": "Email", "to": "Login" } ],

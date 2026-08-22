@@ -185,7 +185,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (8–128), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `codeKey: collectForm.Code`; writes `verifyCode.UserId`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.Password`. `next: null` |
 
@@ -199,7 +199,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 4–32); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 6–12); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
 | `token` | token | `passwordKey`, `codeKey`, `channel: email`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
 
