@@ -9,10 +9,12 @@
 
 При регистрации жертвы с `victim@corp.com` (email не подтверждён) атакующий логинится через OAuth с тем же email → попадает в чужой аккаунт. Плюс `EmailConfirmed = true` при создании через OAuth.
 
-### 2. Account linking без аутентификации
-`main.ExternalLogin.json`: опциональный `UserId` в bag → `ExternalLoginInitiateStep` → state. **Библиотека не проверяет**, что вызывающий — этот пользователь.
+### 2. ~~Account linking без аутентификации~~ ✅ закрыто
+~~`main.ExternalLogin.json`: опциональный `UserId` в bag → `ExternalLoginInitiateStep` → state. **Библиотека не проверяет**, что вызывающий — этот пользователь.~~
 
-Атакующий передаёт `UserId` жертвы, проходит OAuth своим аккаунтом → provider привязан к чужому аккаунту.
+~~Атакующий передаёт `UserId` жертвы, проходит OAuth своим аккаунтом → provider привязан к чужому аккаунту.~~
+
+**Исправлено (2.0):** при linking обязателен `RefreshToken` того же пользователя (`requiredIf` в `main.ExternalLogin.json`, `EnsureLinkRefreshTokenAsync` в `ExternalLoginService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
 
 ### 3. IDOR на flows с `UserId` из bag
 То же для:
@@ -139,7 +141,7 @@ Obsolete, но всё ещё в коде — слабый алгоритм пр�
 
 ## Приоритет фиксов (если чинить)
 
-1. **S1–S4:** OTP attempts + `RandomNumberGenerator` + OAuth email/linking policy + logout access revoke
+1. **S1–S4:** OTP attempts + `RandomNumberGenerator` + OAuth email policy + logout access revoke *(account linking — ✅)*
 2. **S5–S7:** `IsActive`, единый OTP verify, инвалидация старых кодов
 3. **Контракты:** UserName в flows, password max, `TokenStep` fail vs ok
 4. **Архитектура:** refresh transaction, lockout, 2FA
