@@ -301,7 +301,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
 | `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
 
-> Malformed tokens yield `valid: false` (no error). Does not refresh or revoke.
+> Malformed or cryptographically invalid tokens yield `valid: false` (step `Ok`). Database or configuration errors fail the step (exception propagated to the host).
 
 ---
 

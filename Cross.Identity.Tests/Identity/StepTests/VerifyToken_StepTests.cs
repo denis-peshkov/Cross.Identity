@@ -104,4 +104,31 @@ public class VerifyToken_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("verifyToken.Valid").Should().BeFalse();
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenOperationalFailure_WhenExecuteAsync_ThenReturnsFailAsync()
+    {
+        var accessToken = "access-token-value";
+        _jwtTokenService
+            .Setup(j => j.ValidateAccessTokenAsync(accessToken, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Database unavailable."));
+
+        var step = new VerifyTokenStep
+        {
+            Kind = "verifyToken",
+            AccessTokenKey = "AccessToken",
+            JwtTokenService = _jwtTokenService.Object,
+            Next = null,
+        };
+
+        var bag = new Bag();
+        bag.Set("verifyToken.AccessToken", accessToken);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<InvalidOperationException>();
+        bag.TryGet<bool>("verifyToken.Valid", out _).Should().BeFalse();
+    }
 }

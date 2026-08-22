@@ -55,6 +55,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     public async Task GivenValidAccessToken_WhenVerifyTokenFlow_ThenReturnsValidWithClaimsAsync()
     {
         var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
             userId,
@@ -105,6 +106,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
 
         var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
             userId,
@@ -131,6 +133,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     public async Task GivenRevokedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
         var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
             userId, familyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);

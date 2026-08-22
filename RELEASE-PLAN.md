@@ -131,8 +131,10 @@
 ### 20. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра.
 
-### 21. `VerifyTokenStep` глотает исключения
-Любая ошибка (DB, decrypt) → `valid: false`. Operational failure неотличим от invalid token.
+### 21. ~~`VerifyTokenStep` глотает исключения~~ ✅ закрыто
+~~Любая ошибка (DB, decrypt) → `valid: false`. Operational failure неотличим от invalid token.~~
+
+**Исправлено (2.0):** только `SecurityTokenException` / `ArgumentException` / `FormatException` → `Valid = false`, `StepResult.Ok`. Остальные ошибки (DB, конфиг и т.д.) не маскируются как invalid token — пробрасываются через `StepResult.Fail` / исключение executor.
 
 ### 22. Sync-over-async
 `GetClaimValueFromJweToken` → `ValidateTokenAsync(...).GetAwaiter().GetResult()`. Риск deadlock в sync context.

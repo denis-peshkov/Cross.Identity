@@ -3,7 +3,8 @@
 /// <summary>
 /// Validates an access token (crypto + storage) via <see cref="IJwtTokenService.ValidateAccessTokenAsync"/>.
 /// Sets <c>Valid</c>; when valid, also <c>UserId</c> and <c>Jti</c> from claims.
-/// Invalid tokens yield <c>Valid = false</c> (no throw).
+/// Invalid or malformed tokens yield <c>Valid = false</c> with <see cref="StepResult.Ok"/>.
+/// Operational failures (database, configuration, etc.) return <see cref="StepResult.Fail"/>.
 /// </summary>
 internal sealed class VerifyTokenStep : IStep
 {
@@ -24,14 +25,18 @@ internal sealed class VerifyTokenStep : IStep
     {
         var accessToken = ctx.Get<string>(BagKey.Qualify(Kind, AccessTokenKey));
 
-        var valid = false;
+        bool valid;
         try
         {
             valid = await JwtTokenService.ValidateAccessTokenAsync(accessToken, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException or FormatException)
         {
             valid = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return StepResult.Fail(ex);
         }
 
         ctx.Set(BagKey.Qualify(Kind, "Valid"), valid);
