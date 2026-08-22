@@ -12,7 +12,7 @@
 /// Reuse of an already rotated refresh token triggers family revoke with
 /// <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/> (theft race: attacker may hold the newer token).
 /// See <see cref="IJwtTokenService.EnsureRefreshTokenActiveForRotationAsync"/>.
-/// Session binding compares client-supplied <c>collectForm</c> metadata with the family anchor.
+/// Session binding compares host-supplied <c>collectForm</c> metadata with the family anchor.
 /// </para>
 /// <para>
 /// Keys:

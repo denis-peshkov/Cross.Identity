@@ -58,7 +58,19 @@ No DI registration is required.
 
 ## Client context (`ClientContext`)
 
-Optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` feed [`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs). On refresh, the library compares them with `Created*` captured when the session started (family anchor). Forward the **same client-supplied fields** on login and every refresh. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — Client context (host).
+The host Web API sets optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` from **server-side** metadata before calling the library ([`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs)). On refresh, the library compares them with `Created*` captured when the session started (family anchor). Use the **same host-derived sources** on login and every refresh. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — Client context (host).
+
+```csharp
+using Cross.Identity.ProcessEngine.Core;
+
+var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
+
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
+
+await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
+```
 
 ## Requirements
 

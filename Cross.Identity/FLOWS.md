@@ -11,37 +11,44 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. Host forwards client-supplied values; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets them from server-side metadata before `ExecuteAsync`; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
 
 ### Client context (host)
 
-Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. `IpAddress`, `UserAgent`, and `DeviceFingerprint` are optional `collectForm` fields; `ClientContext.Read(bag)` reads whatever the host put in the bag.
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `ClientContext` into direct APIs); `ClientContext.Read(bag)` reads whatever the host put there.
 
-**Session binding (refresh)**
+**Trusted pipeline**
 
 | Party | Responsibility |
 |-------|----------------|
-| **Client** | Sends `IpAddress`, `UserAgent`, `DeviceFingerprint` in the request body when the product uses binding (typically `DeviceFingerprint` from SDK). |
-| **Host** | Forwards client-supplied values into `collectForm.*` on **login and every refresh** — same fields, same source. |
-| **Cross.Identity** | Stores non-empty values as `Created*` on the refresh-token family anchor; on refresh compares current `ClientContext` with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). A dimension is checked only if it was captured at family start. |
+| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
+| **Cross.Identity** | Consumes `ClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
 
-If the client did not send a field at login, that dimension is not bound. If it was sent at login but missing or different on refresh → mismatch.
+| Field | Set from (trusted) | Do not use |
+|-------|-------------------|------------|
+| `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
+| `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
+| `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
 
-**Audit / notifications (host choice)**
-
-For password-reset emails and revoke audit rows the host may pass server-derived IP (`RemoteIpAddress` after `ForwardedHeaders`) instead of client body fields. That does not change session binding: binding always uses the same `collectForm` values the host supplied on login and refresh.
+**Session binding (refresh):** non-empty `ClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). A dimension is checked only if it was captured at family start.
 
 **Recommended handler pattern** before `IFlowExecutor.ExecuteAsync`:
 
 ```csharp
-// Session binding: forward what the client sent (example)
-bag["collectForm.DeviceFingerprint"] = request.DeviceFingerprint;
-bag["collectForm.UserAgent"] = request.UserAgent ?? httpContext.Request.Headers.UserAgent.ToString();
-bag["collectForm.IpAddress"] = request.ClientIp ?? httpContext.Connection.RemoteIpAddress?.ToString();
+using Cross.Identity.ProcessEngine.Core;
+
+var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
+
+// Host-derived metadata — not from the client request body
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
+
+await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
 ```
 
-Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` when using server IP for audit or optional client IP claims.
+Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAddress` is correct.
 
 ### Operations (`FlowOperationEnum`)
 
@@ -125,7 +132,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` when using ser
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >
-> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares client-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See [Client context (host)](#client-context-host).
+> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See [Client context (host)](#client-context-host).
 >
 > **Concurrency interceptor:** `IdentityContext` registers `ConcurrencyStampInterceptor` in `OnConfiguring` (hosts need not call `AddInterceptors`). It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
 

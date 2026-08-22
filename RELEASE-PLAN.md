@@ -88,7 +88,7 @@ Replay detection есть (`REPLAY_DETECTED`), race window — остаётся.
 ### 13b. ~~Session binding на refresh не реализован~~ ✅ закрыто
 ~~Enum `DEVICE_MISMATCH` / `IP_MISMATCH` / `USER_AGENT_MISMATCH` / `TOKEN_STOLEN` без сравнения при rotation.~~
 
-**Исправлено (2.0):** колонки `Created*` на `RefreshTokens`; при refresh сравнение `ClientContext` (то, что хост положил из запроса клиента) с family anchor. Без опций в `appsettings` — проверяется каждое поле, зафиксированное при старте сессии. PreDeployment `1_04_auth_RefreshTokens_SessionBinding.sql` (3 провайдера).
+**Исправлено (2.0):** колонки `Created*` на `RefreshTokens`; при refresh сравнение `ClientContext` (host-supplied metadata из trusted pipeline) с family anchor. Проверяется каждое поле, зафиксированное при старте сессии. PreDeployment `1_04_auth_RefreshTokens_SessionBinding.sql` (3 провайдера).
 
 ---
 

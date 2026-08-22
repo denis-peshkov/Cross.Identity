@@ -115,7 +115,7 @@ public interface IJwtTokenService
     /// the entire family is revoked with <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/>
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// When session metadata was captured at family start, refresh compares the current
-    /// <see cref="ClientContext"/> (client-supplied <c>collectForm</c> fields) with the family anchor.
+    /// <see cref="ClientContext"/> (host-supplied <c>collectForm</c> fields) with the family anchor.
     /// Mismatch revokes the family with <see cref="RefreshTokenRevokedReason.DEVICE_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
