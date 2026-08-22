@@ -445,4 +445,76 @@ public class SendCode_StepTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenUserNameSelector_WhenExecuteAsync_ThenSendsToPreferredEndpointAddressAsync()
+    {
+        var userName = "alice";
+        var email = "alice@example.com";
+        var userId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId.ToString());
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpChannelAsync(userId, "UserName", userName, ChannelEnum.Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ChannelEnum.Email);
+        _communicationEndpoints
+            .Setup(c => c.GetPreferredAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CommunicationEndpointDto
+            {
+                Id = Guid.NewGuid(),
+                Channel = ChannelEnum.Email,
+                Address = email,
+                IsVerified = true,
+                IsPreferred = true,
+                Source = CommunicationEndpointSource.Account,
+            });
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>Your code: {{code}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Channel = ChannelEnum.Email,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = "verifyCode"
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "UserName");
+        bag.Set("collectForm.Value", userName);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.Channel == ChannelEnum.Email &&
+                    m.Destination == email),
+                It.IsAny<string>(),
+                userId.ToString(),
+                TimeSpan.FromMinutes(5),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
 }

@@ -634,6 +634,59 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenValidCodeByUserName_WhenValidateCodeAsync_ThenReturnsTrueAsync()
+    {
+        var userId = Guid.NewGuid();
+        var userName = "alice";
+        var email = "alice@example.com";
+        var communicationEndpoints = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            _jwtTokenService.Object);
+        var userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            communicationEndpoints,
+            _options.Object);
+
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            UserName = userName,
+            NormalizedUserName = userName,
+            Email = email,
+            EmailConfirmed = true,
+            IsActive = true,
+        });
+        await communicationEndpoints.UpsertAsync(
+            userId,
+            ChannelEnum.Email,
+            email,
+            CommunicationEndpointSource.Account,
+            isVerified: true);
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await userService.ValidateCodeAsync("UserName", userName, "ABC123", CancellationToken.None);
+
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPepperVersion_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();

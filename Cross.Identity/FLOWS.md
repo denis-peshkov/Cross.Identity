@@ -12,7 +12,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
 - **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets them from server-side metadata before `ExecuteAsync`; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
-- **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify needs Email or PhoneNumber (not UserName alone).
+- **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify by `UserName` uses the user's **preferred verified** communication endpoint (email or phone address); Email/PhoneNumber use the submitted value directly.
 
 ### Client context (host)
 

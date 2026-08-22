@@ -40,7 +40,12 @@ internal sealed class VerifyCodeStep : IStep
 
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        var ok = await CodeService.VerifyAsync(channel, selector.Value, code, cancellationToken).ConfigureAwait(false);
+        bool ok;
+        if (Selector.ChannelForField(selector.Field) is null)
+            ok = await UserService.ValidateCodeAsync(selector.Field, selector.Value, code, cancellationToken).ConfigureAwait(false);
+        else
+            ok = await CodeService.VerifyAsync(channel, selector.Value, code, cancellationToken).ConfigureAwait(false);
+
         if (!ok)
             return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
 

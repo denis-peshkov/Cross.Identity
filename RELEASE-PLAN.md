@@ -98,12 +98,12 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### 14. UserName + Code не работает
-`main.Token.json` / `main.ResetPassword.json` разрешают `UserName` в selector, но:
-- `ValidateCodeAsync` — только Email/PhoneNumber
-- `VerifyCodeStep` для UserName → `ChannelForField` = null → fallback `email` → verify по email == username
+### 14. ~~UserName + Code не работает~~ ✅ закрыто
+~~`main.Token.json` / `main.ResetPassword.json` разрешают `UserName` в selector, но:~~
+~~- `ValidateCodeAsync` — только Email/PhoneNumber~~
+~~- `VerifyCodeStep` для UserName → `ChannelForField` = null → fallback `email` → verify по email == username~~
 
-FLOWS.md говорит «OTP не для UserName alone», JSON это **нарушает**.
+**Исправлено (2.0):** `ValidateCodeAsync` для `UserName` резолвит OTP-канал через `CommunicationEndpoints` и проверяет код по `userId`. `VerifyCodeStep` для `UserName` делегирует в `ValidateCodeAsync`; `SendCodeStep` шлёт на preferred verified endpoint.
 
 ### 15. ~~Лимит пароля: Register 128, Token 32~~ ✅ закрыто
 ~~`main.Register.json`: password `max: 128`. `main.Token.json`: `max: 32`. Пользователь с длинным паролем **не войдёт** через login flow.~~

@@ -158,4 +158,44 @@ public class VerifyCode_StepTests
         bag.Get<string>("verifyCode.UserId").Should().Be(userId);
         _codeService.Verify(c => c.VerifyAsync(ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenUserNameSelector_WhenExecuteAsync_ThenUsesValidateCodeAsyncAsync()
+    {
+        var userName = "alice";
+        var code = "ABC123";
+        var userId = Guid.NewGuid().ToString();
+
+        _userService.Setup(u => u.ValidateCodeAsync("UserName", userName, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+        _userService.Setup(u => u.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+
+        var step = new VerifyCodeStep
+        {
+            Kind = "verifyCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Channel = ChannelEnum.Email,
+            Selector = DefaultSelector,
+            CodeKey = "collectForm.Code",
+            UserIdKey = "UserId",
+            Next = null
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "UserName");
+        bag.Set("collectForm.Value", userName);
+        bag.Set("collectForm.Code", code);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        bag.Get<string>("verifyCode.UserId").Should().Be(userId);
+        _userService.Verify(u => u.ValidateCodeAsync("UserName", userName, code, It.IsAny<CancellationToken>()), Times.Once);
+        _codeService.Verify(
+            c => c.VerifyAsync(It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

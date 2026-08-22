@@ -64,14 +64,12 @@ internal sealed class UserService : IUserService
         else
         {
             var displayValue = NormalizeSelectorValue(field, selectorValue)
-                               ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
+                ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
             userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
-        return await userAccountsFiltered
-                   .FirstOrDefaultAsync(cancellationToken)
-                   .ConfigureAwait(false)
-               ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
+        return await userAccountsFiltered.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+            ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
     }
 
     /// <inheritdoc/>
@@ -246,6 +244,15 @@ internal sealed class UserService : IUserService
 
             case nameof(UserAccountEntity.PhoneNumber):
                 isValid = await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
+                break;
+
+            case nameof(UserAccountEntity.NormalizedUserName):
+                var otpChannel = await _communicationEndpoints
+                    .ResolveOtpChannelAsync(user.Id, selectorField, selectorValue, null, cancellationToken)
+                    .ConfigureAwait(false);
+                isValid = otpChannel == ChannelEnum.Email
+                    ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
+                    : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;
         }
 

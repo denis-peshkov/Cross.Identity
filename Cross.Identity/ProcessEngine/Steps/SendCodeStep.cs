@@ -75,6 +75,14 @@ internal sealed class SendCodeStep : IStep
         if (!channel.SupportsOtp())
             throw new ValidationException("Provide an email or a phone number to send a code.");
 
+        var destination = selector.Value;
+        if (string.Equals(selector.Field, "UserName", StringComparison.OrdinalIgnoreCase))
+        {
+            var preferred = await CommunicationEndpoints.GetPreferredAsync(userId, cancellationToken).ConfigureAwait(false)
+                ?? throw new ValidationException("No preferred verified communication channel. Set one before sending by user name.");
+            destination = preferred.Address;
+        }
+
         var ttl = ResolveTtl(ctx);
         var code = channel.GenerateCode();
 
@@ -110,7 +118,7 @@ internal sealed class SendCodeStep : IStep
         var textTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "txt");
         var htmlTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "html");
 
-        var msg = NotificationMessage.For(channel, selector.Value)
+        var msg = NotificationMessage.For(channel, destination)
             .WithSubject(Subject)
             .WithTextBody(Replace(textTemplate))
             .WithTextHtml(Replace(htmlTemplate));
