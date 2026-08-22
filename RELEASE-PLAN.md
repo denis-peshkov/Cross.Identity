@@ -101,8 +101,10 @@ Replay detection есть (`REPLAY_DETECTED`), race window — остаётся.
 
 FLOWS.md говорит «OTP не для UserName alone», JSON это **нарушает**.
 
-### 15. Лимит пароля: Register 128, Token 32
-`main.Register.json`: password `max: 128`. `main.Token.json`: `max: 32`. Пользователь с длинным паролем **не войдёт** через login flow.
+### 15. ~~Лимит пароля: Register 128, Token 32~~ ✅ закрыто
+~~`main.Register.json`: password `max: 128`. `main.Token.json`: `max: 32`. Пользователь с длинным паролем **не войдёт** через login flow.~~
+
+**Исправлено (2.0):** `max: 32` для всех полей `type: Password` в stock flows (`Register`, `Token`, `ResetPassword`, `ChangePassword`).
 
 ### 16. `TokenStep` при неверных credentials → `Ok`
 `IsInvalidCode=true`, `StepResult.Ok` (есть `// todo`). `PasswordAuthStep` бросает `NotAuthorizedException`. Разная семантика; хост без проверки флага может считать login успешным.

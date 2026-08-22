@@ -146,7 +146,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–128); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
+| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userIdKey: UserId`. → `sendCode` |
 | `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`. → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
@@ -171,7 +171,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword`, `NewPassword`; optional client context. `selector.candidates`: Id. → `passwordAuth` |
+| `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: Id. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.NewPassword`. `next: null` |
 
@@ -185,7 +185,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (8–128), `Password` (8–128); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (8–128), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `channel: email`, `codeKey: collectForm.Code`; writes `verifyCode.UserId`. → `resetPassword` |
 | `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.Password`. `next: null` |
 

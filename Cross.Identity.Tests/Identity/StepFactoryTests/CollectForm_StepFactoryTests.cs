@@ -36,7 +36,7 @@ public class CollectForm_StepFactoryTests
               "schemaDef": {
                 "fields": [
                   { "key": "Email", "type": "Email", "required": true },
-                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 64 },
+                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
                   { "key": "Legacy", "type": "String", "required": false }
                 ]
               },
@@ -136,8 +136,8 @@ public class CollectForm_StepFactoryTests
               "schemaDef": {
                 "fields": [
                   { "key": "Email", "type": "Email", "required": true },
-                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
-                  { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 }
+                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
+                  { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 32 }
                 ],
                 "validators": [
                   { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }

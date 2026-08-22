@@ -8,7 +8,7 @@
           { "key": "Email", "type": "Email", "required": true },
           { "key": "PhoneNumber", "type": "PhoneNumber", "required": false, "max": 16 },
           { "key": "UserName", "type": "String", "required": false, "min": 3, "max": 64 },
-          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
           { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
           { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
