@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// User service: creation, lookup, and password operations.
@@ -46,6 +46,8 @@ internal interface IUserService
 
     /// <summary>
     /// Verify the password of a user found by selector.
+    /// Applies account lockout (<see cref="UserAccountEntity.AccessFailedCount"/>, <see cref="UserAccountEntity.LockoutEnd"/>)
+    /// per <c>Authentication:Lockout</c> on failed attempts; resets on success.
     /// </summary>
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>

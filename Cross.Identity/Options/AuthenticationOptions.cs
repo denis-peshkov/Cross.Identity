@@ -9,6 +9,9 @@ public sealed class AuthenticationOptions
 
     public JwtOptions Jwt { get; set; }
 
+    /// <summary>Failed password attempt lockout (see <see cref="UserAccountEntity.LockoutEnd"/>).</summary>
+    public LockoutOptions Lockout { get; set; } = new();
+
     /// <summary>Background cleanup interval for expired refresh tokens.</summary>
     public TimeSpan TokenCleanupInterval { get; set; } = TimeSpan.FromHours(1);
 
@@ -39,5 +42,18 @@ public sealed class AuthenticationOptions
         /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/>. <c>Zero</c> disables the check.
         /// </summary>
         public TimeSpan RefreshTokenIdleTimeout { get; set; }
+    }
+
+    /// <summary>Lockout policy for password-based authentication.</summary>
+    public sealed class LockoutOptions
+    {
+        /// <summary>Initial <see cref="UserAccountEntity.LockoutEnabled"/> when a user is created.</summary>
+        public bool LockoutEnabled { get; set; } = true;
+
+        /// <summary>Failed attempts before lockout. <c>0</c> disables counting.</summary>
+        public int MaxFailedAccessAttempts { get; set; } = 5;
+
+        /// <summary>How long the account stays locked after the threshold is reached.</summary>
+        public TimeSpan LockoutTimeout { get; set; } = TimeSpan.FromMinutes(15);
     }
 }

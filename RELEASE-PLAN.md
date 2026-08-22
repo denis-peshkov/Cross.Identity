@@ -60,8 +60,10 @@
 
 **Исправлено (2.0):** `UserAccountGuard` + проверки в `UserService`, `CodeService`, `TokenPairIssuer`, `ExternalLoginService.CompleteAsync`, `JwtTokenService` (validate access/refresh и rotation).
 
-### 9. Lockout не реализован
-`LockoutEnd`, `LockoutEnabled`, `AccessFailedCount` в entity — **мертвые колонки**. Брутфорс пароля не ограничен на уровне библиотеки.
+### 9. ~~Lockout не реализован~~ ✅ закрыто
+~~`LockoutEnd`, `LockoutEnabled`, `AccessFailedCount` в entity — **мертвые колонки**. Брутфорс пароля не ограничен на уровне библиотеки.~~
+
+**Исправлено (2.0):** `ValidatePasswordAsync` — проверка lockout, `AccessFailedCount++` при неверном пароле, lockout по `Authentication:Lockout` (`MaxFailedAccessAttempts`, `LockoutTimeout`); сброс при успешном входе и `SetPasswordAsync`.
 
 ### 10. ~~Два несовместимых пути верификации OTP~~ ✅ закрыто (вместе с #4)
 ~~| Путь | Где | Поведение |~~

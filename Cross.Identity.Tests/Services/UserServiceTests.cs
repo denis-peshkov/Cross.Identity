@@ -7,6 +7,7 @@ public class UserServiceTests : EFTestsBase
     private Mock<IPepperVaultProvider> _pepperVault = null!;
     private Mock<IPasswordHasher> _hasher = null!;
     private Mock<IJwtTokenService> _jwtTokenService = null!;
+    private Mock<IOptionsSnapshot<AuthenticationOptions>> _options = null!;
     private UserService _userService = null!;
 
     [SetUp]
@@ -29,13 +30,34 @@ public class UserServiceTests : EFTestsBase
                 It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        _options = CreateOptionsSnapshot();
+
         _userService = new UserService(
             Context,
             _logger.Object,
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
-            Mock.Of<ICommunicationEndpointService>());
+            Mock.Of<ICommunicationEndpointService>(),
+            _options.Object);
+    }
+
+    private static Mock<IOptionsSnapshot<AuthenticationOptions>> CreateOptionsSnapshot(
+        int maxFailedAccessAttempts = 5,
+        TimeSpan? lockoutTimeout = null,
+        bool lockoutEnabled = true)
+    {
+        var mock = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        mock.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Lockout = new AuthenticationOptions.LockoutOptions
+            {
+                LockoutEnabled = lockoutEnabled,
+                MaxFailedAccessAttempts = maxFailedAccessAttempts,
+                LockoutTimeout = lockoutTimeout ?? TimeSpan.FromMinutes(15),
+            },
+        });
+        return mock;
     }
 
     [Test]
@@ -64,6 +86,8 @@ public class UserServiceTests : EFTestsBase
         user.Should().NotBeNull();
         user!.Email.Should().Be(email.ToLowerInvariant());
         user.PasswordPhc.Should().Be(hashedPassword);
+        user.LockoutEnabled.Should().BeTrue();
+        user.AccessFailedCount.Should().Be(0);
     }
 
     [Test]
@@ -528,7 +552,8 @@ public class UserServiceTests : EFTestsBase
             Id = userId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
-            PasswordPepperVersion = 1
+            PasswordPepperVersion = 1,
+            LockoutEnabled = true,
         });
         _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
         {
@@ -540,6 +565,10 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None);
         result.Should().BeFalse();
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(1);
+        user.LockoutEnd.Should().BeNull();
     }
 
     [Test]
@@ -756,5 +785,114 @@ public class UserServiceTests : EFTestsBase
         await FluentActions.Invoking(() => ctx2.SaveChangesAsync())
             .Should()
             .ThrowAsync<DbUpdateConcurrencyException>();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMaxFailedAttempts_WhenValidatePasswordAsyncRepeatedly_ThenLocksOutAccountAsync()
+    {
+        _options = CreateOptionsSnapshot(maxFailedAccessAttempts: 3, lockoutTimeout: TimeSpan.FromMinutes(10));
+        _userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            Mock.Of<ICommunicationEndpointService>(),
+            _options.Object);
+
+        var userId = Guid.NewGuid();
+        var email = "lockout@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            PasswordPhc = "$pbkdf2$stored",
+            PasswordPepperVersion = 1,
+            LockoutEnabled = true,
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Failed);
+
+        for (var i = 0; i < 3; i++)
+        {
+            (await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None)).Should().BeFalse();
+        }
+
+        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        locked.AccessFailedCount.Should().Be(3);
+        locked.LockoutEnd.Should().NotBeNull();
+        locked.LockoutEnd!.Value.Should().BeAfter(DateTimeOffset.UtcNow);
+
+        _hasher.Setup(h => h.Verify("correct", It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Success);
+
+        (await _userService.ValidatePasswordAsync("Email", email, "correct", CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenPriorFailedAttempts_WhenValidatePasswordAsyncSucceeds_ThenResetsLockoutAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "reset-lockout@example.com";
+        var password = "P@ssw0rd!";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            PasswordPhc = "$pbkdf2$stored",
+            PasswordPepperVersion = 1,
+            LockoutEnabled = true,
+            AccessFailedCount = 2,
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Success);
+
+        (await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None)).Should().BeTrue();
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(0);
+        user.LockoutEnd.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLockedOutUser_WhenSetPasswordAsync_ThenClearsLockoutAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "locked@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            PasswordPhc = "$pbkdf2$old",
+            PasswordPepperVersion = 1,
+            LockoutEnabled = true,
+            AccessFailedCount = 5,
+            LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(30),
+        });
+        _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Hash("newPass", "pepper")).Returns("$pbkdf2$new");
+
+        await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(0);
+        user.LockoutEnd.Should().BeNull();
     }
 }

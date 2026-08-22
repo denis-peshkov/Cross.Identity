@@ -548,6 +548,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
             EmailConfirmed = profile.EmailVerified && !string.IsNullOrWhiteSpace(normalizedEmail),
             PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
+            LockoutEnabled = true,
+            AccessFailedCount = 0,
             IsActive = true,
             CreatedAt = now,
             CreatedBy = Guid.Empty,

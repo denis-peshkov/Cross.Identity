@@ -351,3 +351,16 @@ Host must pass `UserId` in the bag (no ambient auth user).
 | `collectResult` fields | included `is_invalid_code` | removed; success response is tokens only |
 
 **Action:** map `NotAuthorizedException` to 401 on the host (same as `ChangePassword` / `ResetPassword` verify); stop checking `is_invalid_code` in Token flow clients.
+
+### Password lockout (`Authentication:Lockout`)
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| `LockoutEnd` / `AccessFailedCount` / `LockoutEnabled` on `UsersAccounts` | columns only | enforced in `ValidatePasswordAsync` |
+| Failed password | always `false`, no counter | increments `AccessFailedCount`; at threshold sets `LockoutEnd` |
+| Locked account | ignored | password validation returns `false` until `LockoutEnd` elapses |
+| Successful login / `SetPasswordAsync` | no reset | clears counter and `LockoutEnd` |
+
+**Configuration (defaults):** `Lockout:LockoutEnabled` = `true`, `MaxFailedAccessAttempts` = `5`, `LockoutTimeout` = `00:15:00`. Set `MaxFailedAccessAttempts` to `0` to disable counting.
+
+**Action:** configure `Authentication:Lockout` if defaults do not fit; ensure host still applies rate limits (lockout is per-account, not per-IP).

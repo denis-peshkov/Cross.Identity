@@ -157,7 +157,18 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             pepperVault.Object,
             passwordHasher.Object,
             Mock.Of<IJwtTokenService>(),
-            Mock.Of<ICommunicationEndpointService>());
+            Mock.Of<ICommunicationEndpointService>(),
+            CreateUserServiceOptions());
+    }
+
+    private static IOptionsSnapshot<AuthenticationOptions> CreateUserServiceOptions()
+    {
+        var mock = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        mock.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Lockout = new AuthenticationOptions.LockoutOptions(),
+        });
+        return mock.Object;
     }
 
     /// <summary>

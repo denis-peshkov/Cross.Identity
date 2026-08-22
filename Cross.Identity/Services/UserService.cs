@@ -12,6 +12,7 @@ internal sealed class UserService : IUserService
     private readonly IPasswordHasher _hasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ICommunicationEndpointService _communicationEndpoints;
+    private readonly AuthenticationOptions _options;
 
     public UserService(
         IdentityContext context,
@@ -19,7 +20,8 @@ internal sealed class UserService : IUserService
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
         IJwtTokenService jwtTokenService,
-        ICommunicationEndpointService communicationEndpoints)
+        ICommunicationEndpointService communicationEndpoints,
+        IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
         _logger = logger;
@@ -27,6 +29,7 @@ internal sealed class UserService : IUserService
         _hasher = hasher;
         _jwtTokenService = jwtTokenService;
         _communicationEndpoints = communicationEndpoints;
+        _options = options.Value;
     }
 
     /// <inheritdoc/>
@@ -124,6 +127,8 @@ internal sealed class UserService : IUserService
             EmailConfirmed = false,
             PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
+            LockoutEnabled = _options.Lockout.LockoutEnabled,
+            AccessFailedCount = 0,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
@@ -150,6 +155,13 @@ internal sealed class UserService : IUserService
         if (user is null || string.IsNullOrEmpty(user.PasswordPhc) || !user.IsActive)
             return false;
 
+        var now = DateTimeOffset.UtcNow;
+        if (UserAccountLockout.IsLockedOut(user, now))
+        {
+            _logger.LogWarning("Password validation rejected for locked-out user {UserId}", user.Id);
+            return false;
+        }
+
         // 3) Get pepper by the version stored on the user
         if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
@@ -163,7 +175,13 @@ internal sealed class UserService : IUserService
         // 4) Verify password
         var result = _hasher.Verify(password, user.PasswordPhc, pepper);
         if (result == PasswordVerificationEnum.Failed)
+        {
+            UserAccountLockout.RecordFailedAccess(user, _options.Lockout, now);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return false;
+        }
+
+        UserAccountLockout.Reset(user);
 
         // 5) Re-hash with current parameters/pepper version if needed
         var currentVersion = _pepperVault.CurrentVersion;
@@ -175,15 +193,22 @@ internal sealed class UserService : IUserService
         {
             user.PasswordPhc = _hasher.Hash(password, currentPepper);
             user.PasswordPepperVersion = currentVersion;
+        }
 
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            if (needRehash)
             {
                 // Do not fail successful authentication due to re-hash issues; log only
                 _logger.LogError(ex, "Failed to re-hash password for user {UserId}", user.Id);
+            }
+            else
+            {
+                throw;
             }
         }
 
@@ -294,6 +319,7 @@ internal sealed class UserService : IUserService
 
         user.PasswordPhc = _hasher.Hash(newPassword, pepper);
         user.PasswordPepperVersion = _pepperVault.CurrentVersion;
+        UserAccountLockout.Reset(user);
         // Invalidate existing sessions: stamp rotation + revoke all tokens (PASSWORD_CHANGED).
         user.SecurityStamp = Guid.NewGuid();
 
