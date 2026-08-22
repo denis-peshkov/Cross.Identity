@@ -24,6 +24,8 @@ internal static class TokenPairIssuer
         ArgumentNullException.ThrowIfNull(user);
         ArgumentException.ThrowIfNullOrWhiteSpace(stepKind);
 
+        UserAccountGuard.EnsureIsActive(user);
+
         var accessClaims = new List<Claim>
             {
                 new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),

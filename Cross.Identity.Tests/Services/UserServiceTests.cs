@@ -544,6 +544,67 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenInactiveUser_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "inactive@example.com";
+        var password = "P@ssw0rd!";
+        var hashedPassword = "$pbkdf2-test-hash";
+
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            PasswordPhc = hashedPassword,
+            PasswordPepperVersion = 1,
+            IsActive = false,
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, hashedPassword, It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Success);
+
+        var result = await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None);
+
+        result.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenInactiveUser_WhenValidateCodeAsync_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "inactive@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            IsActive = false,
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "123456", CancellationToken.None);
+
+        result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPepperVersion_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();

@@ -1,10 +1,43 @@
 namespace Cross.Identity.Services;
 
 /// <summary>
-/// Email and phone uniqueness among confirmed accounts; multiple unconfirmed rows per contact are allowed.
+/// Account-level guards: activation state and confirmed contact uniqueness.
 /// </summary>
-internal static class UserAccountContactGuard
+internal static class UserAccountGuard
 {
+    public static void EnsureIsActive(UserAccountEntity user)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        if (!user.IsActive)
+        {
+            throw new NotAuthorizedException("Account is disabled.");
+        }
+    }
+
+    public static async Task EnsureIsActiveAsync(
+        IdentityContext context,
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        if (userId == Guid.Empty)
+        {
+            throw new NotAuthorizedException("Account is disabled.");
+        }
+
+        var isActive = await context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!isActive)
+        {
+            throw new NotAuthorizedException("Account is disabled.");
+        }
+    }
+
     public static async Task EnsureNoOtherConfirmedEmailAsync(
         IdentityContext context,
         Guid userId,

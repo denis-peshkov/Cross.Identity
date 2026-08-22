@@ -55,8 +55,10 @@
 
 ## Высокий (логика / auth model)
 
-### 8. `IsActive` не проверяется
-Поле есть в `UserAccountEntity`, выставляется при создании, но **нигде не читается** в `ValidatePasswordAsync`, `ValidateCodeAsync`, OAuth, `TokenPairIssuer`. Деактивированный пользователь продолжает логиниться.
+### 8. ~~`IsActive` не проверяется~~ ✅ закрыто
+~~Поле есть в `UserAccountEntity`, выставляется при создании, но **нигде не читается** в `ValidatePasswordAsync`, `ValidateCodeAsync`, OAuth, `TokenPairIssuer`. Деактивированный пользователь продолжает логиниться.~~
+
+**Исправлено (2.0):** `UserAccountGuard` + проверки в `UserService`, `CodeService`, `TokenPairIssuer`, `ExternalLoginService.CompleteAsync`, `JwtTokenService` (validate access/refresh и rotation).
 
 ### 9. Lockout не реализован
 `LockoutEnd`, `LockoutEnabled`, `AccessFailedCount` в entity — **мертвые колонки**. Брутфорс пароля не ограничен на уровне библиотеки.

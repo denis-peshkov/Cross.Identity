@@ -413,6 +413,37 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenInactiveUser_WhenVerifyAsync_ThenReturnsFalseWithoutIncrementingAttemptsAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "inactive@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            IsActive = false,
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _codeService.VerifyAsync(ChannelEnum.Email, email, "123456", CancellationToken.None);
+
+        result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedChannel_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var result = await _codeService.VerifyAsync(ChannelEnum.Telegram, "user", "123456", CancellationToken.None);

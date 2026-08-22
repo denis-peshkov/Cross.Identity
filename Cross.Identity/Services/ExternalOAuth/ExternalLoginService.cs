@@ -177,6 +177,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
             payload.UserId,
             cancellationToken).ConfigureAwait(false);
 
+        await UserAccountGuard.EnsureIsActiveAsync(_identityContext, userId, cancellationToken).ConfigureAwait(false);
+
         if (_userProvisioner is not null)
         {
             await _userProvisioner.ProvisionAsync(userId, profile, cancellationToken).ConfigureAwait(false);

@@ -147,7 +147,7 @@ internal sealed class UserService : IUserService
         var field = ResolveSelectorField(selectorField);
         var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
 
-        if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
+        if (user is null || string.IsNullOrEmpty(user.PasswordPhc) || !user.IsActive)
             return false;
 
         // 3) Get pepper by the version stored on the user
@@ -199,6 +199,15 @@ internal sealed class UserService : IUserService
 
         var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
 
+        if (!user.IsActive)
+        {
+            _logger.LogWarning(
+                "Code validation rejected for disabled account, {Channel} channel, identity: {Identity}",
+                ResolveSelectorField(selectorField),
+                selectorValue);
+            return false;
+        }
+
         // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
         var field = ResolveSelectorField(selectorField);
 
@@ -224,7 +233,7 @@ internal sealed class UserService : IUserService
                 {
                     var normalizedEmail = account.Email
                         ?? throw new InvalidOperationException("Email is required to confirm email.");
-                    await UserAccountContactGuard.EnsureNoOtherConfirmedEmailAsync(
+                    await UserAccountGuard.EnsureNoOtherConfirmedEmailAsync(
                         _context,
                         account.Id,
                         normalizedEmail,
@@ -235,7 +244,7 @@ internal sealed class UserService : IUserService
                 {
                     var normalizedPhone = account.PhoneNumber
                         ?? throw new InvalidOperationException("PhoneNumber is required to confirm phone.");
-                    await UserAccountContactGuard.EnsureNoOtherConfirmedPhoneAsync(
+                    await UserAccountGuard.EnsureNoOtherConfirmedPhoneAsync(
                         _context,
                         account.Id,
                         normalizedPhone,

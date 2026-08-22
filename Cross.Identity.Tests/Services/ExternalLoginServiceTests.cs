@@ -415,6 +415,46 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenInactiveLinkedAccount_WhenOAuthSignIn_ThenThrowsNotAuthorizedAsync()
+    {
+        var userId = Guid.NewGuid();
+        var providerId = SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "user@example.com",
+            UserName = "existing",
+            NormalizedUserName = "existing",
+            EmailConfirmed = true,
+            IsActive = false,
+            CreatedAt = DateTime.UtcNow,
+            CreatedBy = Guid.Empty,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = Guid.NewGuid(),
+            UserAccountId = userId,
+            UserAccount = null!,
+            ProviderId = providerId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        });
+
+        var sut = CreateService(GoogleSuccessHandler());
+        var url = await sut.InitiateAsync("Google", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Account is disabled*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnconfirmedEmailSquat_WhenOAuthWithVerifiedEmail_ThenCreatesConfirmedAccountAsync()
     {
         var squatterUserId = Guid.NewGuid();

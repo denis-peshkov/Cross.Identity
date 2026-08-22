@@ -218,7 +218,18 @@ internal class JwtTokenService : IJwtTokenService
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow;
+               && entity.CreatedAt <= DateTime.UtcNow
+               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private TokenValidationParameters CreateAccessTokenValidationParameters(bool requireDecryption)
@@ -252,7 +263,8 @@ internal class JwtTokenService : IJwtTokenService
 
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow;
+               && entity.CreatedAt <= DateTime.UtcNow
+               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -268,7 +280,8 @@ internal class JwtTokenService : IJwtTokenService
         return entity is { RevokedAt: null }
                && entity.ExpiresAt >= DateTime.UtcNow
                && entity.AbsoluteExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow;
+               && entity.CreatedAt <= DateTime.UtcNow
+               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -323,6 +336,11 @@ internal class JwtTokenService : IJwtTokenService
             || entity.CreatedAt > DateTime.UtcNow)
         {
             throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        if (!await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false))
+        {
+            throw new NotAuthorizedException("Account is disabled.");
         }
     }
 

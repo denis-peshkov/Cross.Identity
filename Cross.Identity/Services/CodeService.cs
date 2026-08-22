@@ -138,6 +138,12 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
+        if (!await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false))
+        {
+            _logger.LogWarning("Email verification rejected for disabled account {Email}", normalizedEmail);
+            return false;
+        }
+
         // Check attempt count
         if (entity.Attempts >= entity.MaxAttempts)
         {
@@ -193,6 +199,12 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
+        if (!await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false))
+        {
+            _logger.LogWarning("PhoneNumber verification rejected for disabled account {PhoneNumber}", normalizedPhone);
+            return false;
+        }
+
         // Check attempt count
         if (entity.Attempts >= entity.MaxAttempts)
         {
@@ -226,5 +238,15 @@ internal sealed class CodeService : ICodeService
             _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedPhone);
             return false;
         }
+    }
+
+    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 }
