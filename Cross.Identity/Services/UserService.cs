@@ -222,19 +222,27 @@ internal sealed class UserService : IUserService
         ArgumentException.ThrowIfNullOrWhiteSpace(code);
         code = code.Trim();
 
-        var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue.Trim(), cancellationToken).ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
         if (!user.IsActive)
         {
             _logger.LogWarning(
                 "Code validation rejected for disabled account, {Channel} channel, identity: {Identity}",
-                ResolveSelectorField(selectorField),
+                field,
                 selectorValue);
             return false;
         }
 
+        var lockoutNow = DateTimeOffset.UtcNow;
+        if (UserAccountLockout.IsLockedOut(user, lockoutNow))
+        {
+            _logger.LogWarning("Code validation rejected for locked-out user {UserId}", user.Id);
+            return false;
+        }
+
         // Same channel as SendCodeStep / VerifyCodeStep: preferred → email fallback (not selector field).
-        var field = ResolveSelectorField(selectorField);
         var otpTarget = await _communicationEndpoints
             .ResolveOtpTargetAsync(user.Id, cancellationToken)
             .ConfigureAwait(false);
@@ -244,52 +252,45 @@ internal sealed class UserService : IUserService
             ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
             : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
 
-        if (isValid)
-        {
-            var account = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
-            if (account != null)
-            {
-                if (field == nameof(UserAccountEntity.Email))
-                {
-                    var normalizedEmail = account.Email
-                        ?? throw new InvalidOperationException("Email is required to confirm email.");
-                    await UserAccountGuard.EnsureNoOtherConfirmedEmailAsync(
-                        _context,
-                        account.Id,
-                        normalizedEmail,
-                        cancellationToken).ConfigureAwait(false);
-                    account.EmailConfirmed = true;
-                }
-                else if (field == nameof(UserAccountEntity.PhoneNumber))
-                {
-                    var normalizedPhone = account.PhoneNumber
-                        ?? throw new InvalidOperationException("PhoneNumber is required to confirm phone.");
-                    await UserAccountGuard.EnsureNoOtherConfirmedPhoneAsync(
-                        _context,
-                        account.Id,
-                        normalizedPhone,
-                        cancellationToken).ConfigureAwait(false);
-                    account.PhoneNumberConfirmed = true;
-                }
-            }
-        }
-
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        if (isValid)
-        {
-            await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        }
-
         if (!isValid)
         {
+            UserAccountLockout.RecordFailedAccess(user, _options.Lockout, lockoutNow);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             _logger.LogWarning(
                 "Code validation failed for {Channel} channel, identity: {Identity}",
                 field,
                 selectorValue);
+            return false;
         }
 
-        return isValid;
+        UserAccountLockout.Reset(user);
+
+        if (field == nameof(UserAccountEntity.Email))
+        {
+            var normalizedEmail = user.Email
+                ?? throw new InvalidOperationException("Email is required to confirm email.");
+            await UserAccountGuard.EnsureNoOtherConfirmedEmailAsync(
+                _context,
+                user.Id,
+                normalizedEmail,
+                cancellationToken).ConfigureAwait(false);
+            user.EmailConfirmed = true;
+        }
+        else if (field == nameof(UserAccountEntity.PhoneNumber))
+        {
+            var normalizedPhone = user.PhoneNumber
+                ?? throw new InvalidOperationException("PhoneNumber is required to confirm phone.");
+            await UserAccountGuard.EnsureNoOtherConfirmedPhoneAsync(
+                _context,
+                user.Id,
+                normalizedPhone,
+                cancellationToken).ConfigureAwait(false);
+            user.PhoneNumberConfirmed = true;
+        }
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
     public async Task SetPasswordAsync(

@@ -1,7 +1,8 @@
 namespace Cross.Identity.Services.Helpers;
 
 /// <summary>
-/// Account lockout after repeated failed password attempts (ASP.NET Identity-style fields on <see cref="UserAccountEntity"/>).
+/// Account lockout after repeated failed password or OTP sign-in attempts
+/// (ASP.NET Identity-style fields on <see cref="UserAccountEntity"/>).
 /// </summary>
 internal static class UserAccountLockout
 {

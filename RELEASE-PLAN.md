@@ -41,11 +41,10 @@
 - **`ResolveOtpTargetAsync`** — fallback на account email **разрешён и без** `EmailConfirmed` (иначе нельзя подтвердить только что добавленный email).
 - **`ResolveDeliveryTargetAsync`** (notify, напр. после reset password) — fallback **только** при `EmailConfirmed`.
 
-### 7. Lockout обходится OTP-логином
-`ValidatePasswordAsync` проверяет lockout; `ValidateCodeAsync` — **нет**. После lockout по паролю вход по коду всё ещё возможен.
+### 7. ~~Lockout обходится OTP-логином~~ ✅ закрыто
+~~`ValidatePasswordAsync` проверяет lockout; `ValidateCodeAsync` — нет.~~
 
-**Impact:** неполная lockout policy.  
-**Stock flows:** Token (code branch), flows с verifyCode.
+**Исправлено (2.0):** `ValidateCodeAsync` — `IsLockedOut` → отказ; неверный код → `RecordFailedAccess`; успех → `Reset`. (`VerifyCodeStep` / ForgotPassword без изменений — recovery отдельно от code-login.)
 
 ### 8. User enumeration — разные ответы шагов
 | Шаг | Поведение |
@@ -186,6 +185,6 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 ## Приоритет фиксов
 
 1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
-2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; ~~lookup prefer confirmed~~; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; lockout на code path.
+2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; ~~lookup prefer confirmed~~; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; ~~lockout на code path~~.
 3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
 4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
