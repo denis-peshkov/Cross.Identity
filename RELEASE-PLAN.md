@@ -15,9 +15,6 @@
 ### 20. PII в логах SendCode / GetUserId / ValidateCode (CR)
 `SendCodeStep`, `GetUserIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
 
-### 21. Microsoft `EmailConfirmed` vs Graph email (CR)
-`ExternalOAuthProviders` — `EmailConfirmed` только если email пришёл из OIDC userinfo **и** `email_verified`; Graph fallback email не должен подтверждать mailbox.
-
 ### 22. Confirm contact по selector field, не OTP-каналу (CR)
 `UserService.ValidateCodeAsync` — после успеха confirm идёт по `field` (Email/Phone selector), а не по `otpTarget.Channel` — можно подтвердить не тот контакт.
 
@@ -167,7 +164,8 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #2 TokenStep ↔ SendCode channel | `ValidateCodeAsync` → `ResolveOtpTargetAsync` |
 | #3 VerifyAsync без userId | `VerifyAsync(userId, …)` + `UserAccountId` match |
 | #4 Lookup без PreferConfirmed | `OrderByDescending` confirmed перед FirstOrDefault |
-| #5 Microsoft EmailConfirmed | только OIDC `email_verified` (userinfo) |
+| #5 Microsoft EmailConfirmed | только OIDC `email` + `email_verified` (не Graph fallback) |
+| #21 Microsoft verified без OIDC email | Graph mail не confirmed при `email_verified` без userinfo `email` |
 | #6 OTP vs notify email | OTP: unconfirmed OK; notify: confirmed only |
 | #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
 | #8 Enumeration на шагах | единый `Invalid credentials.` + log |
@@ -200,7 +198,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20–M28:** PII logs; Microsoft EmailConfirmed edge; OTP confirm channel; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
+2. **CR M20, M22–M28:** PII logs; OTP confirm channel; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
 3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.

@@ -87,9 +87,10 @@ internal static class ExternalOAuthProviders
                 : null;
 
         // Graph mail/UPN alone is not mailbox attestation (admin-editable / non-SMTP UPN).
-        // Prefer OIDC userinfo and require email_verified — same policy as Google.
+        // EmailConfirmed only when OIDC userinfo supplies a non-empty email AND email_verified.
         string? email = graphEmail;
-        var emailConfirmed = false;
+        string? oidcEmailAddress = null;
+        var oidcEmailVerified = false;
 
         using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/oidc/userinfo");
         userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -107,11 +108,12 @@ internal static class ExternalOAuthProviders
                 var oidcEmailValue = oidcEmail.GetString();
                 if (!string.IsNullOrWhiteSpace(oidcEmailValue))
                 {
+                    oidcEmailAddress = oidcEmailValue;
                     email = oidcEmailValue;
                 }
             }
 
-            emailConfirmed = userInfo.TryGetProperty("email_verified", out var verifiedNode)
+            oidcEmailVerified = userInfo.TryGetProperty("email_verified", out var verifiedNode)
                 && verifiedNode.ValueKind == JsonValueKind.True;
         }
 
@@ -119,7 +121,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = me.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailConfirmed = emailConfirmed && !string.IsNullOrWhiteSpace(email),
+            EmailConfirmed = oidcEmailVerified && !string.IsNullOrWhiteSpace(oidcEmailAddress),
             DisplayName = me.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
         };
     }

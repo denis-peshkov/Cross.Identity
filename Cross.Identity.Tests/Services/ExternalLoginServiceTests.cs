@@ -808,6 +808,51 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMicrosoftEmailVerifiedWithoutOidcEmail_WhenCompleteAsync_ThenGraphMailRemainsUnconfirmedAsync()
+    {
+        SeedProvider("Microsoft");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://login.microsoftonline.com/common/oauth2/v2.0/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "ms-token" }),
+            ["https://graph.microsoft.com/v1.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "ms-user-graph-only",
+                    mail = "graph-only@example.com",
+                    displayName = "MS Graph Only",
+                }),
+            ["https://graph.microsoft.com/oidc/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "ms-user-graph-only",
+                    email_verified = true,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-client",
+                    ClientSecret = "ms-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Microsoft", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
+        account.Email.Should().Be("graph-only@example.com");
+        account.EmailConfirmed.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenConfirmedEmailAccount_WhenMicrosoftWithoutEmailConfirmed_ThenDoesNotLinkAsync()
     {
         var userId = Guid.NewGuid();

@@ -418,11 +418,11 @@ Host must pass `UserId` in the bag (no ambient auth user).
 |------|-----|-----|
 | `ExternalOAuthProfile` flag | `EmailVerified` | **`EmailConfirmed`** (same meaning; aligns with `UsersAccounts.EmailConfirmed`) |
 | Profile source | Graph `/me` only | Graph `/me` (id, displayName, fallback email) + OIDC `https://graph.microsoft.com/oidc/userinfo` |
-| Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has `email_verified: true` |
+| Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has **non-empty `email`** and `email_verified: true` (Graph fallback email alone never confirms) |
 
-Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a confirmed local account.
+Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a confirmed local account. `email_verified` without an OIDC `email` claim also does **not** confirm a Graph-derived address (common on Entra work accounts).
 
-**Action:** ensure the Microsoft app registration token has scopes that allow OIDC userinfo (`openid` `email` `profile` `User.Read` — already the library default). Expect new Microsoft users without `email_verified` to land as unconfirmed / without email auto-link until the mailbox is attested.
+**Action:** ensure the Microsoft app registration token has scopes that allow OIDC userinfo (`openid` `email` `profile` `User.Read` — already the library default). Expect new Microsoft users without OIDC `email` + `email_verified` to land as unconfirmed / without email auto-link until the mailbox is attested.
 
 ### `UsersAccounts.CreatedBy` removed
 
