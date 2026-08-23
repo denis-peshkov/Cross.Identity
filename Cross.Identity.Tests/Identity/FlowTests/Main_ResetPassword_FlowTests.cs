@@ -92,7 +92,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
             s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
@@ -118,7 +118,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
             s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()),
@@ -162,7 +162,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
             s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
@@ -186,7 +186,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
             s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),

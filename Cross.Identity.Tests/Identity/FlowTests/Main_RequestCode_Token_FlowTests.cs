@@ -30,7 +30,16 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
+                Mock.Of<ISmsSenderService>(),
+                configuration,
+                TestAuthOptions.Snapshot(new AuthenticationOptions
+                {
+                    OtpSendRateLimit = new AuthenticationOptions.OtpSendRateLimitOptions
+                    {
+                        Cooldown = TimeSpan.Zero,
+                        MaxSendsPerWindow = 0,
+                    },
+                })));
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
