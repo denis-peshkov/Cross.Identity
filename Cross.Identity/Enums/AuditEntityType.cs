@@ -11,7 +11,7 @@ public enum AuditEntityType : short
     EmailVerification = 4,
     PhoneVerification = 5,
     UserExternalLogin = 6,
-    LinkedMessenger,
     UserCommunicationEndpoint = 7,
     ExternalLoginState = 8,
+    LinkedMessenger = 9,
 }

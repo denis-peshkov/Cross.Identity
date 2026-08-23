@@ -15,9 +15,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 26. `AuditEntityType` discriminator collision (CR)
-`LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
-
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
 
@@ -128,6 +125,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
 | ✅ Старые OTP при resend | supersede active codes per `UserAccountId` + destination (`ExpiresAt = now`) |
 | ✅ #23 OTP supersede scoped by user (CR) | `SupersedeActive*VerificationsAsync` фильтрует по `UserAccountId` + email/phone |
+| ✅ #26 `AuditEntityType` unique values (CR) | `UserCommunicationEndpoint=7`, `ExternalLoginState=8`, `LinkedMessenger=9` |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
 | ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` (opt-in); device/UA always when captured |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
@@ -192,6 +190,6 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M28:** SendCode action URL.
-3. **CR M26, M32–M33, M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; idle double-audit.
+3. **CR M32–M33, M35, M39:** Guard exceptions; Bag nullable; idle double-audit.
 4. **M40–M41:** явный выбор канала; messenger send + bot verification.
 5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).

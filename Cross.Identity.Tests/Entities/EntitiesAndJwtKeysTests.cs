@@ -121,4 +121,16 @@ public sealed class EntitiesAndJwtKeysTests
         key.KeyId.Should().NotBeNullOrWhiteSpace();
         key.Rsa.Should().NotBeNull();
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenAuditEntityTypeMembers_WhenReadingNumericValues_ThenEachValueIsUnique()
+    {
+        var values = Enum.GetValues<AuditEntityType>().Select(x => (short)x).ToList();
+
+        values.Should().OnlyHaveUniqueItems();
+        ((short)AuditEntityType.LinkedMessenger).Should().Be(9);
+        ((short)AuditEntityType.UserCommunicationEndpoint).Should().Be(7);
+        ((short)AuditEntityType.ExternalLoginState).Should().Be(8);
+    }
 }
