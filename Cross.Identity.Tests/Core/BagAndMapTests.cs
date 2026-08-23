@@ -44,6 +44,34 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenNullableValueTypes_WhenGetOrTryGet_ThenConvertsViaUnderlyingType()
+    {
+        var ttl = TimeSpan.FromMinutes(17);
+        var bag = new Bag()
+            .Set("count", "42")
+            .Set("countLong", 42L)
+            .Set("ttl", ttl)
+            .Set("empty", null);
+
+        bag.Get<int?>("count").Should().Be(42);
+        bag.Get<int?>("countLong").Should().Be(42);
+        bag.Get<TimeSpan?>("ttl").Should().Be(ttl);
+        bag.Get<int?>("empty").Should().BeNull();
+
+        bag.TryGet<int?>("count", out var parsedCount).Should().BeTrue();
+        parsedCount.Should().Be(42);
+
+        bag.TryGet<TimeSpan?>("ttl", out var parsedTtl).Should().BeTrue();
+        parsedTtl.Should().Be(ttl);
+
+        bag.TryGet<int?>("empty", out var parsedNull).Should().BeTrue();
+        parsedNull.Should().BeNull();
+
+        bag.TryGet<int>("empty", out _).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidKey_WhenGet_ThenThrows()
     {
         var bag = new Bag().Set("x", "abc").Set("n", null);

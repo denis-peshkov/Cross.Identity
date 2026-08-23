@@ -15,9 +15,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 33. `Bag` nullable `Convert.ChangeType` (CR)
-`Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
-
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
@@ -120,6 +117,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ Старые OTP при resend | supersede active codes per `UserAccountId` + destination (`ExpiresAt = now`) |
 | ✅ #23 OTP supersede scoped by user (CR) | `SupersedeActive*VerificationsAsync` фильтрует по `UserAccountId` + email/phone |
 | ✅ #26 `AuditEntityType` unique values (CR) | `UserCommunicationEndpoint=7`, `ExternalLoginState=8`, `LinkedMessenger=9` |
+| ✅ #33 `Bag` nullable `Convert.ChangeType` (CR) | `Get` / `TryGet` — underlying type для `T?` value-types; null в `TryGet` |
 | ✅ #32 Verified contact conflict → `ConflictException` (CR) | `UserAccountGuard` + `CreateUserAsync`; email/phone/username duplicate |
 | ✅ #28 SendCode action URL by template (CR) | `verify` → `/verify?code=`; `reset` → `/reset-password?code=`; + `email`/`phone` when selector is Email/PhoneNumber |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |

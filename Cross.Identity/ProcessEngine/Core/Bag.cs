@@ -46,7 +46,7 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         // Attempt generic conversion (int→decimal, string→int, etc.)
         try
         {
-            return (T)Convert.ChangeType(v, typeof(T))!;
+            return (T)Convert.ChangeType(v, GetConversionType<T>())!;
         }
         catch
         {
@@ -65,9 +65,21 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
                 return true;
             }
 
+            if (v is null)
+            {
+                if (default(T) is null)
+                {
+                    value = default;
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
             try
             {
-                value = (T)Convert.ChangeType(v!, typeof(T))!;
+                value = (T)Convert.ChangeType(v, GetConversionType<T>())!;
                 return true;
             }
             catch
@@ -79,6 +91,8 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         value = default;
         return false;
     }
+
+    private static Type GetConversionType<T>() => Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
 
     /// <summary>Set or update a value by key.</summary>
     public Bag Set(string key, object? value)
