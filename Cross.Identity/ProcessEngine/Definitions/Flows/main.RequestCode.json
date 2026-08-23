@@ -24,7 +24,6 @@
     },
     {
       "kind": "sendCode",
-      "channel": "email",
       "template": "verify",
       "subject": "Verification Code",
       "ttlKey": "collectForm.Ttl",

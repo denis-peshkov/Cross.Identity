@@ -25,7 +25,6 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
             EmailSenderService     = emailSenderService,
             SmsSenderService       = smsSenderService,
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
-            Channel                = cfg.EnumReq<ChannelEnum>("channel"),
             Logger                 = loggerFactory.CreateLogger<ResetPasswordStep>(),
             Next                   = cfg.StrOpt("next"),
         };

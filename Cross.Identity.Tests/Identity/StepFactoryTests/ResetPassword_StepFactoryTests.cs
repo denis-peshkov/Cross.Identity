@@ -38,7 +38,6 @@ public class ResetPassword_StepFactoryTests
         var step = (ResetPasswordStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("resetPassword");
-        step.Channel.Should().Be(ChannelEnum.Email);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.PasswordKey.Should().Be("forgotPassword.password");
@@ -67,7 +66,7 @@ public class ResetPassword_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenThrowsKeyNotFoundException()
+    public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -78,10 +77,9 @@ public class ResetPassword_StepFactoryTests
             """);
 
         var factory = new ResetPasswordStepFactory();
+        var step = (ResetPasswordStep)factory.Create(json.RootElement, _sp);
 
-        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
-            .Should()
-            .Throw<KeyNotFoundException>();
+        step.PasswordKey.Should().Be("password");
     }
 
 }

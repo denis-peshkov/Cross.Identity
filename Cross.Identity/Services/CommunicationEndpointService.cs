@@ -5,15 +5,18 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     private readonly IdentityContext _context;
     private readonly IAuditService _audit;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly AuthenticationOptions _options;
 
     public CommunicationEndpointService(
         IdentityContext context,
         IAuditService audit,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        IOptions<AuthenticationOptions> options)
     {
         _context = context;
         _audit = audit;
         _jwtTokenService = jwtTokenService;
+        _options = options.Value;
     }
 
     /// <inheritdoc />
@@ -157,83 +160,41 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     /// <inheritdoc />
-    public async Task<ChannelEnum> ResolveDeliveryChannelAsync(
+    public async Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
-        string selectorField,
-        string selectorValue,
-        ChannelEnum? fallback = null,
         CancellationToken cancellationToken = default)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(selectorField);
-        ArgumentException.ThrowIfNullOrWhiteSpace(selectorValue);
-
-        var field = selectorField.Trim().ToLowerInvariant();
-        if (field is "email")
+        if (_options.LockChannelAsEmail)
         {
-            return ChannelEnum.Email;
+            return await RequireEmailTargetAsync(userId, cancellationToken).ConfigureAwait(false);
         }
 
-        if (field is "phone" or "phonenumber")
+        var preferred = await GetPreferredEntityAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (preferred is not null)
         {
-            var address = ChannelEnum.Sms.NormalizeAddress(selectorValue);
-            var phoneEndpoints = await _context.UsersCommunicationEndpoints
-                .AsNoTracking()
-                .Where(x => x.UserAccountId == userId
-                            && x.IsVerified
-                            && x.Address == address
-                            && ChannelEnumExtensions.PhoneChannels.Contains(x.Channel))
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var preferred = phoneEndpoints.FirstOrDefault(x => x.IsPreferred);
-            if (preferred is not null)
-            {
-                return preferred.Channel;
-            }
-
-            if (phoneEndpoints.Count > 0)
-            {
-                return phoneEndpoints[0].Channel;
-            }
-
-            return fallback is { } phoneFallback && phoneFallback.IsPhoneChannel()
-                ? phoneFallback
-                : ChannelEnum.Sms;
+            return ToTarget(preferred);
         }
 
-        if (field is "username")
+        var email = await FindEmailTargetAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (email is not null)
         {
-            var preferred = await GetPreferredEntityAsync(userId, cancellationToken).ConfigureAwait(false)
-                ?? throw new ValidationException(
-                    "No preferred verified communication channel. Set one before sending by user name.");
-            return preferred.Channel;
+            return email;
         }
 
-        if (fallback.HasValue)
-        {
-            return fallback.Value;
-        }
-
-        throw new ValidationException($"Cannot resolve delivery channel for field '{selectorField}'.");
+        throw new ValidationException("No preferred verified communication channel and no email. Set a preferred endpoint or provide an email.");
     }
 
     /// <inheritdoc />
-    public async Task<ChannelEnum> ResolveOtpChannelAsync(
+    public async Task<DeliveryTarget> ResolveOtpTargetAsync(
         Guid userId,
-        string selectorField,
-        string selectorValue,
-        ChannelEnum? fallback = null,
         CancellationToken cancellationToken = default)
     {
-        var channel = await ResolveDeliveryChannelAsync(
-                userId,
-                selectorField,
-                selectorValue,
-                fallback,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        return channel.ToEmailOrSms();
+        var target = await ResolveDeliveryTargetAsync(userId, cancellationToken).ConfigureAwait(false);
+        return new DeliveryTarget
+        {
+            Channel = target.Channel.ToEmailOrSms(),
+            Address = target.Address,
+        };
     }
 
     /// <inheritdoc />
@@ -283,6 +244,51 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
     }
 
+    private async Task<DeliveryTarget> RequireEmailTargetAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var email = await FindEmailTargetAsync(userId, cancellationToken).ConfigureAwait(false)
+            ?? throw new ValidationException("Authentication:LockChannelAsEmail is enabled but no email is available for the user.");
+        return email;
+    }
+
+    private async Task<DeliveryTarget?> FindEmailTargetAsync(
+        Guid userId,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = await _context.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == userId && x.IsVerified && x.Channel == ChannelEnum.Email)
+            .OrderByDescending(x => x.IsPreferred)
+            .ThenByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (endpoint is not null)
+        {
+            return ToTarget(endpoint);
+        }
+
+        var accountEmail = await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => x.Email)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(accountEmail))
+        {
+            return null;
+        }
+
+        return new DeliveryTarget
+        {
+            Channel = ChannelEnum.Email,
+            Address = ChannelEnum.Email.NormalizeAddress(accountEmail),
+        };
+    }
+
     private async Task<UserCommunicationEndpointEntity?> GetPreferredEntityAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -292,6 +298,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             .FirstOrDefaultAsync(x => x.UserAccountId == userId && x.IsPreferred && x.IsVerified, cancellationToken)
             .ConfigureAwait(false);
     }
+
+    private static DeliveryTarget ToTarget(UserCommunicationEndpointEntity entity)
+        => new()
+        {
+            Channel = entity.Channel,
+            Address = entity.Address,
+        };
 
     private static CommunicationEndpointDto ToDto(UserCommunicationEndpointEntity entity)
         => new()

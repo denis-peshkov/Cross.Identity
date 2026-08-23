@@ -37,26 +37,20 @@ public interface ICommunicationEndpointService
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Resolve delivery channel for an identity selector (login field + value).
-    /// Email → <see cref="ChannelEnum.Email"/>; phone → preferred phone-channel endpoint for that address, else SMS;
-    /// user name → preferred verified endpoint channel (required).
+    /// Resolve where to deliver messages for the user.
+    /// Order: <c>Authentication:LockChannelAsEmail</c> → preferred verified endpoint → email
+    /// (verified email endpoint, else <c>UsersAccounts.Email</c> if present).
     /// </summary>
-    Task<ChannelEnum> ResolveDeliveryChannelAsync(
+    Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
-        string selectorField,
-        string selectorValue,
-        ChannelEnum? fallback = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Like <see cref="ResolveDeliveryChannelAsync"/>, but maps messenger channels to
+    /// Like <see cref="ResolveDeliveryTargetAsync"/>, but maps messenger channels to
     /// <see cref="ChannelEnum.Sms"/> for OTP until messenger senders are implemented.
     /// </summary>
-    Task<ChannelEnum> ResolveOtpChannelAsync(
+    Task<DeliveryTarget> ResolveOtpTargetAsync(
         Guid userId,
-        string selectorField,
-        string selectorValue,
-        ChannelEnum? fallback = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>Preferred verified endpoint, or null if none.</summary>

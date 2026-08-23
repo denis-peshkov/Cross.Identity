@@ -16,7 +16,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         _jwt
             .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _service = new CommunicationEndpointService(Context, new AuditService(Context), _jwt.Object);
+        _service = new CommunicationEndpointService(Context, new AuditService(Context), _jwt.Object, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
     }
 
     [Test]
@@ -77,7 +77,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ResolveDeliveryChannel_Phone_UsesPreferredMessenger()
+    public async Task ResolveDeliveryTarget_UsesPreferredMessenger()
     {
         var userId = Guid.NewGuid();
         var phone = "+79161234567";
@@ -88,13 +88,14 @@ public class CommunicationEndpointServiceTests : EFTestsBase
             userId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
         await _service.SetPreferredAsync(userId, tg.Id, SessionRefresh, ClientContext.Empty);
 
-        var channel = await _service.ResolveDeliveryChannelAsync(userId, "PhoneNumber", phone);
+        var target = await _service.ResolveDeliveryTargetAsync(userId);
 
-        channel.Should().Be(ChannelEnum.Telegram);
+        target.Channel.Should().Be(ChannelEnum.Telegram);
+        target.Address.Should().Be(phone);
     }
 
     [Test]
-    public async Task ResolveOtpChannel_Messenger_FallsBackToSms()
+    public async Task ResolveOtpTarget_Messenger_FallsBackToSms()
     {
         var userId = Guid.NewGuid();
         var phone = "+79161234567";
@@ -104,9 +105,72 @@ public class CommunicationEndpointServiceTests : EFTestsBase
             userId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
         await _service.SetPreferredAsync(userId, tg.Id, SessionRefresh, ClientContext.Empty);
 
-        var otp = await _service.ResolveOtpChannelAsync(userId, "PhoneNumber", phone);
+        var otp = await _service.ResolveOtpTargetAsync(userId);
 
-        otp.Should().Be(ChannelEnum.Sms);
+        otp.Channel.Should().Be(ChannelEnum.Sms);
+        otp.Address.Should().Be(phone);
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenNoPreferred_FallsBackToVerifiedEmail()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "fallback@example.com",
+            EmailConfirmed = true,
+        });
+
+        // Verified email endpoint that is not preferred (clear preferred after upsert of phone-only preferred then remove)
+        await _service.UpsertAsync(
+            userId, ChannelEnum.Email, "fallback@example.com", CommunicationEndpointSource.Account, true);
+        var phone = await _service.UpsertAsync(
+            userId, ChannelEnum.Sms, "+79161234567", CommunicationEndpointSource.Account, true);
+        await _service.SetPreferredAsync(userId, phone.Id, SessionRefresh, ClientContext.Empty);
+
+        // Clear preferred flags to simulate missing preferred
+        foreach (var row in Context.UsersCommunicationEndpoints.Where(x => x.UserAccountId == userId))
+        {
+            row.IsPreferred = false;
+        }
+
+        await Context.SaveChangesAsync();
+
+        var target = await _service.ResolveDeliveryTargetAsync(userId);
+
+        target.Channel.Should().Be(ChannelEnum.Email);
+        target.Address.Should().Be("fallback@example.com");
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenLockChannelAsEmail_ForcesEmail()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+79161234567";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "locked@example.com",
+            EmailConfirmed = true,
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = true,
+        });
+
+        var locked = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            _jwt.Object,
+            Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions { LockChannelAsEmail = true }));
+
+        await locked.UpsertAsync(userId, ChannelEnum.Email, "locked@example.com", CommunicationEndpointSource.Account, true);
+        var sms = await locked.UpsertAsync(userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
+        await locked.SetPreferredAsync(userId, sms.Id, SessionRefresh, ClientContext.Empty);
+
+        var target = await locked.ResolveDeliveryTargetAsync(userId);
+
+        target.Channel.Should().Be(ChannelEnum.Email);
+        target.Address.Should().Be("locked@example.com");
     }
 
     [Test]

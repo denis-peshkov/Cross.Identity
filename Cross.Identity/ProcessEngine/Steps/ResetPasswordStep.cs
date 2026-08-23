@@ -22,7 +22,6 @@ internal sealed class ResetPasswordStep : IStep
     public IEmailSenderService EmailSenderService { get; set; }
     public ISmsSenderService SmsSenderService { get; set; }
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
-    public required ChannelEnum Channel { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -36,19 +35,27 @@ internal sealed class ResetPasswordStep : IStep
 
         var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+        {
             return StepResult.Ok(Next);
+        }
 
-        var preferred = await CommunicationEndpoints.GetPreferredAsync(userId, cancellationToken).ConfigureAwait(false);
-        var channel = preferred?.Channel
-                      ?? await CommunicationEndpoints
-                          .ResolveDeliveryChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
-                          .ConfigureAwait(false);
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveDeliveryTargetAsync(userId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException)
+        {
+            return StepResult.Ok(Next);
+        }
 
-        channel = channel.ToEmailOrSms();
+        var channel = target.Channel.ToEmailOrSms();
         if (!channel.SupportsOtp())
+        {
             return StepResult.Ok(Next);
-
-        var notifyAddress = preferred?.Address ?? selector.Value;
+        }
 
         var ip = string.IsNullOrWhiteSpace(clientContext.IpAddress) ? "unknown" : clientContext.IpAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
@@ -61,10 +68,10 @@ internal sealed class ResetPasswordStep : IStep
             switch (channel)
             {
                 case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", notifyAddress, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
+                    await EmailSenderService.SendAsync("", target.Address, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
                     break;
                 case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(notifyAddress, textBody, cancellationToken).ConfigureAwait(false);
+                    await SmsSenderService.SendAsync(target.Address, textBody, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }

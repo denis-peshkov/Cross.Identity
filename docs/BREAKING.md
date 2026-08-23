@@ -374,6 +374,18 @@ Host must pass `UserId` in the bag (no ambient auth user).
 
 **Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode.
 
+### Delivery channel: preferred / email / `LockChannelAsEmail`
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| Stock JSON `channel` on `sendCode` / `verifyCode` / `resetPassword` | required enum | **removed** — ignored if present in overrides |
+| Channel selection | largely login field + JSON `channel` | `ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync` |
+| Order | field-based | `Authentication:LockChannelAsEmail` → preferred verified endpoint → email fallback |
+| API | `ResolveDeliveryChannelAsync` / `ResolveOtpChannelAsync` | **`ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync`** → `DeliveryTarget` (channel + address) |
+| `VerifyCodeStep` | `Selector.ChannelForField` / `CodeService` by login value | same resolved OTP target as send |
+
+**Action:** bind `Authentication:LockChannelAsEmail` (already under `Authentication` in host config); stop relying on flow `channel`; update callers of the old resolve APIs; ensure users have a preferred verified endpoint or an email for OTP.
+
 ### `UsersAccounts.CreatedBy` removed
 
 | Area | Was (1.10) | Now (2.0+) |

@@ -17,16 +17,8 @@ public class ResetPassword_StepTests
     {
         _communicationEndpoints = new Mock<ICommunicationEndpointService>();
         _communicationEndpoints
-            .Setup(c => c.ResolveOtpChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
-                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
-        _communicationEndpoints
-            .Setup(c => c.ResolveDeliveryChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
-                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
-        _communicationEndpoints
-            .Setup(c => c.GetPreferredAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((CommunicationEndpointDto?)null);
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = "notify@example.com" });
         _faker = new Faker();
         _userService = new Mock<IUserService>();
         _emailSenderService = new Mock<IEmailSenderService>();
@@ -45,6 +37,9 @@ public class ResetPassword_StepTests
             .Returns(Task.CompletedTask);
         _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid().ToString());
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = email });
 
         var step = new ResetPasswordStep
         {
@@ -55,7 +50,6 @@ public class ResetPassword_StepTests
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             Next = "done"
         };
@@ -82,7 +76,7 @@ public class ResetPassword_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserIdSelector_WhenExecuteAsync_ThenSetsPasswordAndNotifiesWithSelectorValueAsync()
+    public async Task GivenUserIdSelector_WhenExecuteAsync_ThenSetsPasswordAndNotifiesResolvedTargetAsync()
     {
         var userId = Guid.NewGuid();
         var password = "P@ssw0rd!";
@@ -102,7 +96,6 @@ public class ResetPassword_StepTests
             EmailSenderService = _emailSenderService.Object,
             SmsSenderService = _smsSenderService.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Logger = _logger.Object,
             Next = "done",
         };
@@ -126,7 +119,7 @@ public class ResetPassword_StepTests
             u => u.GetUserByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _emailSenderService.Verify(
-            x => x.SendAsync("", userIdText, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            x => x.SendAsync("", "notify@example.com", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

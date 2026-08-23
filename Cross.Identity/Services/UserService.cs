@@ -247,10 +247,10 @@ internal sealed class UserService : IUserService
                 break;
 
             case nameof(UserAccountEntity.NormalizedUserName):
-                var otpChannel = await _communicationEndpoints
-                    .ResolveOtpChannelAsync(user.Id, selectorField, selectorValue, null, cancellationToken)
+                var otpTarget = await _communicationEndpoints
+                    .ResolveOtpTargetAsync(user.Id, cancellationToken)
                     .ConfigureAwait(false);
-                isValid = otpChannel == ChannelEnum.Email
+                isValid = otpTarget.Channel == ChannelEnum.Email
                     ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
                     : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
                 break;

@@ -15,21 +15,24 @@ public class SendCode_StepTests
 
     private static Selector DefaultSelector { get; } = new();
 
+    private void SetupOtpTarget(ChannelEnum channel, string address)
+    {
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = channel, Address = address });
+    }
+
+
     [SetUp]
     public void SetUp()
     {
         _communicationEndpoints = new Mock<ICommunicationEndpointService>();
         _communicationEndpoints
-            .Setup(c => c.ResolveOtpChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
-                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = "default@example.com" });
         _communicationEndpoints
-            .Setup(c => c.ResolveDeliveryChannelAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<ChannelEnum?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Guid _, string field, string __, ChannelEnum? fallback, CancellationToken ___) =>
-                field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase) ? ChannelEnum.Sms : (fallback ?? ChannelEnum.Email));
-        _communicationEndpoints
-            .Setup(c => c.GetPreferredAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((CommunicationEndpointDto?)null);
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = "default@example.com" });
         _faker = new Faker();
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();
@@ -62,6 +65,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -87,7 +91,6 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -125,6 +128,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
             .Returns("Your code: {{code}}");
@@ -148,7 +152,6 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -182,6 +185,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
             .Returns("Your code: {{code}}");
@@ -205,7 +209,6 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -240,6 +243,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Sms, phone);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -257,7 +261,6 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Sms,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -288,6 +291,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -313,7 +317,6 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -366,7 +369,6 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,
@@ -397,6 +399,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
             .Returns("Reset {{email}} {{code}} {{url}}");
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "html"))
@@ -419,7 +422,6 @@ public class SendCode_StepTests
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "reset",
             Subject = "Reset your password",
             Selector = DefaultSelector,
@@ -456,20 +458,7 @@ public class SendCode_StepTests
 
         _userService.Setup(s => s.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId.ToString());
-        _communicationEndpoints
-            .Setup(c => c.ResolveOtpChannelAsync(userId, "UserName", userName, ChannelEnum.Email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ChannelEnum.Email);
-        _communicationEndpoints
-            .Setup(c => c.GetPreferredAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new CommunicationEndpointDto
-            {
-                Id = Guid.NewGuid(),
-                Channel = ChannelEnum.Email,
-                Address = email,
-                IsVerified = true,
-                IsPreferred = true,
-                Source = CommunicationEndpointSource.Account,
-            });
+        SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
             .Returns("Your code: {{code}}");
@@ -493,7 +482,6 @@ public class SendCode_StepTests
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            Channel = ChannelEnum.Email,
             Template = "verify",
             Subject = "Verification Code",
             Selector = DefaultSelector,

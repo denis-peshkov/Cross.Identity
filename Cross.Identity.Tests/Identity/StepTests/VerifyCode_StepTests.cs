@@ -6,6 +6,7 @@ public class VerifyCode_StepTests
     private Faker _faker = null!;
     private Mock<ICodeService> _codeService = null!;
     private Mock<IUserService> _userService = null!;
+    private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
 
     private static Selector DefaultSelector { get; } = new();
 
@@ -15,6 +16,14 @@ public class VerifyCode_StepTests
         _faker = new Faker();
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();
+        _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+    }
+
+    private void SetupOtpTarget(ChannelEnum channel, string address)
+    {
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = channel, Address = address });
     }
 
     [Test]
@@ -25,17 +34,18 @@ public class VerifyCode_StepTests
         var code = "ABC123";
         var userId = Guid.NewGuid().ToString();
 
-        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             UserService = _userService.Object,
-            Channel = ChannelEnum.Email,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             UserIdKey = "UserId",
@@ -62,7 +72,11 @@ public class VerifyCode_StepTests
     {
         var email = _faker.Internet.Email();
         var code = "INVALID";
+        var userId = Guid.NewGuid().ToString();
 
+        _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -71,7 +85,7 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             UserService = _userService.Object,
-            Channel = ChannelEnum.Email,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             Next = null
@@ -86,7 +100,6 @@ public class VerifyCode_StepTests
 
         result.Status.Should().Be(StepStatusEnum.Fail);
         result.Error.Should().BeOfType<NotAuthorizedException>();
-        _userService.Verify(u => u.GetUserIdByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Test]
@@ -96,8 +109,6 @@ public class VerifyCode_StepTests
         var email = _faker.Internet.Email();
         var code = "ABC123";
 
-        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync((string?)null);
 
@@ -106,7 +117,7 @@ public class VerifyCode_StepTests
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             UserService = _userService.Object,
-            Channel = ChannelEnum.Email,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             Next = null
@@ -121,6 +132,9 @@ public class VerifyCode_StepTests
 
         result.Status.Should().Be(StepStatusEnum.Fail);
         result.Error.Should().BeOfType<KeyNotFoundException>();
+        _codeService.Verify(
+            c => c.VerifyAsync(It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 
     [Test]
@@ -131,17 +145,18 @@ public class VerifyCode_StepTests
         var code = "123456";
         var userId = Guid.NewGuid().ToString();
 
-        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         _userService.Setup(u => u.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Sms, phone);
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             UserService = _userService.Object,
-            Channel = ChannelEnum.Sms,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Selector = DefaultSelector,
             CodeKey = "Code",
             Next = null
@@ -161,23 +176,25 @@ public class VerifyCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserNameSelector_WhenExecuteAsync_ThenUsesValidateCodeAsyncAsync()
+    public async Task GivenUserNameSelector_WhenExecuteAsync_ThenVerifiesAgainstResolvedTargetAsync()
     {
         var userName = "alice";
+        var email = "alice@example.com";
         var code = "ABC123";
         var userId = Guid.NewGuid().ToString();
 
-        _userService.Setup(u => u.ValidateCodeAsync("UserName", userName, code, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
         _userService.Setup(u => u.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _codeService.Setup(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         var step = new VerifyCodeStep
         {
             Kind = "verifyCode",
             CodeService = _codeService.Object,
             UserService = _userService.Object,
-            Channel = ChannelEnum.Email,
+            CommunicationEndpoints = _communicationEndpoints.Object,
             Selector = DefaultSelector,
             CodeKey = "collectForm.Code",
             UserIdKey = "UserId",
@@ -193,9 +210,7 @@ public class VerifyCode_StepTests
 
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<string>("verifyCode.UserId").Should().Be(userId);
-        _userService.Verify(u => u.ValidateCodeAsync("UserName", userName, code, It.IsAny<CancellationToken>()), Times.Once);
-        _codeService.Verify(
-            c => c.VerifyAsync(It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+        _codeService.Verify(c => c.VerifyAsync(ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()), Times.Once);
+        _userService.Verify(u => u.ValidateCodeAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

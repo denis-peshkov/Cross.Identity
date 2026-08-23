@@ -2,6 +2,7 @@
 
 /// <summary>
 /// Step for sending a one-time code to the user.
+/// Delivery channel/address come from <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>.
 /// </summary>
 internal sealed class SendCodeStep : IStep
 {
@@ -18,13 +19,10 @@ internal sealed class SendCodeStep : IStep
     public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
     public required ILogger Logger { get; init; }
 
-    /// <summary>Default delivery channel when not inferred from selector field.</summary>
-    public required ChannelEnum Channel { get; init; }
-
     /// <summary>Identity selector (bag keys for field name + value).</summary>
     public required Selector Selector { get; init; }
 
-    /// <summary>Resolves preferred / OTP delivery channel from user endpoints.</summary>
+    /// <summary>Resolves preferred / OTP delivery target from user endpoints.</summary>
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <summary>
@@ -69,22 +67,16 @@ internal sealed class SendCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        var channel = await CommunicationEndpoints
-            .ResolveOtpChannelAsync(userId, selector.Field, selector.Value, Channel, cancellationToken)
+        var target = await CommunicationEndpoints
+            .ResolveOtpTargetAsync(userId, cancellationToken)
             .ConfigureAwait(false);
-        if (!channel.SupportsOtp())
-            throw new ValidationException("Provide an email or a phone number to send a code.");
-
-        var destination = selector.Value;
-        if (string.Equals(selector.Field, "UserName", StringComparison.OrdinalIgnoreCase))
+        if (!target.Channel.SupportsOtp())
         {
-            var preferred = await CommunicationEndpoints.GetPreferredAsync(userId, cancellationToken).ConfigureAwait(false)
-                ?? throw new ValidationException("No preferred verified communication channel. Set one before sending by user name.");
-            destination = preferred.Address;
+            throw new ValidationException("Provide an email or a phone number to send a code.");
         }
 
         var ttl = ResolveTtl(ctx);
-        var code = channel.GenerateCode();
+        var code = target.Channel.GenerateCode();
 
         var clientUrl = Configuration["Authentication:ClientUrl"]
             ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
@@ -118,7 +110,7 @@ internal sealed class SendCodeStep : IStep
         var textTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "txt");
         var htmlTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "html");
 
-        var msg = NotificationMessage.For(channel, destination)
+        var msg = NotificationMessage.For(target.Channel, target.Address)
             .WithSubject(Subject)
             .WithTextBody(Replace(textTemplate))
             .WithTextHtml(Replace(htmlTemplate));
@@ -128,7 +120,9 @@ internal sealed class SendCodeStep : IStep
             await CodeService.SendAsync(msg, code, userIdRaw, ttl, cancellationToken).ConfigureAwait(false);
 
             if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
+            {
                 ctx.Set(BagKey.Qualify(Kind, "LastCode"), code);
+            }
 
             return StepResult.Ok(Next);
         }
@@ -145,14 +139,20 @@ internal sealed class SendCodeStep : IStep
 
         // Reset links need identity in the query; verify/register keep code-only URLs.
         if (!Template.Equals("reset", StringComparison.OrdinalIgnoreCase))
+        {
             return url;
+        }
 
         if (selector.Field.Equals("Email", StringComparison.OrdinalIgnoreCase))
+        {
             return url + $"&email={Uri.EscapeDataString(selector.Value)}";
+        }
 
         if (selector.Field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase)
             || selector.Field.Equals("Phone", StringComparison.OrdinalIgnoreCase))
+        {
             return url + $"&phone={Uri.EscapeDataString(selector.Value)}";
+        }
 
         return url;
     }
@@ -162,7 +162,9 @@ internal sealed class SendCodeStep : IStep
         var ttlDefault = TimeSpan.FromMinutes(5);
 
         if (string.IsNullOrWhiteSpace(TtlKey))
+        {
             return ttlDefault;
+        }
 
         return ctx.Get<TimeSpan?>(BagKey.Qualify(Kind, TtlKey)) ?? ttlDefault;
     }

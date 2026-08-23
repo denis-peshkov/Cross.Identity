@@ -52,7 +52,6 @@ public class SendCode_StepFactoryTests
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("sendCode");
-        step.Channel.Should().Be(ChannelEnum.Email);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.TtlKey.Should().BeNull();
@@ -81,8 +80,6 @@ public class SendCode_StepFactoryTests
 
         var factory = new SendCodeStepFactory();
         var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
-
-        step.Channel.Should().Be(ChannelEnum.Sms);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
     }
@@ -110,7 +107,7 @@ public class SendCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenThrowsKeyNotFoundException()
+    public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -122,10 +119,10 @@ public class SendCode_StepFactoryTests
             """);
 
         var factory = new SendCodeStepFactory();
+        var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
 
-        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
-            .Should()
-            .Throw<KeyNotFoundException>();
+        step.Template.Should().Be("verify");
+        step.Subject.Should().Be("Verification Code");
     }
 
     [Test]

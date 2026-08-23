@@ -13,14 +13,14 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
     {
         return new VerifyCodeStep
         {
-            Kind        = Kind,
-            Selector    = new Selector(),
-            Channel     = cfg.EnumReq<ChannelEnum>("channel"),
-            CodeKey     = cfg.Str("codeKey"),
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
-            CodeService = sp.GetRequiredService<ICodeService>(),
-            UserService = sp.GetRequiredService<IUserService>(),
-            Next        = cfg.StrOpt("next")
+            Kind                   = Kind,
+            Selector               = new Selector(),
+            CodeKey                = cfg.Str("codeKey"),
+            UserIdKey              = cfg.StrOpt("userIdKey") ?? "UserId",
+            CodeService            = sp.GetRequiredService<ICodeService>(),
+            UserService            = sp.GetRequiredService<IUserService>(),
+            CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
+            Next                   = cfg.StrOpt("next")
         };
     }
 }

@@ -103,7 +103,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional client context. `selector.candidates`: Email, PhoneNumber. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `template: reset`, `subject: Reset your password`. → `collectResult` |
+| `sendCode` | sendCode | `template: reset`, `subject: Reset your password` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
@@ -148,7 +148,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userIdKey: UserId`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`. → `collectResult` |
+| `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
 
 ---
@@ -160,7 +160,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl`. → `collectResult` |
+| `sendCode` | sendCode | `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
@@ -173,7 +173,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: Id. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.NewPassword`. `next: null` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync`). `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
 
@@ -186,8 +186,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
-| `verifyCode` | verifyCode | `channel: email`, `codeKey: collectForm.Code`; writes `verifyCode.UserId`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `passwordKey: collectForm.Password`. `next: null` |
+| `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserId`. → `resetPassword` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync`). `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
@@ -336,7 +336,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP (email/SMS); required `channel` / `template` / `subject` (`reset` also adds email and phone number to the action URL). Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email). `reset` also adds email/phone to the action URL. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `verifyCode` | Verify OTP and write `UserId` to the bag |
 | `passwordAuth` | Verify identity + password; writes `UserId` |
 | `resetPassword` | Set new password (identity from `Selector`) |

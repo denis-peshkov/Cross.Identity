@@ -12,6 +12,13 @@ public sealed class AuthenticationOptions
     /// <summary>Failed password attempt lockout (see <see cref="UserAccountEntity.LockoutEnd"/>).</summary>
     public LockoutOptions Lockout { get; set; } = new();
 
+    /// <summary>
+    /// When <c>true</c>, OTP and password-change notifications always use Email
+    /// (ignores preferred phone/messenger endpoints). Requires an email on the account
+    /// or a verified email endpoint.
+    /// </summary>
+    public bool LockChannelAsEmail { get; set; }
+
     /// <summary>Background cleanup interval for expired refresh tokens.</summary>
     public TimeSpan TokenCleanupInterval { get; set; } = TimeSpan.FromHours(1);
 

@@ -104,8 +104,8 @@ public sealed record Selector
         };
 
     /// <summary>
-    /// Legacy fallback: login field → default channel when no user endpoints are available.
-    /// Prefer <see cref="ICommunicationEndpointService.ResolveDeliveryChannelAsync"/>.
+    /// Legacy helper: login field → default channel hint.
+    /// Prefer <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>.
     /// </summary>
     public static ChannelEnum? ChannelForField(string field)
         => field.ToLowerInvariant() switch

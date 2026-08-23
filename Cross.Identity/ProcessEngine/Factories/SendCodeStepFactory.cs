@@ -21,7 +21,6 @@ internal sealed class SendCodeStepFactory : IStepFactory
         return new SendCodeStep
         {
             Kind                      = Kind,
-            Channel                   = cfg.EnumReq<ChannelEnum>("channel"),
             Selector                  = new Selector(),
             TtlKey                    = cfg.StrOpt("ttlKey"),
             Template                  = cfg.Str("template"),

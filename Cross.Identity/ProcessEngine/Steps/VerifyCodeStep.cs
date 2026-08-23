@@ -1,7 +1,8 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Verifies an OTP and writes the resolved user id into the bag.
+/// Verifies an OTP against the same delivery target used for send
+/// (<see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>) and writes the user id into the bag.
 /// </summary>
 internal sealed class VerifyCodeStep : IStep
 {
@@ -10,9 +11,6 @@ internal sealed class VerifyCodeStep : IStep
 
     /// <inheritdoc/>
     public string? Next { get; init; }
-
-    /// <summary>Default verification channel when not inferred from selector field.</summary>
-    public required ChannelEnum Channel { get; init; }
 
     /// <summary>Identity selector (bag keys for field name + value).</summary>
     public required Selector Selector { get; init; }
@@ -29,31 +27,36 @@ internal sealed class VerifyCodeStep : IStep
     /// <summary>User service (resolve id after successful verify).</summary>
     public required IUserService UserService { get; init; }
 
+    /// <summary>Resolves OTP delivery target (must match send).</summary>
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
+
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
-        // OTP verify uses Email/Sms storage keyed by login field (not preferred messenger).
-        var channel = Selector.ChannelForField(selector.Field) ?? Channel;
-        if (!channel.SupportsOtp())
-            throw new ValidationException("Provide an email or a phone number to verify a code.");
-
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        bool ok;
-        if (Selector.ChannelForField(selector.Field) is null)
-            ok = await UserService.ValidateCodeAsync(selector.Field, selector.Value, code, cancellationToken).ConfigureAwait(false);
-        else
-            ok = await CodeService.VerifyAsync(channel, selector.Value, code, cancellationToken).ConfigureAwait(false);
-
-        if (!ok)
-            return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
-
-        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(userId))
+        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(userIdRaw) || !Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+        {
             return StepResult.Fail(new KeyNotFoundException("User not found."));
+        }
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId);
+        var target = await CommunicationEndpoints
+            .ResolveOtpTargetAsync(userId, cancellationToken)
+            .ConfigureAwait(false);
+        if (!target.Channel.SupportsOtp())
+        {
+            throw new ValidationException("Provide an email or a phone number to verify a code.");
+        }
+
+        var ok = await CodeService.VerifyAsync(target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
+        if (!ok)
+        {
+            return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
+        }
+
+        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userIdRaw);
         return StepResult.Ok(Next);
     }
 }

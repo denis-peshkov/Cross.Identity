@@ -446,7 +446,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
             _jwtTokenService,
-            new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService));
+            new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions())));
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

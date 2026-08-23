@@ -122,7 +122,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
-            new CommunicationEndpointService(Context, new AuditService(Context), jwtMock.Object));
+            new CommunicationEndpointService(Context, new AuditService(Context), jwtMock.Object, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions())));
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)

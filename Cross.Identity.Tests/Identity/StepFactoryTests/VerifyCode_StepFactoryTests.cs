@@ -11,6 +11,7 @@ public class VerifyCode_StepFactoryTests
         var sc = new ServiceCollection();
         sc.AddScoped<ICodeService>(p => Mock.Of<ICodeService>());
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 
@@ -35,7 +36,6 @@ public class VerifyCode_StepFactoryTests
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("verifyCode");
-        step.Channel.Should().Be(ChannelEnum.Email);
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.CodeKey.Should().Be("collectForm.Code");
@@ -60,8 +60,6 @@ public class VerifyCode_StepFactoryTests
 
         var factory = new VerifyCodeStepFactory();
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
-
-        step.Channel.Should().Be(ChannelEnum.Sms);
     }
 
     [Test]
@@ -87,7 +85,7 @@ public class VerifyCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenThrowsKeyNotFoundException()
+    public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
     {
         using var json = JsonDocument.Parse(
             """
@@ -98,9 +96,9 @@ public class VerifyCode_StepFactoryTests
             """);
 
         var factory = new VerifyCodeStepFactory();
+        var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
-        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
-            .Should()
-            .Throw<KeyNotFoundException>();
+        step.CodeKey.Should().Be("collectForm.Code");
+        step.CommunicationEndpoints.Should().NotBeNull();
     }
 }

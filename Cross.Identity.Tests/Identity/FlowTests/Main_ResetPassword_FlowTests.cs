@@ -9,6 +9,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
     private const string Password = "P@ssw0rd!";
 
     private Mock<IUserService> _userServiceMock = null!;
+    private Guid _userId;
 
     [SetUp]
     public override void Setup()
@@ -21,10 +22,11 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<VerifyCodeStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
+        _userId = Guid.NewGuid();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
             .Setup(s => s.GetUserIdByAsync("Email", Email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Guid.NewGuid().ToString());
+            .ReturnsAsync(() => _userId.ToString());
         _userServiceMock
             .Setup(s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -247,17 +249,16 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     private void SeedEmailCode(string code, DateTime expiresAt, DateTime? usedAt = null)
     {
-        var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = _userId,
             Email = Email.ToLowerInvariant(),
             EmailConfirmed = true,
             IsActive = true,
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = _userId,
             UserAccount = null!,
             Email = Email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash(code),

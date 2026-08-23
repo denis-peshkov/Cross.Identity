@@ -1247,7 +1247,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             optionsMock.Object,
             _logger.Object,
             jwtTokenService ?? CreateJwtTokenService(),
-            new CommunicationEndpointService(Context, new AuditService(Context), jwtTokenService ?? CreateJwtTokenService()),
+            new CommunicationEndpointService(Context, new AuditService(Context), jwtTokenService ?? CreateJwtTokenService(), Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions())),
             provisioner);
     }
 
