@@ -4,12 +4,6 @@
 
 ## Критично (безопасность)
 
-### 1. OTP plaintext в логах
-`CodeService.SendAsync` после отправки пишет в лог `msg.TextBody` — шаблон уже с подставленным `{{code}}`.
-
-**Impact:** компрометация OTP через log aggregation / SIEM / support-доступ; обход лимита попыток.  
-**Stock flows:** любой `sendCode` (Register, RequestCode, ForgotPassword).
-
 ### 2. ~~`TokenStep` (code-login) не совпадает с каналом `SendCodeStep`~~ ✅ закрыто
 ~~`SendCodeStep` / `VerifyCodeStep` → `ResolveOtpTargetAsync`; `ValidateCodeAsync` для Email/Phone проверял verification по типу selector.~~
 
@@ -56,12 +50,6 @@
 
 **Исправлено (2.0):** единый клиентский ответ на reject identity/channel; детали в Information-логе. Публичный lookup `GetUserId` по-прежнему раскрывает существование при успехе.
 
-### 9. Messenger preferred → SMS с тем же `Address`
-`ResolveOtpTargetAsync` → `ToEmailOrSms()`: Telegram/Viber/WhatsApp мапится в `Sms`, address не переписывается на E.164 phone.
-
-**Impact:** OTP не доходит или verify по chat-id.  
-**Stock flows:** если хост сделал preferred messenger endpoint.
-
 ### 10. ~~Нет fallback на confirmed phone~~ ✅ закрыто
 ~~Цепочка без phone account fallback.~~
 
@@ -71,11 +59,6 @@
 ~~`CodeService` / `SendCodeStep` — нет cooldown / per-identity limits.~~
 
 **Исправлено (2.0):** `Authentication:OtpSendRateLimit` — cooldown (default 60s) и cap в окне (default 5 / 1h) на пару user + destination в `CodeService.SendAsync`. `Cooldown = 0` и `MaxSendsPerWindow = 0` отключают.
-
-### 12. Apple provider в registry, но не реализован
-`FetchAppleProfileAsync` → `NotSupportedException`. Initiate строит URL; Complete падает.
-
-**Impact:** broken auth surface, если провайдер enabled в БД.
 
 ---
 
@@ -134,6 +117,15 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 ### Публичные half-validate API (#13, #14)
 Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
 
+### OTP plaintext в логах (#1) — принято
+`CodeService.SendAsync` логирует `TextBody` с подставленным кодом. Хост обязан не утекать логи / SIEM; в prod не включать verbose notifier logs.
+
+### Messenger preferred → SMS (#9) — принято
+`ToEmailOrSms()` меняет только канал; address остаётся как в endpoint. Хост не ставит preferred messenger с chat-id, пока нет messenger sender / remapping на E.164.
+
+### Apple в registry без реализации (#12) — принято
+`FetchAppleProfileAsync` → `NotSupportedException`. Не включать Apple в `Providers` / options до реализации.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -182,7 +174,7 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 
 ## Приоритет фиксов
 
-1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
-2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; ~~lookup prefer confirmed~~; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; ~~lockout на code path~~.
-3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
+1. ~~**C1–C2**~~ — C2 закрыт; C1 (#1 OTP в логах) **принято**.
+2. ~~**H3–H7**~~ — закрыто / принято по плану.
+3. ~~**H8–H12**~~ — #8/#10/#11 закрыто; #9/#12 **принято**; oracle `GetUserId` — продуктовое.
 4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
