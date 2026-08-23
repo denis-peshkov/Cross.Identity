@@ -45,7 +45,7 @@ internal sealed class CodeService : ICodeService
             throw new NotSupportedException($"OTP send via {msg.Channel} is not supported. Use Email or Sms; messenger delivery is not implemented yet.");
         }
 
-        var normalizedDestination = destination.ToLowerInvariant();
+        var normalizedDestination = msg.Channel.NormalizeAddress(destination);
 
         await EnsureOtpSendAllowedAsync(id, msg.Channel, normalizedDestination, now, cancellationToken)
             .ConfigureAwait(false);
@@ -129,12 +129,10 @@ internal sealed class CodeService : ICodeService
 
         var now = DateTime.UtcNow;
 
-        // Normalize identity based on channel
         var normalizedIdentity = channel switch
         {
-            ChannelEnum.Email => identity.Trim().ToLowerInvariant(),
-            ChannelEnum.Sms => identity.Trim(), // PhoneNumber should already be in E.164 format
-            _ => identity.Trim()
+            ChannelEnum.Email or ChannelEnum.Sms => channel.NormalizeAddress(identity),
+            _ => identity.Trim(),
         };
 
         switch (channel)

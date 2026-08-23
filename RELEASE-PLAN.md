@@ -21,8 +21,8 @@
 ### 23. OTP supersede без `userId` (CR)
 `CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
 
-### 24. SMS destination `ToLowerInvariant` (CR)
-`CodeService.SendAsync` — lowercasing destination для всех каналов; Verify для SMS только `Trim` — риск mismatch.
+### 24. SMS destination `ToLowerInvariant` (CR) — закрыто
+`CodeService` — send/verify используют `ChannelEnum.NormalizeAddress` (email lowercases, SMS trim-only).
 
 ### 25. Lockout: счётчик после истечения окна (CR)
 `UserAccountLockout.RecordFailedAccess` — не сбрасывает `AccessFailedCount`, когда `LockoutEnd` уже истёк, перед новым fail.
@@ -174,6 +174,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 | #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
 | #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
+| #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
@@ -199,7 +200,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20, M23–M28:** PII logs; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
+2. **CR M20, M25–M28:** PII logs; lockout reset; AuditEntityType; preferred unique; action URL.
 3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.

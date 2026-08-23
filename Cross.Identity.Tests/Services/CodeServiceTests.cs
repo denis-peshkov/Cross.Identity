@@ -125,6 +125,29 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSmsSendAndVerify_WhenDestinationTrimmedOnly_ThenMatchesStoredPhoneAsync()
+    {
+        var userId = Guid.NewGuid();
+        var storedPhone = "+1234567890";
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = storedPhone, IsActive = true });
+        var message = NotificationMessage.For(ChannelEnum.Sms, "  +1234567890  ")
+            .WithTextBody("Your code is 123456");
+        var ttl = TimeSpan.FromMinutes(5);
+
+        _smsService.Setup(s => s.SendAsync(storedPhone, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("sms-id");
+
+        await _codeService.SendAsync(message, "123456", userId.ToString(), ttl, CancellationToken.None);
+
+        (await Context.PhoneVerifications.SingleAsync()).PhoneNumber.Should().Be(storedPhone);
+
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, "  +1234567890  ", "123456", CancellationToken.None);
+
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         // Arrange — current implementation checks the database record
