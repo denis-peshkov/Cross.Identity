@@ -44,9 +44,6 @@
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
 - `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
 
-**Закрыто в коде:**
-- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — UserName fixed (#52).
-
 ---
 
 ## Принято (осознанный trade-off / контракт хоста)
@@ -187,7 +184,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #48 Refresh Empty при SessionBindingCheckIp (CR) | `ValidationException` если `Empty` + anchor; docs/API; `Empty` OK на logout/revoke |
 | ✅ #49 Re-hash swallow cancellation (CR) | `ValidatePasswordAsync`: `catch (DbUpdateException) when (needRehash)`; cancellation пробрасывается |
 | ✅ #51 `Bag.TryGet` Guid string parse (CR) | `TryGet` — `Guid.TryParse` как в `Get` для `Guid` / `Guid?` |
-| ✅ #52 CreateUserAsync UserName split (CR) | `userName` через `ToString().Trim()` для `UserName` и `NormalizedUserName` |
+| ✅ #52 CreateUserAsync UserName split (CR) | `userName` / `PhoneNumber` через `ToString().Trim()` для entity и normalized paths |
 | ✅ #53 UpsertAsync trust boundary (CR) | `UpsertAsync` + `SyncAccountContactsAsync` на internal `ICommunicationEndpointUpsertService`; DI singleton per scope |
 
 ---

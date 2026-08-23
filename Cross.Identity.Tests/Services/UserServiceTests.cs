@@ -121,6 +121,24 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenNonStringPhoneNumber_WhenCreateUserAsync_ThenPhoneNumberIsStoredAsync()
+    {
+        _hasher.Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>())).Returns("$pbkdf2-test-hash");
+
+        var map = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = new StringBuilder("+12125551234"),
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.FindAsync(userAccountId);
+        user!.PhoneNumber.Should().Be("+12125551234");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenVerifiedEmail_WhenCreateUserAsync_ThenThrowsConflictExceptionAsync()
     {
         var email = "existing@example.com";

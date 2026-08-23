@@ -88,10 +88,9 @@ internal sealed class UserService : IUserService
         var userName = userNameRaw?.ToString()?.Trim();
         var normalizedUserName = userName?.ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        // PhoneNumber is expected already E.164 (collectForm / PhoneE164 at the form boundary).
-        string? normalizedPhone = null;
-        if (phoneRaw is string phone && !string.IsNullOrWhiteSpace(phone))
-            normalizedPhone = phone;
+        var normalizedPhone = phoneRaw?.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+            normalizedPhone = null;
 
         // 3) Uniqueness
         if (normalizedUserName is not null
