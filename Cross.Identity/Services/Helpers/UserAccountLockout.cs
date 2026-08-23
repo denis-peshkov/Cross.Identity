@@ -26,6 +26,12 @@ internal static class UserAccountLockout
         if (!user.LockoutEnabled || options.MaxFailedAccessAttempts <= 0)
             return;
 
+        if (user.LockoutEnd.HasValue && user.LockoutEnd.Value <= now)
+        {
+            user.AccessFailedCount = 0;
+            user.LockoutEnd = null;
+        }
+
         user.AccessFailedCount++;
         if (user.AccessFailedCount >= options.MaxFailedAccessAttempts)
             user.LockoutEnd = now.Add(options.LockoutTimeout);

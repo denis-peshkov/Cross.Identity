@@ -1123,6 +1123,47 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenExpiredLockout_WhenValidatePasswordAsyncFailsOnce_ThenResetsFailedCountBeforeIncrementAsync()
+    {
+        _options = CreateOptionsSnapshot(maxFailedAccessAttempts: 3, lockoutTimeout: TimeSpan.FromMinutes(10));
+        _userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            Mock.Of<ICommunicationEndpointService>(),
+            _options.Object);
+
+        var userId = Guid.NewGuid();
+        var email = "expired-lockout@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            PasswordPhc = "$pbkdf2$stored",
+            PasswordPepperVersion = 1,
+            LockoutEnabled = true,
+            AccessFailedCount = 3,
+            LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(-5),
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(PasswordVerificationEnum.Failed);
+
+        (await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None)).Should().BeFalse();
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(1);
+        user.LockoutEnd.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMaxFailedAttempts_WhenValidatePasswordAsyncRepeatedly_ThenLocksOutAccountAsync()
     {
         _options = CreateOptionsSnapshot(maxFailedAccessAttempts: 3, lockoutTimeout: TimeSpan.FromMinutes(10));

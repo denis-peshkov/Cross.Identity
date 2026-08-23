@@ -27,8 +27,8 @@
 ### ✅ 24. SMS destination `ToLowerInvariant` (CR)
 `CodeService` — send/verify используют `ChannelEnum.NormalizeAddress` (email lowercases, SMS trim-only).
 
-### 25. Lockout: счётчик после истечения окна (CR)
-`UserAccountLockout.RecordFailedAccess` — не сбрасывает `AccessFailedCount`, когда `LockoutEnd` уже истёк, перед новым fail.
+### ✅ 25. Lockout: счётчик после истечения окна (CR)
+`UserAccountLockout.RecordFailedAccess` — при истёкшем `LockoutEnd` сбрасывает `AccessFailedCount` перед новым fail.
 
 ### 26. `AuditEntityType` discriminator collision (CR)
 `LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
@@ -144,42 +144,43 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 | # | Суть |
 |---|------|
-| OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
-| Account linking без auth | linking требует `RefreshToken` того же user |
-| IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
-| OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
-| Logout access revoke | `RevokeRefreshTokenForLogoutAsync` отзывает access той же `FamilyId` |
-| CSPRNG для OTP | `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper` |
-| GitHub email verified | только `verified: true` emails |
-| `IsActive` | `UserAccountGuard` + checks в auth pipeline |
-| Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
-| Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
-| Session binding на refresh | `Created*` на refresh + compare `ClientContext` |
-| Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
-| UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
-| Password max 32 | все stock Password fields |
-| `TokenStep` fail vs ok | `NotAuthorizedException` на bad credentials |
-| SendCode enumeration (unknown) | `Invalid credentials.` без отправки |
-| Messenger SendCode no-op | `NotSupportedException` |
-| `VerifyTokenStep` swallow | только token-format errors → `Valid=false` |
-| Мёртвые ключи `main.Token.json` | удалены |
-| `CreatedBy` | колонка удалена |
-| #2 TokenStep ↔ SendCode channel | `ValidateCodeAsync` → `ResolveOtpTargetAsync` |
-| #3 VerifyAsync без userId | `VerifyAsync(userId, …)` + `UserAccountId` match |
-| #4 Lookup без PreferVerified | `OrderByDescending` verified перед FirstOrDefault |
-| #5 Microsoft EmailVerified | только OIDC `email` + `email_verified` (не Graph fallback) |
-| #21 Microsoft verified без OIDC email | Graph mail не verified при `email_verified` без userinfo `email` |
-| #6 OTP vs notify email | OTP: unverified OK; notify: verified only |
-| #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
-| #8 Enumeration на шагах | единый `Invalid credentials.` + log |
-| #10 Phone fallback | account phone после email (OTP/notify rules) |
-| #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
-| #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
-| #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
+| ✅ OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
+| ✅ Account linking без auth | linking требует `RefreshToken` того же user |
+| ✅ IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
+| ✅ OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
+| ✅ Logout access revoke | `RevokeRefreshTokenForLogoutAsync` отзывает access той же `FamilyId` |
+| ✅ CSPRNG для OTP | `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper` |
+| ✅ GitHub email verified | только `verified: true` emails |
+| ✅ `IsActive` | `UserAccountGuard` + checks в auth pipeline |
+| ✅ Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
+| ✅ Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
+| ✅ Session binding на refresh | `Created*` на refresh + compare `ClientContext` |
+| ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
+| ✅ UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
+| ✅ Password max 32 | все stock Password fields |
+| ✅ `TokenStep` fail vs ok | `NotAuthorizedException` на bad credentials |
+| ✅ SendCode enumeration (unknown) | `Invalid credentials.` без отправки |
+| ✅ Messenger SendCode no-op | `NotSupportedException` |
+| ✅ `VerifyTokenStep` swallow | только token-format errors → `Valid=false` |
+| ✅ Мёртвые ключи `main.Token.json` | удалены |
+| ✅ `CreatedBy` | колонка удалена |
+| ✅ #2 TokenStep ↔ SendCode channel | `ValidateCodeAsync` → `ResolveOtpTargetAsync` |
+| ✅ #3 VerifyAsync без userId | `VerifyAsync(userId, …)` + `UserAccountId` match |
+| ✅ #4 Lookup без PreferVerified | `OrderByDescending` verified перед FirstOrDefault |
+| ✅ #5 Microsoft EmailVerified | только OIDC `email` + `email_verified` (не Graph fallback) |
+| ✅ #21 Microsoft verified без OIDC email | Graph mail не verified при `email_verified` без userinfo `email` |
+| ✅ #6 OTP vs notify email | OTP: unverified OK; notify: verified only |
+| ✅ #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
+| ✅ #8 Enumeration на шагах | единый `Invalid credentials.` + log |
+| ✅ #10 Phone fallback | account phone после email (OTP/notify rules) |
+| ✅ #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
+| ✅ #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
+| ✅ #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
 | ✅ #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
 | ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
-| Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
-| BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
+| ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
+| ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
+| ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
 ---
 
@@ -203,7 +204,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20, M25–M28:** PII logs; lockout reset; AuditEntityType; preferred unique; action URL.
+2. **CR M20, M26–M28:** PII logs; AuditEntityType; preferred unique; action URL.
 3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
