@@ -101,7 +101,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenVerifiedEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    public async Task GivenVerifiedEmail_WhenCreateUserAsync_ThenThrowsConflictExceptionAsync()
     {
         var email = "existing@example.com";
         AddToDb(new UserAccountEntity
@@ -119,7 +119,7 @@ public class UserServiceTests : EFTestsBase
 
         await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("*Email already exists*");
     }
 
@@ -150,7 +150,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenVerifiedPhone_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    public async Task GivenVerifiedPhone_WhenCreateUserAsync_ThenThrowsConflictExceptionAsync()
     {
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
@@ -168,7 +168,7 @@ public class UserServiceTests : EFTestsBase
 
         await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
             .Should()
-            .ThrowAsync<InvalidOperationException>()
+            .ThrowAsync<ConflictException>()
             .WithMessage("*PhoneNumber already exists*");
     }
 

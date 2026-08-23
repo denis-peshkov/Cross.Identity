@@ -60,7 +60,7 @@ internal interface IUserService
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created user identifier.</returns>
-    /// <exception cref="InvalidOperationException">A verified email, phone, or username already exists.</exception>
+    /// <exception cref="ConflictException">A verified email, phone, or username already exists.</exception>
     Task<Guid> CreateUserAsync(
         IDictionary<string, object?> map,
         CancellationToken cancellationToken);

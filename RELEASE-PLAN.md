@@ -18,9 +18,6 @@
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
 
-### 32. `UserAccountGuard` → `InvalidOperationException` (CR)
-Conflict на email/phone бросает `InvalidOperationException` вместо Conflict/Validation.
-
 ### 33. `Bag` nullable `Convert.ChangeType` (CR)
 `Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
 
@@ -126,6 +123,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ Старые OTP при resend | supersede active codes per `UserAccountId` + destination (`ExpiresAt = now`) |
 | ✅ #23 OTP supersede scoped by user (CR) | `SupersedeActive*VerificationsAsync` фильтрует по `UserAccountId` + email/phone |
 | ✅ #26 `AuditEntityType` unique values (CR) | `UserCommunicationEndpoint=7`, `ExternalLoginState=8`, `LinkedMessenger=9` |
+| ✅ #32 Verified contact conflict → `ConflictException` (CR) | `UserAccountGuard` + `CreateUserAsync`; email/phone/username duplicate |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
 | ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` (opt-in); device/UA always when captured |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
@@ -193,5 +191,5 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M28:** SendCode action URL.
-3. **CR M32–M33, M39:** Guard exceptions; Bag nullable; idle double-audit.
+3. **CR M33, M39:** Bag nullable; idle double-audit.
 4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).

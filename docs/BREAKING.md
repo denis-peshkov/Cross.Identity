@@ -515,3 +515,12 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 | JWT / password / unlink API parameter | `ClientContext clientContext` | `HostSuppliedClientContext hostSuppliedClientContext` |
 
 **Action:** rename type, static members, and parameter names in host code; update `cref` / imports. Bag keys (`collectForm.IpAddress`, …) are unchanged.
+
+### Verified contact duplicate → `ConflictException`
+
+| Area | Was | Now |
+|------|-----|-----|
+| `UserService.CreateUserAsync` (verified email/phone, duplicate username) | `InvalidOperationException` | **`ConflictException`** |
+| `UserAccountGuard.EnsureNoOtherVerifiedEmailAsync` / `…PhoneAsync` (OTP confirm) | `InvalidOperationException` | **`ConflictException`** |
+
+**Action:** map duplicate contact/username to HTTP **409** (or your host policy for `ConflictException`); do not treat as `InvalidOperationException` / 500.

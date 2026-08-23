@@ -55,7 +55,7 @@ internal static class UserAccountGuard
 
         if (conflict)
         {
-            throw new InvalidOperationException("Email already exists.");
+            throw new ConflictException("Email already exists.");
         }
     }
 
@@ -76,7 +76,7 @@ internal static class UserAccountGuard
 
         if (conflict)
         {
-            throw new InvalidOperationException("PhoneNumber already exists.");
+            throw new ConflictException("PhoneNumber already exists.");
         }
     }
 }

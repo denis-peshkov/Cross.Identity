@@ -92,17 +92,17 @@ internal sealed class UserService : IUserService
         // 3) Uniqueness
         if (normalizedUserName is not null
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("UserName already exists.");
+            throw new ConflictException("UserName already exists.");
         if (normalizedEmail is not null
             && await _context.UsersAccounts.AnyAsync(
                 u => u.Email == normalizedEmail && u.EmailVerified,
                 cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("Email already exists.");
+            throw new ConflictException("Email already exists.");
         if (normalizedPhone is not null
             && await _context.UsersAccounts.AnyAsync(
                 u => u.PhoneNumber == normalizedPhone && u.PhoneNumberVerified,
                 cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("PhoneNumber already exists.");
+            throw new ConflictException("PhoneNumber already exists.");
 
         // 4) Password hash (PHC) + current pepper version
         var pepperVersion = _pepperVault.CurrentVersion;
