@@ -68,7 +68,9 @@ internal sealed class UserService : IUserService
             userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
-        return await userAccountsFiltered.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false)
+        return await PreferConfirmedContact(userAccountsFiltered, field)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false)
             ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
     }
 
@@ -360,10 +362,26 @@ internal sealed class UserService : IUserService
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
-        return await _context.UsersAccounts
-            .Where(u => EF.Property<string>(u, field) == value)
+        return await PreferConfirmedContact(
+                _context.UsersAccounts.Where(u => EF.Property<string>(u, field) == value),
+                field)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// When several rows share Email/Phone (unique only among confirmed), prefer the confirmed one.
+    /// </summary>
+    private static IQueryable<UserAccountEntity> PreferConfirmedContact(
+        IQueryable<UserAccountEntity> query,
+        string field)
+    {
+        return field switch
+        {
+            nameof(UserAccountEntity.Email) => query.OrderByDescending(u => u.EmailConfirmed),
+            nameof(UserAccountEntity.PhoneNumber) => query.OrderByDescending(u => u.PhoneNumberConfirmed),
+            _ => query,
+        };
     }
 
     private string? NormalizeSelectorValue(string field, string selectorValue)

@@ -24,11 +24,10 @@
 
 **Исправлено (2.0):** `VerifyAsync(Guid userId, ChannelEnum, identity, code)`; lookup требует `UserAccountId == userId`. `VerifyCodeStep` передаёт resolved user id.
 
-### 4. Lookup Email/Phone: `FirstOrDefault` без приоритета confirmed
-`FindTrackedUserBySelectorAsync` / `GetUserByAsync` — `FirstOrDefault` без `OrderBy EmailConfirmed`. Уникальность email/phone только среди confirmed; несколько unconfirmed + один confirmed допустимы.
+### 4. ~~Lookup Email/Phone: `FirstOrDefault` без приоритета confirmed~~ ✅ закрыто
+~~`FindTrackedUserBySelectorAsync` / `GetUserByAsync` — `FirstOrDefault` без `OrderBy EmailConfirmed`.~~
 
-**Impact:** login / ForgotPassword / OTP / Reset могут попасть на squat-аккаунт с тем же контактом; усиливает #3.  
-**Stock flows:** Token, ForgotPassword, RequestCode, ResetPassword, Register + OAuth create.
+**Исправлено (2.0):** `PreferConfirmedContact` — для Email/Phone `OrderByDescending(EmailConfirmed|PhoneNumberConfirmed)` перед `FirstOrDefault`.
 
 ### 5. ~~Microsoft OAuth: `EmailConfirmed` без attestation~~ ✅ закрыто
 ~~`FetchMicrosoftProfileAsync`: `EmailConfirmed = !string.IsNullOrWhiteSpace(email)`.~~
@@ -187,6 +186,6 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 ## Приоритет фиксов
 
 1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
-2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; lookup prefer confirmed; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; lockout на code path.
+2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; ~~lookup prefer confirmed~~; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; lockout на code path.
 3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
 4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.

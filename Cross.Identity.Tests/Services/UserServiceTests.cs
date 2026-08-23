@@ -333,6 +333,81 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnconfirmedSquatAndConfirmedEmail_WhenGetUserByAsync_ThenPrefersConfirmedAsync()
+    {
+        var email = "shared@example.com";
+        var squatId = Guid.NewGuid();
+        var confirmedId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = squatId,
+            Email = email,
+            UserName = "squat",
+            NormalizedUserName = "squat",
+            EmailConfirmed = false,
+            CreatedAt = DateTime.UtcNow.AddDays(-1),
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserAccountEntity
+        {
+            Id = confirmedId,
+            Email = email,
+            UserName = "owner",
+            NormalizedUserName = "owner",
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var result = await _userService.GetUserByAsync("Email", email, CancellationToken.None);
+
+        result.Id.Should().Be(confirmedId);
+        result.EmailConfirmed.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnconfirmedSquatAndConfirmedPhone_WhenGetUserByAsync_ThenPrefersConfirmedAsync()
+    {
+        var phone = "+79161234567";
+        var squatId = Guid.NewGuid();
+        var confirmedId = Guid.NewGuid();
+
+        AddToDb(new UserAccountEntity
+        {
+            Id = squatId,
+            Email = "squat@example.com",
+            PhoneNumber = phone,
+            UserName = "squat-phone",
+            NormalizedUserName = "squat-phone",
+            PhoneNumberConfirmed = false,
+            CreatedAt = DateTime.UtcNow.AddDays(-1),
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserAccountEntity
+        {
+            Id = confirmedId,
+            Email = "owner@example.com",
+            PhoneNumber = phone,
+            UserName = "owner-phone",
+            NormalizedUserName = "owner-phone",
+            PhoneNumberConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var result = await _userService.GetUserByAsync("PhoneNumber", phone, CancellationToken.None);
+
+        result.Id.Should().Be(confirmedId);
+        result.PhoneNumberConfirmed.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserById_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         var userId = Guid.NewGuid();

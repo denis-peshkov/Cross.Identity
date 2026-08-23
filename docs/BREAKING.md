@@ -176,6 +176,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is confirmed (`ExternalOAuthProfile.EmailConfirmed`); links to **confirmed** account only |
 | `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
 | `UsersAccounts.PhoneNumber` uniqueness | unique on `PhoneNumber` (all rows) | unique only when `PhoneNumberConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
+| Lookup by Email / PhoneNumber | `FirstOrDefault` (undefined which row) | **prefer** `EmailConfirmed` / `PhoneNumberConfirmed` (`GetUserByAsync` / password / code paths) |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
