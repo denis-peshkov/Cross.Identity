@@ -24,9 +24,6 @@
 ### 49. Re-hash `SaveChanges` глотает cancellation (CR 2026-08-23)
 `UserService.ValidatePasswordAsync`: `catch (Exception)` при `needRehash` перехватывает `OperationCanceledException` → успешная auth при отмене. Ловить только `DbUpdateException`; cancellation пробрасывать.
 
-### 50. `UsersExternalLogins` PK `long` → `Guid` — upgrade path (CR 2026-08-23)
-Greenfield `2_01_auth_UsersExternalLogins.sql` уже `uuid` / `UNIQUEIDENTIFIER`. Для legacy DB с `bigint` PK — **нет** staged PreDeployment. Добавить миграцию или явно зафиксировать в `BREAKING.md`, что апгрейд только через greenfield / manual data migration.
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -186,6 +183,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ `IdentityConstants` claim rename (CR stale) | `UserAccountId` → `"user_account_id"`; license JWT `"user_id"` отдельно (#45) |
 | ✅ CR: GetUserAccountId enumeration (2026-08-23) | см. «Принято» — existence oracle |
 | ✅ CR: PII в auth step logs (2026-08-23) | см. «Принято» #20 — forensics by design |
+| ✅ #50 ExternalLogin PK bigint→Guid (CR) | `1_11_auth_UsersExternalLogins_UserExternalLoginIdToGuid.sql`; `docs/BREAKING.md` |
 
 ---
 
@@ -209,8 +207,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Приоритет фиксов
 
 1. **#48–#49:** refresh + `Empty` session binding; re-hash cancellation.
-2. **#50:** ExternalLogin PK upgrade path / BREAKING note.
-3. **M13–M14:** half-validate API docs / misuse guidance.
-4. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
-5. **M39:** idle double-audit.
-6. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.
+2. **M13–M14:** half-validate API docs / misuse guidance.
+3. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
+4. **M39:** idle double-audit.
+5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.

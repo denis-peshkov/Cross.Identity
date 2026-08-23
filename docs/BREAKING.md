@@ -451,6 +451,21 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verifi
 
 **Action:** run `1_10_auth_UsersCommunicationEndpoints_PreferredUnique.sql` on existing databases (dedupes duplicate preferred rows, then creates index). Greenfield `2_01_auth_UsersCommunicationEndpoints.sql` already includes the index.
 
+### `UsersExternalLogins.UserExternalLoginId`: `bigint` → `uuid` / `UNIQUEIDENTIFIER`
+
+| Area | Was (1.x / early 2.0 deploy) | Now (2.0+) |
+|------|------------------------------|------------|
+| PK column | `BIGINT IDENTITY` / `bigint` / `AUTO_INCREMENT` | **`uuid` / `UNIQUEIDENTIFIER` / `CHAR(36)`** |
+| EF `UserExternalLoginEntity.Id` | `Guid` (always) | unchanged |
+| Optional column | `LastUsedAt` | **`UpdatedAt`** (renamed when present) |
+
+Migration assigns a **new random Guid per row** (not deterministic from old id). Related rows are updated when possible:
+
+- `auth.Audits` where `EntityType = UserExternalLogin` and `EntityId` was the old numeric id as text
+- `auth.UsersCommunicationEndpoints` with `Source = ExternalProvider`, `Channel = Email`, matching `Address` to `UsersExternalLogins.ProviderEmail`
+
+**Action:** on existing databases with a `bigint` PK, run `1_11_auth_UsersExternalLogins_UserExternalLoginIdToGuid.sql` (after `1_10`). Greenfield `2_01_auth_UsersExternalLogins.sql` already uses Guid PK. Host code must not persist old numeric external-login ids.
+
 ### `UsersAccounts.CreatedBy` removed
 
 | Area | Was (1.10) | Now (2.0+) |
