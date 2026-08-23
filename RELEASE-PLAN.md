@@ -28,9 +28,6 @@
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
-### 52. `CreateUserAsync` — `UserName` vs `NormalizedUserName` (CR 2026-08-23)
-`normalizedUserName` через `userNameRaw?.ToString()`, `UserName = userNameRaw as string` — при non-string в map: uniqueness по normalized, exposed `UserName` null. Одна локальная `string? userName` для обоих полей.
-
 ### 53. Public `ICommunicationEndpointService.UpsertAsync` без session proof (CR 2026-08-23)
 `GetAllAsync` / `SetPreferredAsync` требуют refresh token; `UpsertAsync(userAccountId, …, isVerified)` — нет. Любая referencing assembly может пометить адрес verified для чужого аккаунта. `internal` interface **или** XML/trust-boundary: только pre-authorized host/sync paths (`UserService`, OAuth sync).
 
@@ -38,7 +35,7 @@
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
 - `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
-- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — см. также **#52** (UserName split).
+- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — UserName fixed (#52).
 - `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
 
 ---
@@ -181,6 +178,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #48 Refresh Empty при SessionBindingCheckIp (CR) | `ValidationException` если `Empty` + anchor; docs/API; `Empty` OK на logout/revoke |
 | ✅ #49 Re-hash swallow cancellation (CR) | `ValidatePasswordAsync`: `catch (DbUpdateException) when (needRehash)`; cancellation пробрасывается |
 | ✅ #51 `Bag.TryGet` Guid string parse (CR) | `TryGet` — `Guid.TryParse` как в `Get` для `Guid` / `Guid?` |
+| ✅ #52 CreateUserAsync UserName split (CR) | `userName` через `ToString().Trim()` для `UserName` и `NormalizedUserName` |
 
 ---
 
@@ -204,6 +202,6 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **#52–#53:** CreateUserAsync UserName; UpsertAsync trust boundary.
+2. **#53:** UpsertAsync trust boundary.
 3. **M39:** idle double-audit.
 4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.

@@ -82,7 +82,8 @@ internal sealed class UserService : IUserService
         map.TryGetValue("Password", out var passwordRaw);
 
         // 2) Normalization
-        var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
+        var userName = userNameRaw?.ToString()?.Trim();
+        var normalizedUserName = userName?.ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
         // PhoneNumber is expected already E.164 (collectForm / PhoneE164 at the form boundary).
         string? normalizedPhone = null;
@@ -118,7 +119,7 @@ internal sealed class UserService : IUserService
             Id = Guid.NewGuid(),
             Email = normalizedEmail,
             PhoneNumber = normalizedPhone,
-            UserName = userNameRaw as string,
+            UserName = userName,
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
             PasswordPepperVersion = pepperVersion,

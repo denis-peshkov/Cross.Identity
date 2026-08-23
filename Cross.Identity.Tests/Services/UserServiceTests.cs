@@ -101,6 +101,25 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenNonStringUserName_WhenCreateUserAsync_ThenUserNameMatchesNormalizedSourceAsync()
+    {
+        _hasher.Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>())).Returns("$pbkdf2-test-hash");
+
+        var map = new Dictionary<string, object?>
+        {
+            ["UserName"] = new StringBuilder("Alice"),
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.FindAsync(userAccountId);
+        user!.UserName.Should().Be("Alice");
+        user.NormalizedUserName.Should().Be("alice");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenVerifiedEmail_WhenCreateUserAsync_ThenThrowsConflictExceptionAsync()
     {
         var email = "existing@example.com";
