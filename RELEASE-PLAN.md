@@ -1,9 +1,9 @@
 Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 **Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — Free plan limit 150 files; полный diff 293 → scope только `Cross.Identity/` (40 findings: 22 major / 18 minor). Сырой лог: `/tmp/cr-identity.jsonl`.
+**CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — **13 findings** (11 major / 2 minor), 142 files. Лог: `/tmp/cr-identity-20260823-2249.log`. Часть замечаний — intentional 2.0 breaking или уже в «Принято» / «Закрыто» (см. ниже).
 
 ---
 
@@ -18,6 +18,15 @@
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
+### 48. `HostSuppliedClientContext.Empty` на refresh → family revoke (CR 2026-08-23)
+`JwtTokenService.IsSessionBindingMismatch`: anchor заполнен, current пустой → mismatch. Refresh с `HostSuppliedClientContext.Empty` при семействе с Ip/UA/Fingerprint → `TOKEN_STOLEN` + revoke всей family. Документирован `Empty` как «when unknown», но поведение = logout. Решить контракт: skip сравнения для непереданных измерений **или** явно запретить `Empty` на rotation path.
+
+### 49. Re-hash `SaveChanges` глотает cancellation (CR 2026-08-23)
+`UserService.ValidatePasswordAsync`: `catch (Exception)` при `needRehash` перехватывает `OperationCanceledException` → успешная auth при отмене. Ловить только `DbUpdateException`; cancellation пробрасывать.
+
+### 50. `UsersExternalLogins` PK `long` → `Guid` — upgrade path (CR 2026-08-23)
+Greenfield `2_01_auth_UsersExternalLogins.sql` уже `uuid` / `UNIQUEIDENTIFIER`. Для legacy DB с `bigint` PK — **нет** staged PreDeployment. Добавить миграцию или явно зафиксировать в `BREAKING.md`, что апгрейд только через greenfield / manual data migration.
+
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -28,11 +37,20 @@
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
+### 51. `Bag.TryGet` — Guid из string (CR 2026-08-23)
+`Bag.Get<T>` парсит Guid/`Guid?` из form string; `TryGet` — только `Convert.ChangeType` → optional Guid из collectForm может «отсутствовать». Выровнять с `Get` (`Guid.TryParse` до generic conversion). (#33 закрыт только nullable underlying type.)
+
+### 52. `CreateUserAsync` — `UserName` vs `NormalizedUserName` (CR 2026-08-23)
+`normalizedUserName` через `userNameRaw?.ToString()`, `UserName = userNameRaw as string` — при non-string в map: uniqueness по normalized, exposed `UserName` null. Одна локальная `string? userName` для обоих полей.
+
+### 53. Public `ICommunicationEndpointService.UpsertAsync` без session proof (CR 2026-08-23)
+`GetAllAsync` / `SetPreferredAsync` требуют refresh token; `UpsertAsync(userAccountId, …, isVerified)` — нет. Любая referencing assembly может пометить адрес verified для чужого аккаунта. `internal` interface **или** XML/trust-boundary: только pre-authorized host/sync paths (`UserService`, OAuth sync).
+
 ### CodeRabbit minor (XML / style / hygiene)
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
 - `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
-- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName.
+- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — см. также **#52** (UserName split).
 - `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
 
 ---
@@ -163,6 +181,11 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #45 License JWT claim `user_id` | `License.UserId` / claim `"user_id"` — отдельно от identity `user_account_id` |
 | ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param docs |
 | ✅ #47 `Sample.Api.http` | `UserAccountId` / `USER_ACCOUNT_ID` на identity flows (не license) |
+| ✅ EmailVerified rename (CR отклонён как open) | PreDeployment `1_07`–`1_09`; `docs/BREAKING.md` § `EmailConfirmed` → `EmailVerified` |
+| ✅ RefreshToken / VerifyToken `user_account_id` (CR stale) | intentional 2.0 output; см. #43 / `BREAKING.md` (не `user_id`) |
+| ✅ `IdentityConstants` claim rename (CR stale) | `UserAccountId` → `"user_account_id"`; license JWT `"user_id"` отдельно (#45) |
+| ✅ CR: GetUserAccountId enumeration (2026-08-23) | см. «Принято» — existence oracle |
+| ✅ CR: PII в auth step logs (2026-08-23) | см. «Принято» #20 — forensics by design |
 
 ---
 
@@ -185,6 +208,9 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M33, M39:** Bag nullable; idle double-audit.
-3. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
+1. **#48–#49:** refresh + `Empty` session binding; re-hash cancellation.
+2. **#50:** ExternalLogin PK upgrade path / BREAKING note.
+3. **M13–M14:** half-validate API docs / misuse guidance.
+4. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
+5. **M39:** idle double-audit.
+6. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.
