@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Logout from all devices: proves session ownership via refresh token and revokes every
-/// active access/refresh token for that user with <see cref="RefreshTokenRevokeReason.USER_LOGOUT_ALL"/>.
+/// active access/refresh token for that user with <see cref="RefreshTokenRevokedReason.USER_LOGOUT_ALL"/>.
 /// </summary>
 internal sealed class LogoutAllStep : IStep
 {
@@ -22,8 +22,9 @@ internal sealed class LogoutAllStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

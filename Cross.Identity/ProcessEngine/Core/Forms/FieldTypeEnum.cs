@@ -8,7 +8,7 @@ internal enum FieldTypeEnum
     String,
     Int,
     Email,
-    Phone,
+    PhoneNumber,
     Password,
     Date,
     Bool,

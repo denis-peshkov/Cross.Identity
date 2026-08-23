@@ -262,7 +262,6 @@ public sealed class CoreInfrastructureBehaviorTests
             services.AddLogging();
             services.AddDbContext<IdentityContext>(options =>
                 options.UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}"));
-            services.AddScoped<IHeadersContextAccessor>(_ => new HeadersContextAccessor());
             services.AddScoped<IPepperVaultProvider>(_ =>
             {
                 var mock = new Mock<IPepperVaultProvider>();

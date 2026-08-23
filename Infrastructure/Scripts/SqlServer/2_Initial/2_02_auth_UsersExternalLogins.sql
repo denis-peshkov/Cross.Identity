@@ -1,5 +1,5 @@
 ALTER TABLE [auth].[UsersExternalLogins]
-    ADD CONSTRAINT [FK_auth_UsersExternalLogins_User]
+    ADD CONSTRAINT [FK_auth_UsersExternalLogins_UserAccount]
         FOREIGN KEY ([UserAccountId])
             REFERENCES [auth].[UsersAccounts] ([UserAccountId])
             ON DELETE CASCADE;

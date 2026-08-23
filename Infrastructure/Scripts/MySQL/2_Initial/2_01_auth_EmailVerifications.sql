@@ -1,6 +1,6 @@
 CREATE TABLE `auth`.`EmailVerifications`
 (
-    `EmailVerificationId` BIGINT       NOT NULL AUTO_INCREMENT,
+    `EmailVerificationId` CHAR(36)     NOT NULL,
     `UserAccountId`       CHAR(36)     NOT NULL,
     `Email`               VARCHAR(320) NOT NULL,
     `TokenHash`           BINARY(32)   NOT NULL,

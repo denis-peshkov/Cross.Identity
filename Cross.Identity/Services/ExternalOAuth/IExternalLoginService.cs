@@ -7,8 +7,13 @@
 /// <item><description><c>ExternalLoginInitiateStep</c> — <see cref="InitiateAsync"/></description></item>
 /// <item><description><c>ExternalLoginCompleteStep</c> — <see cref="CompleteAsync"/></description></item>
 /// <item><description><c>ExternalLoginUnlinkStep</c> — <see cref="UnlinkAsync"/></description></item>
+/// <item><description><c>ExternalLoginGetAllStep</c> — <see cref="GetAllAsync"/></description></item>
 /// </list>
-/// Corresponding flows: <c>main.ExternalLogin</c>, <c>main.ExternalLoginCallback</c>, <c>main.ExternalLoginUnlink</c>.
+/// Corresponding flows:
+/// <c>main.ExternalLogin</c>,
+/// <c>main.ExternalLoginCallback</c>,
+/// <c>main.ExternalLoginUnlink</c>,
+/// <c>main.ExternalLoginGetAll</c>.
 /// OAuth state is persisted in <c>auth.ExternalLoginStates</c> (nonce + TTL) and consumed once on callback.
 /// </summary>
 internal interface IExternalLoginService
@@ -24,31 +29,37 @@ internal interface IExternalLoginService
     /// <param name="returnUrl">
     /// Optional URL to return to after callback (stored in OAuth state).
     /// When the path contains <c>ExternalLogins</c>, the callback is treated as an account-link flow
-    /// even if <paramref name="linkUserId"/> is omitted.
+    /// even if <paramref name="userAccountId"/> is omitted.
     /// </param>
-    /// <param name="linkUserId">
+    /// <param name="userAccountId">
     /// When set, starts an account-link flow for that user.
-    /// Requires an authenticated principal whose <c>sub</c> / <c>NameIdentifier</c> matches this id,
-    /// and the provider must not already be linked to the user.
+    /// Requires a valid <paramref name="refreshToken"/> for the same user (session proof).
+    /// The provider must not already be linked to the user.
+    /// </param>
+    /// <param name="refreshToken">
+    /// Required when <paramref name="userAccountId"/> is set: an active refresh token issued to that user.
+    /// Omit for normal sign-in / sign-up (no <paramref name="userAccountId"/>).
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Full provider authorization URL including opaque <c>state</c>.</returns>
     /// <exception cref="NotFoundException">
-    /// Provider is not supported by the built-in catalog, or is not enabled in <c>auth.Providers</c>.
+    /// Provider is not supported by the built-in catalog, is not enabled in <c>auth.Providers</c>,
+    /// or the link target user account was not found.
     /// </exception>
     /// <exception cref="ValidationException">
     /// Provider credentials are missing/disabled in options, or the provider is already linked when linking.
     /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Linking requires a valid refresh token matching <paramref name="userAccountId"/>.
+    /// </exception>
     /// <exception cref="InvalidOperationException">
     /// <c>Authentication:ExternalLogin:CallbackUrl</c> is not configured.
-    /// </exception>
-    /// <exception cref="NotAuthorizedException">
-    /// Linking was requested but the caller is not authenticated, or <paramref name="linkUserId"/> does not match the principal.
     /// </exception>
     Task<string> InitiateAsync(
         string provider,
         string? returnUrl,
-        Guid? linkUserId,
+        Guid? userAccountId,
+        string? refreshToken,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -83,7 +94,7 @@ internal interface IExternalLoginService
     /// Provider is not supported or not enabled.
     /// </exception>
     /// <exception cref="NotAuthorizedException">
-    /// Linking requires authentication and a matching <c>LinkUserId</c>.
+    /// Linking requires authentication and a matching <c>UserAccountId</c>.
     /// </exception>
     Task<ExternalLoginCompletion> CompleteAsync(
         string code,
@@ -93,24 +104,50 @@ internal interface IExternalLoginService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Unlink an external provider from the authenticated user.
+    /// Unlink an external provider from the given user.
     /// Rotates <c>UserAccount.SecurityStamp</c> and revokes all active access/refresh tokens
-    /// with <see cref="RefreshTokenRevokeReason.EXTERNAL_LOGIN_REMOVED"/>.
+    /// with <see cref="RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED"/>.
     /// </summary>
     /// <param name="provider">
-    /// Provider name to unlink (for example, <c>Google</c>). Must be enabled and currently linked to the caller.
+    /// Provider name to unlink (for example, <c>Google</c>). Must be enabled and currently linked to the user.
     /// </param>
+    /// <param name="userAccountId">Local user account id (supplied by the host from the authenticated principal).</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/> (session proof).</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <exception cref="NotAuthorizedException">
-    /// Caller is not authenticated.
-    /// </exception>
     /// <exception cref="NotFoundException">
-    /// Provider is not enabled, or is not linked to the current user.
+    /// Provider is not enabled, or is not linked to the user.
     /// </exception>
     /// <exception cref="ValidationException">
     /// Unlinking would leave the user with no login method (no password and no other external logins).
     /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Refresh token is missing, invalid, or does not match <paramref name="userAccountId"/>.
+    /// </exception>
     Task UnlinkAsync(
         string provider,
+        Guid userAccountId,
+        string refreshToken,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// List enabled providers and link status for the given user.
+    /// Includes a provider when it is linked, or when credentials are configured in
+    /// <see cref="ExternalLoginOptions"/> (<see cref="ExternalLoginProviderOptions.IsConfigured"/>).
+    /// </summary>
+    /// <param name="userAccountId">Local user account id (supplied by the host from the authenticated principal).</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/> (session proof).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Account email and provider rows for the user.</returns>
+    /// <exception cref="NotFoundException">
+    /// User account was not found.
+    /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Refresh token is missing, invalid, or does not match <paramref name="userAccountId"/>.
+    /// </exception>
+    Task<ExternalLoginOverviewDto> GetAllAsync(
+        Guid userAccountId,
+        string refreshToken,
         CancellationToken cancellationToken);
 }

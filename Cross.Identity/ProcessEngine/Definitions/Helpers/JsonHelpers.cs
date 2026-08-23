@@ -7,6 +7,15 @@ public static class JsonHelpers
     public static string Str(this JsonElement e, string name)
         => e.GetProperty(name).GetString()!;
 
+    /// <summary>Get a required enum property.</summary>
+    public static T EnumReq<T>(this JsonElement e, string name) where T : struct, Enum
+    {
+        var str = e.GetProperty(name).GetString();
+        if (string.IsNullOrWhiteSpace(str) || !Enum.TryParse<T>(str, ignoreCase: true, out var result))
+            throw new InvalidOperationException($"Property '{name}' must be a valid {typeof(T).Name}.");
+        return result;
+    }
+
     public static T? EnumOpt<T>(this JsonElement e, string name) where T : struct, Enum
     {
         if (!e.TryGetProperty(name, out var p) || p.ValueKind != JsonValueKind.String)

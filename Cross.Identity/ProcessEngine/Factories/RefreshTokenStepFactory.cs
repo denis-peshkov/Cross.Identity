@@ -17,7 +17,6 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
         var authenticationOptions = sp.GetRequiredService<IOptionsSnapshot<AuthenticationOptions>>().Value;
@@ -25,7 +24,6 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
         return new RefreshTokenStep
         {
             Kind                  = Kind,
-            Logger                = loggerFactory.CreateLogger(nameof(RefreshTokenStep)),
             JwtTokenService       = jwtTokenService,
             UserService           = userService,
             AuthenticationOptions = authenticationOptions,

@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
+        services.TryAddScoped<IAuditService, AuditService>();
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
         services.AddHostedService<ExpiredRefreshTokenCleanupHostedService>();
 
@@ -41,9 +42,11 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<IRequestInput, RequestInput>();
 
         services.TryAddScoped<IUserService, UserService>();
+        services.TryAddScoped<CommunicationEndpointService>();
+        services.TryAddScoped<ICommunicationEndpointService>(sp => sp.GetRequiredService<CommunicationEndpointService>());
+        services.TryAddScoped<ICommunicationEndpointUpsertService>(sp => sp.GetRequiredService<CommunicationEndpointService>());
         services.TryAddSingleton<IPasswordHasher, PasswordHasher>();
-        services.TryAddSingleton<IPhoneNormalizer, PhoneNormalizer>();
-        services.Configure<Cross.Identity.Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
+        services.Configure<Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
         // services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
 
         services.TryAddScoped<ICodeService, CodeService>();
@@ -59,12 +62,10 @@ public static class ServiceCollectionExtensions
         services.TryAddEnumerable(
             new[]
             {
-                ServiceDescriptor.Scoped<IStepFactory, CodeAuthStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CollectFormStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CollectResultStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CreateUserStepFactory>(),
-                ServiceDescriptor.Scoped<IStepFactory, ForgotPasswordStepFactory>(),
-                ServiceDescriptor.Scoped<IStepFactory, GetUserIdStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, GetUserAccountIdStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, PasswordAuthStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, RefreshTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ResetPasswordStepFactory>(),
@@ -74,9 +75,12 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginInitiateStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginCompleteStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginUnlinkStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, ExternalLoginGetAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, LogoutStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, LogoutAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointsGetAllStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetPreferredStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();
@@ -91,7 +95,6 @@ public static class ServiceCollectionExtensions
     {
         services.Configure<ExternalLoginOptions>(configuration.GetSection(ExternalLoginOptions.SectionName));
         services.AddHttpClient(nameof(ExternalLoginService));
-        services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.TryAddScoped<IExternalLoginService, ExternalLoginService>();
 
         return services;

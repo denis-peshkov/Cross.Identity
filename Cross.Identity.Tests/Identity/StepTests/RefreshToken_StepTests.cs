@@ -22,39 +22,38 @@ public class RefreshToken_StepTests
     public async Task GivenValidRefreshToken_WhenExecuteAsync_ThenSetsAccessAndRefreshTokensAsync()
     {
         var refreshTokenHash = "refresh-token-hash";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         var newAccessToken = "new-access-token";
         var newRefreshToken = "new-refresh-token";
         var userEntity = new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = _faker.Internet.Email(),
             UserName = "user",
             NormalizedUserName = "user"
         };
 
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new RefreshTokenEntity { UserId = userId, FamilyId = familyId, TokenHash = "" });
+            .ReturnsAsync(new RefreshTokenEntity { UserAccountId = userAccountId, UserAccount = null!, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValue(newRefreshToken, JwtRegisteredClaimNames.Jti))
             .Returns("new-jti");
-        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userAccountId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newAccessToken);
-        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userId, familyId, It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userAccountId, familyId, It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newRefreshToken);
-        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
-        _userService.Setup(u => u.GetUserByAsync("Id", userId.ToString(), It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserByAsync("Id", userAccountId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(userEntity);
 
         var step = new RefreshTokenStep
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -63,6 +62,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", refreshTokenHash);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -77,14 +79,13 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new RefreshTokenStep
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -93,6 +94,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "invalid-hash");
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -104,14 +108,13 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Refresh token has already been used."));
 
         var step = new RefreshTokenStep
         {
             Kind = "refreshToken",
             RefreshTokenKey = "RefreshToken",
-            Logger = _logger.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,
             AuthenticationOptions = new AuthenticationOptions(),
@@ -120,6 +123,9 @@ public class RefreshToken_StepTests
 
         var bag = new Bag();
         bag.Set("refreshToken.RefreshToken", "already-used-hash");
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
 

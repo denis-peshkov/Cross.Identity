@@ -5,7 +5,10 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "AccessToken", "type": "String", "required": true, "max": 2048 }
+          { "key": "AccessToken", "type": "String", "required": true, "max": 2048 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "verifyToken"
@@ -19,7 +22,7 @@
       "kind": "collectResult",
       "map": {
         "valid": "verifyToken.Valid",
-        "user_id": "verifyToken.UserId",
+        "user_account_id": "verifyToken.UserAccountId",
         "jti": "verifyToken.Jti"
       },
       "next": null

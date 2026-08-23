@@ -16,14 +16,12 @@ internal sealed class LogoutAllStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
-
         return new LogoutAllStep
         {
-            Kind            = Kind,
-            JwtTokenService = jwtTokenService,
-            RefreshTokenKey = cfg.Str("refreshTokenKey"),
-            Next            = cfg.StrOpt("next"),
+            Kind                 = Kind,
+            JwtTokenService      = sp.GetRequiredService<IJwtTokenService>(),
+            RefreshTokenKey      = cfg.Str("refreshTokenKey"),
+            Next                 = cfg.StrOpt("next"),
         };
     }
 }

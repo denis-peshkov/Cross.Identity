@@ -18,7 +18,7 @@
 ///     "fields": [ { "key": "Email", "type": "Email" } ]
 ///   },
 ///   "schemaPatch": {
-///     "add": [ { "key": "OtpCode", "type": "String", "required": true, "min": 4, "max": 8 } ],
+///     "add": [ { "key": "OtpCode", "type": "String", "required": true, "min": 6, "max": 12 } ],
 ///     "override": [ { "key": "Email", "regex": "^[^@]+@example\\.com$" } ],
 ///     "remove": [ "LegacyField" ],
 ///     "rename": [ { "from": "Email", "to": "Login" } ],
@@ -58,11 +58,12 @@ internal sealed class CollectFormStepFactory : IStepFactory
 
         return new CollectFormStep
         {
-            Kind = Kind,
-            Schema = schema,
-            Validator = validator,
+            Kind          = Kind,
+            Schema        = schema,
+            Validator     = validator,
             FetchIncoming = input.GetAsync,
-            Next = next
+            Selector      = Selector.TryFromStepJson(cfg),
+            Next          = next
         };
     }
 
@@ -274,14 +275,14 @@ internal sealed class CollectFormStepFactory : IStepFactory
     /// <exception cref="ArgumentOutOfRangeException">Unknown field type.</exception>
     private static FieldTypeEnum ParseFieldType(string s) => s.ToLowerInvariant() switch
     {
-        "string"   => FieldTypeEnum.String,
-        "int"      => FieldTypeEnum.Int,
-        "email"    => FieldTypeEnum.Email,
-        "phone"    => FieldTypeEnum.Phone,
-        "password" => FieldTypeEnum.Password,
-        "date"     => FieldTypeEnum.Date,
-        "bool"     => FieldTypeEnum.Bool,
-        "timespan" => FieldTypeEnum.TimeSpan,
+        "string"      => FieldTypeEnum.String,
+        "int"         => FieldTypeEnum.Int,
+        "email"       => FieldTypeEnum.Email,
+        "phonenumber" => FieldTypeEnum.PhoneNumber,
+        "password"    => FieldTypeEnum.Password,
+        "date"        => FieldTypeEnum.Date,
+        "bool"        => FieldTypeEnum.Bool,
+        "timespan"    => FieldTypeEnum.TimeSpan,
         _ => throw new ArgumentOutOfRangeException(nameof(s), $"Unknown field type '{s}'.")
     };
 }

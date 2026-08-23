@@ -5,7 +5,6 @@ CREATE TABLE [auth].[Providers]
     [Scheme]     NVARCHAR(100) NOT NULL,
     [IsEnabled]  BIT           NOT NULL,
     [CreatedAt]  DATETIME2(7)  NOT NULL,
-    [ConcurrencyStamp] UNIQUEIDENTIFIER NOT NULL,
 
     CONSTRAINT [PK_auth_Providers] PRIMARY KEY ([ProviderId])
 );

@@ -15,12 +15,12 @@
 --         [NormalizedUserName]   NVARCHAR(256)     NULL,
 --         [Email]                NVARCHAR(256)     NULL,
 --         [NormalizedEmail]      NVARCHAR(256)     NULL,
---         [EmailConfirmed]       BIT               NOT NULL,
+--         [EmailVerified]       BIT               NOT NULL,
 --         [PasswordHash]         NVARCHAR(MAX)     NULL,
 --         [SecurityStamp]        NVARCHAR(MAX)     NULL,
 --         [ConcurrencyStamp]     NVARCHAR(MAX)     NULL,
 --         [PhoneNumber]          NVARCHAR(MAX)     NULL,
---         [PhoneNumberConfirmed] BIT               NOT NULL,
+--         [PhoneNumberVerified] BIT               NOT NULL,
 --         [TwoFactorEnabled]     BIT               NOT NULL,
 --         [LockoutEnd]           DATETIMEOFFSET(7) NULL,
 --         [LockoutEnabled]       BIT               NOT NULL,
@@ -31,7 +31,7 @@
 --     );
 --
 --     INSERT INTO @AspNetUsers (
---         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [Id], [IsOnline], [NewsSubscription], [EmailVerified], [PhoneNumberVerified], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
 --         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate],
 --         [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
 --     )
@@ -45,7 +45,7 @@
 --
 -- -- <<< END OF AREA FOR EDIT
 --     ) AS [src] (
---         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [Id], [IsOnline], [NewsSubscription], [EmailVerified], [PhoneNumberVerified], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
 --         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
 --         [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
 --     );
@@ -53,7 +53,7 @@
 --     -- upsert data
 --     MERGE [dbo].[AspNetUsers] [target]
 --     USING (SELECT DISTINCT
---         [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--         [Id], [IsOnline], [NewsSubscription], [EmailVerified], [PhoneNumberVerified], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
 --         [AuthNoSmsProvider], [IsDeleted], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
 --         [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
 --     FROM @AspNetUsers) [source]
@@ -61,8 +61,8 @@
 --         WHEN MATCHED THEN
 --             UPDATE SET [target].[IsOnline]             = [source].[IsOnline]
 --                      , [target].[NewsSubscription]     = [source].[NewsSubscription]
---                      , [target].[EmailConfirmed]       = [source].[EmailConfirmed]
---                      , [target].[PhoneNumberConfirmed] = [source].[PhoneNumberConfirmed]
+--                      , [target].[EmailVerified]       = [source].[EmailVerified]
+--                      , [target].[PhoneNumberVerified] = [source].[PhoneNumberVerified]
 --                      , [target].[TwoFactorEnabled]     = [source].[TwoFactorEnabled]
 --                      , [target].[LockoutEnabled]       = [source].[LockoutEnabled]
 --                      , [target].[AccessFailedCount]    = [source].[AccessFailedCount]
@@ -86,7 +86,7 @@
 --                      , [target].[DeletedDate]          = [source].[DeletedDate]
 --         WHEN NOT MATCHED BY TARGET THEN
 --             INSERT (
---                 [Id], [IsOnline], [NewsSubscription], [EmailConfirmed], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
+--                 [Id], [IsOnline], [NewsSubscription], [EmailVerified], [PhoneNumberVerified], [TwoFactorEnabled], [LockoutEnabled], [AccessFailedCount],
 --                 [AuthNoSmsProvider], [IsDeleted], [CreatedAt], [ModifiedAt], [ActivatedAt], [FirstName], [MiddleName], [LastName], [Gender], [BirthDate], [LastLoginDate], [UserName],
 --                 [NormalizedUserName], [Email], [NormalizedEmail], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [LockoutEnd], [DeletedDate]
 --             )
@@ -94,8 +94,8 @@
 --                 [source].[Id],
 --                 [source].[IsOnline],
 --                 [source].[NewsSubscription],
---                 [source].[EmailConfirmed],
---                 [source].[PhoneNumberConfirmed],
+--                 [source].[EmailVerified],
+--                 [source].[PhoneNumberVerified],
 --                 [source].[TwoFactorEnabled],
 --                 [source].[LockoutEnabled],
 --                 [source].[AccessFailedCount],

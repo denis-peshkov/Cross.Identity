@@ -1,6 +1,6 @@
 CREATE TABLE `auth`.`PhoneVerifications`
 (
-    `PhoneVerificationId` BIGINT       NOT NULL AUTO_INCREMENT,
+    `PhoneVerificationId` CHAR(36)     NOT NULL,
     `UserAccountId`       CHAR(36)     NOT NULL,
     `PhoneNumber`         VARCHAR(20)  NOT NULL,
     `CodeHash`            BINARY(32)   NOT NULL,
@@ -18,4 +18,3 @@ CREATE TABLE `auth`.`PhoneVerifications`
 CREATE INDEX `IX_auth_PhoneVerifications_UserAccount` ON `auth`.`PhoneVerifications` (`UserAccountId`);
 CREATE INDEX `IX_auth_PhoneVerifications_CodeHash` ON `auth`.`PhoneVerifications` (`CodeHash`);
 CREATE INDEX `IX_auth_PhoneVerifications_ExpiresAt` ON `auth`.`PhoneVerifications` (`ExpiresAt`);
-CREATE INDEX `IX_auth_PhoneVerifications_Phone` ON `auth`.`PhoneVerifications` (`PhoneNumber`);

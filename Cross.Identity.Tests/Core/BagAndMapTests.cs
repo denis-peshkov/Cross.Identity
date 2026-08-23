@@ -30,12 +30,66 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenGuidString_WhenGetGuid_ThenParses()
+    {
+        var id = Guid.NewGuid();
+        var bag = new Bag().Set("id", id.ToString());
+
+        bag.Get<Guid>("id").Should().Be(id);
+        bag.Get<Guid?>("id").Should().Be(id);
+        bag.TryGet<Guid>("id", out var parsed).Should().BeTrue();
+        parsed.Should().Be(id);
+        bag.TryGet<Guid?>("id", out var parsedOptional).Should().BeTrue();
+        parsedOptional.Should().Be(id);
+        new Bag().Set("empty", "").Get<Guid?>("empty").Should().BeNull();
+        new Bag().Set("empty", "").TryGet<Guid?>("empty", out var emptyOptional).Should().BeTrue();
+        emptyOptional.Should().BeNull();
+        new Bag().Set("empty", null).Get<Guid?>("empty").Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").Get<Guid?>("bad").Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").TryGet<Guid?>("bad", out var badOptional).Should().BeTrue();
+        badOptional.Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").TryGet<Guid>("bad", out _).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenNullableValueTypes_WhenGetOrTryGet_ThenConvertsViaUnderlyingType()
+    {
+        var ttl = TimeSpan.FromMinutes(17);
+        var bag = new Bag()
+            .Set("count", "42")
+            .Set("countLong", 42L)
+            .Set("ttl", ttl)
+            .Set("empty", null);
+
+        bag.Get<int?>("count").Should().Be(42);
+        bag.Get<int?>("countLong").Should().Be(42);
+        bag.Get<TimeSpan?>("ttl").Should().Be(ttl);
+        bag.Get<int?>("empty").Should().BeNull();
+
+        bag.TryGet<int?>("count", out var parsedCount).Should().BeTrue();
+        parsedCount.Should().Be(42);
+
+        bag.TryGet<TimeSpan?>("ttl", out var parsedTtl).Should().BeTrue();
+        parsedTtl.Should().Be(ttl);
+
+        bag.TryGet<int?>("empty", out var parsedNull).Should().BeTrue();
+        parsedNull.Should().BeNull();
+
+        bag.TryGet<int>("empty", out _).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingOrInvalidKey_WhenGet_ThenThrows()
     {
         var bag = new Bag().Set("x", "abc").Set("n", null);
 
         var miss = () => bag.Get<int>("missing");
         miss.Should().Throw<KeyNotFoundException>();
+
+        var missRef = () => bag.Get<string?>("missing");
+        missRef.Should().Throw<KeyNotFoundException>();
 
         var badCast = () => bag.Get<int>("x");
         badCast.Should().Throw<InvalidCastException>();
@@ -72,23 +126,156 @@ public sealed class BagAndMapTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenChannelAndJson_WhenResolveByMethods_ThenWork()
+    public void GivenSelectorJson_WhenFromJson_ThenParsesCandidatesAndKeepsFixedDefaults()
     {
-        ResolveBy.DefaultFor(ChannelEnum.Email).Field.Should().Be("Email");
-        ResolveBy.DefaultFor(ChannelEnum.Sms).Field.Should().Be("PhoneNumber");
-        ResolveBy.DefaultFor(ChannelEnum.Telegram).Field.Should().Be("PhoneNumber");
-        ResolveBy.DefaultFor((ChannelEnum)999).Field.Should().Be("UserName");
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "required": false,
+              "caseInsensitive": false,
+              "candidates": ["Email", "PhoneNumber"]
+            }
+            """);
+        var parsed = Selector.FromJson(json.RootElement);
+        parsed.FieldKey.Should().Be("collectForm.Field");
+        parsed.ValueKey.Should().Be("collectForm.Value");
+        // Required / CaseInsensitive are fixed on Selector (JSON flags are ignored).
+        parsed.Required.Should().BeTrue();
+        parsed.CaseInsensitive.Should().BeTrue();
+        parsed.Candidates.Should().BeEquivalentTo("Email", "PhoneNumber");
+    }
 
-        using var json = JsonDocument.Parse("""{"field":"Email","required":false,"caseInsensitive":false}""");
-        var parsed = ResolveBy.FromJson(json.RootElement);
-        parsed.Field.Should().Be("Email");
-        parsed.Required.Should().BeFalse();
-        parsed.CaseInsensitive.Should().BeFalse();
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenEmptySelectorJson_WhenFromJson_ThenUsesDefaults()
+    {
+        using var json = JsonDocument.Parse("{}");
+        var parsed = Selector.FromJson(json.RootElement);
+        parsed.FieldKey.Should().Be("collectForm.Field");
+        parsed.ValueKey.Should().Be("collectForm.Value");
+        parsed.Required.Should().BeTrue();
+        parsed.CaseInsensitive.Should().BeTrue();
+    }
 
-        using var jsonDefaults = JsonDocument.Parse("""{"field":"UserName"}""");
-        var defaults = ResolveBy.FromJson(jsonDefaults.RootElement);
-        defaults.Required.Should().BeTrue();
-        defaults.CaseInsensitive.Should().BeTrue();
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenBagWithSelectorValues_WhenResolve_ThenReturnsFieldAndValue()
+    {
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", "test@example.com");
+        var selector = new Selector();
+
+        var (field, value) = selector.Resolve(bag);
+
+        field.Should().Be("Email");
+        value.Should().Be("test@example.com");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenCollectFormSelector_WhenBind_ThenWritesFieldAndValue()
+    {
+        var bag = new Bag().Set("collectForm.UserAccountId", "abc-123");
+        var selector = new Selector
+        {
+            Candidates = new[] { "UserAccountId" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("UserAccountId");
+        bag.Get<string>("collectForm.Value").Should().Be("abc-123");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenCandidatesSelector_WhenBind_ThenUsesFirstNonEmpty()
+    {
+        var bag = new Bag().Set("collectForm.PhoneNumber", "+1234567890");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("PhoneNumber");
+        bag.Get<string>("collectForm.Value").Should().Be("+1234567890");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().Be(ChannelEnum.Sms);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenEmailPhoneAndUserName_WhenBind_ThenPrefersEmail()
+    {
+        var bag = new Bag()
+            .Set("collectForm.Email", "a@b.co")
+            .Set("collectForm.PhoneNumber", "+79161234567")
+            .Set("collectForm.UserName", "alice");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("Email");
+        bag.Get<string>("collectForm.Value").Should().Be("a@b.co");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().Be(ChannelEnum.Email);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenOnlyUserName_WhenBind_ThenWritesUserNameWithoutChannel()
+    {
+        var bag = new Bag().Set("collectForm.UserName", "alice");
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        selector.Bind(bag);
+
+        bag.Get<string>("collectForm.Field").Should().Be("UserName");
+        bag.Get<string>("collectForm.Value").Should().Be("alice");
+        Selector.ChannelForField(bag.Get<string>("collectForm.Field")).Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenNoCandidateValues_WhenBind_ThenThrowsValidationException()
+    {
+        var selector = new Selector
+        {
+            Candidates = new[] { "Email", "PhoneNumber", "UserName" },
+        };
+
+        FluentActions.Invoking(() => selector.Bind(new Bag()))
+            .Should().Throw<ValidationException>()
+            .WithMessage("*email, phone, or user name*");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenChannel_WhenDefaultFor_ThenMapsCandidates()
+    {
+        Selector.DefaultFor(ChannelEnum.Email).Candidates.Should().Equal("Email");
+        Selector.DefaultFor(ChannelEnum.Sms).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.Telegram).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.Viber).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor(ChannelEnum.WhatsApp).Candidates.Should().Equal("PhoneNumber");
+        Selector.DefaultFor((ChannelEnum)999).Candidates.Should().Equal("UserName");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenFieldName_WhenChannelForField_ThenMapsChannel()
+    {
+        Selector.ChannelForField("Email").Should().Be(ChannelEnum.Email);
+        Selector.ChannelForField("PhoneNumber").Should().Be(ChannelEnum.Sms);
+        Selector.ChannelForField("phone").Should().Be(ChannelEnum.Sms);
+        Selector.ChannelForField("UserName").Should().BeNull();
     }
 
     [Test]

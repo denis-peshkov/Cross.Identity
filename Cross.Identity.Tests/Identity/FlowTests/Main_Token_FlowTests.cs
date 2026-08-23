@@ -12,24 +12,15 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<TokenStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         // Mock IUserService to controllably return successful authentication
         var userServiceMock = new Mock<IUserService>();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         userServiceMock
             .Setup(s => s.ValidatePasswordAsync("Email", "test@example.com", "P@ssw0rd!", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -40,7 +31,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.GetUserByAsync("Email", "test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserAccountEntity
             {
-                Id = userId,
+                Id = userAccountId,
                 Email = "test@example.com",
             });
         RegisterToServiceProvider<IUserService, IUserService>(userServiceMock.Object);
@@ -55,8 +46,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
@@ -83,15 +73,13 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
                 It.IsAny<List<string>>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         jwtMock
             .Setup(j => j.GenerateRefreshTokenAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 
@@ -118,11 +106,10 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         // verify that collectResult returned tokens in OAuth2 format
         var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "is_invalid_code");
+        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_account_id");
         dict["access_token"].Should().NotBeNull();
         dict["refresh_token"].Should().NotBeNull();
         dict["token_type"].Should().Be("Bearer");
-        dict["is_invalid_code"].Should().Be(false);
 
         // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
@@ -137,7 +124,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenReturnsIsInvalidCodeAsync()
+    public async Task GivenInvalidPassword_WhenExecuteTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
     {
         // Arrange
         var input = new Dictionary<string, object?>
@@ -146,15 +133,12 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
             ["Password"] = "WrongPass1",
         };
 
-        // Act
-        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Token, CancellationToken.None);
-
-        // Assert
-        var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        dict.Should().ContainKey("is_invalid_code");
-        dict["is_invalid_code"].Should().Be(true);
-        dict.Should().NotContainKey("access_token");
-        dict.Should().NotContainKey("refresh_token");
+        // Act & Assert
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Token, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("Invalid credentials.");
     }
 
     [Test]

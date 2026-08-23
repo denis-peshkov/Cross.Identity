@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services.ExternalOAuth;
+﻿namespace Cross.Identity.Services.ExternalOAuth;
 
 internal static class ExternalOAuthProviders
 {
@@ -60,6 +60,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = root.GetProperty("sub").GetString() ?? string.Empty,
             Email = root.TryGetProperty("email", out var email) ? email.GetString() : null,
+            EmailVerified = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
             DisplayName = root.TryGetProperty("name", out var name) ? name.GetString() : null,
             AvatarUrl = root.TryGetProperty("picture", out var picture) ? picture.GetString() : null,
         };
@@ -70,22 +71,58 @@ internal static class ExternalOAuthProviders
         string accessToken,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        using var meRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
+        meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        using var meResponse = await httpClient.SendAsync(meRequest, cancellationToken).ConfigureAwait(false);
+        meResponse.EnsureSuccessStatusCode();
 
-        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
-        var root = document.RootElement;
+        using var meDocument = await JsonDocument.ParseAsync(await meResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
+        var me = meDocument.RootElement;
+
+        var graphEmail = me.TryGetProperty("mail", out var mail) && mail.ValueKind == JsonValueKind.String
+            ? mail.GetString()
+            : me.TryGetProperty("userPrincipalName", out var upn) && upn.ValueKind == JsonValueKind.String
+                ? upn.GetString()
+                : null;
+
+        // Graph mail/UPN alone is not mailbox attestation (admin-editable / non-SMTP UPN).
+        // EmailVerified only when OIDC userinfo supplies a non-empty email AND email_verified.
+        string? email = graphEmail;
+        string? oidcEmailAddress = null;
+        var oidcEmailVerified = false;
+
+        using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/oidc/userinfo");
+        userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var userInfoResponse = await httpClient.SendAsync(userInfoRequest, cancellationToken).ConfigureAwait(false);
+        if (userInfoResponse.IsSuccessStatusCode)
+        {
+            using var userInfoDocument = await JsonDocument.ParseAsync(
+                await userInfoResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            var userInfo = userInfoDocument.RootElement;
+
+            if (userInfo.TryGetProperty("email", out var oidcEmail) && oidcEmail.ValueKind == JsonValueKind.String)
+            {
+                var oidcEmailValue = oidcEmail.GetString();
+                if (!string.IsNullOrWhiteSpace(oidcEmailValue))
+                {
+                    oidcEmailAddress = oidcEmailValue;
+                    email = oidcEmailValue;
+                }
+            }
+
+            oidcEmailVerified = userInfo.TryGetProperty("email_verified", out var verifiedNode)
+                && verifiedNode.ValueKind == JsonValueKind.True;
+        }
 
         return new ExternalOAuthProfile
         {
-            ProviderUserId = root.GetProperty("id").GetString() ?? string.Empty,
-            Email = root.TryGetProperty("mail", out var mail) && mail.ValueKind == JsonValueKind.String
-                ? mail.GetString()
-                : root.TryGetProperty("userPrincipalName", out var upn) ? upn.GetString() : null,
-            DisplayName = root.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
+            ProviderUserId = me.GetProperty("id").GetString() ?? string.Empty,
+            Email = email,
+            EmailVerified = oidcEmailVerified && !string.IsNullOrWhiteSpace(oidcEmailAddress),
+            DisplayName = me.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
         };
     }
 
@@ -104,40 +141,47 @@ internal static class ExternalOAuthProviders
         using var userDocument = await JsonDocument.ParseAsync(await userResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
         var userRoot = userDocument.RootElement;
         var providerUserId = userRoot.GetProperty("id").GetInt64().ToString(CultureInfo.InvariantCulture);
-        var email = userRoot.TryGetProperty("email", out var emailNode) && emailNode.ValueKind == JsonValueKind.String
-            ? emailNode.GetString()
-            : null;
         var displayName = userRoot.TryGetProperty("name", out var nameNode) && nameNode.ValueKind == JsonValueKind.String
             ? nameNode.GetString()
             : userRoot.TryGetProperty("login", out var loginNode) ? loginNode.GetString() : null;
         var avatarUrl = userRoot.TryGetProperty("avatar_url", out var avatarNode) ? avatarNode.GetString() : null;
 
-        if (string.IsNullOrWhiteSpace(email))
+        string? email = null;
+
+        using var emailsRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user/emails");
+        emailsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        emailsRequest.Headers.UserAgent.ParseAdd("peshkov.biz");
+
+        using var emailsResponse = await httpClient.SendAsync(emailsRequest, cancellationToken).ConfigureAwait(false);
+        emailsResponse.EnsureSuccessStatusCode();
+
+        using var emailsDocument = await JsonDocument.ParseAsync(await emailsResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
+        string? verifiedPrimary = null;
+        string? verifiedFallback = null;
+        foreach (var item in emailsDocument.RootElement.EnumerateArray())
         {
-            using var emailsRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user/emails");
-            emailsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
-            emailsRequest.Headers.UserAgent.ParseAdd("peshkov.biz");
-
-            using var emailsResponse = await httpClient.SendAsync(emailsRequest, cancellationToken).ConfigureAwait(false);
-            emailsResponse.EnsureSuccessStatusCode();
-
-            using var emailsDocument = await JsonDocument.ParseAsync(await emailsResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
-            foreach (var item in emailsDocument.RootElement.EnumerateArray())
+            if (!item.TryGetProperty("verified", out var verifiedNode) || !verifiedNode.GetBoolean())
             {
-                if (!item.TryGetProperty("primary", out var primary) || !primary.GetBoolean())
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                email = item.GetProperty("email").GetString();
+            var address = item.GetProperty("email").GetString();
+            if (item.TryGetProperty("primary", out var primaryNode) && primaryNode.GetBoolean())
+            {
+                verifiedPrimary = address;
                 break;
             }
+
+            verifiedFallback ??= address;
         }
+
+        email = verifiedPrimary ?? verifiedFallback;
 
         return new ExternalOAuthProfile
         {
             ProviderUserId = providerUserId,
             Email = email,
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
             DisplayName = displayName,
             AvatarUrl = avatarUrl,
         };

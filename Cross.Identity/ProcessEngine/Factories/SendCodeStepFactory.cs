@@ -18,36 +18,21 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
         var configuration             = sp.GetRequiredService<IConfiguration>();
 
-        var channel = cfg.EnumOpt<ChannelEnum>("channel")
-                      ?? throw new InvalidOperationException($"{Kind}: 'channel' is required.");
-
-        // resolveBy is optional; if omitted, a sensible default is inferred from the channel
-        ResolveBy resolveBy;
-        if (cfg.TryGetProperty("resolveBy", out var resolveEl) && resolveEl.ValueKind == JsonValueKind.Object)
-        {
-            resolveBy = ResolveBy.FromJson(resolveEl);
-            if (string.IsNullOrWhiteSpace(resolveBy.Field))
-                throw new InvalidOperationException($"{Kind}: 'resolveBy.field' must be a non-empty string.");
-        }
-        else
-        {
-            resolveBy = ResolveBy.DefaultFor(channel);
-        }
-
         return new SendCodeStep
         {
             Kind                      = Kind,
-            Channel                   = channel,
-            SelectorKey               = cfg.Str("selectorKey"),
+            Selector                  = new Selector(),
             TtlKey                    = cfg.StrOpt("ttlKey"),
+            Template                  = cfg.Str("template"),
+            Subject                   = cfg.Str("subject"),
             CodeService               = codeService,
             UserService               = userService,
+            CommunicationEndpoints    = sp.GetRequiredService<ICommunicationEndpointService>(),
             Environment               = hostEnvironment,
-            Configuration             = configuration,
             ProcessDefinitionProvider = processDefinitionProvider,
-            Logger                    = loggerFactory.CreateLogger<SendCodeStep>(),
-            ResolveBy                 = resolveBy,
-            Next                      = cfg.StrOpt("next"),
+            Logger                    = loggerFactory.CreateLogger(nameof(SendCodeStep)),
+            Configuration             = configuration,
+            Next                      = cfg.StrOpt("next")
         };
     }
 }

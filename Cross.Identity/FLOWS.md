@@ -10,7 +10,45 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Steps run in a `next` chain; `start` points to the first step.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
-- Relative keys (`Email`, `selectorKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
+- Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
+- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets them from server-side metadata before `ExecuteAsync`; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
+- **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify by `UserName` uses the user's **preferred verified** communication endpoint (email or phone address); Email/PhoneNumber use the submitted value directly.
+
+### Client context (host)
+
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedClientContext` into direct APIs); `HostSuppliedClientContext.Read(bag)` reads whatever the host put there.
+
+**Trusted pipeline**
+
+| Party | Responsibility |
+|-------|----------------|
+| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
+
+| Field | Set from (trusted) | Do not use |
+|-------|-------------------|------------|
+| `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
+| `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
+| `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
+
+**Session binding (refresh):** non-empty `HostSuppliedClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`** and the anchor captured metadata, refresh must pass the same trusted `IpAddress` / `UserAgent` / `DeviceFingerprint` as on Token — **`HostSuppliedClientContext.Empty` throws `ValidationException`** (no family revoke). `Empty` remains valid on logout, password change, and revoke APIs.
+
+**Recommended handler pattern** before `IFlowExecutor.ExecuteAsync`:
+
+```csharp
+using Cross.Identity.ProcessEngine.Core;
+
+var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
+
+// Host-derived metadata — not from the client request body
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
+
+await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
+```
+
+Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAddress` is correct.
 
 ### Operations (`FlowOperationEnum`)
 
@@ -24,14 +62,17 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `*.ChangePassword.json` | `ChangePassword` |
 | `*.ResetPassword.json` | `ResetPassword` |
 | `*.ForgotPassword.json` | `ForgotPassword` |
-| `*.GetUserId.json` | `GetUserId` |
+| `*.GetUserAccountId.json` | `GetUserAccountId` |
 | `*.ExternalLogin.json` | `ExternalLogin` |
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 | `*.ExternalLoginUnlink.json` | `ExternalLoginUnlink` |
+| `*.ExternalLoginGetAll.json` | `ExternalLoginGetAll` |
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
+| `*.CommunicationEndpointsGetAll.json` | `CommunicationEndpointsGetAll` |
+| `*.CommunicationEndpointSetPreferred.json` | `CommunicationEndpointSetPreferred` |
 
-### All flow files (14)
+### All flow files (17)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -43,12 +84,15 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 | `main` | ChangePassword | `main.ChangePassword.json` |
 | `main` | ResetPassword | `main.ResetPassword.json` |
 | `main` | ForgotPassword | `main.ForgotPassword.json` |
-| `main` | GetUserId | `main.GetUserId.json` |
+| `main` | GetUserAccountId | `main.GetUserAccountId.json` |
 | `main` | ExternalLogin | `main.ExternalLogin.json` |
 | `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
 | `main` | ExternalLoginUnlink | `main.ExternalLoginUnlink.json` |
+| `main` | ExternalLoginGetAll | `main.ExternalLoginGetAll.json` |
 | `main` | Logout | `main.Logout.json` |
 | `main` | LogoutAll | `main.LogoutAll.json` |
+| `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
+| `main` | CommunicationEndpointSetPreferred | `main.CommunicationEndpointSetPreferred.json` |
 
 ---
 
@@ -58,21 +102,21 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128). → `forgotPassword` |
-| `forgotPassword` | forgotPassword | `channel: email`, `selectorKey: collectForm.Email`, `resolveBy.field: Email`. → `collectResult` |
-| `collectResult` | collectResult | `LastCode = forgotPassword.LastCode`. `next: null` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional client context. `selector.candidates`: Email, PhoneNumber. → `sendCode` |
+| `sendCode` | sendCode | `template: reset`, `subject: Reset your password` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
+| `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
 
-## `main.GetUserId.json`
+## `main.GetUserAccountId.json`
 
-**Purpose:** get `user_id` by email.
+**Purpose:** get `user_account_id` by identity.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`. → `getUserId` |
-| `getUserId` | getUserId | `selectorField: Email`, `selectorKey: collectForm.Email`. → `collectResult` |
-| `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `getUserAccountId` |
+| `getUserAccountId` | getUserAccountId | resolves via `Selector`; writes `getUserAccountId.UserAccountId`. Unknown → `Invalid credentials.` (logged). → `collectResult` |
+| `collectResult` | collectResult | `user_account_id = getUserAccountId.UserAccountId`. `next: null` |
 
 ---
 
@@ -82,11 +126,15 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `refreshToken` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `refreshToken` |
 | `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
-| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. `next: null` |
+| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. `next: null` |
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
+>
+> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, the host must populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the **trusted pipeline** (same as Token) — `Empty` → `ValidationException`, not family revoke. Default IP check: disabled. See [Client context (host)](#client-context-host).
+>
+> **Idle timeout:** when `Authentication:Jwt:RefreshTokenIdleTimeout` is greater than zero, refresh rejects tokens whose `LastActivityAt` is older than the configured window and revokes the family with `SESSION_EXPIRED`. Successful rotation sets `LastActivityAt` on the new refresh row. Default: disabled.
 >
 > **Concurrency interceptor:** `IdentityContext` registers `ConcurrencyStampInterceptor` in `OnConfiguring` (hosts need not call `AddInterceptors`). It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
 
@@ -98,10 +146,10 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (8–128). → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`; `userIdKey: UserId`, `selectorKey: collectForm.Email`. → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: createUser.selectorKey`, `resolveBy.field: Email`. → `collectResult` |
-| `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
+| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserId`. → `sendCode` |
+| `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
+| `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |
 
 ---
 
@@ -111,21 +159,21 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Ttl` (TimeSpan). → `sendCode` |
-| `sendCode` | sendCode | `channel: email`, `selectorKey: collectForm.Email`, `ttlKey: collectForm.Ttl`, `resolveBy.field: Email`. → `collectResult` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
+| `sendCode` | sendCode | `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
 ---
 
 ## `main.ChangePassword.json`
 
-**Purpose:** change password by email after validating the current password.
+**Purpose:** change password by user id after validating the current password.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `CurrentPassword` (8–128), `NewPassword` (8–128). → `passwordAuth` |
-| `passwordAuth` | passwordAuth | `selectorField: Email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.NewPassword`, `resolveBy.field: Email`. `next: null` |
+| `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: Id. → `passwordAuth` |
+| `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
 
@@ -133,13 +181,13 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.ResetPassword.json`
 
-**Purpose:** change password by email after verifying the recovery code.
+**Purpose:** change password after verifying the recovery code.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (8–128), `Code` (required, 8–128), `Password` (8–128). → `verifyCode` |
-| `verifyCode` | verifyCode | `channel: email`, `identityKey: collectForm.Email`, `codeKey: collectForm.Code`. → `resetPassword` |
-| `resetPassword` | resetPassword | `channel: email`, `selectorKey: collectForm.Email`, `passwordKey: collectForm.Password`, `resolveBy.field: Email`. `next: null` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
+| `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserAccountId`. → `resetPassword` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
@@ -147,13 +195,13 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.Token.json`
 
-**Purpose:** tokens by email and password **or** code (at least one required).
+**Purpose:** tokens by identity and password **or** code (at least one credential required).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email`, `Password` (opt., 8–32), `Code` (opt., 4–32). Validators: `requiredIf`, `atLeastOneRequired`. → `token` |
-| `token` | token | `selectorKey`, `passwordKey`, `codeKey`, `channel: email`, `resolveBy` (field, required, caseInsensitive). → `collectResult` |
-| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_invalid_code`. `next: null` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 6–12); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
+| `token` | token | `passwordKey`, `codeKey`. Bag output keys are fixed by `TokenPairIssuer` (`AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`, `UserAccountId`). → `collectResult` |
+| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. Invalid credentials → `NotAuthorizedException` (same as `passwordAuth` / `verifyCode`). `next: null` |
 
 ---
 
@@ -163,11 +211,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt., up to 512), `LinkUserId` (opt. Guid string). → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey: collectForm.Provider`, `returnUrlKey: collectForm.ReturnUrl`, `linkUserIdKey: collectForm.LinkUserId`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserAccountId` (opt. Guid string), `RefreshToken` (required when `UserAccountId` is set); optional client context. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `LinkUserId` enables account linking when present and must match the authenticated principal (`sub` / NameIdentifier); omit for normal sign-in / sign-up.
+> `UserAccountId` enables account linking when present; the host must supply the authenticated user’s id **and** a valid `RefreshToken` for that user (the library validates the token before starting OAuth). Omit both for normal sign-in / sign-up.
 
 ---
 
@@ -177,25 +225,41 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either via `requiredIf`/`atLeastOneRequired`); `ErrorDescription` (opt.). → `externalLoginComplete` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either); `ErrorDescription` (opt.); optional client context. → `externalLoginComplete` |
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
-| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
+| `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
 
+> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` + `RefreshToken`.
+>
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
 ---
 
 ## `main.ExternalLoginUnlink.json`
 
-**Purpose:** unlink an external OAuth provider from the authenticated user.
+**Purpose:** unlink an external OAuth provider from the given user.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32). → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey: collectForm.Provider`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Requires an authenticated principal (`sub` / NameIdentifier). Removes the matching row from `auth.UsersExternalLogins` for the current user and provider.
+> Host supplies `UserAccountId` and a valid `RefreshToken` for that user (session proof). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+
+---
+
+## `main.ExternalLoginGetAll.json`
+
+**Purpose:** list enabled OAuth providers and link status for the given user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
+
+> Host supplies `UserAccountId` and a valid `RefreshToken` for that user. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -205,11 +269,11 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logout` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logout` |
 | `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
-> Revokes the refresh token with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
+> Revokes the refresh token and access tokens in the same session (family) with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
 
 ---
 
@@ -219,7 +283,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048). → `logoutAll` |
+| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logoutAll` |
 | `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 
@@ -229,15 +293,39 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ## `main.VerifyToken.json`
 
-**Purpose:** check whether an access token is still valid in storage (not revoked / not expired).
+**Purpose:** check whether an access token is still valid (crypto + storage + `security_stamp` vs `UserAccount.SecurityStamp`).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `AccessToken` (required, max 2048). → `verifyToken` |
+| `collectForm` | collectForm | `AccessToken` (required, max 2048); optional client context. → `verifyToken` |
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
-| `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
+| `collectResult` | collectResult | `valid`, `user_account_id`, `jti` (user_account_id/jti only when valid). `next: null` |
 
-> Malformed tokens yield `valid: false` (no error). Does not refresh or revoke.
+> Malformed or cryptographically invalid tokens yield `valid: false` (step `Ok`). Tokens whose `security_stamp` claim no longer matches the account (e.g. after password change) also yield `valid: false`. Database or configuration errors fail the step (exception propagated to the host).
+
+---
+
+## `main.CommunicationEndpointsGetAll.json`
+
+**Purpose:** list communication endpoints for the given user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `communicationEndpointsGetAll` |
+| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `endpoints`. `next: null` |
+
+---
+
+## `main.CommunicationEndpointSetPreferred.json`
+
+**Purpose:** set the preferred communication endpoint for the given user.
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserAccountId`, `RefreshToken`, `EndpointId` (required); optional client context. → `communicationEndpointSetPreferred` |
+| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `preferred`. `next: null` |
 
 ---
 
@@ -245,24 +333,25 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 | kind | Purpose |
 |------|---------|
-| `collectForm` | Collect and validate form fields |
+| `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP (email/SMS) |
-| `verifyCode` | Verify OTP |
-| `codeAuth` | Verify OTP + authenticate |
-| `passwordAuth` | Verify email + password |
-| `forgotPassword` | Start password recovery |
-| `resetPassword` | Set new password |
-| `getUserId` | Find user, return `UserId` |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). Action link: `verify` → `/verify?code=…`; `reset` → `/reset-password?code=…`; when selector is Email / PhoneNumber, append `email` / `phone` (identity for deep links; OTP channel is still resolved on verify). Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `verifyCode` | Verify OTP and write `UserAccountId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `getUserAccountId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `passwordAuth` | Verify identity + password; writes `UserAccountId` |
+| `resetPassword` | Set new password (identity from `Selector`) |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
 | `externalLoginInitiate` | OAuth redirect URL |
 | `externalLoginComplete` | OAuth callback, issue tokens |
 | `externalLoginUnlink` | Unlink OAuth provider from current user |
+| `externalLoginGetAll` | List OAuth providers + link status for current user |
 | `logout` | Revoke current refresh token (`USER_LOGOUT`) |
 | `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
-| `verifyToken` | Validate access token; return `valid` (+ `user_id` / `jti` when valid) |
+| `verifyToken` | Validate access token; return `valid` (+ `user_account_id` / `jti` when valid) |
+| `communicationEndpointsGetAll` | List user communication endpoints |
+| `communicationEndpointSetPreferred` | Set preferred communication endpoint |
 
 ### Form validators (`schemaDef.validators`)
 

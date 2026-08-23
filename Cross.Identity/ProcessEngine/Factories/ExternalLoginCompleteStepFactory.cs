@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
 {

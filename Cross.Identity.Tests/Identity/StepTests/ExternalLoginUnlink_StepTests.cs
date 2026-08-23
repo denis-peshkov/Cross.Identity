@@ -13,28 +13,39 @@ public class ExternalLoginUnlink_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenProvider_WhenExecuteAsync_ThenUnlinksAndSetsFlagAsync()
+    public async Task GivenProviderUserIdAndRefreshToken_WhenExecuteAsync_ThenUnlinksAndSetsFlagAsync()
     {
+        var userAccountId = Guid.NewGuid();
+        const string refreshToken = "refresh-token-value";
         _externalLoginService
-            .Setup(s => s.UnlinkAsync("Google", It.IsAny<CancellationToken>()))
+            .Setup(s => s.UnlinkAsync("Google", userAccountId, refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ExternalLoginUnlinkStep
         {
             Kind = "externalLoginUnlink",
             ProviderKey = "Provider",
+            UserAccountIdKey = "UserAccountId",
+            RefreshTokenKey = "RefreshToken",
             ExternalLoginService = _externalLoginService.Object,
             Next = "done",
         };
 
         var bag = new Bag();
         bag.Set("externalLoginUnlink.Provider", "Google");
+        bag.Set("externalLoginUnlink.UserAccountId", userAccountId);
+        bag.Set("externalLoginUnlink.RefreshToken", refreshToken);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         bag.Get<bool>("externalLoginUnlink.Unlinked").Should().BeTrue();
-        _externalLoginService.Verify(s => s.UnlinkAsync("Google", It.IsAny<CancellationToken>()), Times.Once);
+        _externalLoginService.Verify(
+            s => s.UnlinkAsync("Google", userAccountId, refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

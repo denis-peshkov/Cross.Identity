@@ -16,20 +16,12 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<VerifyTokenStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IdentityContext, IdentityContext>(Context);
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
@@ -54,7 +46,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
@@ -62,13 +54,14 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidAccessToken_WhenVerifyTokenFlow_ThenReturnsValidWithClaimsAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId,
+            userAccountId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },
@@ -78,7 +71,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userId);
+        payload["user_account_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -109,16 +102,17 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         httpContext.Connection.RemoteIpAddress = IPAddress.Parse("10.0.0.42");
         httpContextAccessor.Setup(x => x.HttpContext).Returns(httpContext);
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, httpContextAccessor.Object);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
 
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId,
+            userAccountId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
         accessToken.Split('.').Length.Should().Be(5);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -129,7 +123,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userId);
+        payload["user_account_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -138,10 +132,11 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyId, new List<string>(), new List<Claim>(), CancellationToken.None);
+            userAccountId, familyId, new List<string>(), new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();
@@ -155,7 +150,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(false);
-        payload.Should().NotContainKey("user_id");
+        payload.Should().NotContainKey("user_account_id");
     }
 
     [Test]
@@ -170,7 +165,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(false);
-        payload.Should().NotContainKey("user_id");
+        payload.Should().NotContainKey("user_account_id");
     }
 
     [Test]

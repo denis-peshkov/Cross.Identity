@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Simple property bag for exchanging data between process steps.
-/// Keys should be namespaced: "registration.Email", "auth.Phone", "user.Id", "auth.Token".
+/// Keys should be namespaced: "registration.Email", "auth.PhoneNumber", "user.Id", "auth.Token".
 /// </summary>
 public sealed class Bag : IReadOnlyDictionary<string, object?>
 {
@@ -26,10 +26,27 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
             throw new InvalidCastException($"Key '{key}' is null, cannot cast to {typeof(T).Name}.");
         }
 
+        // Guid is not handled by Convert.ChangeType from string (form fields are strings).
+        if (v is string text)
+        {
+            if (typeof(T) == typeof(Guid))
+            {
+                if (Guid.TryParse(text, out var guid))
+                    return (T)(object)guid;
+            }
+            else if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid))
+            {
+                // Optional Guid?: empty / invalid → null (e.g. optional link UserId).
+                if (string.IsNullOrWhiteSpace(text) || !Guid.TryParse(text, out var optionalGuid))
+                    return default!;
+                return (T)(object)optionalGuid;
+            }
+        }
+
         // Attempt generic conversion (int→decimal, string→int, etc.)
         try
         {
-            return (T)System.Convert.ChangeType(v, typeof(T))!;
+            return (T)Convert.ChangeType(v, GetConversionType<T>())!;
         }
         catch
         {
@@ -48,9 +65,48 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
                 return true;
             }
 
+            if (v is null)
+            {
+                if (default(T) is null)
+                {
+                    value = default;
+                    return true;
+                }
+
+                value = default;
+                return false;
+            }
+
+            if (v is string text)
+            {
+                if (typeof(T) == typeof(Guid))
+                {
+                    if (Guid.TryParse(text, out var guid))
+                    {
+                        value = (T)(object)guid;
+                        return true;
+                    }
+
+                    value = default;
+                    return false;
+                }
+
+                if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid))
+                {
+                    if (string.IsNullOrWhiteSpace(text) || !Guid.TryParse(text, out var optionalGuid))
+                    {
+                        value = default;
+                        return true;
+                    }
+
+                    value = (T)(object)optionalGuid;
+                    return true;
+                }
+            }
+
             try
             {
-                value = (T)System.Convert.ChangeType(v!, typeof(T))!;
+                value = (T)Convert.ChangeType(v, GetConversionType<T>())!;
                 return true;
             }
             catch
@@ -62,6 +118,8 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
         value = default;
         return false;
     }
+
+    private static Type GetConversionType<T>() => Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
 
     /// <summary>Set or update a value by key.</summary>
     public Bag Set(string key, object? value)

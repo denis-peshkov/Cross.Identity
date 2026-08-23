@@ -32,7 +32,7 @@ public class UserAccountEntity : IHasConcurrencyStamp
     /// <summary>
     /// Gets or sets a telephone number for the user.
     /// </summary>
-    /// <remarks>store in E.164</remarks>
+    /// <remarks>Must be stored as E.164 only (e.g. +79161234567). Other formats are not accepted.</remarks>
     [ProtectedPersonalData]
     public string? PhoneNumber { get; set; }
 
@@ -87,18 +87,18 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public Guid ConcurrencyStamp { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if a user has confirmed their email address.
+    /// Gets or sets a flag indicating if a user has verified their email address.
     /// </summary>
-    /// <value>True if the email address has been confirmed, otherwise false.</value>
+    /// <value>True if the email address has been verified, otherwise false.</value>
     [PersonalData]
-    public bool EmailConfirmed { get; set; }
+    public bool EmailVerified { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if a user has confirmed their telephone address.
+    /// Gets or sets a flag indicating if a user has verified their telephone address.
     /// </summary>
-    /// <value>True if the telephone number has been confirmed, otherwise false.</value>
+    /// <value>True if the telephone number has been verified, otherwise false.</value>
     [PersonalData]
-    public bool PhoneConfirmed { get; set; }
+    public bool PhoneNumberVerified { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating if two factor authentication is enabled for this user.
@@ -111,7 +111,10 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
-    public Guid CreatedBy { get; set; }
 
+    /// <summary>Linked external OAuth/OIDC identities.</summary>
     public virtual ICollection<UserExternalLoginEntity> ExternalLogins { get; set; } = new List<UserExternalLoginEntity>();
+
+    /// <summary>Verified and candidate delivery endpoints (email, SMS, messengers).</summary>
+    public virtual ICollection<UserCommunicationEndpointEntity> CommunicationEndpoints { get; set; } = new List<UserCommunicationEndpointEntity>();
 }

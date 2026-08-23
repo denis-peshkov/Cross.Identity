@@ -7,7 +7,7 @@
 /// </summary>
 internal static class BagKey
 {
-    public static string Qualify(string stepName, string key)
+    public static string Qualify(string? stepName, string? key)
     {
         if (string.IsNullOrWhiteSpace(stepName))
             throw new ArgumentException("Step name must be provided.", nameof(stepName));

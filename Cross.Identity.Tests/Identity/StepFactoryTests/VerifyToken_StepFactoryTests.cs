@@ -10,6 +10,7 @@ public class VerifyToken_StepFactoryTests
     {
         var sc = new ServiceCollection();
         sc.AddScoped<IJwtTokenService>(_ => Mock.Of<IJwtTokenService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 

@@ -6,7 +6,6 @@ internal class AccessTokenEntityTypeConfiguration : IEntityTypeConfiguration<Acc
     {
         builder.ToTable(nameof(IdentityContext.AccessTokens), IdentityContext.DefaultSchema);
         builder.Property(x => x.Id).HasColumnName("AccessTokenId");
-        builder.Property(x => x.RevokeReason).HasConversion<short?>();
         builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
@@ -14,5 +13,13 @@ internal class AccessTokenEntityTypeConfiguration : IEntityTypeConfiguration<Acc
         builder.HasIndex(x => x.TokenHash)
             .IsUnique(false)
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.AccessTokens)}_TokenHash");
+        builder.HasIndex(x => x.UserAccountId)
+            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.AccessTokens)}_UserAccountId");
+
+        builder.HasOne(x => x.UserAccount)
+            .WithMany()
+            .HasForeignKey(x => x.UserAccountId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.AccessTokens)}_UserAccount");
     }
 }

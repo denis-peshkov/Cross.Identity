@@ -37,8 +37,8 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
 | Mechanism           | Why it matters                                                                 |
 |---------------------|--------------------------------------------------------------------------------|
 | One-time use        | refresh token can be used only once, then it is replaced                       |
-| Database storage    | Id, UserId, ExpiresAt, RevokedAt, CreatedAt, CreatedByIp, ReplacedByToken      |
-| Device binding      | on login, save device_id or fingerprint                                        |
+| Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `LastActivityAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
+| Device binding      | Host sets `HostSuppliedClientContext` on login; library stores `Created*` and compares on refresh (see below) |
 | Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
 ## Replay detection (family revoke + `REPLAY_DETECTED`)
@@ -48,7 +48,7 @@ Rotation alone rejects a reused refresh token. That is **not** enough when the a
 1. Attacker steals `R1` and refreshes first → gets active `R2`, `R1` revoked.
 2. Victim sends their copy of `R1` → reuse of a revoked refresh.
 3. **Without** family revoke: victim gets conflict / must re-login; attacker keeps live `R2`.
-4. **With** family revoke (`RefreshTokenRevokeReason.REPLAY_DETECTED`): `R2` and access tokens in the same `FamilyId` are revoked too.
+4. **With** family revoke (`RefreshTokenRevokedReason.REPLAY_DETECTED`): `R2` and access tokens in the same `FamilyId` are revoked too.
 
 Implemented in `EnsureRefreshTokenActiveForRotationAsync` / `InvalidateRefreshTokenAsync` → `HandleRefreshTokenReplayAsync`.
 
@@ -76,34 +76,7 @@ Implemented in `EnsureRefreshTokenActiveForRotationAsync` / `InvalidateRefreshTo
 
 👉 The old token becomes invalid immediately after use.
 
-Example in code (flow):
-```cs
-// refresh_token_step.cs
-var oldToken = await _context.RefreshTokens
-    .FirstOrDefaultAsync(t => t.Token == request.RefreshToken);
-
-if (oldToken is null || oldToken.IsRevoked || oldToken.ExpiresAt < DateTime.UtcNow)
-    throw new SecurityException("Invalid or expired refresh token");
-
-// mark old as revoked
-oldToken.RevokedAt = DateTime.UtcNow;
-oldToken.RevokedByIp = request.IpAddress;
-
-// create new
-var newRefreshToken = new RefreshTokenEntity
-{
-    Id = Guid.NewGuid(),
-    UserId = oldToken.UserId,
-    ExpiresAt = DateTime.UtcNow.AddDays(30),
-    CreatedAt = DateTime.UtcNow,
-    CreatedByIp = request.IpAddress,
-    ReplacedByToken = oldToken.Token
-};
-
-_context.RefreshTokens.Add(newRefreshToken);
-await _context.SaveChangesAsync();
-
-```
+Stock Cross.Identity: `RefreshTokenStep` → `EnsureRefreshTokenActiveForRotationAsync` (validate + session binding) → `TokenPairIssuer` (new pair) → `InvalidateRefreshTokenAsync` (mark old `RevokedAt`, `ReplacedByTokenId`, audit with `ROTATION_REQUIRED`). Reuse of a revoked refresh → `REPLAY_DETECTED` + family revoke. See `JwtTokenService` and `FLOWS.md` — `main.RefreshToken.json`.
 
 Thus:
 - **Access Token** → short-lived (10–30 min), changes frequently.
@@ -146,25 +119,42 @@ if (DateTime.UtcNow > oldToken.AbsoluteExpiresAt)
 
 This guarantees that after, say, 90 days even an active user must log in again.
 
-#### 2. Device binding
+#### 2. Device binding (session binding)
 
-Store not just a refresh token, but bind it to a specific device / user-agent / IP.
+Store not just a refresh token, but bind the token **family** to metadata captured at login.
 
-For example:
+Cross.Identity persists host-supplied metadata on `RefreshTokenEntity`:
+
 ```cs
-public string DeviceFingerprint { get; set; } = default!;
+public string? CreatedIpAddress { get; set; }
+public string? CreatedUserAgent { get; set; }
+public string? CreatedDeviceFingerprint { get; set; }
 ```
 
-Then even if the token is stolen from another device — it will not work.
+On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, refresh must not use `HostSuppliedClientContext.Empty` if the anchor captured metadata — pass the same trusted pipeline values as on login (`ValidationException` otherwise). See `FLOWS.md` — Client context (host).
 
-(In production, libraries like FingerprintJS are usually used, which do this more reliably.)
+**Host vs library**
 
-You end up with a hash string, for example:
+Cross.Identity is a library; it does not read `HttpContext` or the HTTP body. The **host Web API**:
+
+1. Receives the client request (optional `deviceFingerprint` in JSON, headers, SDK token, etc.).
+2. Derives trusted metadata (validate or compute fingerprint; `RemoteIpAddress` + `ForwardedHeaders`; request `User-Agent`).
+3. Puts them into the flow bag before `ExecuteAsync`:
+
+```csharp
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // validated / host-computed
 ```
-"bdb38b8f2c0a6a17884e23f9a7b05c4e"
-```
 
-On login the client sends deviceFingerprint:
+4. On **login and every refresh** — the same sources. The library reads `HostSuppliedClientContext.Read(bag)` and stores or compares `Created*`.
+
+Do **not** copy `IpAddress` / `UserAgent` blindly from the client JSON into `collectForm` (spoofable). `DeviceFingerprint` should be host-validated (cookie, server session, signed SDK payload), not an arbitrary client string.
+
+**Example API (host)**
+
+The mobile app may send a fingerprint to **your** API:
+
 ```http
 POST /api/v1/auth/token
 {
@@ -174,46 +164,41 @@ POST /api/v1/auth/token
 }
 ```
 
-The server saves this DeviceFingerprint in RefreshTokenEntity:
-```cs
-public class RefreshTokenEntity
-{
-    public Guid Id { get; set; }
-    public Guid UserId { get; set; }
-    public string Token { get; set; } = default!;
-    public DateTime ExpiresAt { get; set; }
-    public DateTime AbsoluteExpiresAt { get; set; }
-    public DateTime? RevokedAt { get; set; }
+The host handler validates or recomputes that value, then calls Cross.Identity with `collectForm.DeviceFingerprint` set from the **trusted** result — not by forwarding the raw body field into the library unchanged.
 
-    public string DeviceFingerprint { get; set; } = default!;
-    public string UserAgent { get; set; } = default!;
-    public string? IpAddress { get; set; }
-}
+(In production, fingerprint libraries such as FingerprintJS are often used on the client; the host still decides what to trust and store.)
+
+Example hash string:
+
+```
+"bdb38b8f2c0a6a17884e23f9a7b05c4e"
 ```
 
-On a refresh request the server compares:
-```cs
-if (!string.Equals(oldToken.DeviceFingerprint, request.DeviceFingerprint, StringComparison.Ordinal))
-    throw new SecurityException("Device mismatch — refresh token invalid.");
-```
+**For mobile (iOS/Android)**
 
-For Mobile (iOS/Android)
+The fingerprint is usually formed as:
 
-There the fingerprint is usually formed as:
 ```js
 device_id = hash(Manufacturer + Model + OSVersion + InstallID)
 ```
 
-And stored in Secure Storage (Keychain / Keystore).
-Good practice — store not one but two fields:
+Stored in Secure Storage (Keychain / Keystore). The app sends it to the host API; the host validates and passes it into `HostSuppliedClientContext`.
 
-| Field             | Example value                                                                      | Purpose                          |
-|-------------------|------------------------------------------------------------------------------------|----------------------------------|
-| DeviceFingerprint | "bdb38b8f2c0a6a17884e23f9a7b05c4e"                                                 | persistent device hash           |
-| UserAgent         | "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)..."                               | human-readable description       |
-| IdleTimeout       | (sliding window) — optional (e.g. 7 days without activity → invalidate)          |                                  |
+Good practice — bind up to three dimensions (each optional; only non-empty values are checked):
 
-Example code:
+| Field | Example value | Host source |
+|-------|---------------|-------------|
+| `DeviceFingerprint` | `bdb38b8f2c0a6a17884e23f9a7b05c4e` | Validated device id / host-computed hash |
+| `UserAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...` | `HttpContext.Request.Headers.User-Agent` |
+| `IpAddress` | `203.0.113.42` | `RemoteIpAddress` after `ForwardedHeaders` |
+| `SessionBindingCheckIp` | `Authentication:Jwt:SessionBindingCheckIp` | When `true`, anchor IP vs current IP on refresh (`IP_MISMATCH`); default `false` |
+| `IdleTimeout` | `Authentication:Jwt:RefreshTokenIdleTimeout` | Compared against `LastActivityAt` on refresh (`SESSION_EXPIRED`) |
+
+**IP binding:** when `SessionBindingCheckIp` is `true`, refresh compares family anchor IP with the current request IP. Default: disabled (NAT/mobile-friendly). Device fingerprint and User-Agent are always checked when captured.
+
+**Idle timeout:** when `RefreshTokenIdleTimeout` is greater than zero, refresh compares `UtcNow` with `LastActivityAt` on the presented token. Exceeded idle revokes the family with `SESSION_EXPIRED`. Each successful login/rotation sets `LastActivityAt = UtcNow` on the new refresh row. Default: disabled (`00:00:00`).
+
+Example code — absolute expiry (`AbsoluteExpiresAt` is preserved across rotation in `GenerateRefreshTokenAsync`):
 ```cs
 if (oldToken.AbsoluteExpiresAt < DateTime.UtcNow)
 {

@@ -7,9 +7,6 @@ builder.Services.AddDbContext<IdentityContext>(options =>
 // HttpContextAccessor for JwtTokenService
 builder.Services.AddHttpContextAccessor();
 
-// HeadersContextAccessor for UserService (language, region, etc.)
-builder.Services.AddScoped<IHeadersContextAccessor, HeadersContextAccessor>();
-
 // Pepper from appsettings (Sample.Api local dev — no AUTH_PEPPERS_JSON required)
 builder.Services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(builder.Configuration);
 builder.Services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();

@@ -10,7 +10,6 @@ internal class ProviderEntityConfiguration : IEntityTypeConfiguration<ProviderEn
         builder.Property(x => x.Name).IsRequired();
         builder.Property(x => x.Scheme).IsRequired();
         builder.Property(x => x.CreatedAt).IsRequired();
-        builder.Property(x => x.ConcurrencyStamp).IsConcurrencyToken();
 
         builder.HasKey(x => x.Id)
             .HasName($"PK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.Providers)}");

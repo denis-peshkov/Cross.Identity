@@ -15,7 +15,9 @@ internal sealed class ExternalLoginInitiateStep : IStep
 
     public string? ReturnUrlKey { get; init; }
 
-    public string? LinkUserIdKey { get; init; }
+    public string? UserAccountIdKey { get; init; }
+
+    public string? RefreshTokenKey { get; init; }
 
     public required IExternalLoginService ExternalLoginService { get; init; }
 
@@ -24,48 +26,26 @@ internal sealed class ExternalLoginInitiateStep : IStep
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
 
-        string? returnUrl = null;
-        if (!string.IsNullOrWhiteSpace(ReturnUrlKey))
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, ReturnUrlKey), out returnUrl);
-        }
+        var returnUrl = string.IsNullOrWhiteSpace(ReturnUrlKey)
+            ? null
+            : ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
 
-        Guid? linkUserId = null;
-        if (!string.IsNullOrWhiteSpace(LinkUserIdKey))
-        {
-            if (!TryReadLinkUserId(ctx, LinkUserIdKey, out linkUserId)
-                && !TryReadLinkUserId(ctx, BagKey.Qualify(Kind, LinkUserIdKey), out linkUserId))
-            {
-                linkUserId = null;
-            }
-        }
+        var linkUserAccountId = string.IsNullOrWhiteSpace(UserAccountIdKey)
+            ? null
+            : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserAccountIdKey));
 
-        var url = await ExternalLoginService.InitiateAsync(provider, returnUrl, linkUserId, cancellationToken).ConfigureAwait(false);
+        var refreshToken = string.IsNullOrWhiteSpace(RefreshTokenKey)
+            ? null
+            : ctx.Get<string?>(BagKey.Qualify(Kind, RefreshTokenKey));
+
+        var url = await ExternalLoginService.InitiateAsync(
+            provider,
+            returnUrl,
+            linkUserAccountId,
+            refreshToken,
+            cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Url"), url);
 
         return StepResult.Ok(Next);
-    }
-
-    private static bool TryReadLinkUserId(Bag ctx, string key, out Guid? linkUserId)
-    {
-        linkUserId = null;
-        if (!ctx.TryGet<object?>(key, out var linkUserIdRaw) || linkUserIdRaw is null)
-        {
-            return false;
-        }
-
-        if (linkUserIdRaw is Guid guid)
-        {
-            linkUserId = guid;
-            return true;
-        }
-
-        if (Guid.TryParse(linkUserIdRaw.ToString(), out var parsed))
-        {
-            linkUserId = parsed;
-            return true;
-        }
-
-        return false;
     }
 }

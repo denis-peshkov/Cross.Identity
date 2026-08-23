@@ -9,6 +9,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
     private const string Password = "P@ssw0rd!";
 
     private Mock<IUserService> _userServiceMock = null!;
+    private Guid _userId;
 
     [SetUp]
     public override void Setup()
@@ -21,19 +22,14 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<VerifyCodeStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
+        _userId = Guid.NewGuid();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetUserAccountIdByAsync("Email", Email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() => _userId);
+        _userServiceMock
+            .Setup(s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
         RegisterToServiceProvider<IEmailSenderService, IEmailSenderService>(Mock.Of<IEmailSenderService>());
@@ -50,8 +46,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         var httpContextAccessor = new Mock<IHttpContextAccessor>();
         var context = new DefaultHttpContext();
@@ -76,7 +71,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -97,10 +92,10 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -123,10 +118,10 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -146,7 +141,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .ThrowAsync<ValidationException>();
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -167,10 +162,10 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -191,10 +186,10 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired verification code*");
+            .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -253,9 +248,17 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
 
     private void SeedEmailCode(string code, DateTime expiresAt, DateTime? usedAt = null)
     {
+        AddToDb(new UserAccountEntity
+        {
+            Id = _userId,
+            Email = Email.ToLowerInvariant(),
+            EmailVerified = true,
+            IsActive = true,
+        });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = Guid.NewGuid(),
+            UserAccountId = _userId,
+            UserAccount = null!,
             Email = Email.ToLowerInvariant(),
             TokenHash = CodeGeneratorHelper.GenerateHash(code),
             TokenLength = (byte)code.Length,

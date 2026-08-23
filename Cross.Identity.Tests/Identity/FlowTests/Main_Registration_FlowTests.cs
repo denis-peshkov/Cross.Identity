@@ -12,13 +12,6 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CreateUserStepFactory>();
@@ -26,11 +19,9 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<CollectResultStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -42,61 +33,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
-
-        // Load JSON as embedded /ProcessEngine/Definitions/Flows/main.Register.json
-        // AddJson("""
-        //         {
-        //           "start": "collectForm",
-        //           "steps": [
-        //             {
-        //               "kind": "collectForm",
-        //               "schemaDef": {
-        //                 "fields": [
-        //                   { "key": "Email", "type": "Email", "required": true },
-        //                   { "key": "FullName", "type": "String", "required": true, "min": 3, "max": 128 },
-        //                   { "key": "Company", "type": "String", "required": true, "min": 2, "max": 128 },
-        //                   { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
-        //                   { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 },
-        //                   { "key": "AcceptGetEmails", "type": "Bool", "required": false },
-        //                   { "key": "AcceptLicenseTerms", "type": "Bool", "required": true }
-        //                 ],
-        //                 "validators": [
-        //                   { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }
-        //                 ]
-        //               },
-        //               "next": "createUser"
-        //             },
-        //             {
-        //               "kind": "createUser",
-        //               "map": {
-        //                 "Email": "collectForm.Email",
-        //                 "FullName": "collectForm.FullName",
-        //                 "Company": "collectForm.Company",
-        //                 "AcceptGetEmails": "collectForm.AcceptGetEmails",
-        //                 "AcceptLicenseTerms": "collectForm.AcceptLicenseTerms"
-        //               },
-        //               "selectorKey": "collectForm.Email",
-        //               "next": "sendCode"
-        //             },
-        //             {
-        //               "kind": "sendCode",
-        //               "channel": "email",
-        //               "selectorKey": "createUser.selectorKey",
-        //               "resolveBy": { "field": "Email" },
-        //               "next": "collectResult"
-        //             },
-        //             {
-        //               "kind": "collectResult",
-        //               "map": {
-        //                 "LastCode": "sendCode.LastCode"
-        //               },
-        //               "next": null
-        //             }
-        //           ]
-        //         }
-        //         """);
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
     }
 
     [Test]
@@ -117,8 +54,8 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull();
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        payload.Should().ContainKey("UserId");
-        payload["UserId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
+        payload.Should().ContainKey("UserAccountId");
+        payload["UserAccountId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
         // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);

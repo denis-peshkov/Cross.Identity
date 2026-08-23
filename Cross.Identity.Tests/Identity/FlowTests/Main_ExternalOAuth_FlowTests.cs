@@ -24,13 +24,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             HttpContext = new DefaultHttpContext(),
         };
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
         {
@@ -47,28 +40,38 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
         });
 
-        _jwtTokenService = new JwtTokenService(Context, optionsSnapshot.Object, _httpContextAccessor);
+        _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
 
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<ExternalLoginInitiateStepFactory>();
         AddRegistryStep<ExternalLoginCompleteStepFactory>();
         AddRegistryStep<ExternalLoginUnlinkStepFactory>();
+        AddRegistryStep<ExternalLoginGetAllStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
-    private void SetAuthenticatedUser(Guid userId)
+    private void SetAuthenticatedUser(Guid userAccountId)
     {
         var identity = new ClaimsIdentity(
-            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
+            new[] { new Claim(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) },
             authenticationType: "Test");
         _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
+    }
+
+    private async Task<string> IssueRefreshTokenAsync(Guid userAccountId)
+    {
+        return await _jwtTokenService.GenerateRefreshTokenAsync(
+            userAccountId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
     }
 
     [Test]
@@ -96,37 +99,37 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenAuthenticatedUserWithLinkedProvider_WhenExternalLoginUnlink_ThenUnlinksProviderAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var provider = await Context.Providers.SingleAsync(x => x.Name == "Google");
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "unlink@example.com",
             UserName = "unlink",
             NormalizedUserName = "unlink",
             PasswordPhc = "$pbkdf2$has-password",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
         AddToDb(new UserExternalLoginEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
             ProviderId = provider.Id,
+            ProviderEntity = null!,
             ProviderUserId = "google-sub-unlink",
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
         });
-        SetAuthenticatedUser(userId);
-
-        // Recreate service so it uses the authenticated HttpContext principal.
-        _externalLoginService = CreateExternalLoginService(GoogleSuccessHandler());
-        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+        SetAuthenticatedUser(userAccountId);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
+                ["UserAccountId"] = userAccountId,
+                ["RefreshToken"] = refresh,
                 ["Provider"] = "Google",
             },
             Flow,
@@ -140,28 +143,115 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMatchingLinkUserId_WhenExternalLogin_ThenAcceptsAsync()
+    public async Task GivenAuthenticatedUser_WhenExternalLoginGetAll_ThenReturnsAccountEmailAndProvidersAsync()
     {
-        var linkUserId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new ProviderEntity
+        {
+            Name = "Microsoft",
+            Scheme = "microsoft",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        });
+        AddToDb(new ProviderEntity
+        {
+            Name = "GitHub",
+            Scheme = "github",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        });
         AddToDb(new UserAccountEntity
         {
-            Id = linkUserId,
+            Id = userAccountId,
+            Email = "owner@example.com",
+            UserName = "owner",
+            NormalizedUserName = "owner",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        var google = await Context.Providers.SingleAsync(x => x.Name == "Google");
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = google.Id,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "linked@gmail.com",
+            AvatarUrl = "https://example.com/avatar.png",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SetAuthenticatedUser(userAccountId);
+
+        _externalLoginService = CreateExternalLoginService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-id",
+                    ClientSecret = "ms-secret",
+                };
+            });
+        RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["UserAccountId"] = userAccountId,
+                ["RefreshToken"] = refresh,
+            },
+            Flow,
+            FlowOperationEnum.ExternalLoginGetAll,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["account_email"].Should().Be("owner@example.com");
+        var providers = payload["providers"].Should().BeAssignableTo<IReadOnlyList<ExternalLoginProviderItemDto>>().Subject;
+        providers.Should().HaveCount(2);
+        providers.Should().NotContain(x => x.Provider == "GitHub");
+
+        var googleRow = providers.Single(x => x.Provider == "Google");
+        googleRow.IsConnected.Should().BeTrue();
+        googleRow.ProviderEmail.Should().Be("linked@gmail.com");
+        googleRow.AvatarUrl.Should().Be("https://example.com/avatar.png");
+
+        var microsoft = providers.Single(x => x.Provider == "Microsoft");
+        microsoft.IsConnected.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMatchingUserId_WhenExternalLogin_ThenAcceptsAsync()
+    {
+        var linkUserAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = linkUserAccountId,
             Email = "link@example.com",
             UserName = "link",
             NormalizedUserName = "link",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
-        SetAuthenticatedUser(linkUserId);
+        var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
+            linkUserAccountId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
                 ["Provider"] = "Google",
                 ["ReturnUrl"] = "/home",
-                ["LinkUserId"] = linkUserId.ToString(),
+                ["UserAccountId"] = linkUserAccountId.ToString(),
+                ["RefreshToken"] = refreshToken,
             },
             Flow,
             FlowOperationEnum.ExternalLogin,
@@ -173,37 +263,63 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMismatchedLinkUserId_WhenExternalLogin_ThenRejectsAsync()
+    public async Task GivenUserIdWithoutMatchingRefreshToken_WhenExternalLogin_ThenThrowsNotAuthorizedAsync()
     {
-        var authenticatedUserId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
-        SetAuthenticatedUser(authenticatedUserId);
+        var ownerUserAccountId = Guid.NewGuid();
+        var otherUserAccountId = Guid.NewGuid();
+        AddToDb(
+            new UserAccountEntity
+            {
+                Id = ownerUserAccountId,
+                Email = "owner@example.com",
+                UserName = "owner",
+                NormalizedUserName = "owner",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                Id = otherUserAccountId,
+                Email = "other@example.com",
+                UserName = "other",
+                NormalizedUserName = "other",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+        var ownerRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
+            ownerUserAccountId,
+            Guid.NewGuid(),
+            new List<Claim>(),
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
 
-        await FluentActions.Invoking(() =>
-                _flowExecutor.ExecuteAsync(
-                    new Dictionary<string, object?>
-                    {
-                        ["Provider"] = "Google",
-                        ["LinkUserId"] = otherUserId.ToString(),
-                    },
-                    Flow,
-                    FlowOperationEnum.ExternalLogin,
-                    CancellationToken.None))
+        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
+                new Dictionary<string, object?>
+                {
+                    ["Provider"] = "Google",
+                    ["UserAccountId"] = otherUserAccountId.ToString(),
+                    ["RefreshToken"] = ownerRefresh,
+                },
+                Flow,
+                FlowOperationEnum.ExternalLogin,
+                CancellationToken.None))
             .Should()
             .ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*does not match the authenticated user*");
+            .WithMessage("*does not match*");
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidLinkUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
+    public async Task GivenInvalidUserId_WhenExternalLogin_ThenThrowsValidationExceptionAsync()
     {
         await FluentActions.Invoking(() =>
                 _flowExecutor.ExecuteAsync(
                     new Dictionary<string, object?>
                     {
                         ["Provider"] = "Google",
-                        ["LinkUserId"] = "not-a-guid",
+                        ["UserAccountId"] = "not-a-guid",
                     },
                     Flow,
                     FlowOperationEnum.ExternalLogin,
@@ -216,7 +332,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenSuccessfulGoogleOAuth_WhenExternalLoginCallback_ThenReturnsTokensAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", "/home", null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -234,7 +350,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         payload["refresh_token"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
         payload["token_type"].Should().Be("Bearer");
         payload["expires_in"].Should().NotBeNull();
-        payload["user_id"].Should().NotBeNull();
+        payload["user_account_id"].Should().NotBeNull();
         payload["is_linking"].Should().Be(false);
 
         (await Context.UsersAccounts.CountAsync()).Should().Be(1);
@@ -245,7 +361,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenOAuthError_WhenExternalLoginCallback_ThenFailsAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
@@ -268,7 +384,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenStateAndErrorWithoutCode_WhenExternalLoginCallback_ThenProcessesErrorAsync()
     {
-        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, CancellationToken.None);
+        var authorizationUrl = await _externalLoginService.InitiateAsync("Google", null, null, null, CancellationToken.None);
         var state = ExtractState(authorizationUrl);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
@@ -297,7 +413,9 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
     }
 
-    private ExternalLoginService CreateExternalLoginService(HttpMessageHandler handler)
+    private ExternalLoginService CreateExternalLoginService(
+        HttpMessageHandler handler,
+        Action<ExternalLoginOptions>? configure = null)
     {
         var options = new ExternalLoginOptions
         {
@@ -312,6 +430,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 },
             },
         };
+        configure?.Invoke(options);
 
         var optionsMock = new Mock<IOptionsSnapshot<ExternalLoginOptions>>();
         optionsMock.Setup(o => o.Value).Returns(options);
@@ -326,8 +445,8 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
-            _httpContextAccessor,
-            _jwtTokenService);
+            _jwtTokenService,
+            new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService, TestAuthOptions.Snapshot()));
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()
@@ -340,6 +459,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 {
                     sub = "google-sub-1",
                     email = "oauth-user@example.com",
+                    email_verified = true,
                     name = "OAuth User",
                     picture = "https://example.com/avatar.png",
                 }),

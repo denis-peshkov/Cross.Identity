@@ -1,4 +1,4 @@
-namespace Cross.Identity.ProcessEngine.Factories;
+﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 internal sealed class ExternalLoginInitiateStepFactory : IStepFactory
 {
@@ -16,7 +16,8 @@ internal sealed class ExternalLoginInitiateStepFactory : IStepFactory
             ExternalLoginService = externalLoginService,
             ProviderKey          = cfg.Str("providerKey"),
             ReturnUrlKey         = cfg.StrOpt("returnUrlKey"),
-            LinkUserIdKey        = cfg.StrOpt("linkUserIdKey"),
+            UserAccountIdKey            = cfg.StrOpt("userAccountIdKey"),
+            RefreshTokenKey      = cfg.StrOpt("refreshTokenKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }

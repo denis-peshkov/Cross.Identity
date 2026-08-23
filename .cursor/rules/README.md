@@ -7,11 +7,18 @@
 - `001-team-workflow.mdc` - Branches, PR targets (`dev` vs owner-only `master` / `release/*` / `hotfix/*`)
 - `002-multi-repo.mdc` - Multi-repository workflow rules
 - `003-triage.mdc` - GitHub triage (issues/PRs, skills, CI)
-- `004-release-plan.mdc` - `dev`→`master` release plan, "Checklist Summary" sync
+- `004-release-plan.mdc` - `RELEASE-PLAN.md` + `dev`→`master` release plan, "Checklist Summary" sync; closed items use ✅
 
 ### Cursor triage scripts
 
 - `.cursor/triage/` - `gh` wrapper, CI runners (`collect-data.sh`, `post-pr-triage.mjs`), reports in `docs/`
+
+### Cursor skills (project)
+
+- `.cursor/skills/cross-identity-db-scripts/` - DbUp `1_PreDeployment` append-only migrations (SqlServer/PostgreSQL/MySQL)
+- `.cursor/skills/cross-identity-triage/` - issue + PR triage orchestrator
+- `.cursor/skills/issue-triage/` - GitHub issues
+- `.cursor/skills/pr-triage/` - GitHub PRs
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules
