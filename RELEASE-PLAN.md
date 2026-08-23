@@ -15,9 +15,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 28. SendCode action URL всегда `/reset-password` (CR)
-`SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
-
 ### 33. `Bag` nullable `Convert.ChangeType` (CR)
 `Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
 
@@ -124,6 +121,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #23 OTP supersede scoped by user (CR) | `SupersedeActive*VerificationsAsync` фильтрует по `UserAccountId` + email/phone |
 | ✅ #26 `AuditEntityType` unique values (CR) | `UserCommunicationEndpoint=7`, `ExternalLoginState=8`, `LinkedMessenger=9` |
 | ✅ #32 Verified contact conflict → `ConflictException` (CR) | `UserAccountGuard` + `CreateUserAsync`; email/phone/username duplicate |
+| ✅ #28 SendCode action URL by template (CR) | `verify` → `/verify?code=`; `reset` → `/reset-password?code=`; + `email`/`phone` when selector is Email/PhoneNumber |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
 | ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` (opt-in); device/UA always when captured |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
@@ -190,6 +188,5 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M28:** SendCode action URL.
-3. **CR M33, M39:** Bag nullable; idle double-audit.
-4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
+2. **CR M33, M39:** Bag nullable; idle double-audit.
+3. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).

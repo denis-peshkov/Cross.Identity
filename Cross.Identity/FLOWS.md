@@ -336,7 +336,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). `reset` also adds email/phone to the action URL. Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). Action link: `verify` → `/verify?code=…`; `reset` → `/reset-password?code=…`; when selector is Email / PhoneNumber, append `email` / `phone` (identity for deep links; OTP channel is still resolved on verify). Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `verifyCode` | Verify OTP and write `UserAccountId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `getUserAccountId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `passwordAuth` | Verify identity + password; writes `UserAccountId` |

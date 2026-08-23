@@ -120,6 +120,62 @@ public class SendCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public async Task GivenVerifyTemplate_WhenExecuteAsync_ThenUsesVerifyActionUrlAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Verify {{code}} {{url}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>{{url}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = "verifyCode",
+        };
+
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.TextBody!.Contains("http://localhost:4200/verify?code=")
+                    && m.TextBody.Contains($"email={Uri.EscapeDataString(email)}")),
+                It.IsAny<string>(),
+                userAccountId,
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();

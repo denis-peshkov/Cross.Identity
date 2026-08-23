@@ -524,3 +524,14 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 | `UserAccountGuard.EnsureNoOtherVerifiedEmailAsync` / `…PhoneAsync` (OTP confirm) | `InvalidOperationException` | **`ConflictException`** |
 
 **Action:** map duplicate contact/username to HTTP **409** (or your host policy for `ConflictException`); do not treat as `InvalidOperationException` / 500.
+
+### `SendCodeStep` action URL by `template`
+
+| `template` (flow JSON) | Action link (`{{url}}`, `{{verificationLink}}`, …) |
+|------------------------|-----------------------------------------------------|
+| `verify` (Register, RequestCode, …) | `{Authentication:ClientUrl}/verify?code=…` + `&email=` / `&phone=` when selector is Email / PhoneNumber |
+| `reset` (ForgotPassword) | `{Authentication:ClientUrl}/reset-password?code=…` + `&email=` / `&phone=` when selector is Email / PhoneNumber |
+
+Query params carry **identity** for SPA deep links; OTP **channel** is still resolved server-side via `ResolveOtpTargetAsync` on verify (not from the URL).
+
+**Action:** host SPA routes `/verify` and `/reset-password` must read `code` + optional `email` / `phone` from the query string.

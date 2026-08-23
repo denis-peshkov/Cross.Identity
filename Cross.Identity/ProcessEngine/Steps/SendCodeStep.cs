@@ -33,6 +33,10 @@ internal sealed class SendCodeStep : IStep
     public string? TtlKey { get; init; }
 
     /// <summary>Template name under Definitions/Templates. Defaults to <c>verify</c>.</summary>
+    /// <remarks>
+    /// Action link path: <c>reset</c> → <c>/reset-password</c>; other templates (e.g. <c>verify</c>) → <c>/verify</c>.
+    /// When selector is Email / PhoneNumber, <c>email</c> / <c>phone</c> query params are appended (deep-link identity; channel is still resolved server-side on verify).
+    /// </remarks>
     public required string Template { get; init; }
 
     /// <summary>Notification subject line. Defaults to <c>Verification Code</c>.</summary>
@@ -142,13 +146,12 @@ internal sealed class SendCodeStep : IStep
 
     private string BuildActionUrl(string clientUrl, string code, (string Field, string Value) selector)
     {
-        var url = $"{clientUrl.TrimEnd('/')}/reset-password?code={Uri.EscapeDataString(code)}";
-
-        // Reset links need identity in the query; verify/register keep code-only URLs.
-        if (!Template.Equals("reset", StringComparison.OrdinalIgnoreCase))
-        {
-            return url;
-        }
+        var baseUrl = clientUrl.TrimEnd('/');
+        var encodedCode = Uri.EscapeDataString(code);
+        var path = Template.Equals("reset", StringComparison.OrdinalIgnoreCase)
+            ? "reset-password"
+            : "verify";
+        var url = $"{baseUrl}/{path}?code={encodedCode}";
 
         if (selector.Field.Equals("Email", StringComparison.OrdinalIgnoreCase))
         {
