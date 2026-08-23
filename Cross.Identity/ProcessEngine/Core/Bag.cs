@@ -77,6 +77,33 @@ public sealed class Bag : IReadOnlyDictionary<string, object?>
                 return false;
             }
 
+            if (v is string text)
+            {
+                if (typeof(T) == typeof(Guid))
+                {
+                    if (Guid.TryParse(text, out var guid))
+                    {
+                        value = (T)(object)guid;
+                        return true;
+                    }
+
+                    value = default;
+                    return false;
+                }
+
+                if (Nullable.GetUnderlyingType(typeof(T)) == typeof(Guid))
+                {
+                    if (string.IsNullOrWhiteSpace(text) || !Guid.TryParse(text, out var optionalGuid))
+                    {
+                        value = default;
+                        return true;
+                    }
+
+                    value = (T)(object)optionalGuid;
+                    return true;
+                }
+            }
+
             try
             {
                 value = (T)Convert.ChangeType(v, GetConversionType<T>())!;

@@ -28,9 +28,6 @@
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
-### 51. `Bag.TryGet` — Guid из string (CR 2026-08-23)
-`Bag.Get<T>` парсит Guid/`Guid?` из form string; `TryGet` — только `Convert.ChangeType` → optional Guid из collectForm может «отсутствовать». Выровнять с `Get` (`Guid.TryParse` до generic conversion). (#33 закрыт только nullable underlying type.)
-
 ### 52. `CreateUserAsync` — `UserName` vs `NormalizedUserName` (CR 2026-08-23)
 `normalizedUserName` через `userNameRaw?.ToString()`, `UserName = userNameRaw as string` — при non-string в map: uniqueness по normalized, exposed `UserName` null. Одна локальная `string? userName` для обоих полей.
 
@@ -183,6 +180,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #50 ExternalLogin PK bigint→Guid (CR) | `1_11_auth_UsersExternalLogins_UserExternalLoginIdToGuid.sql`; `docs/BREAKING.md` |
 | ✅ #48 Refresh Empty при SessionBindingCheckIp (CR) | `ValidationException` если `Empty` + anchor; docs/API; `Empty` OK на logout/revoke |
 | ✅ #49 Re-hash swallow cancellation (CR) | `ValidatePasswordAsync`: `catch (DbUpdateException) when (needRehash)`; cancellation пробрасывается |
+| ✅ #51 `Bag.TryGet` Guid string parse (CR) | `TryGet` — `Guid.TryParse` как в `Get` для `Guid` / `Guid?` |
 
 ---
 
@@ -206,6 +204,6 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
+2. **#52–#53:** CreateUserAsync UserName; UpsertAsync trust boundary.
 3. **M39:** idle double-audit.
 4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.

@@ -37,9 +37,18 @@ public sealed class BagAndMapTests
 
         bag.Get<Guid>("id").Should().Be(id);
         bag.Get<Guid?>("id").Should().Be(id);
+        bag.TryGet<Guid>("id", out var parsed).Should().BeTrue();
+        parsed.Should().Be(id);
+        bag.TryGet<Guid?>("id", out var parsedOptional).Should().BeTrue();
+        parsedOptional.Should().Be(id);
         new Bag().Set("empty", "").Get<Guid?>("empty").Should().BeNull();
+        new Bag().Set("empty", "").TryGet<Guid?>("empty", out var emptyOptional).Should().BeTrue();
+        emptyOptional.Should().BeNull();
         new Bag().Set("empty", null).Get<Guid?>("empty").Should().BeNull();
         new Bag().Set("bad", "not-a-guid").Get<Guid?>("bad").Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").TryGet<Guid?>("bad", out var badOptional).Should().BeTrue();
+        badOptional.Should().BeNull();
+        new Bag().Set("bad", "not-a-guid").TryGet<Guid>("bad", out _).Should().BeFalse();
     }
 
     [Test]
