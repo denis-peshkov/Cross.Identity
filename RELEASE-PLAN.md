@@ -15,9 +15,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 20. PII в логах SendCode / GetUserAccountId / ValidateCode (CR)
-`SendCodeStep`, `GetUserAccountIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
-
 ### 23. OTP supersede без `userId` (CR)
 `CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
 
@@ -113,6 +110,9 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 ### Audit PII в `auth.Audits` (#38) — принято
 `AuditEntity.IpAddress` / `UserAgent` / `DeviceFingerprint` — намеренно для issue/revoke forensics (`AuditService.RecordTokenIssued` / `RecordTokenRevoked`); на token rows только `RevokedAt`. CR M38 (минимизировать PII) **отклонён**: retention и доступ к `auth.Audits` — ответственность хоста; см. `docs/BREAKING.md` (revoke audit metadata).
 
+### PII в логах auth steps (#20) — принято
+`SendCodeStep`, `VerifyCodeStep`, `GetUserAccountIdStep`, `UserService.ValidateCodeAsync`, `CodeService` — raw email/phone/destination в Information/Warning для operational forensics, пока клиенту отдаётся единый `Invalid credentials.` (anti-enumeration). CR M20 (маскировать / только `userId`) **отклонён**: без identity в логе сложнее саппорт и расследование (особенно «user not found» до резолва Guid); retention, redaction и доступ к log sink — ответственность хоста (аналогично #38).
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -149,6 +149,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ #6 OTP vs notify email | OTP: unverified OK; notify: verified only |
 | ✅ #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
 | ✅ #8 Enumeration на шагах | единый `Invalid credentials.` + log |
+| ✅ #20 PII в логах auth steps (CR отклонён) | selector identity / OTP paths в Information/Warning для forensics; см. «Принято» |
 | ✅ #10 Phone fallback | account phone после email (OTP/notify rules) |
 | ✅ #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | ✅ #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
@@ -192,7 +193,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20, M28:** PII logs; action URL.
+2. **CR M28:** SendCode action URL.
 3. **CR M26, M32–M33, M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; idle double-audit.
 4. **M40–M41:** явный выбор канала; messenger send + bot verification.
 5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
