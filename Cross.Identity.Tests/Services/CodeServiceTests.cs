@@ -114,7 +114,7 @@ public class CodeServiceTests : EFTestsBase
         });
 
         // Act
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         // Assert
         result.Should().BeTrue();
@@ -142,7 +142,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         result.Should().BeFalse();
     }
@@ -166,15 +166,15 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "nobody@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(Guid.NewGuid(), ChannelEnum.Email, "nobody@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -197,7 +197,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-10)
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -221,7 +221,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
         var stored = await Context.PhoneVerifications.SingleAsync();
         stored.UsedAt.Should().NotBeNull();
@@ -248,7 +248,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -256,7 +256,7 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, "+9999999999", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(Guid.NewGuid(), ChannelEnum.Sms, "+9999999999", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -280,7 +280,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -304,7 +304,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
         (await Context.PhoneVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
@@ -329,7 +329,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -352,7 +352,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
@@ -376,7 +376,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -399,7 +399,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, "attacker@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "attacker@example.com", "123456", CancellationToken.None);
 
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
@@ -424,10 +424,10 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong1", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong2", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "wrong3", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong1", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong2", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong3", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
 
         var stored = await Context.EmailVerifications.SingleAsync();
         stored.Attempts.Should().Be(3);
@@ -449,8 +449,8 @@ public class CodeServiceTests : EFTestsBase
         await _codeService.SendAsync(message, "OLD-CODE", userId.ToString(), ttl, CancellationToken.None);
         await _codeService.SendAsync(message, "NEW-CODE", userId.ToString(), ttl, CancellationToken.None);
 
-        (await _codeService.VerifyAsync(ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
 
         (await Context.EmailVerifications.CountAsync(x => x.UsedAt != null)).Should().Be(1);
     }
@@ -480,7 +480,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        var result = await _codeService.VerifyAsync(ChannelEnum.Email, email, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "123456", CancellationToken.None);
 
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
@@ -490,8 +490,37 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUnsupportedChannel_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var result = await _codeService.VerifyAsync(ChannelEnum.Telegram, "user", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(Guid.NewGuid(), ChannelEnum.Telegram, "user", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenCodeOwnedByOtherUser_WhenVerifyAsync_ThenReturnsFalseAsync()
+    {
+        var victimId = Guid.NewGuid();
+        var attackerId = Guid.NewGuid();
+        var email = "shared@example.com";
+        AddToDb(new UserAccountEntity { Id = victimId, Email = email, IsActive = true });
+        AddToDb(new UserAccountEntity { Id = attackerId, Email = email, IsActive = true });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = victimId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _codeService.VerifyAsync(attackerId, ChannelEnum.Email, email, "123456", CancellationToken.None);
+
+        result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync()).UsedAt.Should().BeNull();
+        (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
+    }
 }

@@ -386,6 +386,15 @@ Host must pass `UserId` in the bag (no ambient auth user).
 
 **Action:** bind `Authentication:LockChannelAsEmail` (already under `Authentication` in host config); stop relying on flow `channel`; update callers of the old resolve APIs; ensure users have a preferred verified endpoint or an email for OTP.
 
+### `ICodeService.VerifyAsync` requires `userId`
+
+| Area | Was | Now |
+|------|-----|-----|
+| Signature | `VerifyAsync(channel, identity, code, ct)` | `VerifyAsync(userId, channel, identity, code, ct)` |
+| Lookup | latest active row by email/phone only | same **and** `UserAccountId == userId` |
+
+**Action:** pass the resolved user id (stock `VerifyCodeStep` already does). Prevents accepting another account's OTP when the same unconfirmed email/phone exists on multiple rows.
+
 ### `UsersAccounts.CreatedBy` removed
 
 | Area | Was (1.10) | Now (2.0+) |

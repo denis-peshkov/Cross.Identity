@@ -104,10 +104,19 @@ internal sealed class CodeService : ICodeService
     }
 
     /// <inheritdoc />
-    public async Task<bool> VerifyAsync(ChannelEnum channel, string identity, string code, CancellationToken cancellationToken)
+    public async Task<bool> VerifyAsync(
+        Guid userId,
+        ChannelEnum channel,
+        string identity,
+        string code,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(identity);
         ArgumentNullException.ThrowIfNull(code);
+        if (userId == Guid.Empty)
+        {
+            return false;
+        }
 
         var now = DateTime.UtcNow;
 
@@ -122,9 +131,9 @@ internal sealed class CodeService : ICodeService
         switch (channel)
         {
             case ChannelEnum.Email:
-                return await VerifyEmailAsync(normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
+                return await VerifyEmailAsync(userId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             case ChannelEnum.Sms:
-                return await VerifyPhoneAsync(normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
+                return await VerifyPhoneAsync(userId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             default:
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);
                 return false;
@@ -132,14 +141,18 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task<bool> VerifyEmailAsync(
+        Guid userId,
         string normalizedEmail,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        // Look up the latest active email verification for this identity (hash is checked below).
+        // Latest active email verification for this user + identity (hash is checked below).
         var entity = await _context.EmailVerifications
-            .Where(x => x.Email == normalizedEmail && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userId
+                        && x.Email == normalizedEmail
+                        && x.ExpiresAt >= now
+                        && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -151,7 +164,7 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
-        if (!await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false))
+        if (!await IsUserAccountActiveAsync(userId, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Email verification rejected for disabled account {Email}", normalizedEmail);
             return false;
@@ -193,14 +206,18 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task<bool> VerifyPhoneAsync(
+        Guid userId,
         string normalizedPhone,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
-        // For phone, find the latest unused record for this identity (hash is checked below).
+        // Latest unused phone verification for this user + identity (hash is checked below).
         var entity = await _context.PhoneVerifications
-            .Where(x => x.PhoneNumber == normalizedPhone && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userId
+                        && x.PhoneNumber == normalizedPhone
+                        && x.ExpiresAt >= now
+                        && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -212,7 +229,7 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
-        if (!await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false))
+        if (!await IsUserAccountActiveAsync(userId, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("PhoneNumber verification rejected for disabled account {PhoneNumber}", normalizedPhone);
             return false;

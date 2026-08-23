@@ -19,11 +19,10 @@
 
 ## Высокий (логика / auth model)
 
-### 3. `CodeService.VerifyAsync` не привязывает код к `userId`
-Поиск последней активной записи по email/phone **без** `entity.UserAccountId == resolvedUserId`. При нескольких unconfirmed аккаунтах с одним адресом (unique index только на confirmed) возможен cross-user accept.
+### 3. ~~`CodeService.VerifyAsync` не привязывает код к `userId`~~ ✅ закрыто
+~~Поиск по email/phone без `UserAccountId == resolvedUserId` → cross-user OTP accept при дубликатах адреса.~~
 
-**Impact:** IDOR на уровне OTP.  
-**Stock flows:** VerifyCode, ResetPassword (verifyCode), потенциально Token после fix #2.
+**Исправлено (2.0):** `VerifyAsync(Guid userId, ChannelEnum, identity, code)`; lookup требует `UserAccountId == userId`. `VerifyCodeStep` передаёт resolved user id.
 
 ### 4. Lookup Email/Phone: `FirstOrDefault` без приоритета confirmed
 `FindTrackedUserBySelectorAsync` / `GetUserByAsync` — `FirstOrDefault` без `OrderBy EmailConfirmed`. Уникальность email/phone только среди confirmed; несколько unconfirmed + один confirmed допустимы.

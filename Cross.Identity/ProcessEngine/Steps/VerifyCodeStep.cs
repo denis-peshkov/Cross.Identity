@@ -50,7 +50,7 @@ internal sealed class VerifyCodeStep : IStep
             throw new ValidationException("Provide an email or a phone number to verify a code.");
         }
 
-        var ok = await CodeService.VerifyAsync(target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
+        var ok = await CodeService.VerifyAsync(userId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
         if (!ok)
         {
             return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
