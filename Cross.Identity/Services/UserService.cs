@@ -197,17 +197,10 @@ internal sealed class UserService : IUserService
         {
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (DbUpdateException ex) when (needRehash)
         {
-            if (needRehash)
-            {
-                // Do not fail successful authentication due to re-hash issues; log only
-                _logger.LogError(ex, "Failed to re-hash password for user {UserAccountId}", user.Id);
-            }
-            else
-            {
-                throw;
-            }
+            // Do not fail successful authentication due to re-hash persistence issues; log only
+            _logger.LogError(ex, "Failed to re-hash password for user {UserAccountId}", user.Id);
         }
 
         return true;

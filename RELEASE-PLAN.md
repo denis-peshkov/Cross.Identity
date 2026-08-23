@@ -18,12 +18,7 @@
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
-### 49. Re-hash `SaveChanges` глотает cancellation (CR 2026-08-23)
-`UserService.ValidatePasswordAsync`: `catch (Exception)` при `needRehash` перехватывает `OperationCanceledException` → успешная auth при отмене. Ловить только `DbUpdateException`; cancellation пробрасывать.
-
----
-
-## Низкий (техдолг / несогласованности)
+### 39. Idle revoke double-audit? (CR)
 
 - `TwoFactorEnabled` — мёртвое поле в entity, в auth pipeline не используется.
 - `DeveloperMode` → `LastCode` в bag + skip send (`Authentication:DeveloperMode`). Утечка OTP через API response, если включить в prod.
@@ -185,6 +180,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ CR: PII в auth step logs (2026-08-23) | см. «Принято» #20 — forensics by design |
 | ✅ #50 ExternalLogin PK bigint→Guid (CR) | `1_11_auth_UsersExternalLogins_UserExternalLoginIdToGuid.sql`; `docs/BREAKING.md` |
 | ✅ #48 Refresh Empty при SessionBindingCheckIp (CR) | `ValidationException` если `Empty` + anchor; docs/API; `Empty` OK на logout/revoke |
+| ✅ #49 Re-hash swallow cancellation (CR) | `ValidatePasswordAsync`: `catch (DbUpdateException) when (needRehash)`; cancellation пробрасывается |
 
 ---
 
@@ -207,8 +203,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-1. **#49:** re-hash cancellation.
-2. **M13–M14:** half-validate API docs / misuse guidance.
-3. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
-4. **M39:** idle double-audit.
-5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.
+1. **M13–M14:** half-validate API docs / misuse guidance.
+2. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
+3. **M39:** idle double-audit.
+4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.

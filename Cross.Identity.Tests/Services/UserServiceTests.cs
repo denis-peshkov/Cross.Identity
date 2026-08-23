@@ -1027,6 +1027,43 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenPasswordNeedingRehash_WhenValidatePasswordAsyncCancelled_ThenThrowsOperationCanceledAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var email = "test@example.com";
+        var password = "P@ssw0rd!";
+        var oldHash = "$pbkdf2$old";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = email,
+            PasswordPhc = oldHash,
+            PasswordPepperVersion = 1,
+        });
+        _pepperVault.Setup(p => p.TryGetValue((short)1, out It.Ref<string>.IsAny)).Returns((short v, out string p) =>
+        {
+            p = "pepper";
+            return true;
+        });
+        _pepperVault.Setup(p => p.CurrentVersion).Returns((short)2);
+        _pepperVault.Setup(p => p.TryGetCurrentValue(out It.Ref<string>.IsAny)).Returns((out string p) =>
+        {
+            p = "new-pepper";
+            return true;
+        });
+        _hasher.Setup(h => h.Verify(password, oldHash, "pepper")).Returns(PasswordVerificationEnum.SuccessRehashNeeded);
+        _hasher.Setup(h => h.Hash(password, "new-pepper")).Returns("$pbkdf2$new");
+
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        var act = () => _userService.ValidatePasswordAsync("Email", email, password, cts.Token);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmptySelectorValue_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
         var result = await _userService.ValidatePasswordAsync("Email", "   ", "pass", CancellationToken.None);
