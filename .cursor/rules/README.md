@@ -13,6 +13,13 @@
 
 - `.cursor/triage/` - `gh` wrapper, CI runners (`collect-data.sh`, `post-pr-triage.mjs`), reports in `docs/`
 
+### Cursor skills (project)
+
+- `.cursor/skills/cross-identity-db-scripts/` - DbUp `1_PreDeployment` append-only migrations (SqlServer/PostgreSQL/MySQL)
+- `.cursor/skills/cross-identity-triage/` - issue + PR triage orchestrator
+- `.cursor/skills/issue-triage/` - GitHub issues
+- `.cursor/skills/pr-triage/` - GitHub PRs
+
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules
 - `101-backend-architecture.mdc` - Backend architecture

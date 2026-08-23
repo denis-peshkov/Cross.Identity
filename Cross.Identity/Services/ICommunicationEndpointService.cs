@@ -3,7 +3,7 @@
 /// <summary>
 /// Manages per-user communication endpoints and the single preferred delivery channel.
 /// Preferred / trusted delivery uses only <c>IsVerified</c> endpoints; OTP may also fall back
-/// to an unconfirmed <c>UsersAccounts.Email</c> or <c>PhoneNumber</c> so a newly added contact can be confirmed.
+/// to an unverified <c>UsersAccounts.Email</c> or <c>PhoneNumber</c> so a newly added contact can be verified.
 /// Used by process steps:
 /// <list type="bullet">
 /// <item><description><c>SendCodeStep</c> / <c>VerifyCodeStep</c> — <see cref="ResolveOtpTargetAsync"/></description></item>
@@ -70,14 +70,14 @@ public interface ICommunicationEndpointService
     /// <summary>
     /// Resolve where to deliver <em>trusted</em> messages (for example password-changed notify).
     /// Order: <c>Authentication:LockChannelAsEmail</c> → preferred verified endpoint → email
-    /// (verified email endpoint, else confirmed <c>UsersAccounts.Email</c>) → phone
-    /// (verified SMS endpoint, else confirmed <c>UsersAccounts.PhoneNumber</c>).
+    /// (verified email endpoint, else verified <c>UsersAccounts.Email</c>) → phone
+    /// (verified SMS endpoint, else verified <c>UsersAccounts.PhoneNumber</c>).
     /// </summary>
     /// <param name="userId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Channel and address for delivery.</returns>
     /// <exception cref="ValidationException">
-    /// No preferred verified channel and no confirmed account email or phone (or no email when lock-as-email is on).
+    /// No preferred verified channel and no verified account email or phone (or no email when lock-as-email is on).
     /// </exception>
     Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
@@ -85,7 +85,7 @@ public interface ICommunicationEndpointService
 
     /// <summary>
     /// Resolve OTP send/verify target (same order as <see cref="ResolveDeliveryTargetAsync"/>),
-    /// but account email/phone fallback also allows <em>unconfirmed</em> account contacts
+    /// but account email/phone fallback also allows <em>unverified</em> account contacts
     /// (chicken-and-egg for confirmation). Messenger channels map to <see cref="ChannelEnum.Sms"/>
     /// until messenger OTP senders are implemented.
     /// </summary>
@@ -111,8 +111,8 @@ public interface ICommunicationEndpointService
 
     /// <summary>
     /// Upsert verified endpoints from <c>UsersAccounts</c> email/phone when the corresponding
-    /// confirmation flags are set (<c>EmailConfirmed</c> / <c>PhoneNumberConfirmed</c>).
-    /// Called after successful code validation that confirms those contacts.
+    /// verification flags are set (<c>EmailVerified</c> / <c>PhoneNumberVerified</c>).
+    /// Called after successful code validation that verifies those contacts.
     /// </summary>
     /// <param name="userId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

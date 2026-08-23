@@ -17,8 +17,8 @@ CREATE TABLE `auth`.`UsersAccounts`
     `SecurityStamp`         CHAR(36)     NULL,
     `ConcurrencyStamp`      CHAR(36)     NOT NULL,
 
-    `EmailConfirmed`        TINYINT(1)   NOT NULL,
-    `PhoneNumberConfirmed`  TINYINT(1)   NOT NULL,
+    `EmailVerified`        TINYINT(1)   NOT NULL,
+    `PhoneNumberVerified`  TINYINT(1)   NOT NULL,
     `TwoFactorEnabled`      TINYINT(1)   NOT NULL,
 
     `IsActive`              TINYINT(1)   NOT NULL,
@@ -34,7 +34,7 @@ CREATE UNIQUE INDEX `UX_auth_UsersAccounts_UserName`
     ON `auth`.`UsersAccounts` (`NormalizedUserName`);
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Email`
-    ON `auth`.`UsersAccounts` ((IF(`EmailConfirmed`, `Email`, NULL)));
+    ON `auth`.`UsersAccounts` ((IF(`EmailVerified`, `Email`, NULL)));
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Phone`
-    ON `auth`.`UsersAccounts` ((IF(`PhoneNumberConfirmed`, `PhoneNumber`, NULL)));
+    ON `auth`.`UsersAccounts` ((IF(`PhoneNumberVerified`, `PhoneNumber`, NULL)));

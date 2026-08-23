@@ -17,8 +17,8 @@ CREATE TABLE auth."UsersAccounts"
     "SecurityStamp"         uuid         NULL,
     "ConcurrencyStamp"      uuid         NOT NULL,
 
-    "EmailConfirmed"        boolean      NOT NULL,
-    "PhoneNumberConfirmed"  boolean      NOT NULL,
+    "EmailVerified"        boolean      NOT NULL,
+    "PhoneNumberVerified"  boolean      NOT NULL,
     "TwoFactorEnabled"      boolean      NOT NULL,
 
     "IsActive"              boolean      NOT NULL,
@@ -35,8 +35,8 @@ CREATE UNIQUE INDEX "UX_auth_UsersAccounts_UserName"
 
 CREATE UNIQUE INDEX "UX_auth_UsersAccounts_Email"
     ON auth."UsersAccounts" ("Email")
-    WHERE "Email" IS NOT NULL AND "EmailConfirmed" = true;
+    WHERE "Email" IS NOT NULL AND "EmailVerified" = true;
 
 CREATE UNIQUE INDEX "UX_auth_UsersAccounts_Phone"
     ON auth."UsersAccounts" ("PhoneNumber")
-    WHERE "PhoneNumber" IS NOT NULL AND "PhoneNumberConfirmed" = true;
+    WHERE "PhoneNumber" IS NOT NULL AND "PhoneNumberVerified" = true;

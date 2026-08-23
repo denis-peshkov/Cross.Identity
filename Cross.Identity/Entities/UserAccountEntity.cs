@@ -87,18 +87,18 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public Guid ConcurrencyStamp { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if a user has confirmed their email address.
+    /// Gets or sets a flag indicating if a user has verified their email address.
     /// </summary>
-    /// <value>True if the email address has been confirmed, otherwise false.</value>
+    /// <value>True if the email address has been verified, otherwise false.</value>
     [PersonalData]
-    public bool EmailConfirmed { get; set; }
+    public bool EmailVerified { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating if a user has confirmed their telephone address.
+    /// Gets or sets a flag indicating if a user has verified their telephone address.
     /// </summary>
-    /// <value>True if the telephone number has been confirmed, otherwise false.</value>
+    /// <value>True if the telephone number has been verified, otherwise false.</value>
     [PersonalData]
-    public bool PhoneNumberConfirmed { get; set; }
+    public bool PhoneNumberVerified { get; set; }
 
     /// <summary>
     /// Gets or sets a flag indicating if two factor authentication is enabled for this user.

@@ -1,7 +1,7 @@
-namespace Cross.Identity.Services.Helpers;
+﻿namespace Cross.Identity.Services.Helpers;
 
 /// <summary>
-/// Account-level guards: activation state and confirmed contact uniqueness.
+/// Account-level guards: activation state and verified contact uniqueness.
 /// </summary>
 internal static class UserAccountGuard
 {
@@ -38,7 +38,7 @@ internal static class UserAccountGuard
         }
     }
 
-    public static async Task EnsureNoOtherConfirmedEmailAsync(
+    public static async Task EnsureNoOtherVerifiedEmailAsync(
         IdentityContext context,
         Guid userId,
         string normalizedEmail,
@@ -49,7 +49,7 @@ internal static class UserAccountGuard
         var conflict = await context.UsersAccounts
             .AsNoTracking()
             .AnyAsync(
-                x => x.Email == normalizedEmail && x.EmailConfirmed && x.Id != userId,
+                x => x.Email == normalizedEmail && x.EmailVerified && x.Id != userId,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -59,7 +59,7 @@ internal static class UserAccountGuard
         }
     }
 
-    public static async Task EnsureNoOtherConfirmedPhoneAsync(
+    public static async Task EnsureNoOtherVerifiedPhoneAsync(
         IdentityContext context,
         Guid userId,
         string normalizedPhone,
@@ -70,7 +70,7 @@ internal static class UserAccountGuard
         var conflict = await context.UsersAccounts
             .AsNoTracking()
             .AnyAsync(
-                x => x.PhoneNumber == normalizedPhone && x.PhoneNumberConfirmed && x.Id != userId,
+                x => x.PhoneNumber == normalizedPhone && x.PhoneNumberVerified && x.Id != userId,
                 cancellationToken)
             .ConfigureAwait(false);
 

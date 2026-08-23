@@ -60,7 +60,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = root.GetProperty("sub").GetString() ?? string.Empty,
             Email = root.TryGetProperty("email", out var email) ? email.GetString() : null,
-            EmailConfirmed = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
+            EmailVerified = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
             DisplayName = root.TryGetProperty("name", out var name) ? name.GetString() : null,
             AvatarUrl = root.TryGetProperty("picture", out var picture) ? picture.GetString() : null,
         };
@@ -87,7 +87,7 @@ internal static class ExternalOAuthProviders
                 : null;
 
         // Graph mail/UPN alone is not mailbox attestation (admin-editable / non-SMTP UPN).
-        // EmailConfirmed only when OIDC userinfo supplies a non-empty email AND email_verified.
+        // EmailVerified only when OIDC userinfo supplies a non-empty email AND email_verified.
         string? email = graphEmail;
         string? oidcEmailAddress = null;
         var oidcEmailVerified = false;
@@ -121,7 +121,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = me.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailConfirmed = oidcEmailVerified && !string.IsNullOrWhiteSpace(oidcEmailAddress),
+            EmailVerified = oidcEmailVerified && !string.IsNullOrWhiteSpace(oidcEmailAddress),
             DisplayName = me.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
         };
     }
@@ -181,7 +181,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = providerUserId,
             Email = email,
-            EmailConfirmed = !string.IsNullOrWhiteSpace(email),
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
             DisplayName = displayName,
             AvatarUrl = avatarUrl,
         };

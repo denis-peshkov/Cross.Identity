@@ -23,7 +23,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     public async Task Upsert_FirstVerified_BecomesPreferred()
     {
         var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "a@example.com", EmailConfirmed = true });
+        AddToDb(new UserAccountEntity { Id = userId, Email = "a@example.com", EmailVerified = true });
 
         var dto = await _service.UpsertAsync(
             userId, ChannelEnum.Email, "a@example.com", CommunicationEndpointSource.Account, isVerified: true);
@@ -81,7 +81,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var phone = "+79161234567";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberConfirmed = true });
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberVerified = true });
 
         await _service.UpsertAsync(userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
         var tg = await _service.UpsertAsync(
@@ -119,7 +119,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         {
             Id = userId,
             Email = "fallback@example.com",
-            EmailConfirmed = true,
+            EmailVerified = true,
         });
 
         // Verified email endpoint that is not preferred (clear preferred after upsert of phone-only preferred then remove)
@@ -152,9 +152,9 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         {
             Id = userId,
             Email = "locked@example.com",
-            EmailConfirmed = true,
+            EmailVerified = true,
             PhoneNumber = phone,
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
         });
 
         var locked = new CommunicationEndpointService(
@@ -174,14 +174,14 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ResolveOtpTarget_WhenAccountEmailUnconfirmed_AllowsFallback()
+    public async Task ResolveOtpTarget_WhenAccountEmailUnverified_AllowsFallback()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             Email = "new@example.com",
-            EmailConfirmed = false,
+            EmailVerified = false,
         });
 
         var otp = await _service.ResolveOtpTargetAsync(userId);
@@ -191,24 +191,24 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ResolveDeliveryTarget_WhenAccountEmailUnconfirmed_DoesNotFallback()
+    public async Task ResolveDeliveryTarget_WhenAccountEmailUnverified_DoesNotFallback()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             Email = "new@example.com",
-            EmailConfirmed = false,
+            EmailVerified = false,
         });
 
         var act = () => _service.ResolveDeliveryTargetAsync(userId);
 
         await act.Should().ThrowAsync<ValidationException>()
-            .WithMessage("*confirmed email or phone*");
+            .WithMessage("*verified email or phone*");
     }
 
     [Test]
-    public async Task ResolveDeliveryTarget_WhenPhoneOnlyConfirmed_FallsBackToAccountPhone()
+    public async Task ResolveDeliveryTarget_WhenPhoneOnlyVerified_FallsBackToAccountPhone()
     {
         var userId = Guid.NewGuid();
         var phone = "+79161234567";
@@ -216,7 +216,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         {
             Id = userId,
             PhoneNumber = phone,
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
         });
 
         var target = await _service.ResolveDeliveryTargetAsync(userId);
@@ -226,7 +226,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ResolveOtpTarget_WhenPhoneOnlyUnconfirmed_AllowsFallback()
+    public async Task ResolveOtpTarget_WhenPhoneOnlyUnverified_AllowsFallback()
     {
         var userId = Guid.NewGuid();
         var phone = "+79169876543";
@@ -234,7 +234,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         {
             Id = userId,
             PhoneNumber = phone,
-            PhoneNumberConfirmed = false,
+            PhoneNumberVerified = false,
         });
 
         var otp = await _service.ResolveOtpTargetAsync(userId);
@@ -244,31 +244,31 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
-    public async Task ResolveDeliveryTarget_WhenPhoneOnlyUnconfirmed_DoesNotFallback()
+    public async Task ResolveDeliveryTarget_WhenPhoneOnlyUnverified_DoesNotFallback()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             PhoneNumber = "+79161112233",
-            PhoneNumberConfirmed = false,
+            PhoneNumberVerified = false,
         });
 
         var act = () => _service.ResolveDeliveryTargetAsync(userId);
 
         await act.Should().ThrowAsync<ValidationException>()
-            .WithMessage("*confirmed email or phone*");
+            .WithMessage("*verified email or phone*");
     }
 
     [Test]
-    public async Task ResolveDeliveryTarget_WhenLockChannelAsEmailAndUnconfirmed_Throws()
+    public async Task ResolveDeliveryTarget_WhenLockChannelAsEmailAndUnverified_Throws()
     {
         var userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             Email = "new@example.com",
-            EmailConfirmed = false,
+            EmailVerified = false,
         });
 
         var locked = new CommunicationEndpointService(
@@ -280,7 +280,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var act = () => locked.ResolveDeliveryTargetAsync(userId);
 
         await act.Should().ThrowAsync<ValidationException>()
-            .WithMessage("*confirmed email*");
+            .WithMessage("*verified email*");
     }
 
     [Test]
@@ -291,9 +291,9 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         {
             Id = userId,
             Email = "sync@example.com",
-            EmailConfirmed = true,
+            EmailVerified = true,
             PhoneNumber = "+40722123456",
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
         });
 
         await _service.SyncAccountContactsAsync(userId);

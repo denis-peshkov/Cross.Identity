@@ -68,7 +68,7 @@ internal sealed class UserService : IUserService
             userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
-        return await PreferConfirmedContact(userAccountsFiltered, field)
+        return await PreferVerifiedContact(userAccountsFiltered, field)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false)
             ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
@@ -97,12 +97,12 @@ internal sealed class UserService : IUserService
             throw new InvalidOperationException("UserName already exists.");
         if (normalizedEmail is not null
             && await _context.UsersAccounts.AnyAsync(
-                u => u.Email == normalizedEmail && u.EmailConfirmed,
+                u => u.Email == normalizedEmail && u.EmailVerified,
                 cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("Email already exists.");
         if (normalizedPhone is not null
             && await _context.UsersAccounts.AnyAsync(
-                u => u.PhoneNumber == normalizedPhone && u.PhoneNumberConfirmed,
+                u => u.PhoneNumber == normalizedPhone && u.PhoneNumberVerified,
                 cancellationToken).ConfigureAwait(false))
             throw new InvalidOperationException("PhoneNumber already exists.");
 
@@ -124,8 +124,8 @@ internal sealed class UserService : IUserService
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
             PasswordPepperVersion = pepperVersion,
-            EmailConfirmed = false,
-            PhoneNumberConfirmed = false,
+            EmailVerified = false,
+            PhoneNumberVerified = false,
             TwoFactorEnabled = false,
             LockoutEnabled = _options.Lockout.LockoutEnabled,
             AccessFailedCount = 0,
@@ -268,24 +268,24 @@ internal sealed class UserService : IUserService
         if (field == nameof(UserAccountEntity.Email))
         {
             var normalizedEmail = user.Email
-                ?? throw new InvalidOperationException("Email is required to confirm email.");
-            await UserAccountGuard.EnsureNoOtherConfirmedEmailAsync(
+                ?? throw new InvalidOperationException("Email is required to verify email.");
+            await UserAccountGuard.EnsureNoOtherVerifiedEmailAsync(
                 _context,
                 user.Id,
                 normalizedEmail,
                 cancellationToken).ConfigureAwait(false);
-            user.EmailConfirmed = true;
+            user.EmailVerified = true;
         }
         else if (field == nameof(UserAccountEntity.PhoneNumber))
         {
             var normalizedPhone = user.PhoneNumber
-                ?? throw new InvalidOperationException("PhoneNumber is required to confirm phone.");
-            await UserAccountGuard.EnsureNoOtherConfirmedPhoneAsync(
+                ?? throw new InvalidOperationException("PhoneNumber is required to verify phone.");
+            await UserAccountGuard.EnsureNoOtherVerifiedPhoneAsync(
                 _context,
                 user.Id,
                 normalizedPhone,
                 cancellationToken).ConfigureAwait(false);
-            user.PhoneNumberConfirmed = true;
+            user.PhoneNumberVerified = true;
         }
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -363,7 +363,7 @@ internal sealed class UserService : IUserService
         if (string.IsNullOrWhiteSpace(value))
             return null;
 
-        return await PreferConfirmedContact(
+        return await PreferVerifiedContact(
                 _context.UsersAccounts.Where(u => EF.Property<string>(u, field) == value),
                 field)
             .FirstOrDefaultAsync(cancellationToken)
@@ -371,16 +371,16 @@ internal sealed class UserService : IUserService
     }
 
     /// <summary>
-    /// When several rows share Email/Phone (unique only among confirmed), prefer the confirmed one.
+    /// When several rows share Email/Phone (unique only among verified), prefer the verified one.
     /// </summary>
-    private static IQueryable<UserAccountEntity> PreferConfirmedContact(
+    private static IQueryable<UserAccountEntity> PreferVerifiedContact(
         IQueryable<UserAccountEntity> query,
         string field)
     {
         return field switch
         {
-            nameof(UserAccountEntity.Email) => query.OrderByDescending(u => u.EmailConfirmed),
-            nameof(UserAccountEntity.PhoneNumber) => query.OrderByDescending(u => u.PhoneNumberConfirmed),
+            nameof(UserAccountEntity.Email) => query.OrderByDescending(u => u.EmailVerified),
+            nameof(UserAccountEntity.PhoneNumber) => query.OrderByDescending(u => u.PhoneNumberVerified),
             _ => query,
         };
     }

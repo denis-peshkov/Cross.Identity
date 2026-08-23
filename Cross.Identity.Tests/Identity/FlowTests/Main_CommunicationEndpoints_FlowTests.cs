@@ -58,7 +58,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     public async Task CommunicationEndpointsGetAll_WhenUserIdProvided_ShouldReturnEndpoints()
     {
         var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "c@example.com", EmailConfirmed = true });
+        AddToDb(new UserAccountEntity { Id = userId, Email = "c@example.com", EmailVerified = true });
         await _endpoints.SyncAccountContactsAsync(userId);
         var refresh = await IssueRefreshTokenAsync(userId);
 
@@ -86,8 +86,8 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
             Id = userId,
             Email = "a@example.com",
             PhoneNumber = "+79161234567",
-            EmailConfirmed = true,
-            PhoneNumberConfirmed = true,
+            EmailVerified = true,
+            PhoneNumberVerified = true,
         });
         await _endpoints.SyncAccountContactsAsync(userId);
         var refresh = await IssueRefreshTokenAsync(userId);
@@ -121,8 +121,8 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     {
         var ownerUserId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = ownerUserId, Email = "owner@example.com", EmailConfirmed = true });
-        AddToDb(new UserAccountEntity { Id = otherUserId, Email = "other@example.com", EmailConfirmed = true });
+        AddToDb(new UserAccountEntity { Id = ownerUserId, Email = "owner@example.com", EmailVerified = true });
+        AddToDb(new UserAccountEntity { Id = otherUserId, Email = "other@example.com", EmailVerified = true });
         var ownerRefresh = await IssueRefreshTokenAsync(ownerUserId);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(

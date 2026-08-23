@@ -252,7 +252,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         {
             Id = _userId,
             Email = Email.ToLowerInvariant(),
-            EmailConfirmed = true,
+            EmailVerified = true,
             IsActive = true,
         });
         AddToDb(new EmailVerificationEntity

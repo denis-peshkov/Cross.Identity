@@ -173,10 +173,10 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, ClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, ClientContext, ct)` |
 | User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserId` trusted without session proof | bag `UserId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
-| OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is confirmed (`ExternalOAuthProfile.EmailConfirmed`); links to **confirmed** account only |
-| `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
-| `UsersAccounts.PhoneNumber` uniqueness | unique on `PhoneNumber` (all rows) | unique only when `PhoneNumberConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
-| Lookup by Email / PhoneNumber | `FirstOrDefault` (undefined which row) | **prefer** `EmailConfirmed` / `PhoneNumberConfirmed` (`GetUserByAsync` / password / code paths) |
+| OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is verified (`ExternalOAuthProfile.EmailVerified`); links to **verified** account only |
+| `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailVerified = 1` (filtered index); multiple unverified rows allowed |
+| `UsersAccounts.PhoneNumber` uniqueness | unique on `PhoneNumber` (all rows) | unique only when `PhoneNumberVerified = 1` (filtered index); multiple unverified rows allowed |
+| Lookup by Email / PhoneNumber | `FirstOrDefault` (undefined which row) | **prefer** `EmailVerified` / `PhoneNumberVerified` (`GetUserByAsync` / password / code paths) |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
@@ -397,7 +397,7 @@ Host must pass `UserId` in the bag (no ambient auth user).
 | Stock JSON `channel` on `sendCode` / `verifyCode` / `resetPassword` | required enum | **removed** — ignored if present in overrides |
 | Channel selection | largely login field + JSON `channel` | `ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync` |
 | Order | field-based | `Authentication:LockChannelAsEmail` → preferred verified → email → **phone** |
-| Account contact fallback | any `UsersAccounts.Email` | **OTP**: unconfirmed email **or** phone allowed. **Notify**: only `EmailConfirmed` / `PhoneNumberConfirmed` |
+| Account contact fallback | any `UsersAccounts.Email` | **OTP**: unverified email **or** phone allowed. **Notify**: only `EmailVerified` / `PhoneNumberVerified` |
 | API | `ResolveDeliveryChannelAsync` / `ResolveOtpChannelAsync` | **`ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync`** → `DeliveryTarget` (channel + address) |
 | `VerifyCodeStep` | `Selector.ChannelForField` / `CodeService` by login value | same resolved OTP target as send |
 
@@ -410,19 +410,29 @@ Host must pass `UserId` in the bag (no ambient auth user).
 | Signature | `VerifyAsync(channel, identity, code, ct)` | `VerifyAsync(userId, channel, identity, code, ct)` |
 | Lookup | latest active row by email/phone only | same **and** `UserAccountId == userId` |
 
-**Action:** pass the resolved user id (stock `VerifyCodeStep` already does). Prevents accepting another account's OTP when the same unconfirmed email/phone exists on multiple rows.
+**Action:** pass the resolved user id (stock `VerifyCodeStep` already does). Prevents accepting another account's OTP when the same unverified email/phone exists on multiple rows.
 
-### Microsoft OAuth: `EmailConfirmed` requires OIDC attestation
+### Microsoft OAuth: `EmailVerified` requires OIDC attestation
 
 | Area | Was | Now |
 |------|-----|-----|
-| `ExternalOAuthProfile` flag | `EmailVerified` | **`EmailConfirmed`** (same meaning; aligns with `UsersAccounts.EmailConfirmed`) |
+| `ExternalOAuthProfile` flag | `EmailConfirmed` | **`EmailVerified`** (aligns with `UsersAccounts.EmailVerified`) |
 | Profile source | Graph `/me` only | Graph `/me` (id, displayName, fallback email) + OIDC `https://graph.microsoft.com/oidc/userinfo` |
-| Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has **non-empty `email`** and `email_verified: true` (Graph fallback email alone never confirms) |
+| Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has **non-empty `email`** and `email_verified: true` (Graph fallback email alone never verifies) |
 
-Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a confirmed local account. `email_verified` without an OIDC `email` claim also does **not** confirm a Graph-derived address (common on Entra work accounts).
+Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verified local account. `email_verified` without an OIDC `email` claim also does **not** verify a Graph-derived address (common on Entra work accounts).
 
-**Action:** ensure the Microsoft app registration token has scopes that allow OIDC userinfo (`openid` `email` `profile` `User.Read` — already the library default). Expect new Microsoft users without OIDC `email` + `email_verified` to land as unconfirmed / without email auto-link until the mailbox is attested.
+**Action:** ensure the Microsoft app registration token has scopes that allow OIDC userinfo (`openid` `email` `profile` `User.Read` — already the library default). Expect new Microsoft users without OIDC `email` + `email_verified` to land as unverified / without email auto-link until the mailbox is attested.
+
+### `EmailConfirmed` / `PhoneNumberConfirmed` → `EmailVerified` / `PhoneNumberVerified`
+
+| Area | Was | Now |
+|------|-----|-----|
+| `UserAccountEntity` | `EmailConfirmed`, `PhoneNumberConfirmed` | **`EmailVerified`**, **`PhoneNumberVerified`** |
+| `ExternalOAuthProfile` | `EmailConfirmed` | **`EmailVerified`** |
+| DDL `auth.UsersAccounts` | same old column names | renamed columns; filtered unique indexes use `EmailVerified` / `PhoneNumberVerified` |
+
+**Action:** on existing databases run, in order: `1_07_auth_UsersAccounts_RenameConfirmedToVerified.sql`, then `1_08_auth_UsersAccounts_EmailVerifiedUnique.sql`, then `1_09_auth_UsersAccounts_PhoneNumberVerifiedUnique.sql`. Do **not** edit or re-run `1_02` / `1_03` (PreDeployment scripts are append-only). Update host EF mappings / queries. Greenfield `2_01_auth_UsersAccounts.sql` already uses `*Verified`.
 
 ### `UsersAccounts.CreatedBy` removed
 

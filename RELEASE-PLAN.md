@@ -36,8 +36,8 @@
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
 
-### 29. OAuth unconfirmed email collision (CR)
-`ExternalLoginService` — даже при `profile.EmailConfirmed` отвергать merge, если локальный email уже есть как unconfirmed row.
+### 29. OAuth unverified email collision (CR)
+`ExternalLoginService` — даже при `profile.EmailVerified` отвергать merge, если локальный email уже есть как unverified row.
 
 ### 30. `ICodeService.SendAsync` `userId: string` (CR)
 `SendAsync(string userId)` vs `VerifyAsync(Guid)` — выровнять на `Guid`.
@@ -109,7 +109,7 @@ CR: минимизировать PII; сейчас намеренно для rev
 `IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
 
 ### Delivery channel resolution (новая модель)
-OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unconfirmed allowed for OTP confirm). Notify: тот же порядок, email/phone только confirmed. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
+OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unverified allowed for OTP confirm). Notify: тот же порядок, email/phone только verified. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
 
 ### Публичные half-validate API (#13, #14)
 Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
@@ -141,7 +141,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 | # | Суть |
 |---|------|
-| OAuth takeover по email | auto-link только при `profile.EmailConfirmed` + local confirmed |
+| OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
 | Account linking без auth | linking требует `RefreshToken` того же user |
 | IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
 | OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
@@ -163,10 +163,10 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | `CreatedBy` | колонка удалена |
 | #2 TokenStep ↔ SendCode channel | `ValidateCodeAsync` → `ResolveOtpTargetAsync` |
 | #3 VerifyAsync без userId | `VerifyAsync(userId, …)` + `UserAccountId` match |
-| #4 Lookup без PreferConfirmed | `OrderByDescending` confirmed перед FirstOrDefault |
-| #5 Microsoft EmailConfirmed | только OIDC `email` + `email_verified` (не Graph fallback) |
-| #21 Microsoft verified без OIDC email | Graph mail не confirmed при `email_verified` без userinfo `email` |
-| #6 OTP vs notify email | OTP: unconfirmed OK; notify: confirmed only |
+| #4 Lookup без PreferVerified | `OrderByDescending` verified перед FirstOrDefault |
+| #5 Microsoft EmailVerified | только OIDC `email` + `email_verified` (не Graph fallback) |
+| #21 Microsoft verified без OIDC email | Graph mail не verified при `email_verified` без userinfo `email` |
+| #6 OTP vs notify email | OTP: unverified OK; notify: verified only |
 | #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
 | #8 Enumeration на шагах | единый `Invalid credentials.` + log |
 | #10 Phone fallback | account phone после email (OTP/notify rules) |

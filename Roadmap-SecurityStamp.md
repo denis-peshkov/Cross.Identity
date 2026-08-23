@@ -85,7 +85,7 @@
 **Типичный строгий вариант:**
 
 1. confirm нового email/phone number
-2. обновить поле + `EmailConfirmed`/`PhoneConfirmed`
+2. обновить поле + `EmailVerified`/`PhoneVerified`
 3. stamp rotate
 4. revoke all (или хотя бы все кроме текущей сессии — продуктовое решение)
 

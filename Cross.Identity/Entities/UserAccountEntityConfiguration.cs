@@ -16,11 +16,11 @@ internal class UserAccountEntityConfiguration : IEntityTypeConfiguration<UserAcc
         builder.HasIndex(x => x.Email)
             .IsUnique()
             .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersAccounts)}_Email")
-            .HasFilter("[EmailConfirmed] = 1 AND [Email] IS NOT NULL");
+            .HasFilter("[EmailVerified] = 1 AND [Email] IS NOT NULL");
         builder.HasIndex(x => x.PhoneNumber)
             .IsUnique()
             .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersAccounts)}_Phone")
-            .HasFilter("[PhoneNumberConfirmed] = 1 AND [PhoneNumber] IS NOT NULL");
+            .HasFilter("[PhoneNumberVerified] = 1 AND [PhoneNumber] IS NOT NULL");
         builder.HasMany(x => x.ExternalLogins)
             .WithOne(x => x.UserAccount)
             .HasForeignKey(x => x.UserAccountId)

@@ -18,8 +18,8 @@ CREATE TABLE [auth].[UsersAccounts]
     [SecurityStamp]         UNIQUEIDENTIFIER  NULL,
     [ConcurrencyStamp]      UNIQUEIDENTIFIER  NOT NULL,
 
-    [EmailConfirmed]        BIT               NOT NULL,
-    [PhoneNumberConfirmed]  BIT               NOT NULL,
+    [EmailVerified]        BIT               NOT NULL,
+    [PhoneNumberVerified]  BIT               NOT NULL,
     [TwoFactorEnabled]      BIT               NOT NULL,
 
     [IsActive]              BIT               NOT NULL,
@@ -37,9 +37,9 @@ CREATE UNIQUE INDEX [UX_auth_UsersAccounts_UserName]
 GO
 CREATE UNIQUE INDEX [UX_auth_UsersAccounts_Email]
     ON [auth].[UsersAccounts]([Email])
-    WHERE [Email] IS NOT NULL AND [EmailConfirmed] = 1;
+    WHERE [Email] IS NOT NULL AND [EmailVerified] = 1;
 GO
 CREATE UNIQUE INDEX [UX_auth_UsersAccounts_Phone]
     ON [auth].[UsersAccounts]([PhoneNumber])
-    WHERE [PhoneNumber] IS NOT NULL AND [PhoneNumberConfirmed] = 1;
+    WHERE [PhoneNumber] IS NOT NULL AND [PhoneNumberVerified] = 1;
 GO

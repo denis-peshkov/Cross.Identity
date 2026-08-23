@@ -496,29 +496,29 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(normalizedEmail))
         {
-            var confirmedUserId = await _identityContext.UsersAccounts
+            var verifiedUserId = await _identityContext.UsersAccounts
                 .AsNoTracking()
-                .Where(x => x.Email == normalizedEmail && x.EmailConfirmed)
+                .Where(x => x.Email == normalizedEmail && x.EmailVerified)
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (confirmedUserId != Guid.Empty)
+            if (verifiedUserId != Guid.Empty)
             {
-                if (!profile.EmailConfirmed)
+                if (!profile.EmailVerified)
                 {
                     throw new ValidationException(
                         "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
                 }
 
-                return confirmedUserId;
+                return verifiedUserId;
             }
 
-            if (!profile.EmailConfirmed)
+            if (!profile.EmailVerified)
             {
                 var squatExists = await _identityContext.UsersAccounts
                     .AsNoTracking()
-                    .AnyAsync(x => x.Email == normalizedEmail && !x.EmailConfirmed, cancellationToken)
+                    .AnyAsync(x => x.Email == normalizedEmail && !x.EmailVerified, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (squatExists)
@@ -545,8 +545,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Email = normalizedEmail,
             UserName = userName,
             NormalizedUserName = userName.Trim().ToLowerInvariant(),
-            EmailConfirmed = profile.EmailConfirmed && !string.IsNullOrWhiteSpace(normalizedEmail),
-            PhoneNumberConfirmed = false,
+            EmailVerified = profile.EmailVerified && !string.IsNullOrWhiteSpace(normalizedEmail),
+            PhoneNumberVerified = false,
             TwoFactorEnabled = false,
             LockoutEnabled = true,
             AccessFailedCount = 0,
@@ -586,7 +586,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.AvatarUrl = profile.AvatarUrl;
             existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, profile.EmailConfirmed, cancellationToken).ConfigureAwait(false);
+            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -631,14 +631,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .FirstAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, profile.EmailConfirmed, cancellationToken).ConfigureAwait(false);
+        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SyncProviderEmailEndpointAsync(
         Guid userId,
         Guid externalLoginId,
         string? providerEmail,
-        bool emailConfirmed,
+        bool emailVerified,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(providerEmail))
@@ -652,7 +652,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 ChannelEnum.Email,
                 providerEmail,
                 CommunicationEndpointSource.ExternalProvider,
-                isVerified: emailConfirmed,
+                isVerified: emailVerified,
                 entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);

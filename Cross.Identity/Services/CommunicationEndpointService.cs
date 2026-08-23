@@ -163,14 +163,14 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     public async Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
-        => await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountContact: false, cancellationToken).ConfigureAwait(false);
+        => await ResolveTargetCoreAsync(userId, allowUnverifiedAccountContact: false, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<DeliveryTarget> ResolveOtpTargetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var target = await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountContact: true, cancellationToken).ConfigureAwait(false);
+        var target = await ResolveTargetCoreAsync(userId, allowUnverifiedAccountContact: true, cancellationToken).ConfigureAwait(false);
         return new DeliveryTarget
         {
             Channel = target.Channel.ToEmailOrSms(),
@@ -200,7 +200,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             return;
         }
 
-        if (!string.IsNullOrWhiteSpace(account.Email) && account.EmailConfirmed)
+        if (!string.IsNullOrWhiteSpace(account.Email) && account.EmailVerified)
         {
             await UpsertAsync(
                     userId,
@@ -212,7 +212,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
                 .ConfigureAwait(false);
         }
 
-        if (!string.IsNullOrWhiteSpace(account.PhoneNumber) && account.PhoneNumberConfirmed)
+        if (!string.IsNullOrWhiteSpace(account.PhoneNumber) && account.PhoneNumberVerified)
         {
             await UpsertAsync(
                     userId,
@@ -227,12 +227,12 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     private async Task<DeliveryTarget> ResolveTargetCoreAsync(
         Guid userId,
-        bool allowUnconfirmedAccountContact,
+        bool allowUnverifiedAccountContact,
         CancellationToken cancellationToken)
     {
         if (_options.LockChannelAsEmail)
         {
-            return await RequireEmailTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+            return await RequireEmailTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -242,14 +242,14 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             return ToTarget(preferred);
         }
 
-        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+        var email = await FindEmailTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
             .ConfigureAwait(false);
         if (email is not null)
         {
             return email;
         }
 
-        var phone = await FindPhoneTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+        var phone = await FindPhoneTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
             .ConfigureAwait(false);
         if (phone is not null)
         {
@@ -257,17 +257,17 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
 
         throw new ValidationException(
-            allowUnconfirmedAccountContact
+            allowUnverifiedAccountContact
                 ? "No preferred verified communication channel and no email or phone. Set a preferred endpoint or provide an email or phone number."
-                : "No preferred verified communication channel and no confirmed email or phone. Set a preferred endpoint or confirm an email or phone number.");
+                : "No preferred verified communication channel and no verified email or phone. Set a preferred endpoint or verify an email or phone number.");
     }
 
     private async Task<DeliveryTarget> RequireEmailTargetAsync(
         Guid userId,
-        bool allowUnconfirmedAccountEmail,
+        bool allowUnverifiedAccountEmail,
         CancellationToken cancellationToken)
     {
-        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountEmail, cancellationToken)
+        var email = await FindEmailTargetAsync(userId, allowUnverifiedAccountEmail, cancellationToken)
             .ConfigureAwait(false);
         if (email is not null)
         {
@@ -275,14 +275,14 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
 
         throw new ValidationException(
-            allowUnconfirmedAccountEmail
+            allowUnverifiedAccountEmail
                 ? "Authentication:LockChannelAsEmail is enabled but no email is available for the user."
-                : "Authentication:LockChannelAsEmail is enabled but no confirmed email is available for the user.");
+                : "Authentication:LockChannelAsEmail is enabled but no verified email is available for the user.");
     }
 
     private async Task<DeliveryTarget?> FindEmailTargetAsync(
         Guid userId,
-        bool allowUnconfirmedAccountEmail,
+        bool allowUnverifiedAccountEmail,
         CancellationToken cancellationToken)
     {
         var endpoint = await _context.UsersCommunicationEndpoints
@@ -301,7 +301,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         var account = await _context.UsersAccounts
             .AsNoTracking()
             .Where(x => x.Id == userId)
-            .Select(x => new { x.Email, x.EmailConfirmed })
+            .Select(x => new { x.Email, x.EmailVerified })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -310,7 +310,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             return null;
         }
 
-        if (!account.EmailConfirmed && !allowUnconfirmedAccountEmail)
+        if (!account.EmailVerified && !allowUnverifiedAccountEmail)
         {
             return null;
         }
@@ -324,7 +324,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     private async Task<DeliveryTarget?> FindPhoneTargetAsync(
         Guid userId,
-        bool allowUnconfirmedAccountPhone,
+        bool allowUnverifiedAccountPhone,
         CancellationToken cancellationToken)
     {
         var endpoint = await _context.UsersCommunicationEndpoints
@@ -343,7 +343,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         var account = await _context.UsersAccounts
             .AsNoTracking()
             .Where(x => x.Id == userId)
-            .Select(x => new { x.PhoneNumber, x.PhoneNumberConfirmed })
+            .Select(x => new { x.PhoneNumber, x.PhoneNumberVerified })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -352,7 +352,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             return null;
         }
 
-        if (!account.PhoneNumberConfirmed && !allowUnconfirmedAccountPhone)
+        if (!account.PhoneNumberVerified && !allowUnverifiedAccountPhone)
         {
             return null;
         }

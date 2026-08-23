@@ -346,7 +346,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
         account.Email.Should().Be("user@example.com");
-        account.EmailConfirmed.Should().BeTrue();
+        account.EmailVerified.Should().BeTrue();
         account.UserName.Should().Be("user@example.com");
 
         var externalLogin = await Context.UsersExternalLogins.SingleAsync();
@@ -423,7 +423,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
-            EmailConfirmed = true,
+            EmailVerified = true,
             IsActive = false,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
@@ -452,7 +452,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedEmailSquat_WhenOAuthWithVerifiedEmail_ThenCreatesConfirmedAccountAsync()
+    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithVerifiedEmail_ThenCreatesVerifiedAccountAsync()
     {
         var squatterUserId = Guid.NewGuid();
         SeedProvider("Google");
@@ -462,7 +462,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "squatter",
             NormalizedUserName = "squatter",
-            EmailConfirmed = false,
+            EmailVerified = false,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -478,13 +478,13 @@ public class ExternalLoginServiceTests : EFTestsBase
         (await Context.UsersAccounts.CountAsync()).Should().Be(2);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
         var oauthAccount = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
-        oauthAccount.EmailConfirmed.Should().BeTrue();
-        (await Context.UsersAccounts.SingleAsync(x => x.Id == squatterUserId)).EmailConfirmed.Should().BeFalse();
+        oauthAccount.EmailVerified.Should().BeTrue();
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == squatterUserId)).EmailVerified.Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenConfirmedEmailAccount_WhenOAuthWithUnverifiedEmail_ThenDoesNotLinkAsync()
+    public async Task GivenVerifiedEmailAccount_WhenOAuthWithUnverifiedEmail_ThenDoesNotLinkAsync()
     {
         var userId = Guid.NewGuid();
         SeedProvider("Google");
@@ -494,7 +494,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
-            EmailConfirmed = true,
+            EmailVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -537,7 +537,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
-            EmailConfirmed = true,
+            EmailVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -758,12 +758,12 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         completion.UserId.Should().NotBe(Guid.Empty);
         (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("ms-user-1");
-        (await Context.UsersAccounts.SingleAsync()).EmailConfirmed.Should().BeTrue();
+        (await Context.UsersAccounts.SingleAsync()).EmailVerified.Should().BeTrue();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMicrosoftGraphMailWithoutEmailConfirmed_WhenCompleteAsync_ThenCreatesUnconfirmedAccountAsync()
+    public async Task GivenMicrosoftGraphMailWithoutEmailVerified_WhenCompleteAsync_ThenCreatesUnverifiedAccountAsync()
     {
         SeedProvider("Microsoft");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -803,12 +803,12 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
         account.Email.Should().Be("ms-unverified@example.com");
-        account.EmailConfirmed.Should().BeFalse();
+        account.EmailVerified.Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMicrosoftEmailVerifiedWithoutOidcEmail_WhenCompleteAsync_ThenGraphMailRemainsUnconfirmedAsync()
+    public async Task GivenMicrosoftEmailVerifiedWithoutOidcEmail_WhenCompleteAsync_ThenGraphMailRemainsUnverifiedAsync()
     {
         SeedProvider("Microsoft");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -848,12 +848,12 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
         account.Email.Should().Be("graph-only@example.com");
-        account.EmailConfirmed.Should().BeFalse();
+        account.EmailVerified.Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenConfirmedEmailAccount_WhenMicrosoftWithoutEmailConfirmed_ThenDoesNotLinkAsync()
+    public async Task GivenVerifiedEmailAccount_WhenMicrosoftWithoutEmailVerified_ThenDoesNotLinkAsync()
     {
         var userId = Guid.NewGuid();
         SeedProvider("Microsoft");
@@ -863,7 +863,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "ms@example.com",
             UserName = "existing",
             NormalizedUserName = "existing",
-            EmailConfirmed = true,
+            EmailVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -1129,7 +1129,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = "user@example.com",
             UserName = "user",
             NormalizedUserName = "user",
-            EmailConfirmed = true,
+            EmailVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),

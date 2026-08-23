@@ -101,14 +101,14 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenConfirmedEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    public async Task GivenVerifiedEmail_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         var email = "existing@example.com";
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
             Email = email,
-            EmailConfirmed = true,
+            EmailVerified = true,
         });
 
         var map = new Dictionary<string, object?>
@@ -125,14 +125,14 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedEmailSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
+    public async Task GivenUnverifiedEmailSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
     {
         var email = "victim@example.com";
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
             Email = email,
-            EmailConfirmed = false,
+            EmailVerified = false,
         });
 
         var map = new Dictionary<string, object?>
@@ -145,19 +145,19 @@ public class UserServiceTests : EFTestsBase
 
         userId.Should().NotBeNullOrEmpty();
         (await Context.UsersAccounts.CountAsync(x => x.Email == email)).Should().Be(2);
-        (await Context.UsersAccounts.CountAsync(x => x.Email == email && x.EmailConfirmed)).Should().Be(0);
+        (await Context.UsersAccounts.CountAsync(x => x.Email == email && x.EmailVerified)).Should().Be(0);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenConfirmedPhone_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
+    public async Task GivenVerifiedPhone_WhenCreateUserAsync_ThenThrowsInvalidOperationExceptionAsync()
     {
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
             PhoneNumber = phone,
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
         });
 
         var map = new Dictionary<string, object?>
@@ -174,14 +174,14 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedPhoneSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
+    public async Task GivenUnverifiedPhoneSquat_WhenCreateUserAsync_ThenAllowsRegistrationAsync()
     {
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
             Id = Guid.NewGuid(),
             PhoneNumber = phone,
-            PhoneNumberConfirmed = false,
+            PhoneNumberVerified = false,
         });
 
         var map = new Dictionary<string, object?>
@@ -194,7 +194,7 @@ public class UserServiceTests : EFTestsBase
 
         userId.Should().NotBeNullOrEmpty();
         (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone)).Should().Be(2);
-        (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone && x.PhoneNumberConfirmed)).Should().Be(0);
+        (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone && x.PhoneNumberVerified)).Should().Be(0);
     }
 
     [Test]
@@ -333,29 +333,29 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedSquatAndConfirmedEmail_WhenGetUserByAsync_ThenPrefersConfirmedAsync()
+    public async Task GivenUnverifiedSquatAndVerifiedEmail_WhenGetUserByAsync_ThenPrefersVerifiedAsync()
     {
         var email = "shared@example.com";
         var squatId = Guid.NewGuid();
-        var confirmedId = Guid.NewGuid();
+        var verifiedId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
             Id = squatId,
             Email = email,
             UserName = "squat",
             NormalizedUserName = "squat",
-            EmailConfirmed = false,
+            EmailVerified = false,
             CreatedAt = DateTime.UtcNow.AddDays(-1),
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
         AddToDb(new UserAccountEntity
         {
-            Id = confirmedId,
+            Id = verifiedId,
             Email = email,
             UserName = "owner",
             NormalizedUserName = "owner",
-            EmailConfirmed = true,
+            EmailVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -363,17 +363,17 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserByAsync("Email", email, CancellationToken.None);
 
-        result.Id.Should().Be(confirmedId);
-        result.EmailConfirmed.Should().BeTrue();
+        result.Id.Should().Be(verifiedId);
+        result.EmailVerified.Should().BeTrue();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnconfirmedSquatAndConfirmedPhone_WhenGetUserByAsync_ThenPrefersConfirmedAsync()
+    public async Task GivenUnverifiedSquatAndVerifiedPhone_WhenGetUserByAsync_ThenPrefersVerifiedAsync()
     {
         var phone = "+79161234567";
         var squatId = Guid.NewGuid();
-        var confirmedId = Guid.NewGuid();
+        var verifiedId = Guid.NewGuid();
 
         AddToDb(new UserAccountEntity
         {
@@ -382,19 +382,19 @@ public class UserServiceTests : EFTestsBase
             PhoneNumber = phone,
             UserName = "squat-phone",
             NormalizedUserName = "squat-phone",
-            PhoneNumberConfirmed = false,
+            PhoneNumberVerified = false,
             CreatedAt = DateTime.UtcNow.AddDays(-1),
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
         AddToDb(new UserAccountEntity
         {
-            Id = confirmedId,
+            Id = verifiedId,
             Email = "owner@example.com",
             PhoneNumber = phone,
             UserName = "owner-phone",
             NormalizedUserName = "owner-phone",
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -402,8 +402,8 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserByAsync("PhoneNumber", phone, CancellationToken.None);
 
-        result.Id.Should().Be(confirmedId);
-        result.PhoneNumberConfirmed.Should().BeTrue();
+        result.Id.Should().Be(verifiedId);
+        result.PhoneNumberVerified.Should().BeTrue();
     }
 
     [Test]
@@ -671,7 +671,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var phone = "+12125551234";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberConfirmed = true });
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberVerified = true });
         var sms = await _communicationEndpoints.UpsertAsync(
             userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
         await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
@@ -703,9 +703,9 @@ public class UserServiceTests : EFTestsBase
         {
             Id = userId,
             Email = email,
-            EmailConfirmed = true,
+            EmailVerified = true,
             PhoneNumber = phone,
-            PhoneNumberConfirmed = true,
+            PhoneNumberVerified = true,
             IsActive = true,
         });
         await _communicationEndpoints.UpsertAsync(
@@ -897,7 +897,7 @@ public class UserServiceTests : EFTestsBase
             UserName = userName,
             NormalizedUserName = userName,
             Email = email,
-            EmailConfirmed = true,
+            EmailVerified = true,
             IsActive = true,
         });
         await communicationEndpoints.UpsertAsync(
@@ -1070,10 +1070,10 @@ public class UserServiceTests : EFTestsBase
         var user1 = await ctx1.UsersAccounts.SingleAsync(x => x.Id == userId);
         var user2 = await ctx2.UsersAccounts.SingleAsync(x => x.Id == userId);
 
-        user1.EmailConfirmed = true;
+        user1.EmailVerified = true;
         await ctx1.SaveChangesAsync();
 
-        user2.PhoneNumberConfirmed = true;
+        user2.PhoneNumberVerified = true;
         await FluentActions.Invoking(() => ctx2.SaveChangesAsync())
             .Should()
             .ThrowAsync<DbUpdateConcurrencyException>();
