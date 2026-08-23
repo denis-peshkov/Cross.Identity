@@ -1,5 +1,8 @@
 Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
+Закрытые пункты **всегда** помечаются зелёным чекбоксом `✅` (в заголовке и в таблице «Закрыто»).
+
 **CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — Free plan limit 150 files; полный diff 293 → scope только `Cross.Identity/` (40 findings: 22 major / 18 minor). Сырой лог: `/tmp/cr-identity.jsonl`.
 
 ---
@@ -15,13 +18,13 @@
 ### 20. PII в логах SendCode / GetUserId / ValidateCode (CR)
 `SendCodeStep`, `GetUserIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
 
-### 22. Confirm contact по selector field, не OTP-каналу (CR) — закрыто
+### ✅ 22. Confirm contact по selector field, не OTP-каналу (CR)
 `UserService.ValidateCodeAsync` — `EmailVerified` / `PhoneNumberVerified` выставляются по `otpTarget.Channel` + address, не по selector field.
 
 ### 23. OTP supersede без `userId` (CR)
 `CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
 
-### 24. SMS destination `ToLowerInvariant` (CR) — закрыто
+### ✅ 24. SMS destination `ToLowerInvariant` (CR)
 `CodeService` — send/verify используют `ChannelEnum.NormalizeAddress` (email lowercases, SMS trim-only).
 
 ### 25. Lockout: счётчик после истечения окна (CR)
@@ -173,8 +176,8 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 | #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
-| #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
-| #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
+| ✅ #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
+| ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 

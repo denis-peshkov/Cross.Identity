@@ -1,6 +1,7 @@
 ---
 description: Maintain docs/RELEASE-PLAN-dev-to-master.md and sync the "Checklist Summary" section
 globs:
+  - RELEASE-PLAN.md
   - docs/RELEASE-PLAN-dev-to-master.md
   - docs/BREAKING.md
 alwaysApply: false
@@ -10,8 +11,19 @@ alwaysApply: false
 
 ## Files
 
+- `RELEASE-PLAN.md` — library audit / hardening backlog (root)
 - `docs/RELEASE-PLAN-dev-to-master.md` — readiness checklists for `dev` → `master`
 - `docs/BREAKING.md` — breaking changes for NuGet consumers
+
+## Root `RELEASE-PLAN.md` status marks
+
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / accepted · ❌ blocker
+
+When closing an item (fixed or accepted):
+
+1. Prefix the heading with green checkbox `✅` (e.g. `### ✅ 22. …`) — do **not** use plain text «закрыто» alone.
+2. Add/update the row in **Закрыто** with `✅ #N …`.
+3. Drop the item from **Приоритет фиксов** open lists.
 
 ## Mandatory rule: "Checklist Summary"
 
