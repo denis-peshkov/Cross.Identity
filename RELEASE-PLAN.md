@@ -35,11 +35,12 @@
 
 **Исправлено (2.0):** Graph `/me` только для id/name (+ fallback email); `ExternalOAuthProfile.EmailConfirmed` только из OIDC `email_verified` на `https://graph.microsoft.com/oidc/userinfo` (как Google).
 
-### 6. OTP на неподтверждённый email
-`CommunicationEndpointService.FindEmailTargetAsync` fallback на `UsersAccounts.Email` **без** `EmailConfirmed`.
+### 6. ~~OTP/notify на неподтверждённый email~~ ✅ закрыто
+~~`FindEmailTargetAsync` fallback на `UsersAccounts.Email` без `EmailConfirmed` для всех resolve.~~
 
-**Impact:** OTP/notify на адрес, который пользователь не подтвердил.  
-**Stock flows:** SendCode, VerifyCode, ResetPassword notify (при `LockChannelAsEmail` или email-fallback).
+**Исправлено (2.0):** разделены пути:
+- **`ResolveOtpTargetAsync`** — fallback на account email **разрешён и без** `EmailConfirmed` (иначе нельзя подтвердить только что добавленный email).
+- **`ResolveDeliveryTargetAsync`** (notify, напр. после reset password) — fallback **только** при `EmailConfirmed`.
 
 ### 7. Lockout обходится OTP-логином
 `ValidatePasswordAsync` проверяет lockout; `ValidateCodeAsync` — **нет**. После lockout по паролю вход по коду всё ещё возможен.
@@ -132,7 +133,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` **игнорируется**; `N
 `IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
 
 ### Delivery channel resolution (новая модель)
-OTP/notify: `Authentication:LockChannelAsEmail` → preferred verified endpoint → email fallback. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2, #6).
+OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email (**в т.ч. unconfirmed** — подтверждение email). Notify (`ResolveDeliveryTargetAsync`): тот же порядок, но account email **только** при `EmailConfirmed` (#6). Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2).
 
 ### Публичные half-validate API (#13, #14)
 Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
@@ -186,6 +187,6 @@ OTP/notify: `Authentication:LockChannelAsEmail` → preferred verified endpoint 
 ## Приоритет фиксов
 
 1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
-2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; lookup prefer confirmed; ~~Microsoft `EmailConfirmed`~~; email fallback только confirmed; lockout на code path.
+2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; lookup prefer confirmed; ~~Microsoft `EmailConfirmed`~~; ~~email fallback только confirmed (notify) / OTP allow unconfirmed~~; lockout на code path.
 3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
 4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.

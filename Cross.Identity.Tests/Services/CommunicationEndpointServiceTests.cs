@@ -174,6 +174,63 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    public async Task ResolveOtpTarget_WhenAccountEmailUnconfirmed_AllowsFallback()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "new@example.com",
+            EmailConfirmed = false,
+        });
+
+        var otp = await _service.ResolveOtpTargetAsync(userId);
+
+        otp.Channel.Should().Be(ChannelEnum.Email);
+        otp.Address.Should().Be("new@example.com");
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenAccountEmailUnconfirmed_DoesNotFallback()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "new@example.com",
+            EmailConfirmed = false,
+        });
+
+        var act = () => _service.ResolveDeliveryTargetAsync(userId);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*confirmed email*");
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenLockChannelAsEmailAndUnconfirmed_Throws()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "new@example.com",
+            EmailConfirmed = false,
+        });
+
+        var locked = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            _jwt.Object,
+            Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions { LockChannelAsEmail = true }));
+
+        var act = () => locked.ResolveDeliveryTargetAsync(userId);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*confirmed email*");
+    }
+
+    [Test]
     public async Task SyncAccountContacts_CreatesVerifiedEndpoints()
     {
         var userId = Guid.NewGuid();

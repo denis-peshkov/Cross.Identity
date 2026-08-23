@@ -173,7 +173,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: Id. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync`). `next: null` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync` — confirmed email / verified preferred only). `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
 
@@ -187,7 +187,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserId`. → `resetPassword` |
-| `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync`). `next: null` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync` — confirmed email / verified preferred only). `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
@@ -336,7 +336,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email). `reset` also adds email/phone to the action URL. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email, including unconfirmed for email confirmation). `reset` also adds email/phone to the action URL. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `verifyCode` | Verify OTP and write `UserId` to the bag |
 | `passwordAuth` | Verify identity + password; writes `UserId` |
 | `resetPassword` | Set new password (identity from `Selector`) |
