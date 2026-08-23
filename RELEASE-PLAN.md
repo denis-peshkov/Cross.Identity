@@ -24,9 +24,6 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### 33. `Bag` nullable `Convert.ChangeType` (CR)
 `Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
 
-### 35. `WatsApp` obsolete alias (CR)
-`ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
-
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
@@ -107,6 +104,9 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 ### Мессенджер + верификация / бот (#41) — принято (2.0 scope)
 `Telegram` / `Viber` / `WhatsApp`, `LinkedMessenger`, endpoints в модели — **задел под будущее**. В 2.0: нет messenger sender, нет bot link/verify flow; OTP только Email/Sms (`SupportsOtp`); messenger preferred → `ToEmailOrSms()` / `NotSupportedException` на SendCode (см. #9). Реализация sender + bot verification — post-2.0 / кастом хоста.
 
+### `ChannelEnum.WhatsApp` (#35) — принято (2.0)
+Legacy typo **`WatsApp` удалён**; единственное имя — **`WhatsApp`**. Obsolete alias не добавляем: stock flow JSON **без** `channel`; endpoint channel в БД — `smallint` (numeric value не менялся). Хост обновляет C# / свой string enum на `WhatsApp`.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -159,6 +159,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ #40 Выбор канала (2.0 scope, принято) | канал = preferred endpoint; selector — identity only; см. «Принято» |
 | ✅ #41 Messenger bot verify (2.0 scope, принято) | модель/endpoints задел; sender+bot post-2.0; см. «Принято» / #9 |
+| ✅ #35 `ChannelEnum.WhatsApp` (CR отклонён) | `WatsApp` typo removed; no obsolete alias; flow JSON без `channel`; см. «Принято» |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 | ✅ #37 HostSuppliedClientContext в ExternalLogin form (CR отклонён) | collectForm Ip/UA/Fingerprint — host trusted pipeline; см. «Принято» |
 | ✅ #38 Audit PII в `auth.Audits` (CR отклонён) | Ip/UA/Fingerprint на issue/revoke — forensics by design; retention/access — хост; см. «Принято» |
@@ -192,5 +193,5 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M28:** SendCode action URL.
-3. **CR M32–M33, M35, M39:** Guard exceptions; Bag nullable; idle double-audit.
+3. **CR M32–M33, M39:** Guard exceptions; Bag nullable; idle double-audit.
 4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).

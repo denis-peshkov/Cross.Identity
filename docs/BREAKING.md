@@ -277,9 +277,9 @@ Flow JSON / custom overrides must use enum names: `email`, `sms` (not `phone`).
 
 `Selector.Bind` + `Selector.ChannelForField`: phone number → `ChannelEnum.Sms`, email → `ChannelEnum.Email`, user name → no channel.
 
-Also: `ChannelEnum.WatsApp` renamed to **`WhatsApp`**.
+`ChannelEnum` uses **`WhatsApp`** (legacy typo `WatsApp` removed). Messenger values: `Telegram`, `WhatsApp`, `Viber` (stored as `smallint` on endpoints).
 
-**Action:** replace `"channel": "phone"` with `"channel": "sms"`; update `WatsApp` / `watsApp` to `WhatsApp`; update callers of `VerifyAsync`.
+**Action:** use `ChannelEnum.WhatsApp` in host C#; stock flow JSON has **no** `channel` (see [Delivery channel](#delivery-channel-preferred--email--lockchannelasemail)); replace legacy `"channel": "phone"` with `"sms"` only in old custom overrides.
 
 ### `Selector` replaces `resolveBy` / `selectorKey` / `phoneNumberKey` / `userNameKey`
 
