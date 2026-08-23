@@ -125,6 +125,8 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
+        code = code.Trim();
+
         var now = DateTime.UtcNow;
 
         // Normalize identity based on channel

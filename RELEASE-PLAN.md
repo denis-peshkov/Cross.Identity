@@ -16,9 +16,6 @@
 ### 18. OAuth `ReturnUrl` без allowlist
 Произвольный `ReturnUrl` в state. Open redirect на стороне хоста, если тот редиректит вслепую.
 
-### 19. `CodeService.VerifyAsync` — code без trim
-`UserService.ValidateCodeAsync` делает `code.Trim()`; `CodeService.VerifyAsync` — нет. Minor mismatch на whitespace.
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -28,7 +25,6 @@
 - `AuditService.Record` без собственного `SaveChanges` — audit теряется, если caller не закоммитит.
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
-- Inconsistent code trimming (#19).
 
 ---
 
@@ -102,6 +98,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #10 Phone fallback | account phone после email (OTP/notify rules) |
 | #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
+| #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
 
 ---
 
@@ -124,4 +121,4 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 ## Приоритет фиксов
 
-1. **M13–M14, M17–M19:** half-validate API docs; ChangePassword session proof; OAuth ReturnUrl; OTP trim.
+1. **M13–M14, M17–M18:** half-validate API docs; ChangePassword session proof; OAuth ReturnUrl.

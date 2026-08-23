@@ -158,6 +158,36 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenValidEmailCodeWithWhitespace_WhenVerifyAsync_ThenTrimsAndReturnsTrueAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "test@example.com",
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = "test@example.com",
+            TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var result = await _codeService.VerifyAsync(
+            userId, ChannelEnum.Email, "test@example.com", "  123456  ", CancellationToken.None);
+
+        result.Should().BeTrue();
+        (await Context.EmailVerifications.SingleAsync()).UsedAt.Should().NotBeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenUsedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
