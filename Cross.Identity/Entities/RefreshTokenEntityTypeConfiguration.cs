@@ -2,6 +2,7 @@
 
 internal class RefreshTokenEntityTypeConfiguration : IEntityTypeConfiguration<RefreshTokenEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<RefreshTokenEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.RefreshTokens), IdentityContext.DefaultSchema);

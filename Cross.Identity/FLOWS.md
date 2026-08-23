@@ -16,14 +16,14 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 
 ### Client context (host)
 
-Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `ClientContext` into direct APIs); `ClientContext.Read(bag)` reads whatever the host put there.
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedClientContext` into direct APIs); `HostSuppliedClientContext.Read(bag)` reads whatever the host put there.
 
 **Trusted pipeline**
 
 | Party | Responsibility |
 |-------|----------------|
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
-| **Cross.Identity** | Consumes `ClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
@@ -31,7 +31,7 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
 | `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
 
-**Session binding (refresh):** non-empty `ClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). A dimension is checked only if it was captured at family start.
+**Session binding (refresh):** non-empty `HostSuppliedClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). A dimension is checked only if it was captured at family start.
 
 **Recommended handler pattern** before `IFlowExecutor.ExecuteAsync`:
 

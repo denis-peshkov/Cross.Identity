@@ -113,7 +113,7 @@ internal interface IExternalLoginService
     /// </param>
     /// <param name="userAccountId">Local user account id (supplied by the host from the authenticated principal).</param>
     /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/> (session proof).</param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">
     /// Provider is not enabled, or is not linked to the user.
@@ -128,7 +128,7 @@ internal interface IExternalLoginService
         string provider,
         Guid userAccountId,
         string refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>

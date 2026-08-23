@@ -51,13 +51,13 @@ public class CommunicationEndpoints_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserIdEndpointAndRefreshToken_WhenSetPreferred_ThenPassesClientContextAsync()
+    public async Task GivenUserIdEndpointAndRefreshToken_WhenSetPreferred_ThenPassesHostSuppliedClientContextAsync()
     {
         var userAccountId = Guid.NewGuid();
         var endpointId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         _endpoints
-            .Setup(s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new HostSuppliedClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new CommunicationEndpointSetPreferredStep
@@ -83,7 +83,7 @@ public class CommunicationEndpoints_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("communicationEndpointSetPreferred.Preferred").Should().BeTrue();
         _endpoints.Verify(
-            s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()),
+            s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new HostSuppliedClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

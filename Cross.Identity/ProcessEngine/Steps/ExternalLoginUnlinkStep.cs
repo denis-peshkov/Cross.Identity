@@ -25,9 +25,9 @@ internal sealed class ExternalLoginUnlinkStep : IStep
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
         var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserAccountIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        var clientContext = ClientContext.Read(ctx);
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await ExternalLoginService.UnlinkAsync(provider, userAccountId, refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
+        await ExternalLoginService.UnlinkAsync(provider, userAccountId, refreshToken, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Unlinked"), true);
 

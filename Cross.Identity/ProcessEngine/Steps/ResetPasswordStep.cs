@@ -29,9 +29,9 @@ internal sealed class ResetPasswordStep : IStep
         var selector = Selector.Resolve(ctx);
 
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
-        var clientContext = ClientContext.Read(ctx);
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, clientContext, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
@@ -57,7 +57,7 @@ internal sealed class ResetPasswordStep : IStep
             return StepResult.Ok(Next);
         }
 
-        var ip = string.IsNullOrWhiteSpace(clientContext.IpAddress) ? "unknown" : clientContext.IpAddress;
+        var ip = string.IsNullOrWhiteSpace(hostSuppliedClientContext.IpAddress) ? "unknown" : hostSuppliedClientContext.IpAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
         var subject = "Password changed";
         var textBody = $"Your password was changed at {changedAt} from IP {ip}. If this wasn't you, contact support immediately.";

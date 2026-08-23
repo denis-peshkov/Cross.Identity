@@ -48,7 +48,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         email.IsPreferred.Should().BeTrue();
 
-        await _service.SetPreferredAsync(userAccountId, telegram.Id, SessionRefresh, new ClientContext("10.0.0.1", "ua", "fp"));
+        await _service.SetPreferredAsync(userAccountId, telegram.Id, SessionRefresh, new HostSuppliedClientContext("10.0.0.1", "ua", "fp"));
 
         var all = await _service.GetAllAsync(userAccountId, SessionRefresh);
         all.Single(x => x.Id == telegram.Id).IsPreferred.Should().BeTrue();
@@ -70,7 +70,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var ep = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Email, "x@example.com", CommunicationEndpointSource.Manual, isVerified: false);
 
-        var act = () => _service.SetPreferredAsync(userAccountId, ep.Id, SessionRefresh, ClientContext.Empty);
+        var act = () => _service.SetPreferredAsync(userAccountId, ep.Id, SessionRefresh, HostSuppliedClientContext.Empty);
 
         await act.Should().ThrowAsync<ValidationException>()
             .WithMessage("*verified*");
@@ -86,7 +86,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         await _service.UpsertAsync(userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
         var tg = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, ClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, HostSuppliedClientContext.Empty);
 
         var target = await _service.ResolveDeliveryTargetAsync(userAccountId);
 
@@ -103,7 +103,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         var tg = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, ClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, HostSuppliedClientContext.Empty);
 
         var otp = await _service.ResolveOtpTargetAsync(userAccountId);
 
@@ -127,7 +127,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, "fallback@example.com", CommunicationEndpointSource.Account, true);
         var phone = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Sms, "+79161234567", CommunicationEndpointSource.Account, true);
-        await _service.SetPreferredAsync(userAccountId, phone.Id, SessionRefresh, ClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, phone.Id, SessionRefresh, HostSuppliedClientContext.Empty);
 
         // Clear preferred flags to simulate missing preferred
         foreach (var row in Context.UsersCommunicationEndpoints.Where(x => x.UserAccountId == userAccountId))
@@ -165,7 +165,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         await locked.UpsertAsync(userAccountId, ChannelEnum.Email, "locked@example.com", CommunicationEndpointSource.Account, true);
         var sms = await locked.UpsertAsync(userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
-        await locked.SetPreferredAsync(userAccountId, sms.Id, SessionRefresh, ClientContext.Empty);
+        await locked.SetPreferredAsync(userAccountId, sms.Id, SessionRefresh, HostSuppliedClientContext.Empty);
 
         var target = await locked.ResolveDeliveryTargetAsync(userAccountId);
 

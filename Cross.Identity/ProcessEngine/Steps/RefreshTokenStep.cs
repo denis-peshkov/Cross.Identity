@@ -52,8 +52,8 @@ internal sealed class RefreshTokenStep : IStep
     {
         // 1) validate the token (revoked reuse → family REPLAY_DETECTED + Conflict)
         var oldRefreshTokenHashValue = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        var clientContext = ClientContext.Read(ctx);
-        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, clientContext, cancellationToken).ConfigureAwait(false);
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
+        await JwtTokenService.EnsureRefreshTokenActiveForRotationAsync(oldRefreshTokenHashValue, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         // 2) get UserId from the refresh token
         var oldRefreshToken = await JwtTokenService.GetRefreshTokenAsync(oldRefreshTokenHashValue, cancellationToken).ConfigureAwait(false);
@@ -68,14 +68,14 @@ internal sealed class RefreshTokenStep : IStep
 
         // 4–5) issue new pair into bag
         await TokenPairIssuer
-            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, oldRefreshToken.FamilyId, clientContext, cancellationToken)
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, oldRefreshToken.FamilyId, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
 
         // 6) Invalidate old RefreshToken
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, "RefreshToken"));
         var newJti = JwtTokenService.GetClaimValue(refreshToken, JwtRegisteredClaimNames.Jti);
         ArgumentException.ThrowIfNullOrEmpty(newJti);
-        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, clientContext, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.InvalidateRefreshTokenAsync(oldRefreshTokenHashValue, newJti, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         return StepResult.Ok(Next);
     }

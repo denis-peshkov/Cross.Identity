@@ -157,7 +157,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(Task.CompletedTask);
         jwtMock
             .Setup(j => j.RevokeAllTokensForUserAsync(
-                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         return new UserService(

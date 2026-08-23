@@ -329,7 +329,7 @@ internal sealed class UserService : IUserService
         string selectorField,
         string selectorValue,
         string newPassword,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
@@ -352,7 +352,7 @@ internal sealed class UserService : IUserService
         user.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, clientContext, cancellationToken)
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

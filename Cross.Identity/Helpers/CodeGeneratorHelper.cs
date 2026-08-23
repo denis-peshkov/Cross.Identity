@@ -24,6 +24,11 @@ public static class CodeGeneratorHelper
     public static string GenerateNumericCode(int length = 6)
         => GenerateFromAlphabet(DIGITS, length);
 
+    /// <summary>
+    /// Computes SHA-256 over the UTF-8 bytes of <paramref name="code"/> (32-byte digest).
+    /// </summary>
+    /// <param name="code">Plain OTP or verification code.</param>
+    /// <returns>SHA-256 hash (32 bytes).</returns>
     public static byte[] GenerateHash(string code)
         => SHA256.HashData(Encoding.UTF8.GetBytes(code));
 

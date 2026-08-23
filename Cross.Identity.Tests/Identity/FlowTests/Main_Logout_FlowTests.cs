@@ -67,13 +67,13 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userAccountId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userAccountId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
-            userAccountId, familyA, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
         var accessB = await _jwtTokenService.GenerateAccessTokenAsync(
-            userAccountId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },

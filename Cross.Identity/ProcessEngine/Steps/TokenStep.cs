@@ -62,9 +62,9 @@ internal sealed class TokenStep : IStep
         var userAccount = await UserService.GetUserByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(userAccount);
 
-        var clientContext = ClientContext.Read(ctx);
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
         await TokenPairIssuer
-            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, userAccount, Guid.NewGuid(), clientContext, cancellationToken)
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, userAccount, Guid.NewGuid(), hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
 
         return StepResult.Ok(Next);

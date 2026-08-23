@@ -112,7 +112,9 @@ public class UserAccountEntity : IHasConcurrencyStamp
 
     public DateTime CreatedAt { get; set; }
 
+    /// <summary>Linked external OAuth/OIDC identities.</summary>
     public virtual ICollection<UserExternalLoginEntity> ExternalLogins { get; set; } = new List<UserExternalLoginEntity>();
 
+    /// <summary>Verified and candidate delivery endpoints (email, SMS, messengers).</summary>
     public virtual ICollection<UserCommunicationEndpointEntity> CommunicationEndpoints { get; set; } = new List<UserCommunicationEndpointEntity>();
 }

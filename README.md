@@ -56,9 +56,9 @@ bag["PhoneNumber"] = phoneNumber;
 
 No DI registration is required.
 
-## Client context (`ClientContext`)
+## Host-supplied client context (`HostSuppliedClientContext`)
 
-The host Web API sets optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` from **server-side** metadata before calling the library ([`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs)). On refresh, the library compares them with `Created*` captured when the session started (family anchor). Use the **same host-derived sources** on login and every refresh. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — Client context (host).
+The host Web API sets optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` from **server-side** metadata before calling the library ([`HostSuppliedClientContext`](../Cross.Identity/ProcessEngine/Core/HostSuppliedClientContext.cs)). On refresh, the library compares them with `Created*` captured when the session started (family anchor). Use the **same host-derived sources** on login and every refresh. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — Host-supplied client context.
 
 ```csharp
 using Cross.Identity.ProcessEngine.Core;

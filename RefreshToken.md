@@ -38,7 +38,7 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
 |---------------------|--------------------------------------------------------------------------------|
 | One-time use        | refresh token can be used only once, then it is replaced                       |
 | Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `LastActivityAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
-| Device binding      | Host sets `ClientContext` on login; library stores `Created*` and compares on refresh (see below) |
+| Device binding      | Host sets `HostSuppliedClientContext` on login; library stores `Created*` and compares on refresh (see below) |
 | Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
 
 ## Replay detection (family revoke + `REPLAY_DETECTED`)
@@ -131,7 +131,7 @@ public string? CreatedUserAgent { get; set; }
 public string? CreatedDeviceFingerprint { get; set; }
 ```
 
-On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `ClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See `FLOWS.md` — Client context (host).
+On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See `FLOWS.md` — Client context (host).
 
 **Host vs library**
 
@@ -147,7 +147,7 @@ bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
 bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // validated / host-computed
 ```
 
-4. On **login and every refresh** — the same sources. The library reads `ClientContext.Read(bag)` and stores or compares `Created*`.
+4. On **login and every refresh** — the same sources. The library reads `HostSuppliedClientContext.Read(bag)` and stores or compares `Created*`.
 
 Do **not** copy `IpAddress` / `UserAgent` blindly from the client JSON into `collectForm` (spoofable). `DeviceFingerprint` should be host-validated (cookie, server session, signed SDK payload), not an arbitrary client string.
 
@@ -182,7 +182,7 @@ The fingerprint is usually formed as:
 device_id = hash(Manufacturer + Model + OSVersion + InstallID)
 ```
 
-Stored in Secure Storage (Keychain / Keystore). The app sends it to the host API; the host validates and passes it into `ClientContext`.
+Stored in Secure Storage (Keychain / Keystore). The app sends it to the host API; the host validates and passes it into `HostSuppliedClientContext`.
 
 Good practice — bind up to three dimensions (each optional; only non-empty values are checked):
 

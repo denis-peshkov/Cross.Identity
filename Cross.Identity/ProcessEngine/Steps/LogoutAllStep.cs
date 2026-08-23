@@ -22,9 +22,9 @@ internal sealed class LogoutAllStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        var clientContext = ClientContext.Read(ctx);
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeAllTokensForLogoutAsync(refreshToken, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

@@ -110,7 +110,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         Guid userAccountId,
         Guid endpointId,
         string refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default)
     {
         await _jwtTokenService
@@ -150,9 +150,9 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             Operation = AuditOperation.CommunicationEndpointChanged,
             EntityType = AuditEntityType.UserCommunicationEndpoint,
             EntityId = endpointId.ToString(),
-            IpAddress = clientContext.IpAddress,
-            UserAgent = clientContext.UserAgent,
-            DeviceFingerprint = clientContext.DeviceFingerprint,
+            IpAddress = hostSuppliedClientContext.IpAddress,
+            UserAgent = hostSuppliedClientContext.UserAgent,
+            DeviceFingerprint = hostSuppliedClientContext.DeviceFingerprint,
             Notes = "Preferred communication endpoint updated.",
         });
 

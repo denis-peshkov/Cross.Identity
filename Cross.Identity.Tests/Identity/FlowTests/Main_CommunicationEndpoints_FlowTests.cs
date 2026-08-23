@@ -50,7 +50,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
             userAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
-            ClientContext.Empty,
+            HostSuppliedClientContext.Empty,
             CancellationToken.None);
     }
 

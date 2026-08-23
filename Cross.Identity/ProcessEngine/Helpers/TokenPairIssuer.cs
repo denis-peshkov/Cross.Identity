@@ -16,7 +16,7 @@ internal static class TokenPairIssuer
         string stepKind,
         UserAccountEntity user,
         Guid familyId,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(jwt);
@@ -41,7 +41,7 @@ internal static class TokenPairIssuer
                 familyId,
                 new List<string>(),
                 accessClaims,
-                clientContext,
+                hostSuppliedClientContext,
                 cancellationToken)
             .ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(accessToken);
@@ -57,7 +57,7 @@ internal static class TokenPairIssuer
                 user.Id,
                 familyId,
                 refreshClaims,
-                clientContext,
+                hostSuppliedClientContext,
                 cancellationToken)
             .ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(refreshToken);

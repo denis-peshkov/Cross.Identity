@@ -58,13 +58,13 @@ public interface ICommunicationEndpointService
     /// <param name="userAccountId">Local user account id.</param>
     /// <param name="endpointId">Endpoint id that must belong to <paramref name="userAccountId"/> and be verified.</param>
     /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/>.</param>
-    /// <param name="clientContext">Client metadata recorded in audit (use <see cref="ClientContext.Empty"/> when unknown).</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SetPreferredAsync(
         Guid userAccountId,
         Guid endpointId,
         string refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default);
 
     /// <summary>

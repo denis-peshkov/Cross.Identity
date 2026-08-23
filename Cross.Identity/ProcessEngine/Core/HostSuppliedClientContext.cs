@@ -7,7 +7,7 @@
 /// <para>
 /// Cross.Identity is a library: it does not read <c>HttpContext</c>. The <b>host</b> builds
 /// <c>collectForm.IpAddress</c>, <c>collectForm.UserAgent</c>, and <c>collectForm.DeviceFingerprint</c>
-/// in the flow bag (or passes <c>new ClientContext(...)</c> into direct APIs) before calling the library.
+/// in the flow bag (or passes <c>new HostSuppliedClientContext(...)</c> into direct APIs) before calling the library.
 /// Flow steps read them via <see cref="Read"/>.
 /// </para>
 /// <para>
@@ -18,7 +18,7 @@
 /// </para>
 /// <para>
 /// <b>Session binding (refresh):</b> non-empty values are stored as <c>Created*</c> on the refresh-token
-/// family anchor at login. On rotation the library compares the current <see cref="ClientContext"/> with
+/// family anchor at login. On rotation the library compares the current <see cref="HostSuppliedClientContext"/> with
 /// that anchor. A dimension is checked only if it was captured at family start; a missing or different
 /// value on refresh is a mismatch (<c>DEVICE_MISMATCH</c>, <c>IP_MISMATCH</c>,
 /// <c>USER_AGENT_MISMATCH</c>, or <c>TOKEN_STOLEN</c>). Use the <b>same host-derived sources</b> on
@@ -26,13 +26,13 @@
 /// </para>
 /// <para>
 /// The same values are written to token audit rows on issue/revoke and to notification text
-/// (e.g. <c>ResetPasswordStep</c>). See <c>FLOWS.md</c> — Client context (host).
+/// (e.g. <c>ResetPasswordStep</c>). See <c>FLOWS.md</c> — Host-supplied client context.
 /// </para>
 /// </remarks>
-public sealed record ClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
+public sealed record HostSuppliedClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
 {
     /// <summary>All fields <c>null</c> — use when the host has no metadata to pass.</summary>
-    public static ClientContext Empty { get; } = new(null, null, null);
+    public static HostSuppliedClientContext Empty { get; } = new(null, null, null);
 
     /// <summary>Bag prefix of collectForm (<c>CollectFormStepFactory.GetKind</c>).</summary>
     public const string CollectFormKind = "collectForm";
@@ -47,11 +47,11 @@ public sealed record ClientContext(string? IpAddress, string? UserAgent, string?
     public const string DeviceFingerprintField = "DeviceFingerprint";
 
     /// <summary>Reads host-supplied metadata from <c>collectForm.*</c> keys in the flow bag.</summary>
-    public static ClientContext Read(Bag bag)
+    public static HostSuppliedClientContext Read(Bag bag)
     {
         ArgumentNullException.ThrowIfNull(bag);
 
-        return new ClientContext(
+        return new HostSuppliedClientContext(
             ReadField(bag, IpAddressField),
             ReadField(bag, UserAgentField),
             ReadField(bag, DeviceFingerprintField));

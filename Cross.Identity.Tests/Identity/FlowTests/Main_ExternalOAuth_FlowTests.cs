@@ -70,7 +70,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             userAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
-            ClientContext.Empty,
+            HostSuppliedClientContext.Empty,
             CancellationToken.None);
     }
 
@@ -242,7 +242,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             linkUserAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
-            ClientContext.Empty,
+            HostSuppliedClientContext.Empty,
             CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -292,7 +292,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             ownerUserAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
-            ClientContext.Empty,
+            HostSuppliedClientContext.Empty,
             CancellationToken.None);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(

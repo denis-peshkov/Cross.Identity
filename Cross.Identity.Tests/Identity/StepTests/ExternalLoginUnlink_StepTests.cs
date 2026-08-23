@@ -18,7 +18,7 @@ public class ExternalLoginUnlink_StepTests
         var userAccountId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         _externalLoginService
-            .Setup(s => s.UnlinkAsync("Google", userAccountId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Setup(s => s.UnlinkAsync("Google", userAccountId, refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ExternalLoginUnlinkStep
@@ -45,7 +45,7 @@ public class ExternalLoginUnlink_StepTests
         result.Next.Should().Be("done");
         bag.Get<bool>("externalLoginUnlink.Unlinked").Should().BeTrue();
         _externalLoginService.Verify(
-            s => s.UnlinkAsync("Google", userAccountId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.UnlinkAsync("Google", userAccountId, refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

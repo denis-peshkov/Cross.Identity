@@ -152,26 +152,26 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 
 Stock flows: [`FLOWS.md`](../Cross.Identity/FLOWS.md).
 
-### No `IHttpContextAccessor` / ambient `HttpContext` → `ClientContext`
+### No `IHttpContextAccessor` / ambient `HttpContext` → `HostSuppliedClientContext`
 
 Cross.Identity no longer reads `HttpContext` for the authenticated user, client IP, or User-Agent.
 Hosts must pass explicit flow inputs. Host ASP.NET still registers `IHttpContextAccessor` for its own handlers/cookies.
 
-Public JWT and related APIs take a single non-nullable [`ClientContext`](../Cross.Identity/ProcessEngine/Core/ClientContext.cs)
-(`IpAddress`, `UserAgent`, `DeviceFingerprint`). Use `ClientContext.Empty` when unknown.
-Flow steps read metadata via `ClientContext.Read(bag)` from `collectForm.*`
+Public JWT and related APIs take a single non-nullable [`HostSuppliedClientContext`](../Cross.Identity/ProcessEngine/Core/HostSuppliedClientContext.cs)
+(`IpAddress`, `UserAgent`, `DeviceFingerprint`). Use `HostSuppliedClientContext.Empty` when unknown.
+Flow steps read metadata via `HostSuppliedClientContext.Read(bag)` from `collectForm.*`
 (no per-step `ipAddressKey` / `userAgentKey` / `deviceFingerprintKey`).
 The host must supply trusted values via the **trusted pipeline** (see below); the library does not validate them.
 
 | Area | Was (1.10) | Now (2.0+) |
 |------|------------|------------|
 | `JwtTokenService` ctor | `(IdentityContext, IOptionsSnapshot, IHttpContextAccessor)` | `(IdentityContext, IOptionsSnapshot)` |
-| JWT issue / refresh invalidate / logout / logout-all / family / user revoke | IP/UA from `HttpContext` | `ClientContext clientContext` |
-| `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, ClientContext clientContext, ct)` |
-| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string refreshToken, ClientContext clientContext, ct)` |
+| JWT issue / refresh invalidate / logout / logout-all / family / user revoke | IP/UA from `HttpContext` | `HostSuppliedClientContext hostSuppliedClientContext` |
+| `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, HostSuppliedClientContext hostSuppliedClientContext, ct)` |
+| `IExternalLoginService.UnlinkAsync` | `(provider, ct)` — principal from `HttpContext` | `(provider, Guid userId, string refreshToken, HostSuppliedClientContext hostSuppliedClientContext, ct)` |
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
-| `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, ClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, ClientContext, ct)` |
+| `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, HostSuppliedClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, HostSuppliedClientContext, ct)` |
 | User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserAccountId` trusted without session proof | bag `UserAccountId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
 | OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is verified (`ExternalOAuthProfile.EmailVerified`); links to **verified** account only |
 | `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailVerified = 1` (filtered index); multiple unverified rows allowed |
@@ -183,7 +183,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 **required** `UserAccountId` + **`RefreshToken`** on `ExternalLoginUnlink` / `ExternalLoginGetAll` / `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`;
 **optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`); when `UserAccountId` is set, **`RefreshToken` is required** and must belong to that user.
 
-**Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserAccountId` in bags, flow JSON (`userAccountIdKey`), and `auth.ExternalLoginStates`.
+**Action:** fill bags from the host handler; pass `new HostSuppliedClientContext(ip, ua, deviceFingerprint)` or `HostSuppliedClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserAccountId` in bags, flow JSON (`userAccountIdKey`), and `auth.ExternalLoginStates`.
 
 **Trusted pipeline (host responsibility, not a library bug):** `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` are **host-supplied**. Cross.Identity does not read `HttpContext` and does not verify metadata. The **host** must implement a trusted pipeline: overwrite these bag keys from server-side sources (`RemoteIpAddress` after `ForwardedHeaders`, request `User-Agent`, host-computed fingerprint) before `ExecuteAsync`, and pass the same values into direct JWT/password/unlink APIs. The library records them in audit and revoke paths as trusted. Do not copy values from the client request body. Details: [`FLOWS.md`](../Cross.Identity/FLOWS.md) — Client context (host).
 
@@ -205,11 +205,11 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `RefreshTokenEntity` / `auth.RefreshTokens` | `CreatedIpAddress`, `CreatedUserAgent`, `CreatedDeviceFingerprint` — family anchor for session binding on refresh |
 | `AccessTokenEntity` / `auth.AccessTokens` | **No** `Created*` columns |
 
-Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `ClientContext`).
+Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `HostSuppliedClientContext`).
 
 **Access token** issue metadata is **not** denormalized on the token row. It is written to **`auth.Audits`** via `AuditService.RecordTokenIssued` (`IpAddress`, `UserAgent`, `DeviceFingerprint`, `EntityId` = access-token jti).
 
-**Refresh token** issue: same audit row **plus** non-empty `ClientContext` values are copied to `Created*` on the refresh row (family anchor inherited on rotation).
+**Refresh token** issue: same audit row **plus** non-empty `HostSuppliedClientContext` values are copied to `Created*` on the refresh row (family anchor inherited on rotation).
 
 **Action:** run `1_04_auth_RefreshTokens_SessionBinding.sql` on existing databases; greenfield `2_01_auth_RefreshTokens.sql` already includes `Created*`.
 
@@ -231,9 +231,9 @@ On refresh, when idle is exceeded, `EnsureRefreshTokenActiveForRotationAsync` re
 | Token row (`AccessTokens` / `RefreshTokens`) | sometimes `RevokedByIp` in custom schemas | `RevokedAt` only |
 | Audit row on revoke | `RevokedByIp` | `Audits.IpAddress`, `Audits.UserAgent`, `Audits.DeviceFingerprint`, `Audits.RevokedReason` |
 
-Revoke paths pass metadata via `ClientContext` → `RecordTokenRevoked`. There are **no** `RevokedIpAddress` / `RevokedUserAgent` columns on token entities.
+Revoke paths pass metadata via `HostSuppliedClientContext` → `RecordTokenRevoked`. There are **no** `RevokedIpAddress` / `RevokedUserAgent` columns on token entities.
 
-**Action:** pass IP, User-Agent, and device fingerprint through `ClientContext` on revoke paths; query `auth.Audits` for forensic detail.
+**Action:** pass IP, User-Agent, and device fingerprint through `HostSuppliedClientContext` on revoke paths; query `auth.Audits` for forensic detail.
 
 ### No `IHeadersContextAccessor` in Cross.Identity
 
@@ -496,3 +496,14 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 | `IUserService` | `GetUserIdByAsync` | `GetUserAccountIdByAsync` |
 
 **Action:** update client routes and enum literals; rename custom flow overrides and step configs (`"kind": "getUserAccountId"`); replace `GetUserIdByAsync` in host code and mocks.
+
+### Type rename: `ClientContext` → `HostSuppliedClientContext`
+
+| Area | Was (2.0 early / 1.10 docs) | Now (2.0+) |
+|------|-------------------------------|------------|
+| Type / file | `ClientContext`, `ClientContext.cs` | `HostSuppliedClientContext`, `HostSuppliedClientContext.cs` |
+| Sentinel | `ClientContext.Empty` | `HostSuppliedClientContext.Empty` |
+| Flow bag reader | `ClientContext.Read(bag)` | `HostSuppliedClientContext.Read(bag)` |
+| JWT / password / unlink API parameter | `ClientContext clientContext` | `HostSuppliedClientContext hostSuppliedClientContext` |
+
+**Action:** rename type, static members, and parameter names in host code; update `cref` / imports. Bag keys (`collectForm.IpAddress`, …) are unchanged.

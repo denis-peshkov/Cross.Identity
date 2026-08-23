@@ -27,7 +27,7 @@ public interface IJwtTokenService
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="permissions">Permissions to add as claims.</param>
     /// <param name="claims">Additional token claims.</param>
-    /// <param name="clientContext">Optional client metadata for audit fields on the persisted token.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Access token string in compact form.</returns>
     Task<string> GenerateAccessTokenAsync(
@@ -35,7 +35,7 @@ public interface IJwtTokenService
         Guid familyId,
         List<string> permissions,
         List<Claim> claims,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -44,14 +44,14 @@ public interface IJwtTokenService
     /// <param name="userAccountId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="claims">Additional refresh-token claims.</param>
-    /// <param name="clientContext">Optional client metadata for audit fields on the persisted token.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token string.</returns>
     Task<string> GenerateRefreshTokenAsync(
         Guid userAccountId,
         Guid familyId,
         List<Claim> claims,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -122,7 +122,7 @@ public interface IJwtTokenService
     /// the entire family is revoked with <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/>
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// When session metadata was captured at family start, refresh compares the current
-    /// <see cref="ClientContext"/> (host-supplied <c>collectForm</c> fields) with the family anchor.
+    /// <see cref="HostSuppliedClientContext"/> (host-supplied <c>collectForm</c> fields) with the family anchor.
     /// Mismatch revokes the family with <see cref="RefreshTokenRevokedReason.DEVICE_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
@@ -131,13 +131,13 @@ public interface IJwtTokenService
     /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/> if <c>LastActivityAt</c> is older than the idle window.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing, expired, idle timeout exceeded, or session binding failed.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task EnsureRefreshTokenActiveForRotationAsync(
         string refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -201,24 +201,24 @@ public interface IJwtTokenService
     /// <param name="newJti">
     /// JTI of the new refresh token that replaces the old one (used for reasons and linkage).
     /// </param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
     Task InvalidateRefreshTokenAsync(
         string refreshToken,
         string newJti,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
     /// Revoke a refresh token on user logout and invalidate access tokens in the same session (family).
     /// </summary>
     /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(
         string? refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -228,14 +228,14 @@ public interface IJwtTokenService
     /// <param name="refreshToken">
     /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
     /// </param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">
     /// Refresh token is missing in storage, revoked, or expired.
     /// </exception>
     Task RevokeAllTokensForLogoutAsync(
         string? refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -244,12 +244,12 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
     /// <param name="reason">Revocation reason stored on each active token.</param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenFamilyAsync(
         Guid familyId,
         RefreshTokenRevokedReason reason,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -258,12 +258,12 @@ public interface IJwtTokenService
     /// </summary>
     /// <param name="userAccountId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
-    /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeAllTokensForUserAsync(
         Guid userAccountId,
         RefreshTokenRevokedReason reason,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 }
 

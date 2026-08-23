@@ -28,7 +28,7 @@ public class UserServiceTests : EFTestsBase
         _jwtTokenService = new Mock<IJwtTokenService>();
         _jwtTokenService
             .Setup(j => j.RevokeAllTokensForUserAsync(
-                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService
             .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -672,7 +672,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -710,7 +710,7 @@ public class UserServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: false);
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -752,7 +752,7 @@ public class UserServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: true);
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -1066,7 +1066,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Hash("newPass", "new-pepper")).Returns("$pbkdf2$new");
 
-        await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
+        await _userService.SetPasswordAsync("Email", email, "newPass", HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var user = await Context.UsersAccounts.FindAsync(userAccountId);
         user.Should().NotBeNull();
@@ -1075,7 +1075,7 @@ public class UserServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBeNull();
         user.SecurityStamp.Should().NotBe(oldStamp);
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.PASSWORD_CHANGED, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.PASSWORD_CHANGED, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1083,7 +1083,7 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingUser_WhenSetPasswordAsync_ThenThrowsNotFoundExceptionAsync()
     {
-        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => _userService.SetPasswordAsync("Email", "missing@example.com", "newPass", HostSuppliedClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>();
     }
@@ -1262,7 +1262,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Hash("newPass", "pepper")).Returns("$pbkdf2$new");
 
-        await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
+        await _userService.SetPasswordAsync("Email", email, "newPass", HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(0);

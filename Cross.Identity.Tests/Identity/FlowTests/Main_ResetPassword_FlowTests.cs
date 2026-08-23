@@ -28,7 +28,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.GetUserAccountIdByAsync("Email", Email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(() => _userId);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
@@ -71,7 +71,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ResetPassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -95,7 +95,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -121,7 +121,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Email", Email, Password, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("Email", Email, Password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -141,7 +141,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .ThrowAsync<ValidationException>();
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -165,7 +165,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -189,7 +189,7 @@ internal class Main_ResetPassword_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("*Invalid credentials.*");
 
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 

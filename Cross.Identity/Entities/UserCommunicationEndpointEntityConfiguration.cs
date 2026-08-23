@@ -2,6 +2,7 @@
 
 internal class UserCommunicationEndpointEntityConfiguration : IEntityTypeConfiguration<UserCommunicationEndpointEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<UserCommunicationEndpointEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.UsersCommunicationEndpoints), IdentityContext.DefaultSchema);

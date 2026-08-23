@@ -73,13 +73,13 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
                 It.IsAny<List<string>>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         jwtMock
             .Setup(j => j.GenerateRefreshTokenAsync(
                 It.IsAny<Guid>(),
                 It.IsAny<Guid>(),
-                It.IsAny<List<System.Security.Claims.Claim>>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+                It.IsAny<List<System.Security.Claims.Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 

@@ -2,6 +2,7 @@
 
 internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<PhoneVerificationEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<PhoneVerificationEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.PhoneVerifications), IdentityContext.DefaultSchema);

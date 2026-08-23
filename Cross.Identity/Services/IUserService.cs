@@ -112,7 +112,7 @@ internal interface IUserService
     /// <param name="selectorField">Lookup field (e.g. <c>"Id"</c> or <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>
     /// <param name="newPassword">New password.</param>
-    /// <param name="clientContext">Optional client metadata for token revoke audit fields.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">No user matches the selector.</exception>
     /// <exception cref="NotSupportedException"><paramref name="selectorField"/> is not supported.</exception>
@@ -121,6 +121,6 @@ internal interface IUserService
         string selectorField,
         string selectorValue,
         string newPassword,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 }

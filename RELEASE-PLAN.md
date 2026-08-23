@@ -63,8 +63,8 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### ✅ 36. Password max 32 (CR max 128 отклонён)
 Stock flows — `max: 32` на Password fields. CodeRabbit предлагал 128 — **принято** оставить 32 (см. «Принято» ниже); не менять без явного BREAKING.
 
-### 37. ClientContext fields в ExternalLogin form (CR) — конфликт с принятым
-`main.ExternalLogin.json` — CR: убрать Ip/UA/Fingerprint из form; **принято** как host collectForm → `ClientContext`.
+### 37. HostSuppliedClientContext fields в ExternalLogin form (CR) — конфликт с принятым
+`main.ExternalLogin.json` — CR: убрать Ip/UA/Fingerprint из form; **принято** как host collectForm → `HostSuppliedClientContext`.
 
 ### 38. `AuditEntity` хранит Ip/UA/Fingerprint (CR) — спорно
 CR: минимизировать PII; сейчас намеренно для revoke forensics (`Audits`).
@@ -89,7 +89,7 @@ CR: минимизировать PII; сейчас намеренно для rev
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
 ### CodeRabbit minor (XML / style / hygiene)
-- XML docs: `NotificationMessage` (`param`→`summary`), `CodeGeneratorHelper.GenerateHash`, `ChannelEnumExtensions`, `IdentityContext` DbSets, `UserExternalLoginEntity`, `UserAccount.CommunicationEndpoints`, endpoint/phone/refresh/state entities, `Configure`, `IJwtTokenService` ClientContext wording («Optional» → sentinel).
+- XML docs: `NotificationMessage` (`param`→`summary`), `CodeGeneratorHelper.GenerateHash`, `ChannelEnumExtensions`, `IdentityContext` DbSets, `UserExternalLoginEntity`, `UserAccount.CommunicationEndpoints`, endpoint/phone/refresh/state entities, `Configure`, `IJwtTokenService` HostSuppliedClientContext wording («Optional» → sentinel).
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
 - `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
@@ -108,7 +108,7 @@ CR: минимизировать PII; сейчас намеренно для rev
 ### Sync-over-async в `GetClaimValue` (JWE)
 `GetClaimValueFromJweToken` → `GetAwaiter().GetResult()`. В ASP.NET Core deadlock маловероятен; основной путь — JWS refresh без async I/O.
 
-### `ClientContext` — trusted pipeline хоста
+### `HostSuppliedClientContext` — trusted pipeline хоста
 `IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
 
 ### Delivery channel resolution (новая модель)
@@ -161,7 +161,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ `IsActive` | `UserAccountGuard` + checks в auth pipeline |
 | ✅ Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
 | ✅ Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
-| ✅ Session binding на refresh | `Created*` на refresh + compare `ClientContext` |
+| ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
 | ✅ UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
 | ✅ #36 Password max 32 (CR 128 отклонён) | stock Password fields `max: 32`; см. «Принято» |
@@ -216,6 +216,6 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
 3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit. M29 принято (OAuth unverified squat); M30 закрыт (SendAsync Guid).
-4. **CR M37–M38:** решить принять/отклонить (ClientContext form, Audit PII); M36 принято (password 32).
+4. **CR M37–M38:** решить принять/отклонить (HostSuppliedClientContext form, Audit PII); M36 принято (password 32).
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
 6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.

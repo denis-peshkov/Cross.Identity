@@ -2,6 +2,7 @@
 
 internal class ExternalLoginStateEntityConfiguration : IEntityTypeConfiguration<ExternalLoginStateEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<ExternalLoginStateEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.ExternalLoginStates), IdentityContext.DefaultSchema);

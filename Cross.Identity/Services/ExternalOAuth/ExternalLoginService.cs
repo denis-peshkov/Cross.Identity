@@ -194,7 +194,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         string provider,
         Guid userAccountId,
         string refreshToken,
-        ClientContext clientContext,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
@@ -240,7 +240,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, clientContext, cancellationToken)
+            .RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

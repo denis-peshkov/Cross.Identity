@@ -34,17 +34,17 @@ public class RefreshToken_StepTests
             NormalizedUserName = "user"
         };
 
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(refreshTokenHash, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.GetRefreshTokenAsync(refreshTokenHash, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new RefreshTokenEntity { UserAccountId = userAccountId, UserAccount = null!, FamilyId = familyId, TokenHash = "" });
         _jwtTokenService.Setup(j => j.GetClaimValue(newRefreshToken, JwtRegisteredClaimNames.Jti))
             .Returns("new-jti");
-        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userAccountId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateAccessTokenAsync(userAccountId, familyId, It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newAccessToken);
-        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userAccountId, familyId, It.IsAny<List<Claim>>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.GenerateRefreshTokenAsync(userAccountId, familyId, It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync(newRefreshToken);
-        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.InvalidateRefreshTokenAsync(refreshTokenHash, "new-jti", HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _userService.Setup(u => u.GetUserByAsync("Id", userAccountId.ToString(), It.IsAny<CancellationToken>()))
@@ -79,7 +79,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenInvalidRefreshToken_WhenExecuteAsync_ThenThrowsNotAuthorizedExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new NotAuthorizedException("Invalid or expired refresh token."));
 
         var step = new RefreshTokenStep
@@ -108,7 +108,7 @@ public class RefreshToken_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenAlreadyUsedRefreshToken_WhenExecuteAsync_ThenThrowsConflictExceptionAsync()
     {
-        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _jwtTokenService.Setup(j => j.EnsureRefreshTokenActiveForRotationAsync(It.IsAny<string>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ConflictException("Refresh token has already been used."));
 
         var step = new RefreshTokenStep

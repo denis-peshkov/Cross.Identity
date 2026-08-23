@@ -57,7 +57,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             userAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
-            ClientContext.Empty,
+            HostSuppliedClientContext.Empty,
             CancellationToken.None);
     }
 
@@ -1188,11 +1188,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         jwt.Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), userAccountId, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
-                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
+                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
-        await sut.UnlinkAsync("Google", userAccountId, "session-refresh-token", ClientContext.Empty, CancellationToken.None);
+        await sut.UnlinkAsync("Google", userAccountId, "session-refresh-token", HostSuppliedClientContext.Empty, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
         var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
@@ -1200,7 +1200,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         user.SecurityStamp.Should().NotBe(oldStamp);
         jwt.Verify(
             j => j.RevokeAllTokensForUserAsync(
-                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()),
+                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1211,7 +1211,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, "session-refresh-token", ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, "session-refresh-token", HostSuppliedClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*UserAccountId is required*");
@@ -1250,7 +1250,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var refresh = await IssueRefreshTokenAsync(jwt, userAccountId);
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, refresh, ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, refresh, HostSuppliedClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*last login method*");
@@ -1281,7 +1281,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var refresh = await IssueRefreshTokenAsync(jwt, userAccountId);
         var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt);
 
-        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, refresh, ClientContext.Empty, CancellationToken.None))
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, refresh, HostSuppliedClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<NotFoundException>()
             .WithMessage("*not linked*");
