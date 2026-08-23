@@ -1,7 +1,7 @@
 Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-Закрытые пункты **всегда** помечаются зелёным чекбоксом `✅` (в заголовке и в таблице «Закрыто»).
+**Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
 **CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — Free plan limit 150 files; полный diff 293 → scope только `Cross.Identity/` (40 findings: 22 major / 18 minor). Сырой лог: `/tmp/cr-identity.jsonl`.
 
@@ -18,35 +18,14 @@
 ### 20. PII в логах SendCode / GetUserAccountId / ValidateCode (CR)
 `SendCodeStep`, `GetUserAccountIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
 
-### ✅ 22. Confirm contact по selector field, не OTP-каналу (CR)
-`UserService.ValidateCodeAsync` — `EmailVerified` / `PhoneNumberVerified` выставляются по `otpTarget.Channel` + address, не по selector field.
-
 ### 23. OTP supersede без `userId` (CR)
 `CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
-
-### ✅ 24. SMS destination `ToLowerInvariant` (CR)
-`CodeService` — send/verify используют `ChannelEnum.NormalizeAddress` (email lowercases, SMS trim-only).
-
-### ✅ 25. Lockout: счётчик после истечения окна (CR)
-`UserAccountLockout.RecordFailedAccess` — при истёкшем `LockoutEnd` сбрасывает `AccessFailedCount` перед новым fail.
 
 ### 26. `AuditEntityType` discriminator collision (CR)
 `LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
 
-### ✅ 27. Preferred endpoint unique index (CR)
-Filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` — один `IsPreferred` на user; migration `1_10_*`.
-
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
-
-### ✅ 29. OAuth unverified email collision (CR отклонён)
-При `profile.EmailVerified` и локальном unverified squat — **создаётся новый verified-аккаунт** (не блокировка). CR предлагал отклонять — **принято** текущее поведение (см. «Принято» ниже).
-
-### ✅ 30. `ICodeService.SendAsync` `userId: Guid` (CR)
-`SendAsync(Guid userId)` — выровнено с `VerifyAsync(Guid)`; `Guid.TryParse` убран.
-
-### ✅ 31. `GetUserAccountIdByAsync` nullability (CR)
-Сигнатура `Task<Guid?>`; при отсутствии user — `null` (не `NotFoundException`). В `Bag` по-прежнему строка (`ToString()`).
 
 ### 32. `UserAccountGuard` → `InvalidOperationException` (CR)
 Conflict на email/phone бросает `InvalidOperationException` вместо Conflict/Validation.
@@ -59,12 +38,6 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 
 ### 35. `WatsApp` obsolete alias (CR)
 `ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
-
-### ✅ 36. Password max 32 (CR max 128 отклонён)
-Stock flows — `max: 32` на Password fields. CodeRabbit предлагал 128 — **принято** оставить 32 (см. «Принято» ниже); не менять без явного BREAKING.
-
-### 37. HostSuppliedClientContext fields в ExternalLogin form (CR) — конфликт с принятым
-`main.ExternalLogin.json` — CR: убрать Ip/UA/Fingerprint из form; **принято** как host collectForm → `HostSuppliedClientContext`.
 
 ### 38. `AuditEntity` хранит Ip/UA/Fingerprint (CR) — спорно
 CR: минимизировать PII; сейчас намеренно для revoke forensics (`Audits`).
@@ -89,7 +62,6 @@ CR: минимизировать PII; сейчас намеренно для rev
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
 ### CodeRabbit minor (XML / style / hygiene)
-- XML docs: `NotificationMessage` (`param`→`summary`), `CodeGeneratorHelper.GenerateHash`, `ChannelEnumExtensions`, `IdentityContext` DbSets, `UserExternalLoginEntity`, `UserAccount.CommunicationEndpoints`, endpoint/phone/refresh/state entities, `Configure`, `IJwtTokenService` HostSuppliedClientContext wording («Optional» → sentinel).
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
 - `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
@@ -109,7 +81,7 @@ CR: минимизировать PII; сейчас намеренно для rev
 `GetClaimValueFromJweToken` → `GetAwaiter().GetResult()`. В ASP.NET Core deadlock маловероятен; основной путь — JWS refresh без async I/O.
 
 ### `HostSuppliedClientContext` — trusted pipeline хоста
-`IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
+`IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata. Поля в `main.ExternalLogin.json` collectForm — **принято** (CR M37 отклонён; см. ✅ #37 в «Закрыто»).
 
 ### Delivery channel resolution (новая модель)
 OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unverified allowed for OTP confirm). Notify: тот же порядок, email/phone только verified. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
@@ -183,14 +155,21 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | ✅ #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 | ✅ #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
-| ✅ #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
-| ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
-| ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
-| ✅ #27 Preferred unique index | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
-| ✅ #30 SendAsync userId Guid | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
-| ✅ #31 GetUserAccountIdByAsync nullability | `Task<Guid?>`; missing user → `null` |
+| ✅ #22 Confirm contact по OTP-каналу (CR) | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
+| ✅ #24 SMS normalize (CR) | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
+| ✅ #25 Lockout after expiry (CR) | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
+| ✅ #27 Preferred unique index (CR) | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
+| ✅ #30 SendAsync userId Guid (CR) | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
+| ✅ #31 GetUserAccountIdByAsync nullability (CR) | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
+| ✅ #37 HostSuppliedClientContext в ExternalLogin form (CR отклонён) | collectForm Ip/UA/Fingerprint — host trusted pipeline; см. «Принято» |
+| ✅ #42 GetUserId → GetUserAccountId | operation `GetUserAccountId`, step `getUserAccountId`, `GetUserAccountIdByAsync`, `main.GetUserAccountId.json` |
+| ✅ #43 Bag keys `UserId` → `UserAccountId` | `userAccountIdKey`, step output, collectForm; `collectResult` → `user_account_id` |
+| ✅ #44 `ClientContext` → `HostSuppliedClientContext` | type/file/API param `hostSuppliedClientContext`; `Empty` / `Read(bag)`; `docs/BREAKING.md` |
+| ✅ #45 License JWT claim `user_id` | `License.UserId` / claim `"user_id"` — отдельно от identity `user_account_id` |
+| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param docs |
+| ✅ #47 `Sample.Api.http` | `UserAccountId` / `USER_ACCOUNT_ID` на identity flows (не license) |
 
 ---
 
@@ -215,7 +194,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
-3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit. M29 принято (OAuth unverified squat); M30 закрыт (SendAsync Guid).
-4. **CR M37–M38:** решить принять/отклонить (HostSuppliedClientContext form, Audit PII); M36 принято (password 32).
-5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
-6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.
+3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+4. **CR M38:** Audit PII — принять или минимизировать.
+5. **M40–M41:** явный выбор канала; messenger send + bot verification.
+6. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
