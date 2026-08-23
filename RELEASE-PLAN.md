@@ -10,12 +10,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 17. `ChangePassword` по `Id` без session proof
-Достаточно Guid + current password; refresh token не требуется. При утечке UUID + password — смена пароля (entropy UUID mitigates).
-
-### 18. OAuth `ReturnUrl` без allowlist
-Произвольный `ReturnUrl` в state. Open redirect на стороне хоста, если тот редиректит вслепую.
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -61,6 +55,12 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 
 ### `PasswordAlgoEnum.SHA256` (#16) — принято
 Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет auto-upgrade на Argon2id. Default path — Argon2id/PBKDF2 + pepper. SHA256 только для явного legacy; хост не должен включать его для новых хешей.
+
+### `ChangePassword` без session proof (#17) — принято
+Достаточно `Id` + current password (как при логине). Refresh не требуется: энтропия Guid + знание пароля — достаточный proof; session proof — опционально на стороне хоста (`[Authorize]`).
+
+### OAuth `ReturnUrl` (#18) — принято (контракт хоста)
+Библиотека только хранит `ReturnUrl` в OAuth state и отдаёт обратно; HTTP-redirect не делает. Allowlist / relative-only / запрет open redirect — ответственность хоста.
 
 ---
 
@@ -121,4 +121,4 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 ## Приоритет фиксов
 
-1. **M13–M14, M17–M18:** half-validate API docs; ChangePassword session proof; OAuth ReturnUrl.
+1. **M13–M14:** half-validate API docs / misuse guidance.
