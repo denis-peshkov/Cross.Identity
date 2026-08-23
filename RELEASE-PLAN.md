@@ -30,12 +30,6 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
-### 40. Выбор типа канала коммуникации (из TO-DO)
-Каркас есть (`ChannelEnum`, endpoints, resolve через preferred). Нет отдельного user-facing flow «выбери тип канала»; OTP реально только Email/Sms (`SupportsOtp`). Нужен явный контракт/flow выбора канала (или документировать, что канал = тип preferred endpoint).
-
-### 41. Мессенджер + верификация / бот (из TO-DO)
-`Telegram` / `Viber` / `WhatsApp` + `LinkedMessenger` и preferred уже в модели. Нет: sender в мессенджер, flow привязки/верификации через бота. Сейчас messenger preferred → SMS (`ToEmailOrSms`) / SendCode → `NotSupportedException` (см. принятое #9).
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -107,6 +101,12 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 ### PII в логах auth steps (#20) — принято
 `SendCodeStep`, `VerifyCodeStep`, `GetUserAccountIdStep`, `UserService.ValidateCodeAsync`, `CodeService` — raw email/phone/destination в Information/Warning для operational forensics, пока клиенту отдаётся единый `Invalid credentials.` (anti-enumeration). CR M20 (маскировать / только `userId`) **отклонён**: без identity в логе сложнее саппорт и расследование (особенно «user not found» до резолва Guid); retention, redaction и доступ к log sink — ответственность хоста (аналогично #38).
 
+### Выбор типа канала коммуникации (#40) — принято (2.0 scope)
+Отдельного stock flow «выбери тип канала» в 2.0 **нет**. Контракт: канал доставки/OTP = **preferred verified endpoint** (или `LockChannelAsEmail` / account email / phone по правилам `ResolveOtpTargetAsync` / `ResolveTargetAsync`). Selector (`Email` vs `Phone`) — только identity lookup, не выбор канала. Явный UI выбора канала — опционально на стороне хоста (`CommunicationEndpointSetPreferred`, кастомный flow).
+
+### Мессенджер + верификация / бот (#41) — принято (2.0 scope)
+`Telegram` / `Viber` / `WhatsApp`, `LinkedMessenger`, endpoints в модели — **задел под будущее**. В 2.0: нет messenger sender, нет bot link/verify flow; OTP только Email/Sms (`SupportsOtp`); messenger preferred → `ToEmailOrSms()` / `NotSupportedException` на SendCode (см. #9). Реализация sender + bot verification — post-2.0 / кастом хоста.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -157,6 +157,8 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ #30 SendAsync userId Guid (CR) | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
 | ✅ #31 GetUserAccountIdByAsync nullability (CR) | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
+| ✅ #40 Выбор канала (2.0 scope, принято) | канал = preferred endpoint; selector — identity only; см. «Принято» |
+| ✅ #41 Messenger bot verify (2.0 scope, принято) | модель/endpoints задел; sender+bot post-2.0; см. «Принято» / #9 |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 | ✅ #37 HostSuppliedClientContext в ExternalLogin form (CR отклонён) | collectForm Ip/UA/Fingerprint — host trusted pipeline; см. «Принято» |
 | ✅ #38 Audit PII в `auth.Audits` (CR отклонён) | Ip/UA/Fingerprint на issue/revoke — forensics by design; retention/access — хост; см. «Принято» |
@@ -191,5 +193,4 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M28:** SendCode action URL.
 3. **CR M32–M33, M35, M39:** Guard exceptions; Bag nullable; idle double-audit.
-4. **M40–M41:** явный выбор канала; messenger send + bot verification.
-5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
+4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
