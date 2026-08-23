@@ -265,21 +265,59 @@ internal sealed class UserService : IUserService
 
         UserAccountLockout.Reset(user);
 
-        if (field == nameof(UserAccountEntity.Email))
+        await ApplyVerifiedContactFromOtpTargetAsync(user, otpTarget, cancellationToken).ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        return true;
+    }
+
+    private async Task ApplyVerifiedContactFromOtpTargetAsync(
+        UserAccountEntity user,
+        DeliveryTarget otpTarget,
+        CancellationToken cancellationToken)
+    {
+        if (otpTarget.Channel == ChannelEnum.Email)
         {
-            var normalizedEmail = user.Email
-                ?? throw new InvalidOperationException("Email is required to verify email.");
+            var normalizedEmail = ChannelEnum.Email.NormalizeAddress(otpTarget.Address);
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                user.Email = normalizedEmail;
+            }
+
+            if (!string.Equals(
+                    ChannelEnum.Email.NormalizeAddress(user.Email!),
+                    normalizedEmail,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
             await UserAccountGuard.EnsureNoOtherVerifiedEmailAsync(
                 _context,
                 user.Id,
                 normalizedEmail,
                 cancellationToken).ConfigureAwait(false);
             user.EmailVerified = true;
+            return;
         }
-        else if (field == nameof(UserAccountEntity.PhoneNumber))
+
+        if (otpTarget.Channel == ChannelEnum.Sms)
         {
-            var normalizedPhone = user.PhoneNumber
-                ?? throw new InvalidOperationException("PhoneNumber is required to verify phone.");
+            var normalizedPhone = ChannelEnum.Sms.NormalizeAddress(otpTarget.Address);
+            if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+            {
+                user.PhoneNumber = normalizedPhone;
+            }
+
+            if (!string.Equals(
+                    ChannelEnum.Sms.NormalizeAddress(user.PhoneNumber!),
+                    normalizedPhone,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
             await UserAccountGuard.EnsureNoOtherVerifiedPhoneAsync(
                 _context,
                 user.Id,
@@ -287,10 +325,6 @@ internal sealed class UserService : IUserService
                 cancellationToken).ConfigureAwait(false);
             user.PhoneNumberVerified = true;
         }
-
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        return true;
     }
 
     public async Task SetPasswordAsync(

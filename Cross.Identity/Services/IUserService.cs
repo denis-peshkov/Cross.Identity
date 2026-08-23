@@ -64,6 +64,8 @@ internal interface IUserService
     /// Verify a one-time code for a user found by selector (code-login / email-confirm path).
     /// Delivery channel matches <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>
     /// (same as <c>SendCodeStep</c>), not the selector field type.
+    /// On success, <c>EmailVerified</c> / <c>PhoneNumberVerified</c> follow the OTP channel and address,
+    /// not the selector field (Email vs Phone).
     /// Applies the same account lockout policy as <see cref="ValidatePasswordAsync"/>:
     /// locked accounts are rejected; failed codes increment <c>AccessFailedCount</c>; success resets lockout.
     /// </summary>

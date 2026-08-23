@@ -15,8 +15,8 @@
 ### 20. PII в логах SendCode / GetUserId / ValidateCode (CR)
 `SendCodeStep`, `GetUserIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
 
-### 22. Confirm contact по selector field, не OTP-каналу (CR)
-`UserService.ValidateCodeAsync` — после успеха confirm идёт по `field` (Email/Phone selector), а не по `otpTarget.Channel` — можно подтвердить не тот контакт.
+### 22. Confirm contact по selector field, не OTP-каналу (CR) — закрыто
+`UserService.ValidateCodeAsync` — `EmailVerified` / `PhoneNumberVerified` выставляются по `otpTarget.Channel` + address, не по selector field.
 
 ### 23. OTP supersede без `userId` (CR)
 `CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
@@ -173,6 +173,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 | #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
+| #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
 | Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
@@ -198,7 +199,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20, M22–M28:** PII logs; OTP confirm channel; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
+2. **CR M20, M23–M28:** PII logs; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
 3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.

@@ -694,6 +694,48 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmailSelectorAndSmsOtp_WhenValidateCodeAsync_ThenVerifiesPhoneNotEmailAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "login@example.com";
+        var phone = "+12125559876";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            EmailVerified = false,
+            PhoneNumber = phone,
+            PhoneNumberVerified = false,
+            IsActive = true,
+        });
+        await _communicationEndpoints.UpsertAsync(
+            userId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: false);
+        var sms = await _communicationEndpoints.UpsertAsync(
+            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("654321"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "654321", CancellationToken.None);
+
+        result.Should().BeTrue();
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
+        account.EmailVerified.Should().BeFalse();
+        account.PhoneNumberVerified.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailSelectorAndPreferredSms_WhenValidateCodeAsync_ThenAcceptsPhoneCodeAsync()
     {
         var userId = Guid.NewGuid();
