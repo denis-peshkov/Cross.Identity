@@ -2,66 +2,6 @@
 
 ---
 
-## Критично (безопасность)
-
-### 2. ~~`TokenStep` (code-login) не совпадает с каналом `SendCodeStep`~~ ✅ закрыто
-~~`SendCodeStep` / `VerifyCodeStep` → `ResolveOtpTargetAsync`; `ValidateCodeAsync` для Email/Phone проверял verification по типу selector.~~
-
-**Исправлено (2.0):** `UserService.ValidateCodeAsync` всегда резолвит OTP-target через `ResolveOtpTargetAsync` (как SendCode/VerifyCode), независимо от selector (`Email` / `PhoneNumber` / `UserName`).
-
----
-
-## Высокий (логика / auth model)
-
-### 3. ~~`CodeService.VerifyAsync` не привязывает код к `userId`~~ ✅ закрыто
-~~Поиск по email/phone без `UserAccountId == resolvedUserId` → cross-user OTP accept при дубликатах адреса.~~
-
-**Исправлено (2.0):** `VerifyAsync(Guid userId, ChannelEnum, identity, code)`; lookup требует `UserAccountId == userId`. `VerifyCodeStep` передаёт resolved user id.
-
-### 4. ~~Lookup Email/Phone: `FirstOrDefault` без приоритета confirmed~~ ✅ закрыто
-~~`FindTrackedUserBySelectorAsync` / `GetUserByAsync` — `FirstOrDefault` без `OrderBy EmailConfirmed`.~~
-
-**Исправлено (2.0):** `PreferConfirmedContact` — для Email/Phone `OrderByDescending(EmailConfirmed|PhoneNumberConfirmed)` перед `FirstOrDefault`.
-
-### 5. ~~Microsoft OAuth: `EmailConfirmed` без attestation~~ ✅ закрыто
-~~`FetchMicrosoftProfileAsync`: `EmailConfirmed = !string.IsNullOrWhiteSpace(email)`.~~
-
-**Исправлено (2.0):** Graph `/me` только для id/name (+ fallback email); `ExternalOAuthProfile.EmailConfirmed` только из OIDC `email_verified` на `https://graph.microsoft.com/oidc/userinfo` (как Google).
-
-### 6. ~~OTP/notify на неподтверждённый email~~ ✅ закрыто
-~~`FindEmailTargetAsync` fallback на `UsersAccounts.Email` без `EmailConfirmed` для всех resolve.~~
-
-**Исправлено (2.0):** разделены пути:
-- **`ResolveOtpTargetAsync`** — fallback на account email **разрешён и без** `EmailConfirmed` (иначе нельзя подтвердить только что добавленный email).
-- **`ResolveDeliveryTargetAsync`** (notify, напр. после reset password) — fallback **только** при `EmailConfirmed`.
-
-### 7. ~~Lockout обходится OTP-логином~~ ✅ закрыто
-~~`ValidatePasswordAsync` проверяет lockout; `ValidateCodeAsync` — нет.~~
-
-**Исправлено (2.0):** `ValidateCodeAsync` — `IsLockedOut` → отказ; неверный код → `RecordFailedAccess`; успех → `Reset`. (`VerifyCodeStep` / ForgotPassword без изменений — recovery отдельно от code-login.)
-
-### 8. ~~User enumeration — разные ответы шагов~~ ✅ закрыто (кроме oracle `GetUserId`)
-| Шаг | Было | Сейчас |
-|-----|------|--------|
-| `SendCodeStep` | unknown → `Invalid credentials.` | ✅ |
-| `SendCodeStep` | known без channel → `ValidationException` | ✅ `Invalid credentials.` + log |
-| `VerifyCodeStep` / `GetUserIdStep` | `NotFound` / «User not found» | ✅ `Invalid credentials.` + log |
-| `main.GetUserId` | oracle существования | **остаётся** (успех = `{ user_id }`) — продуктовое решение |
-
-**Исправлено (2.0):** единый клиентский ответ на reject identity/channel; детали в Information-логе. Публичный lookup `GetUserId` по-прежнему раскрывает существование при успехе.
-
-### 10. ~~Нет fallback на confirmed phone~~ ✅ закрыто
-~~Цепочка без phone account fallback.~~
-
-**Исправлено (2.0):** после email — verified Sms endpoint, иначе `UsersAccounts.PhoneNumber` (`PhoneNumberConfirmed` для notify; для OTP unconfirmed тоже, как email). Phone-only пользователи без endpoints работают.
-
-### 11. ~~Нет rate limiting на отправку OTP~~ ✅ закрыто
-~~`CodeService` / `SendCodeStep` — нет cooldown / per-identity limits.~~
-
-**Исправлено (2.0):** `Authentication:OtpSendRateLimit` — cooldown (default 60s) и cap в окне (default 5 / 1h) на пару user + destination в `CodeService.SendAsync`. `Cooldown = 0` и `MaxSendsPerWindow = 0` отключают.
-
----
-
 ## Средний (противоречия / баги контрактов)
 
 ### 13. `GetClaimValue` для JWS без подписи
@@ -112,7 +52,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` **игнорируется**; `N
 `IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
 
 ### Delivery channel resolution (новая модель)
-OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unconfirmed allowed for OTP confirm). Notify: тот же порядок, email/phone только confirmed (#6, #10). Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2).
+OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unconfirmed allowed for OTP confirm). Notify: тот же порядок, email/phone только confirmed. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
 
 ### Публичные half-validate API (#13, #14)
 Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
@@ -125,6 +65,9 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 
 ### Apple в registry без реализации (#12) — принято
 `FetchAppleProfileAsync` → `NotSupportedException`. Не включать Apple в `Providers` / options до реализации.
+
+### `main.GetUserId` existence oracle — принято
+Успех возвращает `{ user_id }` и раскрывает существование пользователя. Продуктовое решение; шаги SendCode/VerifyCode/GetUserId на reject дают единый `Invalid credentials.`.
 
 ---
 
@@ -152,6 +95,15 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 | `VerifyTokenStep` swallow | только token-format errors → `Valid=false` |
 | Мёртвые ключи `main.Token.json` | удалены |
 | `CreatedBy` | колонка удалена |
+| #2 TokenStep ↔ SendCode channel | `ValidateCodeAsync` → `ResolveOtpTargetAsync` |
+| #3 VerifyAsync без userId | `VerifyAsync(userId, …)` + `UserAccountId` match |
+| #4 Lookup без PreferConfirmed | `OrderByDescending` confirmed перед FirstOrDefault |
+| #5 Microsoft EmailConfirmed | только OIDC `email_verified` (userinfo) |
+| #6 OTP vs notify email | OTP: unconfirmed OK; notify: confirmed only |
+| #7 Lockout на OTP-login | `ValidateCodeAsync` lockout как у password |
+| #8 Enumeration на шагах | единый `Invalid credentials.` + log |
+| #10 Phone fallback | account phone после email (OTP/notify rules) |
+| #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 
 ---
 
@@ -174,7 +126,4 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 
 ## Приоритет фиксов
 
-1. ~~**C1–C2**~~ — C2 закрыт; C1 (#1 OTP в логах) **принято**.
-2. ~~**H3–H7**~~ — закрыто / принято по плану.
-3. ~~**H8–H12**~~ — #8/#10/#11 закрыто; #9/#12 **принято**; oracle `GetUserId` — продуктовое.
-4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
+1. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
