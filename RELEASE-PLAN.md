@@ -1,5 +1,7 @@
 Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
+**CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — Free plan limit 150 files; полный diff 293 → scope только `Cross.Identity/` (40 findings: 22 major / 18 minor). Сырой лог: `/tmp/cr-identity.jsonl`.
+
 ---
 
 ## Средний (противоречия / баги контрактов)
@@ -10,6 +12,72 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
+### 20. PII в логах SendCode / GetUserId / ValidateCode (CR)
+`SendCodeStep`, `GetUserIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
+
+### 21. Microsoft `EmailConfirmed` vs Graph email (CR)
+`ExternalOAuthProviders` — `EmailConfirmed` только если email пришёл из OIDC userinfo **и** `email_verified`; Graph fallback email не должен подтверждать mailbox.
+
+### 22. Confirm contact по selector field, не OTP-каналу (CR)
+`UserService.ValidateCodeAsync` — после успеха confirm идёт по `field` (Email/Phone selector), а не по `otpTarget.Channel` — можно подтвердить не тот контакт.
+
+### 23. OTP supersede без `userId` (CR)
+`CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
+
+### 24. SMS destination `ToLowerInvariant` (CR)
+`CodeService.SendAsync` — lowercasing destination для всех каналов; Verify для SMS только `Trim` — риск mismatch.
+
+### 25. Lockout: счётчик после истечения окна (CR)
+`UserAccountLockout.RecordFailedAccess` — не сбрасывает `AccessFailedCount`, когда `LockoutEnd` уже истёк, перед новым fail.
+
+### 26. `AuditEntityType` discriminator collision (CR)
+`LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
+
+### 27. Preferred endpoint unique index (CR)
+`UserCommunicationEndpointEntityConfiguration` — нет filtered unique index: один `IsPreferred` на user.
+
+### 28. SendCode action URL всегда `/reset-password` (CR)
+`SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
+
+### 29. OAuth unconfirmed email collision (CR)
+`ExternalLoginService` — даже при `profile.EmailConfirmed` отвергать merge, если локальный email уже есть как unconfirmed row.
+
+### 30. `ICodeService.SendAsync` `userId: string` (CR)
+`SendAsync(string userId)` vs `VerifyAsync(Guid)` — выровнять на `Guid`.
+
+### 31. `GetUserIdByAsync` nullability (CR)
+Документ: null-on-missing; сигнатура `Task<string>` без `?`.
+
+### 32. `UserAccountGuard` → `InvalidOperationException` (CR)
+Conflict на email/phone бросает `InvalidOperationException` вместо Conflict/Validation.
+
+### 33. `Bag` nullable `Convert.ChangeType` (CR)
+`Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
+
+### 34. Session IP binding не конфигурируется (CR)
+`JwtTokenService` — IP-only mismatch как opt-in (NAT/mobile), не всегда hard-fail.
+
+### 35. `WatsApp` obsolete alias (CR)
+`ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
+
+### 36. Password max 32 → 128 (CR) — конфликт с закрытым
+`main.Token.json` / `ChangePassword` — CR хочет max 128; **уже закрыто** как Password max 32.
+
+### 37. ClientContext fields в ExternalLogin form (CR) — конфликт с принятым
+`main.ExternalLogin.json` — CR: убрать Ip/UA/Fingerprint из form; **принято** как host collectForm → `ClientContext`.
+
+### 38. `AuditEntity` хранит Ip/UA/Fingerprint (CR) — спорно
+CR: минимизировать PII; сейчас намеренно для revoke forensics (`Audits`).
+
+### 39. Idle revoke double-audit? (CR)
+`HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
+
+### 40. Выбор типа канала коммуникации (из TO-DO)
+Каркас есть (`ChannelEnum`, endpoints, resolve через preferred). Нет отдельного user-facing flow «выбери тип канала»; OTP реально только Email/Sms (`SupportsOtp`). Нужен явный контракт/flow выбора канала (или документировать, что канал = тип preferred endpoint).
+
+### 41. Мессенджер + верификация / бот (из TO-DO)
+`Telegram` / `Viber` / `WhatsApp` + `LinkedMessenger` и preferred уже в модели. Нет: sender в мессенджер, flow привязки/верификации через бота. Сейчас messenger preferred → SMS (`ToEmailOrSms`) / SendCode → `NotSupportedException` (см. принятое #9).
+
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -19,6 +87,14 @@
 - `AuditService.Record` без собственного `SaveChanges` — audit теряется, если caller не закоммитит.
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
+
+### CodeRabbit minor (XML / style / hygiene)
+- XML docs: `NotificationMessage` (`param`→`summary`), `CodeGeneratorHelper.GenerateHash`, `ChannelEnumExtensions`, `IdentityContext` DbSets, `UserExternalLoginEntity`, `UserAccount.CommunicationEndpoints`, endpoint/phone/refresh/state entities, `Configure`, `IJwtTokenService` ClientContext wording («Optional» → sentinel).
+- `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
+- `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
+- `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
+- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName.
+- `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
 
 ---
 
@@ -99,6 +175,8 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
 | #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 | #19 OTP code trim | `CodeService.VerifyAsync` trim как `ValidateCodeAsync` |
+| Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
+| BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
 ---
 
@@ -122,3 +200,8 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
+2. **CR M20–M28:** PII logs; Microsoft EmailConfirmed edge; OTP confirm channel; supersede+userId; SMS normalize; lockout reset; AuditEntityType; preferred unique; action URL.
+3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
+5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
+6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.

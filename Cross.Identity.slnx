@@ -30,7 +30,6 @@
     <File Path="GitVersion.yml" />
     <File Path="RELEASE-PLAN.md" />
     <File Path="Roadmap-SecurityStamp.md" />
-    <File Path="TO-DO.md" />
   </Folder>
   <Project Path="Cross.Identity.Tests\Cross.Identity.Tests.csproj" />
   <Project Path="Cross.Identity\Cross.Identity.csproj" />
