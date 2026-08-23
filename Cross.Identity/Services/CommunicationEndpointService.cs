@@ -163,14 +163,14 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     public async Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
-        => await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountEmail: false, cancellationToken).ConfigureAwait(false);
+        => await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountContact: false, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<DeliveryTarget> ResolveOtpTargetAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var target = await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountEmail: true, cancellationToken).ConfigureAwait(false);
+        var target = await ResolveTargetCoreAsync(userId, allowUnconfirmedAccountContact: true, cancellationToken).ConfigureAwait(false);
         return new DeliveryTarget
         {
             Channel = target.Channel.ToEmailOrSms(),
@@ -227,12 +227,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     private async Task<DeliveryTarget> ResolveTargetCoreAsync(
         Guid userId,
-        bool allowUnconfirmedAccountEmail,
+        bool allowUnconfirmedAccountContact,
         CancellationToken cancellationToken)
     {
         if (_options.LockChannelAsEmail)
         {
-            return await RequireEmailTargetAsync(userId, allowUnconfirmedAccountEmail, cancellationToken).ConfigureAwait(false);
+            return await RequireEmailTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+                .ConfigureAwait(false);
         }
 
         var preferred = await GetPreferredEntityAsync(userId, cancellationToken).ConfigureAwait(false);
@@ -241,16 +242,24 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             return ToTarget(preferred);
         }
 
-        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountEmail, cancellationToken).ConfigureAwait(false);
+        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+            .ConfigureAwait(false);
         if (email is not null)
         {
             return email;
         }
 
+        var phone = await FindPhoneTargetAsync(userId, allowUnconfirmedAccountContact, cancellationToken)
+            .ConfigureAwait(false);
+        if (phone is not null)
+        {
+            return phone;
+        }
+
         throw new ValidationException(
-            allowUnconfirmedAccountEmail
-                ? "No preferred verified communication channel and no email. Set a preferred endpoint or provide an email."
-                : "No preferred verified communication channel and no confirmed email. Set a preferred endpoint or confirm an email.");
+            allowUnconfirmedAccountContact
+                ? "No preferred verified communication channel and no email or phone. Set a preferred endpoint or provide an email or phone number."
+                : "No preferred verified communication channel and no confirmed email or phone. Set a preferred endpoint or confirm an email or phone number.");
     }
 
     private async Task<DeliveryTarget> RequireEmailTargetAsync(
@@ -258,7 +267,8 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         bool allowUnconfirmedAccountEmail,
         CancellationToken cancellationToken)
     {
-        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountEmail, cancellationToken).ConfigureAwait(false);
+        var email = await FindEmailTargetAsync(userId, allowUnconfirmedAccountEmail, cancellationToken)
+            .ConfigureAwait(false);
         if (email is not null)
         {
             return email;
@@ -309,6 +319,48 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         {
             Channel = ChannelEnum.Email,
             Address = ChannelEnum.Email.NormalizeAddress(account.Email),
+        };
+    }
+
+    private async Task<DeliveryTarget?> FindPhoneTargetAsync(
+        Guid userId,
+        bool allowUnconfirmedAccountPhone,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = await _context.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == userId && x.IsVerified && x.Channel == ChannelEnum.Sms)
+            .OrderByDescending(x => x.IsPreferred)
+            .ThenByDescending(x => x.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (endpoint is not null)
+        {
+            return ToTarget(endpoint);
+        }
+
+        var account = await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => new { x.PhoneNumber, x.PhoneNumberConfirmed })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (account is null || string.IsNullOrWhiteSpace(account.PhoneNumber))
+        {
+            return null;
+        }
+
+        if (!account.PhoneNumberConfirmed && !allowUnconfirmedAccountPhone)
+        {
+            return null;
+        }
+
+        return new DeliveryTarget
+        {
+            Channel = ChannelEnum.Sms,
+            Address = ChannelEnum.Sms.NormalizeAddress(account.PhoneNumber),
         };
     }
 

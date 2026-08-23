@@ -3,7 +3,7 @@
 /// <summary>
 /// Manages per-user communication endpoints and the single preferred delivery channel.
 /// Preferred / trusted delivery uses only <c>IsVerified</c> endpoints; OTP may also fall back
-/// to an unconfirmed <c>UsersAccounts.Email</c> so a newly added address can be confirmed.
+/// to an unconfirmed <c>UsersAccounts.Email</c> or <c>PhoneNumber</c> so a newly added contact can be confirmed.
 /// Used by process steps:
 /// <list type="bullet">
 /// <item><description><c>SendCodeStep</c> / <c>VerifyCodeStep</c> — <see cref="ResolveOtpTargetAsync"/></description></item>
@@ -70,13 +70,14 @@ public interface ICommunicationEndpointService
     /// <summary>
     /// Resolve where to deliver <em>trusted</em> messages (for example password-changed notify).
     /// Order: <c>Authentication:LockChannelAsEmail</c> → preferred verified endpoint → email
-    /// (verified email endpoint, else <c>UsersAccounts.Email</c> only when <c>EmailConfirmed</c>).
+    /// (verified email endpoint, else confirmed <c>UsersAccounts.Email</c>) → phone
+    /// (verified SMS endpoint, else confirmed <c>UsersAccounts.PhoneNumber</c>).
     /// </summary>
     /// <param name="userId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Channel and address for delivery.</returns>
     /// <exception cref="ValidationException">
-    /// No preferred verified channel and no confirmed account email (or no email when lock-as-email is on).
+    /// No preferred verified channel and no confirmed account email or phone (or no email when lock-as-email is on).
     /// </exception>
     Task<DeliveryTarget> ResolveDeliveryTargetAsync(
         Guid userId,
@@ -84,15 +85,15 @@ public interface ICommunicationEndpointService
 
     /// <summary>
     /// Resolve OTP send/verify target (same order as <see cref="ResolveDeliveryTargetAsync"/>),
-    /// but account-email fallback also allows an <em>unconfirmed</em> <c>UsersAccounts.Email</c>
-    /// (chicken-and-egg for email confirmation). Messenger channels map to <see cref="ChannelEnum.Sms"/>
+    /// but account email/phone fallback also allows <em>unconfirmed</em> account contacts
+    /// (chicken-and-egg for confirmation). Messenger channels map to <see cref="ChannelEnum.Sms"/>
     /// until messenger OTP senders are implemented.
     /// </summary>
     /// <param name="userId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>OTP channel (<see cref="ChannelEnum.Email"/> or <see cref="ChannelEnum.Sms"/>) and address.</returns>
     /// <exception cref="ValidationException">
-    /// No preferred verified channel and no account email (or no email when lock-as-email is on).
+    /// No preferred verified channel and no account email or phone (or no email when lock-as-email is on).
     /// </exception>
     Task<DeliveryTarget> ResolveOtpTargetAsync(
         Guid userId,

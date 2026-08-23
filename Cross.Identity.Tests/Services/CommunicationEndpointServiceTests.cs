@@ -204,7 +204,60 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var act = () => _service.ResolveDeliveryTargetAsync(userId);
 
         await act.Should().ThrowAsync<ValidationException>()
-            .WithMessage("*confirmed email*");
+            .WithMessage("*confirmed email or phone*");
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenPhoneOnlyConfirmed_FallsBackToAccountPhone()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+79161234567";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = true,
+        });
+
+        var target = await _service.ResolveDeliveryTargetAsync(userId);
+
+        target.Channel.Should().Be(ChannelEnum.Sms);
+        target.Address.Should().Be(phone);
+    }
+
+    [Test]
+    public async Task ResolveOtpTarget_WhenPhoneOnlyUnconfirmed_AllowsFallback()
+    {
+        var userId = Guid.NewGuid();
+        var phone = "+79169876543";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = false,
+        });
+
+        var otp = await _service.ResolveOtpTargetAsync(userId);
+
+        otp.Channel.Should().Be(ChannelEnum.Sms);
+        otp.Address.Should().Be(phone);
+    }
+
+    [Test]
+    public async Task ResolveDeliveryTarget_WhenPhoneOnlyUnconfirmed_DoesNotFallback()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            PhoneNumber = "+79161112233",
+            PhoneNumberConfirmed = false,
+        });
+
+        var act = () => _service.ResolveDeliveryTargetAsync(userId);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*confirmed email or phone*");
     }
 
     [Test]

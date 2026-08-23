@@ -336,7 +336,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email, including unconfirmed for email confirmation). `reset` also adds email/phone to the action URL. Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unconfirmed contacts allowed for confirmation). `reset` also adds email/phone to the action URL. Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `verifyCode` | Verify OTP and write `UserId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `getUserId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `passwordAuth` | Verify identity + password; writes `UserId` |

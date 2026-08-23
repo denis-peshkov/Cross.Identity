@@ -396,8 +396,8 @@ Host must pass `UserId` in the bag (no ambient auth user).
 |------|------------|------------|
 | Stock JSON `channel` on `sendCode` / `verifyCode` / `resetPassword` | required enum | **removed** — ignored if present in overrides |
 | Channel selection | largely login field + JSON `channel` | `ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync` |
-| Order | field-based | `Authentication:LockChannelAsEmail` → preferred verified endpoint → email fallback |
-| Account-email fallback | any `UsersAccounts.Email` | **OTP** (`ResolveOtpTargetAsync`): unconfirmed allowed (confirm-email chicken-and-egg). **Notify** (`ResolveDeliveryTargetAsync`): only when `EmailConfirmed` |
+| Order | field-based | `Authentication:LockChannelAsEmail` → preferred verified → email → **phone** |
+| Account contact fallback | any `UsersAccounts.Email` | **OTP**: unconfirmed email **or** phone allowed. **Notify**: only `EmailConfirmed` / `PhoneNumberConfirmed` |
 | API | `ResolveDeliveryChannelAsync` / `ResolveOtpChannelAsync` | **`ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync`** → `DeliveryTarget` (channel + address) |
 | `VerifyCodeStep` | `Selector.ChannelForField` / `CodeService` by login value | same resolved OTP target as send |
 

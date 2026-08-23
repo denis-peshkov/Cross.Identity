@@ -62,11 +62,10 @@
 **Impact:** OTP не доходит или verify по chat-id.  
 **Stock flows:** если хост сделал preferred messenger endpoint.
 
-### 10. Нет fallback на confirmed phone в `ResolveDeliveryTargetAsync`
-Цепочка: `LockChannelAsEmail` → preferred verified → email. Нет fallback на `UsersAccounts.PhoneNumber` при `PhoneNumberConfirmed`, если н нет строки в `UsersCommunicationEndpoints`.
+### 10. ~~Нет fallback на confirmed phone~~ ✅ закрыто
+~~Цепочка без phone account fallback.~~
 
-**Impact:** ValidationException для phone-only пользователей без synced endpoints.  
-**Stock flows:** SendCode, ResetPassword notify.
+**Исправлено (2.0):** после email — verified Sms endpoint, иначе `UsersAccounts.PhoneNumber` (`PhoneNumberConfirmed` для notify; для OTP unconfirmed тоже, как email). Phone-only пользователи без endpoints работают.
 
 ### 11. ~~Нет rate limiting на отправку OTP~~ ✅ закрыто
 ~~`CodeService` / `SendCodeStep` — нет cooldown / per-identity limits.~~
@@ -130,7 +129,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` **игнорируется**; `N
 `IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
 
 ### Delivery channel resolution (новая модель)
-OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email (**в т.ч. unconfirmed** — подтверждение email). Notify (`ResolveDeliveryTargetAsync`): тот же порядок, но account email **только** при `EmailConfirmed` (#6). Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2).
+OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unconfirmed allowed for OTP confirm). Notify: тот же порядок, email/phone только confirmed (#6, #10). Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2).
 
 ### Публичные half-validate API (#13, #14)
 Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
