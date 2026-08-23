@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepFactoryTests;
 
 [TestFixture]
-public class GetUser_StepFactoryTests
+public class GetUserAccountId_StepFactoryTests
 {
     private ServiceProvider _sp = null!;
 
@@ -26,18 +26,18 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUserId",
+              "kind": "getUserAccountId",
               "next": "token"
             }
             """);
 
-        var factory = new GetUserIdStepFactory();
+        var factory = new GetUserAccountIdStepFactory();
 
         // Act
-        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserAccountIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.Kind.Should().Be("getUserId");
+        step.Kind.Should().Be("getUserAccountId");
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.Next.Should().Be("token");
@@ -52,14 +52,14 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUserId"
+              "kind": "getUserAccountId"
             }
             """);
 
-        var factory = new GetUserIdStepFactory();
+        var factory = new GetUserAccountIdStepFactory();
 
         // Act
-        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserAccountIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
         step.Selector.FieldKey.Should().Be("collectForm.Field");
@@ -75,14 +75,14 @@ public class GetUser_StepFactoryTests
         using var json = JsonDocument.Parse(
             """
             {
-              "kind": "getUserId"
+              "kind": "getUserAccountId"
             }
             """);
 
-        var factory = new GetUserIdStepFactory();
+        var factory = new GetUserAccountIdStepFactory();
 
         // Act
-        var step = (GetUserIdStep)factory.Create(json.RootElement, _sp);
+        var step = (GetUserAccountIdStep)factory.Create(json.RootElement, _sp);
 
         // Assert
         step.Selector.FieldKey.Should().Be("collectForm.Field");

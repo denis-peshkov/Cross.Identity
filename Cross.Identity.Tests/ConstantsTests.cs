@@ -38,7 +38,7 @@ public class ConstantsTests
         IdentityConstants.AccessToken.Should().Be("access_token");
         IdentityConstants.RefreshToken.Should().Be("refresh_token");
         IdentityConstants.IdToken.Should().Be("id_token");
-        IdentityConstants.UserId.Should().Be("user_id");
+        IdentityConstants.UserAccountId.Should().Be("user_account_id");
     }
 
     [Test]

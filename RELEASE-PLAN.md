@@ -15,8 +15,8 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 20. PII в логах SendCode / GetUserId / ValidateCode (CR)
-`SendCodeStep`, `GetUserIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
+### 20. PII в логах SendCode / GetUserAccountId / ValidateCode (CR)
+`SendCodeStep`, `GetUserAccountIdStep`, `UserService` — в Information/Warning пишется raw `selector.Value` (email/phone). Маскировать или логировать `userId`.
 
 ### ✅ 22. Confirm contact по selector field, не OTP-каналу (CR)
 `UserService.ValidateCodeAsync` — `EmailVerified` / `PhoneNumberVerified` выставляются по `otpTarget.Channel` + address, не по selector field.
@@ -45,7 +45,7 @@ Filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` — �
 ### ✅ 30. `ICodeService.SendAsync` `userId: Guid` (CR)
 `SendAsync(Guid userId)` — выровнено с `VerifyAsync(Guid)`; `Guid.TryParse` убран.
 
-### ✅ 31. `GetUserIdByAsync` nullability (CR)
+### ✅ 31. `GetUserAccountIdByAsync` nullability (CR)
 Сигнатура `Task<Guid?>`; при отсутствии user — `null` (не `NotFoundException`). В `Bag` по-прежнему строка (`ToString()`).
 
 ### 32. `UserAccountGuard` → `InvalidOperationException` (CR)
@@ -126,8 +126,8 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 ### Apple в registry без реализации (#12) — принято
 `FetchAppleProfileAsync` → `NotSupportedException`. Не включать Apple в `Providers` / options до реализации.
 
-### `main.GetUserId` existence oracle — принято
-Успех возвращает `{ user_id }` и раскрывает существование пользователя. Продуктовое решение; шаги SendCode/VerifyCode/GetUserId на reject дают единый `Invalid credentials.`.
+### `main.GetUserAccountId` existence oracle — принято
+Успех возвращает `{ user_account_id }` и раскрывает существование пользователя. Продуктовое решение; шаги SendCode/VerifyCode/GetUserAccountId на reject дают единый `Invalid credentials.`.
 
 ### `PasswordAlgoEnum.SHA256` (#16) — принято
 Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет auto-upgrade на Argon2id. Default path — Argon2id/PBKDF2 + pepper. SHA256 только для явного legacy; хост не должен включать его для новых хешей.
@@ -188,7 +188,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
 | ✅ #27 Preferred unique index | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
 | ✅ #30 SendAsync userId Guid | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
-| ✅ #31 GetUserIdByAsync nullability | `Task<Guid?>`; missing user → `null` |
+| ✅ #31 GetUserAccountIdByAsync nullability | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 

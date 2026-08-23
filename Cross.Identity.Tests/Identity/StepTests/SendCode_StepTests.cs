@@ -63,7 +63,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
 
@@ -126,7 +126,7 @@ public class SendCode_StepTests
         var userAccountId = Guid.NewGuid();
         var ttl = TimeSpan.FromMinutes(17);
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -183,7 +183,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -241,7 +241,7 @@ public class SendCode_StepTests
         var phone = _faker.Phone.PhoneNumber("+1##########");
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Sms, phone);
 
@@ -289,7 +289,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
 
@@ -350,7 +350,7 @@ public class SendCode_StepTests
         // Arrange
         var email = _faker.Internet.Email();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -398,7 +398,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         _communicationEndpoints
             .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -441,7 +441,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
@@ -500,7 +500,7 @@ public class SendCode_StepTests
         var email = "alice@example.com";
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.GetUserAccountIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);

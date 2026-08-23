@@ -35,7 +35,7 @@ public class ResetPassword_StepTests
 
         _userService.Setup(u => u.SetPasswordAsync("Email", email, password, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Guid.NewGuid());
         _communicationEndpoints
             .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -84,7 +84,7 @@ public class ResetPassword_StepTests
 
         _userService.Setup(u => u.SetPasswordAsync("Id", userAccountIdText, password, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _userService.Setup(u => u.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
 
         var step = new ResetPasswordStep

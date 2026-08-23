@@ -63,7 +63,7 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, CollectFormStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CollectResultStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CreateUserStepFactory>(),
-                ServiceDescriptor.Scoped<IStepFactory, GetUserIdStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, GetUserAccountIdStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, PasswordAuthStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, RefreshTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ResetPasswordStepFactory>(),

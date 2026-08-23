@@ -5,7 +5,7 @@
 /// Unknown identity surfaces as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
 /// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
-internal sealed class GetUserIdStep : IStep
+internal sealed class GetUserAccountIdStep : IStep
 {
     /// <inheritdoc />
     public required string Kind { get; init; }
@@ -27,11 +27,11 @@ internal sealed class GetUserIdStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
         {
             Logger.LogInformation(
-                "Get user id rejected for {Field} identity {Identity}: user not found.",
+                "Get user account id rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
                 selector.Value);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));

@@ -199,7 +199,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingUserById_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    public async Task GivenExistingUserById_WhenGetUserAccountIdByAsync_ThenReturnsUserIdAsync()
     {
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -208,14 +208,14 @@ public class UserServiceTests : EFTestsBase
             Email = "test@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("Id", userAccountId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("Id", userAccountId.ToString(), CancellationToken.None);
 
         result.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingUserByUserId_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    public async Task GivenExistingUserByUserId_WhenGetUserAccountIdByAsync_ThenReturnsUserIdAsync()
     {
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -224,14 +224,14 @@ public class UserServiceTests : EFTestsBase
             Email = "userid-alias@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("UserAccountId", userAccountId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("UserAccountId", userAccountId.ToString(), CancellationToken.None);
 
         result.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    public async Task GivenExistingUserByEmail_WhenGetUserAccountIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange
         var userAccountId = Guid.NewGuid();
@@ -243,7 +243,7 @@ public class UserServiceTests : EFTestsBase
         });
 
         // Act
-        var result = await _userService.GetUserIdByAsync("Email", email, CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("Email", email, CancellationToken.None);
 
         // Assert
         result.Should().Be(userAccountId);
@@ -251,16 +251,16 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMissingUserByEmail_WhenGetUserIdByAsync_ThenReturnsNullAsync()
+    public async Task GivenMissingUserByEmail_WhenGetUserAccountIdByAsync_ThenReturnsNullAsync()
     {
-        var result = await _userService.GetUserIdByAsync("Email", "nonexistent@example.com", CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("Email", "nonexistent@example.com", CancellationToken.None);
 
         result.Should().BeNull();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingUserByUserName_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    public async Task GivenExistingUserByUserName_WhenGetUserAccountIdByAsync_ThenReturnsUserIdAsync()
     {
         var userAccountId = Guid.NewGuid();
         var userName = "testuser";
@@ -272,14 +272,14 @@ public class UserServiceTests : EFTestsBase
             Email = "test@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("UserName", userName, CancellationToken.None);
 
         result.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExistingUserByPhone_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
+    public async Task GivenExistingUserByPhone_WhenGetUserAccountIdByAsync_ThenReturnsUserIdAsync()
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+12125551234";
@@ -289,7 +289,7 @@ public class UserServiceTests : EFTestsBase
             PhoneNumber = phone,
             Email = "test@example.com",
         });
-        var result = await _userService.GetUserIdByAsync("PhoneNumber", phone, CancellationToken.None);
+        var result = await _userService.GetUserAccountIdByAsync("PhoneNumber", phone, CancellationToken.None);
 
         result.Should().Be(userAccountId);
     }
@@ -297,9 +297,9 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnsupportedSelector_WhenGetUserIdByAsync_ThenThrowsNotSupportedExceptionAsync()
+    public async Task GivenUnsupportedSelector_WhenGetUserAccountIdByAsync_ThenThrowsNotSupportedExceptionAsync()
     {
-        await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Unknown", "value", CancellationToken.None))
+        await FluentActions.Invoking(() => _userService.GetUserAccountIdByAsync("Unknown", "value", CancellationToken.None))
             .Should()
             .ThrowAsync<NotSupportedException>()
             .WithMessage("*not supported*");

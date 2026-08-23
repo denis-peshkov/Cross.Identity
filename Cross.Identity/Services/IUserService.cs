@@ -5,7 +5,7 @@
 /// Used by process steps:
 /// <list type="bullet">
 /// <item><description><c>CreateUserStep</c> — <see cref="CreateUserAsync"/></description></item>
-/// <item><description><c>GetUserIdStep</c> — <see cref="GetUserIdByAsync"/></description></item>
+/// <item><description><c>GetUserAccountIdStep</c> — <see cref="GetUserAccountIdByAsync"/></description></item>
 /// <item><description><c>PasswordAuthStep</c> — <see cref="ValidatePasswordAsync"/></description></item>
 /// <item><description><c>TokenStep</c> — <see cref="ValidatePasswordAsync"/>, <see cref="ValidateCodeAsync"/>, <see cref="GetUserByAsync"/></description></item>
 /// <item><description><c>ResetPasswordStep</c> — <see cref="SetPasswordAsync"/></description></item>
@@ -27,15 +27,15 @@ internal interface IUserService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>User account id, or <c>null</c> if not found or the id value is invalid.</returns>
     /// <exception cref="NotSupportedException"><paramref name="selectorField"/> is not supported.</exception>
-    Task<Guid?> GetUserIdByAsync(
+    Task<Guid?> GetUserAccountIdByAsync(
         string selectorField,
         string selectorValue,
         CancellationToken cancellationToken);
 
     /// <summary>
     /// Load a user account entity by selector field.
-    /// Unlike <see cref="GetUserIdByAsync"/>, throws when the user is missing.
-    /// Allowed <paramref name="selectorField"/> values match <see cref="GetUserIdByAsync"/>
+    /// Unlike <see cref="GetUserAccountIdByAsync"/>, throws when the user is missing.
+    /// Allowed <paramref name="selectorField"/> values match <see cref="GetUserAccountIdByAsync"/>
     /// (<c>"Id"</c>, <c>"UserAccountId"</c>, <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>; <c>"UserId"</c> alias for id).
     /// For <c>PhoneNumber</c>, pass an already-valid E.164 value as produced by <c>collectForm</c>.
     /// When several accounts share the same email or phone, the verified contact is preferred.

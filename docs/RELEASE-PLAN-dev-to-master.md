@@ -69,8 +69,8 @@
 
 | Change | Was (master) | Now (dev) | Action |
 |-----------|---------------|-------------|----------|
-| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `main/GetUserId` |
-| Flow file | `main.GetUser.json` | **`main.GetUserId.json`** | Update custom overrides |
+| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `main/GetUserAccountId` |
+| Flow file | `main.GetUser.json` | **`main.GetUserAccountId.json`** | Update custom overrides |
 | Removed flows | `main.Auth.json`, `main.register1.json` | removed | Verify no one still calls them |
 | `collectResult` response with 1 field | bare value (`"abc"`) | **always an object** `{ "field": "abc" }` | Update deserialization on clients |
 | `IFlowExecutor` / `FlowExecutor` | public class | **internal class** | Public contract — only `IFlowExecutor` |
@@ -145,7 +145,7 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | B2 | Provider not in config → `ValidationException` | Unit | ✅ |
 | B3 | Provider not in DB (`Providers` table) / disabled → `NotFoundException` | Unit | ✅ |
 | B4 | **Initiate:** `POST main/ExternalLogin` → `{ url }` with OAuth redirect | Integration | ✅ `Main_ExternalOAuth_FlowTests` |
-| B5 | **Callback:** `POST main/ExternalLoginCallback` → tokens + `user_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
+| B5 | **Callback:** `POST main/ExternalLoginCallback` → tokens + `user_account_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
 | B6 | OAuth error (`Error`, `ErrorDescription`) → correct error | Unit + Integration | ✅ |
 | B7 | State TTL expired → rejection | Unit | ✅ `CompleteAsync_ShouldThrow_WhenStateExpired` |
 | B8 | **New user** — auto-provision | Integration | ✅ callback creates user + external login in DB |
@@ -251,7 +251,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 | # | Check | Status |
 |---|----------|--------|
-| H1 | `GetUserId` flow returns `{ user_id }` | ✅ `License_LicenseCheck_FlowTests` |
+| H1 | `GetUserId` flow returns `{ user_account_id }` | ✅ `License_LicenseCheck_FlowTests` |
 | H2 | `FlowExecutor` — `collectResult` always an object | ✅ flow tests return `Dictionary<string, object?>` |
 | H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | ✅ `UserServiceTests` |
 | H4 | Removal of `NormalizedEmail` — case-insensitive email lookup | 🟨 `ToLowerInvariant` in `UserService`; explicit lookup test ⬜ |
@@ -307,7 +307,7 @@ dotnet run --project Sample.Api
 | Token by code | `main/Token` | `{ "Email": "...", "Code": "..." }` |
 | Token by password | `main/Token` | `{ "Email": "...", "Password": "..." }` |
 | Refresh | `main/RefreshToken` | `{ "RefreshToken": "..." }` |
-| GetUserId | `main/GetUserId` | `{ "Email": "..." }` |
+| GetUserId | `main/GetUserAccountId` | `{ "Email": "..." }` |
 | OAuth start | `main/ExternalLogin` | `{ "Provider": "Google" }` |
 | OAuth callback | `main/ExternalLoginCallback` | `{ "Code": "...", "State": "..." }` |
 

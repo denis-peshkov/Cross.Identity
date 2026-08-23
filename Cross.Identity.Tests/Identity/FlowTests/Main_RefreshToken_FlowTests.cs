@@ -77,11 +77,11 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         result.Data.Should().NotBeNull();
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        payload.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_id");
+        payload.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_account_id");
         payload["access_token"].Should().NotBeNull();
         payload["refresh_token"].Should().NotBeNull().And.NotBe(oldRefreshToken);
         payload["token_type"].Should().Be("Bearer");
-        payload["user_id"].Should().Be(userAccountId);
+        payload["user_account_id"].Should().Be(userAccountId);
     }
 
     [Test]

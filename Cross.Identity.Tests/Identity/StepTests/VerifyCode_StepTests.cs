@@ -54,7 +54,7 @@ public class VerifyCode_StepTests
         var code = "ABC123";
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
@@ -73,7 +73,7 @@ public class VerifyCode_StepTests
         result.Next.Should().Be("nextStep");
         bag.Get<string>("verifyCode.UserAccountId").Should().Be(userAccountId.ToString());
         _codeService.Verify(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()), Times.Once);
-        _userService.Verify(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()), Times.Once);
+        _userService.Verify(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class VerifyCode_StepTests
         var code = "INVALID";
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
@@ -111,7 +111,7 @@ public class VerifyCode_StepTests
         var email = _faker.Internet.Email();
         var code = "ABC123";
 
-        _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
 
         var step = CreateStep(next: null);
@@ -139,7 +139,7 @@ public class VerifyCode_StepTests
         var code = "123456";
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(u => u.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Sms, phone);
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()))
@@ -168,7 +168,7 @@ public class VerifyCode_StepTests
         var code = "ABC123";
         var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(u => u.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.GetUserAccountIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))

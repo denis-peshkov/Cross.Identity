@@ -38,8 +38,8 @@ Removed demo flows: `game.*`, `shop.*`, `edoctors.*`.
 
 | Area | Was | Now |
 |------|-----|-----|
-| Enum / route | `GetUser` | `GetUserId` |
-| Flow file | `license.GetUser.json` / `main.GetUser.json` | `main.GetUserId.json` |
+| Enum / route | `GetUser` | `GetUserId` (→ `GetUserAccountId` in 2.0; see [2.0 section](#from-110x-to-200)) |
+| Flow file | `license.GetUser.json` / `main.GetUser.json` | `main.GetUserAccountId.json` |
 
 **Action:** update clients, custom overrides, and hardcoded operation names.
 
@@ -283,7 +283,7 @@ Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 | Flow JSON | `resolveBy`, `selectorKey`, `phoneNumberKey`, `userNameKey` on steps | `collectForm.selector.candidates` only |
 | Steps | per-step identity keys | `new Selector()` + bag Field/Value |
 
-**Identity on stock flows:** `Email` / `PhoneNumber` / `UserName` on `Token` / `RequestCode` / `ForgotPassword` / `ResetPassword` / `GetUserId` (and optional on `Register`) via `selector.candidates`.
+**Identity on stock flows:** `Email` / `PhoneNumber` / `UserName` on `Token` / `RequestCode` / `ForgotPassword` / `ResetPassword` / `GetUserAccountId` (and optional on `Register`) via `selector.candidates`.
 
 **Action:** remove obsolete keys from custom flow overrides; ensure `collectForm` declares `selector.candidates` where identity is needed.
 
@@ -329,7 +329,7 @@ Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is req
 | Identity | `resolveBy` / `selectorKey` on steps | `collectForm.selector.candidates: ["Id"]` + `Selector.Resolve` |
 
 `ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserByAsync` accept selector `"Id"`.
-`GetUserIdByAsync` does **not** — when the selector is already the id, `PasswordAuthStep` writes it to the bag without a lookup.
+`GetUserAccountIdByAsync` does **not** — when the selector is already the id, `PasswordAuthStep` writes it to the bag without a lookup.
 
 **Action:** pass `{ Id, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
 
@@ -379,16 +379,16 @@ Host must pass `UserId` in the bag (no ambient auth user).
 
 **Action:** bind `Authentication:OtpSendRateLimit` in host config; map `ValidationException` from sendCode to 400/429 as appropriate. Per-IP throttling remains a host concern.
 
-### `sendCode` / `verifyCode` / `getUserId`: unknown identity → `Invalid credentials.` (not `NotFound`)
+### `sendCode` / `verifyCode` / `getUserAccountId`: unknown identity → `Invalid credentials.` (not `NotFound`)
 
 | Area | Was (1.10) | Now (2.0+) |
 |------|------------|------------|
 | `SendCodeStep` when user missing | `NotFoundException` (`User not found.` / `User with given … not found`) | `NotAuthorizedException` (`Invalid credentials.`) — no OTP sent |
 | `SendCodeStep` when user exists but no OTP channel | `ValidationException` (distinct message) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
 | `VerifyCodeStep` when user missing / bad code / no OTP channel | `KeyNotFoundException` / distinct messages | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
-| `GetUserIdStep` when user missing | `KeyNotFoundException` (`User not found.`) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
+| `GetUserAccountIdStep` when user missing | `KeyNotFoundException` (`User not found.`) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
 
-**Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode / ResetPassword / GetUserId.
+**Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode / ResetPassword / GetUserAccountId.
 
 ### Delivery channel: preferred / email / `LockChannelAsEmail`
 
@@ -467,7 +467,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 
 **Action:** after password change / OAuth unlink, expect existing access/refresh JWTs to fail validate even if revoke were skipped. In `OnTokenValidated`, pass the `security_stamp` claim into `ValidateAccessTokenJtiAsync(jti, stamp, ct)` (or use `ValidateAccessTokenAsync`). Update custom `IJwtTokenService` implementations — the `(jti, ct)` overload is gone.
 
-### Flow bag keys: `UserId` → `UserAccountId`
+### Flow bag keys: `UserId` → `UserAccountId` / `user_id` → `user_account_id`
 
 | Area | Was (2.0 early) | Now (2.0+) |
 |------|-----------------|------------|
@@ -476,8 +476,23 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 | Default bag suffix / step output | `UserId` (e.g. `createUser.UserId`, `token.UserId`) | `UserAccountId` |
 | `collectForm` field (OAuth / endpoints flows) | `UserId` | `UserAccountId` |
 | `collectResult` PascalCase output | `UserId` | `UserAccountId` |
-| `collectResult` snake_case output | `user_id` (unchanged key) | still `user_id`; value path e.g. `token.UserAccountId` |
+| `collectResult` snake_case output | `user_id` | `user_account_id` (value path e.g. `token.UserAccountId`) |
+| `IdentityConstants` | `UserId` → `"user_id"` | `UserAccountId` → `"user_account_id"` |
 
-**Unchanged:** JWT claim name `user_id` (`IdentityConstants.UserId`); selector alias `"UserId"` on `GetUserIdByAsync` / `GetUserByAsync` (maps to account id like `"UserAccountId"` / `"Id"`).
+**Unchanged (license JWT, separate from identity flows):** claim `"user_id"` and `License.UserId` — do not rename to `user_account_id` / `UserAccountId`.
 
-**Action:** rename bag keys and flow JSON; update host handlers and custom flow overrides; replace `userIdKey` with `userAccountIdKey` in step definitions.
+**Unchanged:** selector alias `"UserId"` on `GetUserAccountIdByAsync` / `GetUserByAsync` (maps to account id like `"UserAccountId"` / `"Id"`).
+
+**Action:** rename bag keys and flow JSON; update host handlers and custom flow overrides; replace `userIdKey` with `userAccountIdKey` and response field `user_id` with `user_account_id` on **identity flow** outputs only.
+
+### Operation / step / service rename: `GetUserId` → `GetUserAccountId`
+
+| Area | Was (2.0 early) | Now (2.0+) |
+|------|-----------------|------------|
+| `FlowOperationEnum` / route | `GetUserId` | `GetUserAccountId` (`/api/identity/main/GetUserAccountId`) |
+| Flow file | `main.GetUserId.json` | `main.GetUserAccountId.json` |
+| Step kind (JSON) | `getUserId` | `getUserAccountId` |
+| Step / factory types | `GetUserIdStep`, `GetUserIdStepFactory` | `GetUserAccountIdStep`, `GetUserAccountIdStepFactory` |
+| `IUserService` | `GetUserIdByAsync` | `GetUserAccountIdByAsync` |
+
+**Action:** update client routes and enum literals; rename custom flow overrides and step configs (`"kind": "getUserAccountId"`); replace `GetUserIdByAsync` in host code and mocks.

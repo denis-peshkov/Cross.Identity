@@ -1,9 +1,9 @@
 ﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Factory for <see cref="GetUserIdStep"/>.
+/// Factory for <see cref="GetUserAccountIdStep"/>.
 /// </summary>
-internal sealed class GetUserIdStepFactory : IStepFactory
+internal sealed class GetUserAccountIdStepFactory : IStepFactory
 {
     /// <inheritdoc />
     public string Kind => ((IStepFactory)this).GetKind;
@@ -14,12 +14,12 @@ internal sealed class GetUserIdStepFactory : IStepFactory
         var userService = sp.GetRequiredService<IUserService>();
         var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
 
-        return new GetUserIdStep
+        return new GetUserAccountIdStep
         {
             Kind        = Kind,
             UserService = userService,
             Selector    = new Selector(),
-            Logger      = loggerFactory.CreateLogger(nameof(GetUserIdStep)),
+            Logger      = loggerFactory.CreateLogger(nameof(GetUserAccountIdStep)),
             Next        = cfg.StrOpt("next")
         };
     }

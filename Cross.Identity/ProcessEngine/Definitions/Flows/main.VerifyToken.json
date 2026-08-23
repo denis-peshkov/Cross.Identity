@@ -22,7 +22,7 @@
       "kind": "collectResult",
       "map": {
         "valid": "verifyToken.Valid",
-        "user_id": "verifyToken.UserAccountId",
+        "user_account_id": "verifyToken.UserAccountId",
         "jti": "verifyToken.Jti"
       },
       "next": null

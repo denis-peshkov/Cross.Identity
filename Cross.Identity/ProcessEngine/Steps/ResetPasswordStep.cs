@@ -33,7 +33,7 @@ internal sealed class ResetPasswordStep : IStep
 
         await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, clientContext, cancellationToken).ConfigureAwait(false);
 
-        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
         {
             return StepResult.Ok(Next);

@@ -30,7 +30,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.SetPasswordAsync("Id", userAccountIdText, NewPassword, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
-            .Setup(s => s.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetUserAccountIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserId);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);

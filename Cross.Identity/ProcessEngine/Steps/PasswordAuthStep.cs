@@ -33,7 +33,7 @@ internal sealed class PasswordAuthStep : IStep
         if (!ok)
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
 
-        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false)
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("User not found after password validation.");
 
         ctx.Set(BagKey.Qualify(Kind, UserAccountIdKey), userAccountId.ToString());

@@ -120,8 +120,8 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         tokens.Should().ContainKey("access_token");
         tokens.Should().ContainKey("refresh_token");
-        tokens.Should().ContainKey("user_id");
-        tokens["user_id"].Should().Be(_userId);
+        tokens.Should().ContainKey("user_account_id");
+        tokens["user_account_id"].Should().Be(_userId);
     }
 
     [Test]

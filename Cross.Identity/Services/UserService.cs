@@ -33,7 +33,7 @@ internal sealed class UserService : IUserService
     }
 
     /// <inheritdoc/>
-    public async Task<Guid?> GetUserIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
+    public async Task<Guid?> GetUserAccountIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);

@@ -71,7 +71,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userAccountId);
+        payload["user_account_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -123,7 +123,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userAccountId);
+        payload["user_account_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -150,7 +150,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(false);
-        payload.Should().NotContainKey("user_id");
+        payload.Should().NotContainKey("user_account_id");
     }
 
     [Test]
@@ -165,7 +165,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(false);
-        payload.Should().NotContainKey("user_id");
+        payload.Should().NotContainKey("user_account_id");
     }
 
     [Test]

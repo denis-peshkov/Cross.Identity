@@ -19,16 +19,16 @@
       "selector": {
         "candidates": ["Email", "PhoneNumber", "UserName"]
       },
-      "next": "getUserId"
+      "next": "getUserAccountId"
     },
     {
-      "kind": "getUserId",
+      "kind": "getUserAccountId",
       "next": "collectResult"
     },
     {
       "kind": "collectResult",
       "map": {
-        "user_id": "getUserId.UserAccountId"
+        "user_account_id": "getUserAccountId.UserAccountId"
       },
       "next": null
     }

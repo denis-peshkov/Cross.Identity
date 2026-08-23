@@ -350,7 +350,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         payload["refresh_token"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
         payload["token_type"].Should().Be("Bearer");
         payload["expires_in"].Should().NotBeNull();
-        payload["user_id"].Should().NotBeNull();
+        payload["user_account_id"].Should().NotBeNull();
         payload["is_linking"].Should().Be(false);
 
         (await Context.UsersAccounts.CountAsync()).Should().Be(1);

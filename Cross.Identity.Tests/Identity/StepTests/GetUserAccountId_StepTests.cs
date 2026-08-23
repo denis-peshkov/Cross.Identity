@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.Tests.Identity.StepTests;
 
 [TestFixture]
-public class GetUser_StepTests
+public class GetUserAccountId_StepTests
 {
     private Faker _faker = null!;
     private Mock<ILogger> _logger = null!;
@@ -23,10 +23,10 @@ public class GetUser_StepTests
         var userAccountId = Guid.NewGuid();
 
         var users = new Mock<IUserService>(MockBehavior.Strict);
-        users.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+        users.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
 
-        var step = new GetUserIdStep
+        var step = new GetUserAccountIdStep
         {
             Kind = "lookup",
             UserService = users.Object,
@@ -54,10 +54,10 @@ public class GetUser_StepTests
     {
         var phone = _faker.Phone.PhoneNumber("+407########");
         var users = new Mock<IUserService>(MockBehavior.Strict);
-        users.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
+        users.Setup(s => s.GetUserAccountIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Guid?)null);
 
-        var step = new GetUserIdStep
+        var step = new GetUserAccountIdStep
         {
             Kind = "lookup",
             UserService = users.Object,

@@ -25,7 +25,7 @@
         "refresh_token": "refreshToken.RefreshToken",
         "token_type": "refreshToken.TokenType",
         "expires_in": "refreshToken.ExpiresIn",
-        "user_id": "refreshToken.UserAccountId"
+        "user_account_id": "refreshToken.UserAccountId"
       },
       "next": null
     }

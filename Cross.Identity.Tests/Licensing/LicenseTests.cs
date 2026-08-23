@@ -10,7 +10,7 @@ public sealed class LicenseTests
         var sut = new License();
 
         sut.IsConfigured.Should().BeFalse();
-        sut.UserAccountId.Should().BeNull();
+        sut.UserId.Should().BeNull();
         sut.ProductType.Should().BeNull();
     }
 

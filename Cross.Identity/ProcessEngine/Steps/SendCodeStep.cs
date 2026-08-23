@@ -45,7 +45,7 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
         if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
         {
             Logger.LogInformation(

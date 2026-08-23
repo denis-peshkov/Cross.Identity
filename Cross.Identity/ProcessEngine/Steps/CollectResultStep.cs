@@ -12,12 +12,12 @@
 ///   "kind": "collectResult",
 ///   "map": {
 ///     "access_token": "token.AccessToken",
-///     "user_id": "token.UserAccountId"
+///     "user_account_id": "token.UserAccountId"
 ///   },
 ///   "next": null
 /// }
 /// Result example:
-/// "collectResult.access_token", "collectResult.user_id".
+/// "collectResult.access_token", "collectResult.user_account_id".
 /// </code>
 /// </summary>
 internal sealed class CollectResultStep : IStep

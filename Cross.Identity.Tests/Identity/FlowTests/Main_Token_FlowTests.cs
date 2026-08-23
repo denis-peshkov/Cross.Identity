@@ -106,7 +106,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         // verify that collectResult returned tokens in OAuth2 format
         var dict = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_id");
+        dict.Should().ContainKeys("access_token", "refresh_token", "token_type", "expires_in", "user_account_id");
         dict["access_token"].Should().NotBeNull();
         dict["refresh_token"].Should().NotBeNull();
         dict["token_type"].Should().Be("Bearer");
