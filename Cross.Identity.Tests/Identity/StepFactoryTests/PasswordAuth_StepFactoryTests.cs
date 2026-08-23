@@ -27,7 +27,7 @@ public class PasswordAuth_StepFactoryTests
             {
               "kind": "passwordAuth",
               "passwordKey": "collectForm.Password",
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "next": "token"
             }
             """);
@@ -42,14 +42,14 @@ public class PasswordAuth_StepFactoryTests
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.PasswordKey.Should().Be("collectForm.Password");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.Next.Should().Be("token");
         step.UserService.Should().NotBeNull();
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
+    public void GivenJsonWithoutUserAccountIdKey_WhenCreate_ThenUsesDefaultUserAccountIdKey()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -66,7 +66,7 @@ public class PasswordAuth_StepFactoryTests
         var step = (PasswordAuthStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
     }
 
     [Test]

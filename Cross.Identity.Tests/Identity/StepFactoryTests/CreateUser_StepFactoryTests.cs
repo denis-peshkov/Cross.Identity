@@ -31,7 +31,7 @@ public class CreateUser_StepFactoryTests
                 "Password": "collectForm.Password",
                 "FullName": "collectForm.FullName"
               },
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "next": "sendCode"
             }
             """);
@@ -44,7 +44,7 @@ public class CreateUser_StepFactoryTests
         // Assert
         step.Kind.Should().Be("createUser");
         step.Next.Should().Be("sendCode");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.Map.Should().HaveCount(3);
         step.Map["Email"].Should().Be("collectForm.Email");
         step.Map["Password"].Should().Be("collectForm.Password");
@@ -54,7 +54,7 @@ public class CreateUser_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
+    public void GivenJsonWithoutUserAccountIdKey_WhenCreate_ThenUsesDefaultUserAccountIdKey()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -73,7 +73,7 @@ public class CreateUser_StepFactoryTests
         var step = (CreateUserStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
     }
 
     [Test]
@@ -89,7 +89,7 @@ public class CreateUser_StepFactoryTests
                 "Email": "Email",
                 "Password": "Password"
               },
-              "userIdKey": "UserId"
+              "userAccountIdKey": "UserAccountId"
             }
             """);
 

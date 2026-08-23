@@ -21,7 +21,7 @@ internal sealed class PasswordAuthStep : IStep
     public required string PasswordKey { get; init; }
 
     /// <summary>Key for storing the user identifier in <see cref="Bag"/>.</summary>
-    public string UserIdKey { get; init; } = "UserId";
+    public string UserAccountIdKey { get; init; } = "UserAccountId";
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ internal sealed class PasswordAuthStep : IStep
         var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("User not found after password validation.");
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userAccountId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, UserAccountIdKey), userAccountId.ToString());
 
         return StepResult.Ok(Next);
     }

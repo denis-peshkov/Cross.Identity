@@ -1214,7 +1214,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         await FluentActions.Invoking(() => sut.UnlinkAsync("Google", Guid.Empty, "session-refresh-token", ClientContext.Empty, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*UserId is required*");
+            .WithMessage("*UserAccountId is required*");
     }
 
     [Test]
@@ -1365,7 +1365,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         await FluentActions.Invoking(() => sut.GetAllAsync(Guid.Empty, "session-refresh-token", CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
-            .WithMessage("*UserId is required*");
+            .WithMessage("*UserAccountId is required*");
     }
 
     private ExternalLoginService CreateService(

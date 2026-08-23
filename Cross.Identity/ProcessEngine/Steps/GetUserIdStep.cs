@@ -37,7 +37,7 @@ internal sealed class GetUserIdStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), resolvedUserAccountId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), resolvedUserAccountId.ToString());
 
         return StepResult.Ok(Next);
     }

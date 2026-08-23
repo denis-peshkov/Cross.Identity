@@ -128,7 +128,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userAccountId,
+                ["UserAccountId"] = userAccountId,
                 ["RefreshToken"] = refresh,
                 ["Provider"] = "Google",
             },
@@ -201,7 +201,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userAccountId,
+                ["UserAccountId"] = userAccountId,
                 ["RefreshToken"] = refresh,
             },
             Flow,
@@ -250,7 +250,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             {
                 ["Provider"] = "Google",
                 ["ReturnUrl"] = "/home",
-                ["UserId"] = linkUserAccountId.ToString(),
+                ["UserAccountId"] = linkUserAccountId.ToString(),
                 ["RefreshToken"] = refreshToken,
             },
             Flow,
@@ -299,7 +299,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 new Dictionary<string, object?>
                 {
                     ["Provider"] = "Google",
-                    ["UserId"] = otherUserAccountId.ToString(),
+                    ["UserAccountId"] = otherUserAccountId.ToString(),
                     ["RefreshToken"] = ownerRefresh,
                 },
                 Flow,
@@ -319,7 +319,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                     new Dictionary<string, object?>
                     {
                         ["Provider"] = "Google",
-                        ["UserId"] = "not-a-guid",
+                        ["UserAccountId"] = "not-a-guid",
                     },
                     Flow,
                     FlowOperationEnum.ExternalLogin,

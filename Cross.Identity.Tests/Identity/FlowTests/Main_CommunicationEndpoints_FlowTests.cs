@@ -65,7 +65,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userAccountId.ToString(),
+                ["UserAccountId"] = userAccountId.ToString(),
                 ["RefreshToken"] = refresh,
             },
             Flow,
@@ -97,7 +97,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userAccountId.ToString(),
+                ["UserAccountId"] = userAccountId.ToString(),
                 ["RefreshToken"] = refresh,
                 ["EndpointId"] = sms.Id.ToString(),
                 ["IpAddress"] = "10.0.0.42",
@@ -128,7 +128,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
                 new Dictionary<string, object?>
                 {
-                    ["UserId"] = otherUserAccountId.ToString(),
+                    ["UserAccountId"] = otherUserAccountId.ToString(),
                     ["RefreshToken"] = ownerRefresh,
                 },
                 Flow,

@@ -40,7 +40,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
         var completion = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), completion.UserAccountId);
+        ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), completion.UserAccountId);
         ctx.Set(BagKey.Qualify(Kind, "IsLinking"), completion.IsLinking);
 
         if (completion.IsLinking)

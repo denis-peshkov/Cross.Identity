@@ -53,20 +53,20 @@ public class ExternalLoginInitiate_StepTests
         {
             Kind = "externalLoginInitiate",
             ProviderKey = "Provider",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             RefreshTokenKey = "RefreshToken",
             ExternalLoginService = _externalLoginService.Object,
         };
 
         var bagWithGuid = new Bag();
         bagWithGuid.Set("externalLoginInitiate.Provider", "Google");
-        bagWithGuid.Set("externalLoginInitiate.UserId", linkUserAccountId);
+        bagWithGuid.Set("externalLoginInitiate.UserAccountId", linkUserAccountId);
         bagWithGuid.Set("externalLoginInitiate.RefreshToken", refreshToken);
         await step.ExecuteAsync(bagWithGuid, CancellationToken.None);
 
         var bagWithString = new Bag();
         bagWithString.Set("externalLoginInitiate.Provider", "Google");
-        bagWithString.Set("externalLoginInitiate.UserId", linkUserAccountId.ToString());
+        bagWithString.Set("externalLoginInitiate.UserAccountId", linkUserAccountId.ToString());
         bagWithString.Set("externalLoginInitiate.RefreshToken", refreshToken);
         await step.ExecuteAsync(bagWithString, CancellationToken.None);
 
@@ -87,13 +87,13 @@ public class ExternalLoginInitiate_StepTests
         {
             Kind = "externalLoginInitiate",
             ProviderKey = "Provider",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             ExternalLoginService = _externalLoginService.Object,
         };
 
         var bag = new Bag();
         bag.Set("externalLoginInitiate.Provider", "Google");
-        bag.Set("externalLoginInitiate.UserId", "not-a-guid");
+        bag.Set("externalLoginInitiate.UserAccountId", "not-a-guid");
 
         await step.ExecuteAsync(bag, CancellationToken.None);
 

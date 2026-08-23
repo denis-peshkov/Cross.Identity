@@ -5,7 +5,7 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "UserId", "type": "String", "required": true, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+          { "key": "UserAccountId", "type": "String", "required": true, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
           { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
           { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
@@ -16,7 +16,7 @@
     },
     {
       "kind": "communicationEndpointsGetAll",
-      "userIdKey": "collectForm.UserId",
+      "userAccountIdKey": "collectForm.UserAccountId",
       "refreshTokenKey": "collectForm.RefreshToken",
       "next": "collectResult"
     },

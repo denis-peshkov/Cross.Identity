@@ -172,7 +172,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, ClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, ClientContext, ct)` |
-| User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserId` trusted without session proof | bag `UserId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
+| User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserAccountId` trusted without session proof | bag `UserAccountId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
 | OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is verified (`ExternalOAuthProfile.EmailVerified`); links to **verified** account only |
 | `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailVerified = 1` (filtered index); multiple unverified rows allowed |
 | `UsersAccounts.PhoneNumber` uniqueness | unique on `PhoneNumber` (all rows) | unique only when `PhoneNumberVerified = 1` (filtered index); multiple unverified rows allowed |
@@ -180,10 +180,10 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
 
 **Flow bag keys (optional unless noted):** `IpAddress`, `UserAgent`, and `DeviceFingerprint` on **all** main flows (`collectForm`);
-**required** `UserId` + **`RefreshToken`** on `ExternalLoginUnlink` / `ExternalLoginGetAll` / `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`;
-**optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`); when `UserId` is set, **`RefreshToken` is required** and must belong to that user.
+**required** `UserAccountId` + **`RefreshToken`** on `ExternalLoginUnlink` / `ExternalLoginGetAll` / `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`;
+**optional** `UserId` on `ExternalLogin` (account link; formerly `LinkUserId`); when `UserAccountId` is set, **`RefreshToken` is required** and must belong to that user.
 
-**Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserId` in bags, flow JSON (`userIdKey`), and `auth.ExternalLoginStates`.
+**Action:** fill bags from the host handler; pass `new ClientContext(ip, ua, deviceFingerprint)` or `ClientContext.Empty` into JWT / password / unlink APIs; rename `LinkUserId` → `UserAccountId` in bags, flow JSON (`userAccountIdKey`), and `auth.ExternalLoginStates`.
 
 **Trusted pipeline (host responsibility, not a library bug):** `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` are **host-supplied**. Cross.Identity does not read `HttpContext` and does not verify metadata. The **host** must implement a trusted pipeline: overwrite these bag keys from server-side sources (`RemoteIpAddress` after `ForwardedHeaders`, request `User-Agent`, host-computed fingerprint) before `ExecuteAsync`, and pass the same values into direct JWT/password/unlink APIs. The library records them in audit and revoke paths as trusted. Do not copy values from the client request body. Details: [`FLOWS.md`](../Cross.Identity/FLOWS.md) — Client context (host).
 
@@ -292,7 +292,7 @@ Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 | Area | Was | Now |
 |------|-----|-----|
 | Step kind | `codeAuth` | **`verifyCode`** |
-| Behavior | verify OTP + write UserId | same on `verifyCode` (`userIdKey`, default `UserId`) |
+| Behavior | verify OTP + write UserId | same on `verifyCode` (`userAccountIdKey`, default `UserId`) |
 | Bag | `codeAuth.*` | `verifyCode.*` |
 
 **Action:** replace `"kind": "codeAuth"` with `"kind": "verifyCode"`; remap bag keys.
@@ -338,7 +338,7 @@ Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is req
 New operations (stock `main` flows):
 
 - `CommunicationEndpointsGetAll` — list endpoints for `UserId`
-- `CommunicationEndpointSetPreferred` — set preferred endpoint (`UserId` + `EndpointId`)
+- `CommunicationEndpointSetPreferred` — set preferred endpoint (`UserAccountId` + `EndpointId`)
 
 Host must pass `UserId` in the bag (no ambient auth user).
 
@@ -466,3 +466,18 @@ Self-register and OAuth create accounts without an actor id; the column was neve
 Caller-supplied `security_stamp` claims are stripped on issue — the library always embeds the DB value.
 
 **Action:** after password change / OAuth unlink, expect existing access/refresh JWTs to fail validate even if revoke were skipped. In `OnTokenValidated`, pass the `security_stamp` claim into `ValidateAccessTokenJtiAsync(jti, stamp, ct)` (or use `ValidateAccessTokenAsync`). Update custom `IJwtTokenService` implementations — the `(jti, ct)` overload is gone.
+
+### Flow bag keys: `UserId` → `UserAccountId`
+
+| Area | Was (2.0 early) | Now (2.0+) |
+|------|-----------------|------------|
+| Step config JSON | `userIdKey` | `userAccountIdKey` |
+| Step property | `UserIdKey` | `UserAccountIdKey` |
+| Default bag suffix / step output | `UserId` (e.g. `createUser.UserId`, `token.UserId`) | `UserAccountId` |
+| `collectForm` field (OAuth / endpoints flows) | `UserId` | `UserAccountId` |
+| `collectResult` PascalCase output | `UserId` | `UserAccountId` |
+| `collectResult` snake_case output | `user_id` (unchanged key) | still `user_id`; value path e.g. `token.UserAccountId` |
+
+**Unchanged:** JWT claim name `user_id` (`IdentityConstants.UserId`); selector alias `"UserId"` on `GetUserIdByAsync` / `GetUserByAsync` (maps to account id like `"UserAccountId"` / `"Id"`).
+
+**Action:** rename bag keys and flow JSON; update host handlers and custom flow overrides; replace `userIdKey` with `userAccountIdKey` in step definitions.

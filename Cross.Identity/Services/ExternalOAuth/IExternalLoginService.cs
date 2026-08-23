@@ -94,7 +94,7 @@ internal interface IExternalLoginService
     /// Provider is not supported or not enabled.
     /// </exception>
     /// <exception cref="NotAuthorizedException">
-    /// Linking requires authentication and a matching <c>UserId</c>.
+    /// Linking requires authentication and a matching <c>UserAccountId</c>.
     /// </exception>
     Task<ExternalLoginCompletion> CompleteAsync(
         string code,

@@ -18,7 +18,7 @@ internal interface IUserService
     /// Find a user identifier by selector field.
     /// Does not throw when the user is missing — returns <c>null</c> (anti user-enumeration in lookup steps).
     /// Allowed <paramref name="selectorField"/> values depend on the implementation
-    /// (at minimum <c>"Id"</c>, <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, and <c>"PhoneNumber"</c> are supported).
+    /// (at minimum <c>"Id"</c>, <c>"UserAccountId"</c> (alias <c>"UserId"</c>), <c>"Email"</c>, <c>"UserName"</c>, and <c>"PhoneNumber"</c> are supported).
     /// For <c>PhoneNumber</c>, pass an already-valid E.164 value (e.g. <c>+79161234567</c>) as produced by <c>collectForm</c>.
     /// When several accounts share the same email or phone, the verified contact is preferred.
     /// </summary>
@@ -36,7 +36,7 @@ internal interface IUserService
     /// Load a user account entity by selector field.
     /// Unlike <see cref="GetUserIdByAsync"/>, throws when the user is missing.
     /// Allowed <paramref name="selectorField"/> values match <see cref="GetUserIdByAsync"/>
-    /// (<c>"Id"</c>, <c>"UserId"</c>, <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>).
+    /// (<c>"Id"</c>, <c>"UserAccountId"</c>, <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>; <c>"UserId"</c> alias for id).
     /// For <c>PhoneNumber</c>, pass an already-valid E.164 value as produced by <c>collectForm</c>.
     /// When several accounts share the same email or phone, the verified contact is preferred.
     /// </summary>

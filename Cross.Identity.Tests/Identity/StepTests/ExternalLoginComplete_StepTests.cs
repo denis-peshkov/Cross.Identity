@@ -30,7 +30,7 @@ public class ExternalLoginComplete_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<Guid>("externalLoginComplete.UserId").Should().Be(userAccountId);
+        bag.Get<Guid>("externalLoginComplete.UserAccountId").Should().Be(userAccountId);
         bag.Get<bool>("externalLoginComplete.IsLinking").Should().BeTrue();
         bag.ContainsKey("externalLoginComplete.AccessToken").Should().BeFalse();
         _jwtTokenService.Verify(

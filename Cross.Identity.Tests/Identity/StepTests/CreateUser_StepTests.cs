@@ -35,7 +35,7 @@ public class CreateUser_StepTests
                 ["Email"] = "collectForm.Email",
                 ["Password"] = "collectForm.Password"
             },
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = "sendCode"
         };
 
@@ -49,7 +49,7 @@ public class CreateUser_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("sendCode");
-        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&
@@ -81,7 +81,7 @@ public class CreateUser_StepTests
             {
                 ["Email"] = "Email"
             },
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = null
         };
 
@@ -93,7 +93,7 @@ public class CreateUser_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.IsAny<IDictionary<string, object?>>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -122,7 +122,7 @@ public class CreateUser_StepTests
                 ["Email"] = "collectForm.Email",
                 ["Password"] = "collectForm.Password"
             },
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = null
         };
 
@@ -134,7 +134,7 @@ public class CreateUser_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&

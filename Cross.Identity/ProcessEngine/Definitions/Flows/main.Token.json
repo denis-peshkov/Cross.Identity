@@ -39,7 +39,7 @@
         "refresh_token": "token.RefreshToken",
         "token_type": "token.TokenType",
         "expires_in": "token.ExpiresIn",
-        "user_id": "token.UserId"
+        "user_id": "token.UserAccountId"
       },
       "next": null
     }

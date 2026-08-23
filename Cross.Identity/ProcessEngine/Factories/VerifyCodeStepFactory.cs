@@ -16,7 +16,7 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
             Kind                   = Kind,
             Selector               = new Selector(),
             CodeKey                = cfg.Str("codeKey"),
-            UserIdKey              = cfg.StrOpt("userIdKey") ?? "UserId",
+            UserAccountIdKey              = cfg.StrOpt("userAccountIdKey") ?? "UserAccountId",
             CodeService            = sp.GetRequiredService<ICodeService>(),
             UserService            = sp.GetRequiredService<IUserService>(),
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),

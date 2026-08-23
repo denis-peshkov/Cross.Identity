@@ -12,7 +12,7 @@
 ///   "kind": "collectResult",
 ///   "map": {
 ///     "access_token": "token.AccessToken",
-///     "user_id": "token.UserId"
+///     "user_id": "token.UserAccountId"
 ///   },
 ///   "next": null
 /// }

@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Validates an access token (crypto + storage) via <see cref="IJwtTokenService.ValidateAccessTokenAsync"/>.
-/// Sets <c>Valid</c>; when valid, also <c>UserId</c> and <c>Jti</c> from claims.
+/// Sets <c>Valid</c>; when valid, also <c>UserAccountId</c> and <c>Jti</c> from claims.
 /// Invalid or malformed tokens yield <c>Valid = false</c> with <see cref="StepResult.Ok"/>.
 /// Operational failures (database, configuration, etc.) return <see cref="StepResult.Fail"/>.
 /// </summary>
@@ -46,7 +46,7 @@ internal sealed class VerifyTokenStep : IStep
             var sub = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
             if (Guid.TryParse(sub, out var userAccountId))
             {
-                ctx.Set(BagKey.Qualify(Kind, "UserId"), userAccountId);
+                ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), userAccountId);
             }
 
             var jti = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);

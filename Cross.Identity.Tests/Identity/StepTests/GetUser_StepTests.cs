@@ -43,7 +43,7 @@ public class GetUser_StepTests
 
         res.Status.Should().Be(StepStatusEnum.Ok);
         res.Next.Should().Be("done");
-        bag.Get<string>("lookup.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("lookup.UserAccountId").Should().Be(userAccountId.ToString());
 
         users.VerifyAll();
     }

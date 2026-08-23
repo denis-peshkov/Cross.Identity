@@ -54,8 +54,8 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
         result.Should().NotBeNull();
         result.Data.Should().NotBeNull();
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        payload.Should().ContainKey("UserId");
-        payload["UserId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
+        payload.Should().ContainKey("UserAccountId");
+        payload["UserAccountId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
         // verify GetService<T>() calls
         _serviceProviderMock.Verify(x => x.GetService(typeof(IServiceScopeFactory)), Times.Once);
         _serviceProviderMock.Verify(x => x.GetService(typeof(IFormValidatorFactory)), Times.Once);

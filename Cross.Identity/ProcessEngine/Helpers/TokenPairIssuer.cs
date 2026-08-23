@@ -8,7 +8,7 @@ internal static class TokenPairIssuer
     /// <summary>
     /// Builds identity claims, issues access + refresh tokens, and writes the pair into the bag
     /// under <paramref name="stepKind"/> (<c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>,
-    /// <c>ExpiresIn</c>, <c>UserId</c>).
+    /// <c>ExpiresIn</c>, <c>UserAccountId</c>).
     /// </summary>
     public static async Task IssueTokenPairAsync(
         IJwtTokenService jwt,
@@ -66,6 +66,6 @@ internal static class TokenPairIssuer
         ctx.Set(BagKey.Qualify(stepKind, "RefreshToken"), refreshToken);
         ctx.Set(BagKey.Qualify(stepKind, "TokenType"), "Bearer");
         ctx.Set(BagKey.Qualify(stepKind, "ExpiresIn"), jwt.AccessTokenExpiresInSeconds);
-        ctx.Set(BagKey.Qualify(stepKind, "UserId"), user.Id);
+        ctx.Set(BagKey.Qualify(stepKind, "UserAccountId"), user.Id);
     }
 }

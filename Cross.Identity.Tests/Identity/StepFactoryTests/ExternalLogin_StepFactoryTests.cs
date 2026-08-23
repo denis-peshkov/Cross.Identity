@@ -29,7 +29,7 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginInitiate",
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
@@ -41,7 +41,7 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginInitiate");
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
@@ -86,7 +86,7 @@ public class ExternalLogin_StepFactoryTests
             {
               "kind": "externalLoginUnlink",
               "providerKey": "Provider",
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
@@ -97,7 +97,7 @@ public class ExternalLogin_StepFactoryTests
 
         step.Kind.Should().Be("externalLoginUnlink");
         step.ProviderKey.Should().Be("Provider");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
@@ -111,7 +111,7 @@ public class ExternalLogin_StepFactoryTests
             """
             {
               "kind": "externalLoginGetAll",
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
@@ -121,7 +121,7 @@ public class ExternalLogin_StepFactoryTests
         var step = (ExternalLoginGetAllStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("externalLoginGetAll");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();

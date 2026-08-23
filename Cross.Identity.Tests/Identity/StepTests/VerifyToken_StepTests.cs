@@ -45,7 +45,7 @@ public class VerifyToken_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         bag.Get<bool>("verifyToken.Valid").Should().BeTrue();
-        bag.Get<Guid>("verifyToken.UserId").Should().Be(userAccountId);
+        bag.Get<Guid>("verifyToken.UserAccountId").Should().Be(userAccountId);
         bag.Get<string>("verifyToken.Jti").Should().Be(jti);
     }
 
@@ -73,7 +73,7 @@ public class VerifyToken_StepTests
 
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("verifyToken.Valid").Should().BeFalse();
-        bag.TryGet<Guid>("verifyToken.UserId", out _).Should().BeFalse();
+        bag.TryGet<Guid>("verifyToken.UserAccountId", out _).Should().BeFalse();
         _jwtTokenService.Verify(
             j => j.GetClaimValue(It.IsAny<string>(), It.IsAny<string[]>()),
             Times.Never);

@@ -22,7 +22,7 @@
 ///     if the key is relative (no dot), it is read as <c>"{Kind}.{Key}"</c>;
 ///     to read data from another step, specify an absolute key such as <c>"other-step.Field"</c>.</description></item>
 ///   <item><description>The result is written to keys:
-///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserId</c>
+///     <c>AccessToken</c>, <c>RefreshToken</c>, <c>TokenType</c>, <c>ExpiresIn</c>, <c>UserAccountId</c>
 ///     (with the <c>{Kind}.</c> prefix for relative access).</description></item>
 /// </list>
 /// </para>

@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Step that unlinks an external OAuth provider from the user identified by <see cref="UserIdKey"/>.
+/// Step that unlinks an external OAuth provider from the user identified by <see cref="UserAccountIdKey"/>.
 /// </summary>
 internal sealed class ExternalLoginUnlinkStep : IStep
 {
@@ -13,7 +13,7 @@ internal sealed class ExternalLoginUnlinkStep : IStep
 
     public required string ProviderKey { get; init; }
 
-    public required string UserIdKey { get; init; }
+    public required string UserAccountIdKey { get; init; }
 
     public required string RefreshTokenKey { get; init; }
 
@@ -23,7 +23,7 @@ internal sealed class ExternalLoginUnlinkStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
-        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserAccountIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var clientContext = ClientContext.Read(ctx);
 

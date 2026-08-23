@@ -16,7 +16,7 @@ internal sealed class PasswordAuthStepFactory : IStepFactory
             UserService = userService,
             Selector    = new Selector(),
             PasswordKey = cfg.Str("passwordKey"),
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
+            UserAccountIdKey   = cfg.StrOpt("userAccountIdKey") ?? "UserAccountId",
             Next        = cfg.StrOpt("next")
         };
     }

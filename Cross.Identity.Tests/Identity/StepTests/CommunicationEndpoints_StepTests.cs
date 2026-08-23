@@ -34,14 +34,14 @@ public class CommunicationEndpoints_StepTests
         var step = new CommunicationEndpointsGetAllStep
         {
             Kind = "communicationEndpointsGetAll",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             RefreshTokenKey = "RefreshToken",
             CommunicationEndpoints = _endpoints.Object,
             Next = "done",
         };
 
         var bag = new Bag()
-            .Set("communicationEndpointsGetAll.UserId", userAccountId)
+            .Set("communicationEndpointsGetAll.UserAccountId", userAccountId)
             .Set("communicationEndpointsGetAll.RefreshToken", refreshToken);
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -63,7 +63,7 @@ public class CommunicationEndpoints_StepTests
         var step = new CommunicationEndpointSetPreferredStep
         {
             Kind = "communicationEndpointSetPreferred",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             EndpointIdKey = "EndpointId",
             RefreshTokenKey = "RefreshToken",
             CommunicationEndpoints = _endpoints.Object,
@@ -71,7 +71,7 @@ public class CommunicationEndpoints_StepTests
         };
 
         var bag = new Bag()
-            .Set("communicationEndpointSetPreferred.UserId", userAccountId)
+            .Set("communicationEndpointSetPreferred.UserAccountId", userAccountId)
             .Set("communicationEndpointSetPreferred.EndpointId", endpointId.ToString())
             .Set("communicationEndpointSetPreferred.RefreshToken", refreshToken)
             .Set("collectForm.IpAddress", "1.2.3.4")

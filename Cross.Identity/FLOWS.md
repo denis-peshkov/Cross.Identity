@@ -115,8 +115,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `getUserId` |
-| `getUserId` | getUserId | resolves via `Selector`; writes `getUserId.UserId`. Unknown → `Invalid credentials.` (logged). → `collectResult` |
-| `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
+| `getUserId` | getUserId | resolves via `Selector`; writes `getUserId.UserAccountId`. Unknown → `Invalid credentials.` (logged). → `collectResult` |
+| `collectResult` | collectResult | `user_id = getUserId.UserAccountId`. `next: null` |
 
 ---
 
@@ -147,9 +147,9 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userIdKey: UserId`. → `sendCode` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserId`. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
-| `collectResult` | collectResult | `LastCode`, `UserId`. `next: null` |
+| `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |
 
 ---
 
@@ -186,7 +186,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
-| `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserId`. → `resetPassword` |
+| `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserAccountId`. → `resetPassword` |
 | `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
@@ -200,7 +200,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 6–12); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
-| `token` | token | `passwordKey`, `codeKey`. Bag output keys are fixed by `TokenPairIssuer` (`AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`, `UserId`). → `collectResult` |
+| `token` | token | `passwordKey`, `codeKey`. Bag output keys are fixed by `TokenPairIssuer` (`AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`, `UserAccountId`). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. Invalid credentials → `NotAuthorizedException` (same as `passwordAuth` / `verifyCode`). `next: null` |
 
 ---
@@ -211,11 +211,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserId` (opt. Guid string), `RefreshToken` (required when `UserId` is set); optional client context. → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserAccountId` (opt. Guid string), `RefreshToken` (required when `UserAccountId` is set); optional client context. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `UserId` enables account linking when present; the host must supply the authenticated user’s id **and** a valid `RefreshToken` for that user (the library validates the token before starting OAuth). Omit both for normal sign-in / sign-up.
+> `UserAccountId` enables account linking when present; the host must supply the authenticated user’s id **and** a valid `RefreshToken` for that user (the library validates the token before starting OAuth). Omit both for normal sign-in / sign-up.
 
 ---
 
@@ -229,7 +229,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserId` + `RefreshToken`.
+> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` + `RefreshToken`.
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
@@ -241,11 +241,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Host supplies `UserId` and a valid `RefreshToken` for that user (session proof). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+> Host supplies `UserAccountId` and a valid `RefreshToken` for that user (session proof). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 
 ---
 
@@ -255,11 +255,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required); optional client context. → `externalLoginGetAll` |
-| `externalLoginGetAll` | externalLoginGetAll | `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
-> Host supplies `UserId` and a valid `RefreshToken` for that user. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+> Host supplies `UserAccountId` and a valid `RefreshToken` for that user. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -311,8 +311,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId` (required Guid string), `RefreshToken` (required); optional client context. → `communicationEndpointsGetAll` |
-| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `communicationEndpointsGetAll` |
+| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `endpoints`. `next: null` |
 
 ---
@@ -323,8 +323,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserId`, `RefreshToken`, `EndpointId` (required); optional client context. → `communicationEndpointSetPreferred` |
-| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userIdKey`, `endpointIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId`, `RefreshToken`, `EndpointId` (required); optional client context. → `communicationEndpointSetPreferred` |
+| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `preferred`. `next: null` |
 
 ---
@@ -337,9 +337,9 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
 | `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). `reset` also adds email/phone to the action URL. Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
-| `verifyCode` | Verify OTP and write `UserId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `verifyCode` | Verify OTP and write `UserAccountId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `getUserId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
-| `passwordAuth` | Verify identity + password; writes `UserId` |
+| `passwordAuth` | Verify identity + password; writes `UserAccountId` |
 | `resetPassword` | Set new password (identity from `Selector`) |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |

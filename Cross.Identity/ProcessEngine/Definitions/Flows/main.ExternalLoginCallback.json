@@ -36,7 +36,7 @@
         "refresh_token": "externalLoginComplete.RefreshToken",
         "token_type": "externalLoginComplete.TokenType",
         "expires_in": "externalLoginComplete.ExpiresIn",
-        "user_id": "externalLoginComplete.UserId",
+        "user_id": "externalLoginComplete.UserAccountId",
         "is_linking": "externalLoginComplete.IsLinking"
       },
       "next": null

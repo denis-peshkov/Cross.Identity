@@ -72,7 +72,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             if (userAccountId.Value == Guid.Empty)
             {
-                throw new ValidationException("UserId is required for account linking.");
+                throw new ValidationException("UserAccountId is required for account linking.");
             }
 
             var accountExists = await _identityContext.UsersAccounts
@@ -199,7 +199,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
         if (userAccountId == Guid.Empty)
-            throw new ValidationException("UserId is required to unlink an external login.");
+            throw new ValidationException("UserAccountId is required to unlink an external login.");
 
         await _jwtTokenService
             .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
@@ -246,7 +246,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Unlinked external login. UserId={UserAccountId} Provider={Provider}",
+            "Unlinked external login. UserAccountId={UserAccountId} Provider={Provider}",
             userAccountId,
             providerEntity.Name);
     }
@@ -258,7 +258,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         CancellationToken cancellationToken)
     {
         if (userAccountId == Guid.Empty)
-            throw new ValidationException("UserId is required to list external logins.");
+            throw new ValidationException("UserAccountId is required to list external logins.");
 
         await _jwtTokenService
             .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)

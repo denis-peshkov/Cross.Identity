@@ -35,7 +35,7 @@ public class PasswordAuth_StepTests
             UserService = _userService.Object,
             Selector = DefaultSelector,
             PasswordKey = "collectForm.Password",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = "token"
         };
 
@@ -50,7 +50,7 @@ public class PasswordAuth_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("token");
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("passwordAuth.UserAccountId").Should().Be(userAccountId.ToString());
         _userService.Verify(s => s.ValidatePasswordAsync("Email", email, password, It.IsAny<CancellationToken>()), Times.Once);
         _userService.Verify(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -110,7 +110,7 @@ public class PasswordAuth_StepTests
             UserService = _userService.Object,
             Selector = DefaultSelector,
             PasswordKey = "Password",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = null
         };
 
@@ -124,7 +124,7 @@ public class PasswordAuth_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountId.ToString());
+        bag.Get<string>("passwordAuth.UserAccountId").Should().Be(userAccountId.ToString());
     }
 
     [Test]
@@ -146,7 +146,7 @@ public class PasswordAuth_StepTests
             UserService = _userService.Object,
             Selector = DefaultSelector,
             PasswordKey = "collectForm.CurrentPassword",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             Next = "resetPassword",
         };
 
@@ -158,7 +158,7 @@ public class PasswordAuth_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountIdText);
+        bag.Get<string>("passwordAuth.UserAccountId").Should().Be(userAccountIdText);
         _userService.Verify(s => s.ValidatePasswordAsync("Id", userAccountIdText, password, It.IsAny<CancellationToken>()), Times.Once);
         _userService.Verify(s => s.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()), Times.Once);
     }

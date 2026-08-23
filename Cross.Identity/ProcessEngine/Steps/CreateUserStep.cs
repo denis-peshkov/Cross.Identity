@@ -22,7 +22,7 @@ internal sealed class CreateUserStep : IStep
     /// <summary>
     /// Key in <see cref="Bag"/> where the created user's Id is stored.
     /// </summary>
-    public string UserIdKey { get; init; }
+    public string UserAccountIdKey { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -38,7 +38,7 @@ internal sealed class CreateUserStep : IStep
 
         var userAccountId = await UserService.CreateUserAsync(userFields, cancellationToken).ConfigureAwait(false);
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userAccountId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, UserAccountIdKey), userAccountId.ToString());
 
         return StepResult.Ok(Next);
     }

@@ -1,7 +1,7 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Step that lists OAuth providers and link status for the user identified by <see cref="UserIdKey"/>.
+/// Step that lists OAuth providers and link status for the user identified by <see cref="UserAccountIdKey"/>.
 /// </summary>
 internal sealed class ExternalLoginGetAllStep : IStep
 {
@@ -11,7 +11,7 @@ internal sealed class ExternalLoginGetAllStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    public required string UserIdKey { get; init; }
+    public required string UserAccountIdKey { get; init; }
 
     public required string RefreshTokenKey { get; init; }
 
@@ -20,7 +20,7 @@ internal sealed class ExternalLoginGetAllStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserAccountIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var overview = await ExternalLoginService.GetAllAsync(userAccountId, refreshToken, cancellationToken).ConfigureAwait(false);
 

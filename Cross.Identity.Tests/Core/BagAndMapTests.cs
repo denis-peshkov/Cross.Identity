@@ -139,15 +139,15 @@ public sealed class BagAndMapTests
     [Category(TestCategory.UNIT)]
     public void GivenCollectFormSelector_WhenBind_ThenWritesFieldAndValue()
     {
-        var bag = new Bag().Set("collectForm.UserId", "abc-123");
+        var bag = new Bag().Set("collectForm.UserAccountId", "abc-123");
         var selector = new Selector
         {
-            Candidates = new[] { "UserId" },
+            Candidates = new[] { "UserAccountId" },
         };
 
         selector.Bind(bag);
 
-        bag.Get<string>("collectForm.Field").Should().Be("UserId");
+        bag.Get<string>("collectForm.Field").Should().Be("UserAccountId");
         bag.Get<string>("collectForm.Value").Should().Be("abc-123");
     }
 

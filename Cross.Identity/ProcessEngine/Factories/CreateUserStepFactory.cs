@@ -21,7 +21,7 @@ internal sealed class CreateUserStepFactory : IStepFactory
             Kind        = Kind,
             UserService = sp.GetRequiredService<IUserService>(),
             Map         = map,
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId",
+            UserAccountIdKey   = cfg.StrOpt("userAccountIdKey") ?? "UserAccountId",
             Next        = cfg.StrOpt("next")
         };
     }

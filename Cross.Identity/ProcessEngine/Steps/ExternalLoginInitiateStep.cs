@@ -15,7 +15,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
 
     public string? ReturnUrlKey { get; init; }
 
-    public string? UserIdKey { get; init; }
+    public string? UserAccountIdKey { get; init; }
 
     public string? RefreshTokenKey { get; init; }
 
@@ -30,9 +30,9 @@ internal sealed class ExternalLoginInitiateStep : IStep
             ? null
             : ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
 
-        var linkUserAccountId = string.IsNullOrWhiteSpace(UserIdKey)
+        var linkUserAccountId = string.IsNullOrWhiteSpace(UserAccountIdKey)
             ? null
-            : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserIdKey));
+            : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserAccountIdKey));
 
         var refreshToken = string.IsNullOrWhiteSpace(RefreshTokenKey)
             ? null

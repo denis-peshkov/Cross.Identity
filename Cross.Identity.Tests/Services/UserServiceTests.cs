@@ -224,7 +224,7 @@ public class UserServiceTests : EFTestsBase
             Email = "userid-alias@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("UserId", userAccountId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserIdByAsync("UserAccountId", userAccountId.ToString(), CancellationToken.None);
 
         result.Should().Be(userAccountId);
     }

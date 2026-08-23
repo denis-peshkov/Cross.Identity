@@ -28,7 +28,7 @@
     {
       "kind": "collectResult",
       "map": {
-        "user_id": "getUserId.UserId"
+        "user_id": "getUserId.UserAccountId"
       },
       "next": null
     }

@@ -39,14 +39,14 @@ public class ExternalLoginGetAll_StepTests
         var step = new ExternalLoginGetAllStep
         {
             Kind = "externalLoginGetAll",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             RefreshTokenKey = "RefreshToken",
             ExternalLoginService = _externalLoginService.Object,
             Next = "collectResult",
         };
 
         var bag = new Bag();
-        bag.Set("externalLoginGetAll.UserId", userAccountId);
+        bag.Set("externalLoginGetAll.UserAccountId", userAccountId);
         bag.Set("externalLoginGetAll.RefreshToken", refreshToken);
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 

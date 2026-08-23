@@ -21,7 +21,7 @@ internal sealed class VerifyCodeStep : IStep
     public required string CodeKey { get; init; }
 
     /// <summary>Key for storing the resolved user identifier.</summary>
-    public string UserIdKey { get; init; } = "UserId";
+    public string UserAccountIdKey { get; init; } = "UserAccountId";
 
     /// <summary>Code service.</summary>
     public required ICodeService CodeService { get; init; }
@@ -88,7 +88,7 @@ internal sealed class VerifyCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), resolvedUserAccountId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, UserAccountIdKey), resolvedUserAccountId.ToString());
         return StepResult.Ok(Next);
     }
 }

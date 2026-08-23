@@ -40,7 +40,7 @@ public class VerifyCode_StepFactoryTests
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.CodeKey.Should().Be("collectForm.Code");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.Next.Should().Be("token");
         step.CodeService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();
@@ -65,7 +65,7 @@ public class VerifyCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenUserIdKeyInJson_WhenCreate_ThenBindsUserIdKey()
+    public void GivenUserAccountIdKeyInJson_WhenCreate_ThenBindsUserAccountIdKey()
     {
         using var json = JsonDocument.Parse(
             """
@@ -73,7 +73,7 @@ public class VerifyCode_StepFactoryTests
               "kind": "verifyCode",
               "channel": "email",
               "codeKey": "Code",
-              "userIdKey": "Id"
+              "userAccountIdKey": "Id"
             }
             """);
 
@@ -81,7 +81,7 @@ public class VerifyCode_StepFactoryTests
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
         step.CodeKey.Should().Be("Code");
-        step.UserIdKey.Should().Be("Id");
+        step.UserAccountIdKey.Should().Be("Id");
     }
 
     [Test]

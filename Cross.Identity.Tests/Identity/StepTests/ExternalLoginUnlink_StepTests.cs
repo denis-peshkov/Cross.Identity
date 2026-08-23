@@ -25,7 +25,7 @@ public class ExternalLoginUnlink_StepTests
         {
             Kind = "externalLoginUnlink",
             ProviderKey = "Provider",
-            UserIdKey = "UserId",
+            UserAccountIdKey = "UserAccountId",
             RefreshTokenKey = "RefreshToken",
             ExternalLoginService = _externalLoginService.Object,
             Next = "done",
@@ -33,7 +33,7 @@ public class ExternalLoginUnlink_StepTests
 
         var bag = new Bag();
         bag.Set("externalLoginUnlink.Provider", "Google");
-        bag.Set("externalLoginUnlink.UserId", userAccountId);
+        bag.Set("externalLoginUnlink.UserAccountId", userAccountId);
         bag.Set("externalLoginUnlink.RefreshToken", refreshToken);
         bag.Set("collectForm.IpAddress", null);
         bag.Set("collectForm.UserAgent", null);

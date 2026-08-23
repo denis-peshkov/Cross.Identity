@@ -28,7 +28,7 @@
         "PhoneNumber": "collectForm.PhoneNumber",
         "UserName": "collectForm.UserName"
       },
-      "userIdKey": "UserId",
+      "userAccountIdKey": "UserAccountId",
       "next": "sendCode"
     },
     {
@@ -41,7 +41,7 @@
       "kind": "collectResult",
       "map": {
         "LastCode": "sendCode.LastCode",
-        "UserId": "createUser.UserId"
+        "UserAccountId": "createUser.UserAccountId"
       },
       "next": null
     }

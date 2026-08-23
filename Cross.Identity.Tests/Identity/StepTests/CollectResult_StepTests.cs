@@ -13,7 +13,7 @@ public class CollectResult_StepTests
             Kind = "collectResult",
             Map = new Dictionary<string, string>
             {
-                ["UserId"] = "createUser.UserId",
+                ["UserAccountId"] = "createUser.UserAccountId",
                 ["LastCode"] = "sendCode.LastCode",
                 ["Token"] = "token.AccessToken"
             },
@@ -21,7 +21,7 @@ public class CollectResult_StepTests
         };
 
         var bag = new Bag();
-        bag.Set("createUser.UserId", "user123");
+        bag.Set("createUser.UserAccountId", "user123");
         bag.Set("sendCode.LastCode", "ABC123");
         bag.Set("token.AccessToken", "jwt.token.here");
 
@@ -31,7 +31,7 @@ public class CollectResult_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
-        bag.Get<string>("collectResult.UserId").Should().Be("user123");
+        bag.Get<string>("collectResult.UserAccountId").Should().Be("user123");
         bag.Get<string>("collectResult.LastCode").Should().Be("ABC123");
         bag.Get<string>("collectResult.Token").Should().Be("jwt.token.here");
     }
@@ -46,14 +46,14 @@ public class CollectResult_StepTests
             Kind = "collectResult",
             Map = new Dictionary<string, string>
             {
-                ["UserId"] = "createUser.UserId",
+                ["UserAccountId"] = "createUser.UserAccountId",
                 ["LastCode"] = "sendCode.LastCode"
             },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("createUser.UserId", "user123");
+        bag.Set("createUser.UserAccountId", "user123");
         // LastCode is missing
 
         // Act
@@ -61,7 +61,7 @@ public class CollectResult_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("collectResult.UserId").Should().Be("user123");
+        bag.Get<string>("collectResult.UserAccountId").Should().Be("user123");
         bag.TryGet<string>("collectResult.LastCode", out _).Should().BeFalse();
     }
 
@@ -75,20 +75,20 @@ public class CollectResult_StepTests
             Kind = "collectResult",
             Map = new Dictionary<string, string>
             {
-                ["UserId"] = "UserId" // relative key
+                ["UserAccountId"] = "UserAccountId" // relative key
             },
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectResult.UserId", "user123");
+        bag.Set("collectResult.UserAccountId", "user123");
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("collectResult.UserId").Should().Be("user123");
+        bag.Get<string>("collectResult.UserAccountId").Should().Be("user123");
     }
 
     [Test]
@@ -101,14 +101,14 @@ public class CollectResult_StepTests
             Kind = "collectResult",
             Map = new Dictionary<string, string>
             {
-                ["UserId"] = "createUser.UserId"
+                ["UserAccountId"] = "createUser.UserAccountId"
             },
             ReturnEmpty = true,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("createUser.UserId", "user123");
+        bag.Set("createUser.UserAccountId", "user123");
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -116,6 +116,6 @@ public class CollectResult_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("collectResult._empty").Should().BeTrue();
-        bag.TryGet<string>("collectResult.UserId", out _).Should().BeFalse();
+        bag.TryGet<string>("collectResult.UserAccountId", out _).Should().BeFalse();
     }
 }
