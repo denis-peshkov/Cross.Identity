@@ -231,30 +231,16 @@ internal sealed class UserService : IUserService
             return false;
         }
 
-        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
+        // Same channel as SendCodeStep / VerifyCodeStep: preferred → email fallback (not selector field).
         var field = ResolveSelectorField(selectorField);
+        var otpTarget = await _communicationEndpoints
+            .ResolveOtpTargetAsync(user.Id, cancellationToken)
+            .ConfigureAwait(false);
 
-        var isValid = false;
         var now = DateTime.UtcNow;
-        switch (field)
-        {
-            case nameof(UserAccountEntity.Email):
-                isValid = await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case nameof(UserAccountEntity.PhoneNumber):
-                isValid = await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case nameof(UserAccountEntity.NormalizedUserName):
-                var otpTarget = await _communicationEndpoints
-                    .ResolveOtpTargetAsync(user.Id, cancellationToken)
-                    .ConfigureAwait(false);
-                isValid = otpTarget.Channel == ChannelEnum.Email
-                    ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
-                    : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
-                break;
-        }
+        var isValid = otpTarget.Channel == ChannelEnum.Email
+            ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
+            : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
 
         if (isValid)
         {

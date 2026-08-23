@@ -8,6 +8,7 @@ public class UserServiceTests : EFTestsBase
     private Mock<IPasswordHasher> _hasher = null!;
     private Mock<IJwtTokenService> _jwtTokenService = null!;
     private Mock<IOptionsSnapshot<AuthenticationOptions>> _options = null!;
+    private CommunicationEndpointService _communicationEndpoints = null!;
     private UserService _userService = null!;
 
     [SetUp]
@@ -29,8 +30,16 @@ public class UserServiceTests : EFTestsBase
             .Setup(j => j.RevokeAllTokensForUserAsync(
                 It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _jwtTokenService
+            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         _options = CreateOptionsSnapshot();
+        _communicationEndpoints = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            _jwtTokenService.Object,
+            Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
 
         _userService = new UserService(
             Context,
@@ -38,7 +47,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
-            Mock.Of<ICommunicationEndpointService>(),
+            _communicationEndpoints,
             _options.Object);
     }
 
@@ -471,7 +480,10 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var phone = "+12125551234";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberConfirmed = true });
+        var sms = await _communicationEndpoints.UpsertAsync(
+            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userId,
@@ -486,6 +498,45 @@ public class UserServiceTests : EFTestsBase
         });
 
         var result = await _userService.ValidateCodeAsync("PhoneNumber", phone, "123456", CancellationToken.None);
+        result.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmailSelectorAndPreferredSms_WhenValidateCodeAsync_ThenAcceptsPhoneCodeAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "login@example.com";
+        var phone = "+12125559876";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            EmailConfirmed = true,
+            PhoneNumber = phone,
+            PhoneNumberConfirmed = true,
+            IsActive = true,
+        });
+        await _communicationEndpoints.UpsertAsync(
+            userId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: true);
+        var sms = await _communicationEndpoints.UpsertAsync(
+            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
+        AddToDb(new PhoneVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            PhoneNumber = phone,
+            CodeHash = CodeGeneratorHelper.GenerateHash("654321"),
+            CodeLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "654321", CancellationToken.None);
+
         result.Should().BeTrue();
     }
 

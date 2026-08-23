@@ -151,13 +151,26 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>()))
             .Returns("$pbkdf2-test-hash");
 
+        var jwtMock = new Mock<IJwtTokenService>();
+        jwtMock
+            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        jwtMock
+            .Setup(j => j.RevokeAllTokensForUserAsync(
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<ClientContext>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
         return new UserService(
             Context,
             Mock.Of<ILogger<UserService>>(),
             pepperVault.Object,
             passwordHasher.Object,
-            Mock.Of<IJwtTokenService>(),
-            Mock.Of<ICommunicationEndpointService>(),
+            jwtMock.Object,
+            new CommunicationEndpointService(
+                Context,
+                new AuditService(Context),
+                jwtMock.Object,
+                Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions())),
             CreateUserServiceOptions());
     }
 

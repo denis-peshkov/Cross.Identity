@@ -62,6 +62,8 @@ internal interface IUserService
 
     /// <summary>
     /// Verify a one-time code for a user found by selector.
+    /// Delivery channel matches <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>
+    /// (same as <c>SendCodeStep</c>), not the selector field type.
     /// </summary>
     /// <param name="selectorField">Lookup field (e.g. <c>"Email"</c>).</param>
     /// <param name="selectorValue">Selector value.</param>

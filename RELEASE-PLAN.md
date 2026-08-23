@@ -10,12 +10,10 @@
 **Impact:** компрометация OTP через log aggregation / SIEM / support-доступ; обход лимита попыток.  
 **Stock flows:** любой `sendCode` (Register, RequestCode, ForgotPassword).
 
-### 2. `TokenStep` (code-login) не совпадает с каналом `SendCodeStep`
-- `SendCodeStep` / `VerifyCodeStep` → `ResolveOtpTargetAsync(userId)` (preferred → email fallback).
-- `TokenStep` → `UserService.ValidateCodeAsync`: для selector `Email` / `PhoneNumber` проверяет `TryValidateEmailCodeAsync` / `TryValidatePhoneCodeAsync` **по типу selector**, не по фактическому OTP-target.
+### 2. ~~`TokenStep` (code-login) не совпадает с каналом `SendCodeStep`~~ ✅ закрыто
+~~`SendCodeStep` / `VerifyCodeStep` → `ResolveOtpTargetAsync`; `ValidateCodeAsync` для Email/Phone проверял verification по типу selector.~~
 
-**Impact:** code-login в `main.Token` ломается, когда preferred channel ≠ selector (login по Email, OTP ушёл на preferred phone).  
-**Stock flows:** `main.Token.json` (ветка Code).
+**Исправлено (2.0):** `UserService.ValidateCodeAsync` всегда резолвит OTP-target через `ResolveOtpTargetAsync` (как SendCode/VerifyCode), независимо от selector (`Email` / `PhoneNumber` / `UserName`).
 
 ---
 
