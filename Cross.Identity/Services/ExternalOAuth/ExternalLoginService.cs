@@ -505,7 +505,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
             if (confirmedUserId != Guid.Empty)
             {
-                if (!profile.EmailVerified)
+                if (!profile.EmailConfirmed)
                 {
                     throw new ValidationException(
                         "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
@@ -514,7 +514,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 return confirmedUserId;
             }
 
-            if (!profile.EmailVerified)
+            if (!profile.EmailConfirmed)
             {
                 var squatExists = await _identityContext.UsersAccounts
                     .AsNoTracking()
@@ -545,7 +545,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Email = normalizedEmail,
             UserName = userName,
             NormalizedUserName = userName.Trim().ToLowerInvariant(),
-            EmailConfirmed = profile.EmailVerified && !string.IsNullOrWhiteSpace(normalizedEmail),
+            EmailConfirmed = profile.EmailConfirmed && !string.IsNullOrWhiteSpace(normalizedEmail),
             PhoneNumberConfirmed = false,
             TwoFactorEnabled = false,
             LockoutEnabled = true,
@@ -586,7 +586,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.AvatarUrl = profile.AvatarUrl;
             existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, profile.EmailConfirmed, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -631,14 +631,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .FirstAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, profile.EmailConfirmed, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SyncProviderEmailEndpointAsync(
         Guid userId,
         Guid externalLoginId,
         string? providerEmail,
-        bool emailVerified,
+        bool emailConfirmed,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(providerEmail))
@@ -652,7 +652,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 ChannelEnum.Email,
                 providerEmail,
                 CommunicationEndpointSource.ExternalProvider,
-                isVerified: emailVerified,
+                isVerified: emailConfirmed,
                 entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);

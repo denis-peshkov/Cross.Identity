@@ -173,7 +173,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, ClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, ClientContext, ct)` |
 | User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserId` trusted without session proof | bag `UserId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
-| OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is verified (`EmailVerified`); links to **confirmed** account only |
+| OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is confirmed (`ExternalOAuthProfile.EmailConfirmed`); links to **confirmed** account only |
 | `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
 | `UsersAccounts.PhoneNumber` uniqueness | unique on `PhoneNumber` (all rows) | unique only when `PhoneNumberConfirmed = 1` (filtered index); multiple unconfirmed rows allowed |
 | `AddExternalLogin` DI | `TryAddSingleton<IHttpContextAccessor>` | Removed — host registers accessor if needed |
@@ -394,6 +394,18 @@ Host must pass `UserId` in the bag (no ambient auth user).
 | Lookup | latest active row by email/phone only | same **and** `UserAccountId == userId` |
 
 **Action:** pass the resolved user id (stock `VerifyCodeStep` already does). Prevents accepting another account's OTP when the same unconfirmed email/phone exists on multiple rows.
+
+### Microsoft OAuth: `EmailConfirmed` requires OIDC attestation
+
+| Area | Was | Now |
+|------|-----|-----|
+| `ExternalOAuthProfile` flag | `EmailVerified` | **`EmailConfirmed`** (same meaning; aligns with `UsersAccounts.EmailConfirmed`) |
+| Profile source | Graph `/me` only | Graph `/me` (id, displayName, fallback email) + OIDC `https://graph.microsoft.com/oidc/userinfo` |
+| Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has `email_verified: true` |
+
+Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a confirmed local account.
+
+**Action:** ensure the Microsoft app registration token has scopes that allow OIDC userinfo (`openid` `email` `profile` `User.Read` — already the library default). Expect new Microsoft users without `email_verified` to land as unconfirmed / without email auto-link until the mailbox is attested.
 
 ### `UsersAccounts.CreatedBy` removed
 

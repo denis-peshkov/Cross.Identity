@@ -229,7 +229,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **confirmed** local account — only if the provider attests a verified email (`EmailVerified`). Unconfirmed email rows do not block registration or OAuth: verified OAuth creates a new confirmed account alongside any unconfirmed rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserId` + `RefreshToken`.
+> OAuth callback resolves the user by existing external login, or — when emails match a **confirmed** local account — only if the provider attests a confirmed email (`ExternalOAuthProfile.EmailConfirmed`). Unconfirmed email rows do not block registration or OAuth: confirmed OAuth creates a new confirmed account alongside any unconfirmed rows. Without a confirmed provider email, merge is rejected. For explicit linking to a specific account, use `UserId` + `RefreshToken`.
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 

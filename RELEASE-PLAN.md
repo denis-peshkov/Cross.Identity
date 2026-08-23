@@ -30,11 +30,10 @@
 **Impact:** login / ForgotPassword / OTP / Reset могут попасть на squat-аккаунт с тем же контактом; усиливает #3.  
 **Stock flows:** Token, ForgotPassword, RequestCode, ResetPassword, Register + OAuth create.
 
-### 5. Microsoft OAuth: `EmailVerified` без attestation
-`FetchMicrosoftProfileAsync`: `EmailVerified = !string.IsNullOrWhiteSpace(email)`. Google/GitHub проверяют флаг; Microsoft — нет.
+### 5. ~~Microsoft OAuth: `EmailConfirmed` без attestation~~ ✅ закрыто
+~~`FetchMicrosoftProfileAsync`: `EmailConfirmed = !string.IsNullOrWhiteSpace(email)`.~~
 
-**Impact:** auto-link к confirmed локальному аккаунту по UPN/mail без подтверждённого mailbox → account takeover.  
-**Stock flows:** ExternalLogin sign-in / auto-link.
+**Исправлено (2.0):** Graph `/me` только для id/name (+ fallback email); `ExternalOAuthProfile.EmailConfirmed` только из OIDC `email_verified` на `https://graph.microsoft.com/oidc/userinfo` (как Google).
 
 ### 6. OTP на неподтверждённый email
 `CommunicationEndpointService.FindEmailTargetAsync` fallback на `UsersAccounts.Email` **без** `EmailConfirmed`.
@@ -144,7 +143,7 @@ OTP/notify: `Authentication:LockChannelAsEmail` → preferred verified endpoint 
 
 | # | Суть |
 |---|------|
-| OAuth takeover по email | auto-link только при `EmailVerified` + local confirmed |
+| OAuth takeover по email | auto-link только при `profile.EmailConfirmed` + local confirmed |
 | Account linking без auth | linking требует `RefreshToken` того же user |
 | IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
 | OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
@@ -187,6 +186,6 @@ OTP/notify: `Authentication:LockChannelAsEmail` → preferred verified endpoint 
 ## Приоритет фиксов
 
 1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
-2. **H3–H7:** bind `VerifyAsync` к userId; lookup prefer confirmed; Microsoft `EmailVerified`; email fallback только confirmed; lockout на code path.
+2. **H3–H7:** ~~bind `VerifyAsync` к userId~~; lookup prefer confirmed; ~~Microsoft `EmailConfirmed`~~; email fallback только confirmed; lockout на code path.
 3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
 4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.

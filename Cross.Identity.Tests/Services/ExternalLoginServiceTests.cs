@@ -731,6 +731,13 @@ public class ExternalLoginServiceTests : EFTestsBase
                     mail = "ms@example.com",
                     displayName = "MS User",
                 }),
+            ["https://graph.microsoft.com/oidc/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "ms-user-1",
+                    email = "ms@example.com",
+                    email_verified = true,
+                }),
         });
 
         var sut = CreateService(
@@ -751,6 +758,111 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         completion.UserId.Should().NotBe(Guid.Empty);
         (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("ms-user-1");
+        (await Context.UsersAccounts.SingleAsync()).EmailConfirmed.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMicrosoftGraphMailWithoutEmailConfirmed_WhenCompleteAsync_ThenCreatesUnconfirmedAccountAsync()
+    {
+        SeedProvider("Microsoft");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://login.microsoftonline.com/common/oauth2/v2.0/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "ms-token" }),
+            ["https://graph.microsoft.com/v1.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "ms-user-2",
+                    mail = "ms-unverified@example.com",
+                    displayName = "MS User",
+                }),
+            ["https://graph.microsoft.com/oidc/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "ms-user-2",
+                    email = "ms-unverified@example.com",
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-client",
+                    ClientSecret = "ms-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Microsoft", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserId);
+        account.Email.Should().Be("ms-unverified@example.com");
+        account.EmailConfirmed.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenConfirmedEmailAccount_WhenMicrosoftWithoutEmailConfirmed_ThenDoesNotLinkAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedProvider("Microsoft");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = "ms@example.com",
+            UserName = "existing",
+            NormalizedUserName = "existing",
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://login.microsoftonline.com/common/oauth2/v2.0/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "ms-token" }),
+            ["https://graph.microsoft.com/v1.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "ms-user-3",
+                    mail = "ms@example.com",
+                    displayName = "MS User",
+                }),
+            ["https://graph.microsoft.com/oidc/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "ms-user-3",
+                    email = "ms@example.com",
+                    email_verified = false,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Microsoft"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "ms-client",
+                    ClientSecret = "ms-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Microsoft", null, null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email already exists*");
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
     }
 
     [Test]

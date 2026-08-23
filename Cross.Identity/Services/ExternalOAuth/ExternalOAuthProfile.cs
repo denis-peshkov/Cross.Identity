@@ -7,9 +7,10 @@ public sealed class ExternalOAuthProfile
     public string? Email { get; init; }
 
     /// <summary>
-    /// Whether the provider attests that <see cref="Email"/> is verified at the identity provider.
+    /// Whether the provider attests that <see cref="Email"/> is confirmed at the identity provider.
+    /// Maps onto <c>UsersAccounts.EmailConfirmed</c> when creating a local account.
     /// </summary>
-    public bool EmailVerified { get; init; }
+    public bool EmailConfirmed { get; init; }
 
     public string? DisplayName { get; init; }
 

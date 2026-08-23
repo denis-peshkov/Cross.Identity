@@ -60,7 +60,7 @@ internal static class ExternalOAuthProviders
         {
             ProviderUserId = root.GetProperty("sub").GetString() ?? string.Empty,
             Email = root.TryGetProperty("email", out var email) ? email.GetString() : null,
-            EmailVerified = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
+            EmailConfirmed = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
             DisplayName = root.TryGetProperty("name", out var name) ? name.GetString() : null,
             AvatarUrl = root.TryGetProperty("picture", out var picture) ? picture.GetString() : null,
         };
@@ -71,25 +71,56 @@ internal static class ExternalOAuthProviders
         string accessToken,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        using var meRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
+        meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
+        using var meResponse = await httpClient.SendAsync(meRequest, cancellationToken).ConfigureAwait(false);
+        meResponse.EnsureSuccessStatusCode();
 
-        using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
-        var root = document.RootElement;
+        using var meDocument = await JsonDocument.ParseAsync(await meResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
+        var me = meDocument.RootElement;
 
-        var email = root.TryGetProperty("mail", out var mail) && mail.ValueKind == JsonValueKind.String
+        var graphEmail = me.TryGetProperty("mail", out var mail) && mail.ValueKind == JsonValueKind.String
             ? mail.GetString()
-            : root.TryGetProperty("userPrincipalName", out var upn) ? upn.GetString() : null;
+            : me.TryGetProperty("userPrincipalName", out var upn) && upn.ValueKind == JsonValueKind.String
+                ? upn.GetString()
+                : null;
+
+        // Graph mail/UPN alone is not mailbox attestation (admin-editable / non-SMTP UPN).
+        // Prefer OIDC userinfo and require email_verified — same policy as Google.
+        string? email = graphEmail;
+        var emailConfirmed = false;
+
+        using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/oidc/userinfo");
+        userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var userInfoResponse = await httpClient.SendAsync(userInfoRequest, cancellationToken).ConfigureAwait(false);
+        if (userInfoResponse.IsSuccessStatusCode)
+        {
+            using var userInfoDocument = await JsonDocument.ParseAsync(
+                await userInfoResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            var userInfo = userInfoDocument.RootElement;
+
+            if (userInfo.TryGetProperty("email", out var oidcEmail) && oidcEmail.ValueKind == JsonValueKind.String)
+            {
+                var oidcEmailValue = oidcEmail.GetString();
+                if (!string.IsNullOrWhiteSpace(oidcEmailValue))
+                {
+                    email = oidcEmailValue;
+                }
+            }
+
+            emailConfirmed = userInfo.TryGetProperty("email_verified", out var verifiedNode)
+                && verifiedNode.ValueKind == JsonValueKind.True;
+        }
 
         return new ExternalOAuthProfile
         {
-            ProviderUserId = root.GetProperty("id").GetString() ?? string.Empty,
+            ProviderUserId = me.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailVerified = !string.IsNullOrWhiteSpace(email),
-            DisplayName = root.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
+            EmailConfirmed = emailConfirmed && !string.IsNullOrWhiteSpace(email),
+            DisplayName = me.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
         };
     }
 
@@ -114,7 +145,6 @@ internal static class ExternalOAuthProviders
         var avatarUrl = userRoot.TryGetProperty("avatar_url", out var avatarNode) ? avatarNode.GetString() : null;
 
         string? email = null;
-        var emailVerified = false;
 
         using var emailsRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user/emails");
         emailsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -144,13 +174,12 @@ internal static class ExternalOAuthProviders
         }
 
         email = verifiedPrimary ?? verifiedFallback;
-        emailVerified = !string.IsNullOrWhiteSpace(email);
 
         return new ExternalOAuthProfile
         {
             ProviderUserId = providerUserId,
             Email = email,
-            EmailVerified = emailVerified,
+            EmailConfirmed = !string.IsNullOrWhiteSpace(email),
             DisplayName = displayName,
             AvatarUrl = avatarUrl,
         };
