@@ -60,8 +60,8 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### 35. `WatsApp` obsolete alias (CR)
 `ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
 
-### 36. Password max 32 → 128 (CR) — конфликт с закрытым
-`main.Token.json` / `ChangePassword` — CR хочет max 128; **уже закрыто** как Password max 32.
+### ✅ 36. Password max 32 (CR max 128 отклонён)
+Stock flows — `max: 32` на Password fields. CodeRabbit предлагал 128 — **принято** оставить 32 (см. «Принято» ниже); не менять без явного BREAKING.
 
 ### 37. ClientContext fields в ExternalLogin form (CR) — конфликт с принятым
 `main.ExternalLogin.json` — CR: убрать Ip/UA/Fingerprint из form; **принято** как host collectForm → `ClientContext`.
@@ -138,6 +138,9 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ### OAuth `ReturnUrl` (#18) — принято (контракт хоста)
 Библиотека только хранит `ReturnUrl` в OAuth state и отдаёт обратно; HTTP-redirect не делает. Allowlist / relative-only / запрет open redirect — ответственность хоста.
 
+### Password max 32 (#36) — принято
+Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.ChangePassword`, …): `min: 8`, `max: 32`. Лимит — контракт stock JSON / UX, не ограничение hasher или колонки БД. CodeRabbit max 128 отклонён: 32 уже закрыто в коде; хост может поднять `max` в кастомном flow override или своей валидации до submit.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -157,7 +160,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | ✅ Session binding на refresh | `Created*` на refresh + compare `ClientContext` |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
 | ✅ UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
-| ✅ Password max 32 | все stock Password fields |
+| ✅ #36 Password max 32 (CR 128 отклонён) | stock Password fields `max: 32`; см. «Принято» |
 | ✅ `TokenStep` fail vs ok | `NotAuthorizedException` на bad credentials |
 | ✅ SendCode enumeration (unknown) | `Invalid credentials.` без отправки |
 | ✅ Messenger SendCode no-op | `NotSupportedException` |
@@ -208,6 +211,6 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
 3. **CR M26, M29–M30, M32–M35, M39:** AuditEntityType; OAuth collision; SendAsync Guid; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
-4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
+4. **CR M37–M38:** решить принять/отклонить (ClientContext form, Audit PII); M36 принято (password 32).
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
 6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.
