@@ -28,8 +28,8 @@
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
-### 53. Public `ICommunicationEndpointService.UpsertAsync` без session proof (CR 2026-08-23)
-`GetAllAsync` / `SetPreferredAsync` требуют refresh token; `UpsertAsync(userAccountId, …, isVerified)` — нет. Любая referencing assembly может пометить адрес verified для чужого аккаунта. `internal` interface **или** XML/trust-boundary: только pre-authorized host/sync paths (`UserService`, OAuth sync).
+### 53. ~~Public `ICommunicationEndpointService.UpsertAsync` без session proof~~ ✅
+`UpsertAsync` и `SyncAccountContactsAsync` на internal `ICommunicationEndpointUpsertService`; публичный контракт — session-proof операции + read-only resolve.
 
 ### CodeRabbit minor (XML / style / hygiene)
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
@@ -179,6 +179,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #49 Re-hash swallow cancellation (CR) | `ValidatePasswordAsync`: `catch (DbUpdateException) when (needRehash)`; cancellation пробрасывается |
 | ✅ #51 `Bag.TryGet` Guid string parse (CR) | `TryGet` — `Guid.TryParse` как в `Get` для `Guid` / `Guid?` |
 | ✅ #52 CreateUserAsync UserName split (CR) | `userName` через `ToString().Trim()` для `UserName` и `NormalizedUserName` |
+| ✅ #53 UpsertAsync trust boundary (CR) | `UpsertAsync` + `SyncAccountContactsAsync` на internal `ICommunicationEndpointUpsertService`; DI singleton per scope |
 
 ---
 
@@ -202,6 +203,5 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **#53:** UpsertAsync trust boundary.
-3. **M39:** idle double-audit.
-4. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.
+2. **M39:** idle double-audit.
+3. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.

@@ -1,6 +1,6 @@
 ﻿namespace Cross.Identity.Services;
 
-internal sealed class CommunicationEndpointService : ICommunicationEndpointService
+internal sealed class CommunicationEndpointService : ICommunicationEndpointService, ICommunicationEndpointUpsertService
 {
     private readonly IdentityContext _context;
     private readonly IAuditService _audit;

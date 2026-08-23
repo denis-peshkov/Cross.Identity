@@ -48,6 +48,7 @@ public class UserServiceTests : EFTestsBase
             _hasher.Object,
             _jwtTokenService.Object,
             _communicationEndpoints,
+            _communicationEndpoints,
             _options.Object);
     }
 
@@ -614,6 +615,7 @@ public class UserServiceTests : EFTestsBase
             _hasher.Object,
             _jwtTokenService.Object,
             _communicationEndpoints,
+            _communicationEndpoints,
             _options.Object);
 
         var userAccountId = Guid.NewGuid();
@@ -948,6 +950,7 @@ public class UserServiceTests : EFTestsBase
             _hasher.Object,
             _jwtTokenService.Object,
             communicationEndpoints,
+            communicationEndpoints,
             _options.Object);
 
         AddToDb(new UserAccountEntity
@@ -1187,6 +1190,7 @@ public class UserServiceTests : EFTestsBase
             _hasher.Object,
             _jwtTokenService.Object,
             Mock.Of<ICommunicationEndpointService>(),
+            Mock.Of<ICommunicationEndpointUpsertService>(),
             _options.Object);
 
         var userAccountId = Guid.NewGuid();
@@ -1228,6 +1232,7 @@ public class UserServiceTests : EFTestsBase
             _hasher.Object,
             _jwtTokenService.Object,
             Mock.Of<ICommunicationEndpointService>(),
+            Mock.Of<ICommunicationEndpointUpsertService>(),
             _options.Object);
 
         var userAccountId = Guid.NewGuid();

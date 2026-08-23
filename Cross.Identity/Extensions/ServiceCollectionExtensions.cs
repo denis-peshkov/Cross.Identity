@@ -42,7 +42,9 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<IRequestInput, RequestInput>();
 
         services.TryAddScoped<IUserService, UserService>();
-        services.TryAddScoped<ICommunicationEndpointService, CommunicationEndpointService>();
+        services.TryAddScoped<CommunicationEndpointService>();
+        services.TryAddScoped<ICommunicationEndpointService>(sp => sp.GetRequiredService<CommunicationEndpointService>());
+        services.TryAddScoped<ICommunicationEndpointUpsertService>(sp => sp.GetRequiredService<CommunicationEndpointService>());
         services.TryAddSingleton<IPasswordHasher, PasswordHasher>();
         services.Configure<Services.Crypto.PasswordHasherOptions>(configuration.GetSection("PasswordHasher"));
         // services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);

@@ -160,17 +160,20 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
                 It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
+        var communicationEndpoints = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            jwtMock.Object,
+            TestAuthOptions.Snapshot());
+
         return new UserService(
             Context,
             Mock.Of<ILogger<UserService>>(),
             pepperVault.Object,
             passwordHasher.Object,
             jwtMock.Object,
-            new CommunicationEndpointService(
-                Context,
-                new AuditService(Context),
-                jwtMock.Object,
-                TestAuthOptions.Snapshot()),
+            communicationEndpoints,
+            communicationEndpoints,
             CreateUserServiceOptions());
     }
 

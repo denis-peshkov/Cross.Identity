@@ -12,7 +12,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly ExternalLoginOptions _options;
     private readonly ILogger<ExternalLoginService> _logger;
     private readonly IJwtTokenService _jwtTokenService;
-    private readonly ICommunicationEndpointService _communicationEndpoints;
+    private readonly ICommunicationEndpointUpsertService _communicationEndpoints;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
     public ExternalLoginService(
@@ -21,7 +21,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         IOptionsSnapshot<ExternalLoginOptions> options,
         ILogger<ExternalLoginService> logger,
         IJwtTokenService jwtTokenService,
-        ICommunicationEndpointService communicationEndpoints,
+        ICommunicationEndpointUpsertService communicationEndpoints,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;

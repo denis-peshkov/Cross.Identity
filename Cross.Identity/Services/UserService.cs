@@ -12,6 +12,7 @@ internal sealed class UserService : IUserService
     private readonly IPasswordHasher _hasher;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ICommunicationEndpointService _communicationEndpoints;
+    private readonly ICommunicationEndpointUpsertService _communicationEndpointUpsert;
     private readonly AuthenticationOptions _options;
 
     public UserService(
@@ -21,6 +22,7 @@ internal sealed class UserService : IUserService
         IPasswordHasher hasher,
         IJwtTokenService jwtTokenService,
         ICommunicationEndpointService communicationEndpoints,
+        ICommunicationEndpointUpsertService communicationEndpointUpsert,
         IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
@@ -29,6 +31,7 @@ internal sealed class UserService : IUserService
         _hasher = hasher;
         _jwtTokenService = jwtTokenService;
         _communicationEndpoints = communicationEndpoints;
+        _communicationEndpointUpsert = communicationEndpointUpsert;
         _options = options.Value;
     }
 
@@ -260,7 +263,7 @@ internal sealed class UserService : IUserService
         await ApplyVerifiedContactFromOtpTargetAsync(user, otpTarget, cancellationToken).ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await _communicationEndpoints.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        await _communicationEndpointUpsert.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
         return true;
     }
 

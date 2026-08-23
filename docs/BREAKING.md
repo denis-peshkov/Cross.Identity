@@ -172,6 +172,8 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 | `IExternalLoginService.GetAllAsync` | `(ct)` — principal from `HttpContext` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.GetAllAsync` | `(Guid userId, ct)` | `(Guid userId, string refreshToken, ct)` |
 | `ICommunicationEndpointService.SetPreferredAsync` | `(Guid userId, Guid endpointId, HostSuppliedClientContext, ct)` | `(Guid userId, Guid endpointId, string refreshToken, HostSuppliedClientContext, ct)` |
+| `ICommunicationEndpointService.UpsertAsync` | public on `ICommunicationEndpointService` | **removed** — internal `ICommunicationEndpointUpsertService` (library-only: OAuth sync, post-OTP account sync) |
+| `ICommunicationEndpointService.SyncAccountContactsAsync` | public on `ICommunicationEndpointService` | **removed** — internal `ICommunicationEndpointUpsertService` (library-only: `UserService` after OTP verify) |
 | User-scoped flows (`ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, `CommunicationEndpoints*`) | bag `UserAccountId` trusted without session proof | bag `UserAccountId` + **`RefreshToken`**; `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` |
 | OAuth sign-in auto-link by email | any matching `UsersAccounts.Email` | only when provider email is verified (`ExternalOAuthProfile.EmailVerified`); links to **verified** account only |
 | `UsersAccounts.Email` uniqueness | unique on `Email` (all rows) | unique only when `EmailVerified = 1` (filtered index); multiple unverified rows allowed |
