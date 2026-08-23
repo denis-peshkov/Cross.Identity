@@ -32,7 +32,8 @@ internal static class TokenPairIssuer
             }
             .AddIfNotNull(ClaimTypes.Email, user.Email)
             .AddIfNotNull(ClaimTypes.MobilePhone, user.PhoneNumber)
-            .AddIfNotNull(ClaimConstants.Username, user.UserName);
+            .AddIfNotNull(ClaimConstants.Username, user.UserName)
+            .AddIfNotNull(ClaimConstants.SecurityStamp, user.SecurityStamp?.ToString("D"));
 
         var accessToken = await jwt
             .GenerateAccessTokenAsync(
@@ -45,11 +46,17 @@ internal static class TokenPairIssuer
             .ConfigureAwait(false);
         ArgumentException.ThrowIfNullOrEmpty(accessToken);
 
+        var refreshClaims = new List<Claim>
+            {
+                new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            }
+            .AddIfNotNull(ClaimConstants.SecurityStamp, user.SecurityStamp?.ToString("D"));
+
         var refreshToken = await jwt
             .GenerateRefreshTokenAsync(
                 user.Id,
                 familyId,
-                new List<Claim> { new(JwtRegisteredClaimNames.Sub, user.Id.ToString()) },
+                refreshClaims,
                 clientContext,
                 cancellationToken)
             .ConfigureAwait(false);

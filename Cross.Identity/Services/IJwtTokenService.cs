@@ -56,12 +56,13 @@ public interface IJwtTokenService
 
     /// <summary>
     /// Cryptographically validate an access token (signature, issuer, audience, lifetime;
-    /// decrypts JWE when encryption is enabled), then confirm <c>jti</c> is active in storage.
+    /// decrypts JWE when encryption is enabled), then confirm <c>jti</c> is active in storage
+    /// and <c>security_stamp</c> matches <c>UserAccount.SecurityStamp</c> when the account has one.
     /// </summary>
     /// <param name="accessToken">Access token string (JWT/JWE) in compact form.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c> if crypto checks and DB status both succeed; otherwise <c>false</c>.
+    /// <c>true</c> if crypto checks, DB status, and security stamp all succeed; otherwise <c>false</c>.
     /// </returns>
     Task<bool> ValidateAccessTokenAsync(
         string accessToken,
@@ -72,22 +73,28 @@ public interface IJwtTokenService
     /// Used in <c>JwtBearerEvents.OnTokenValidated</c> when middleware has already extracted claims.
     /// </summary>
     /// <param name="jti">JTI (access-token identifier) extracted from JWT claims.</param>
+    /// <param name="securityStamp">
+    /// Stamp from the access-token claim (<see cref="ClaimConstants.SecurityStamp"/>).
+    /// When the account has a stamp, this must match; <c>null</c> fails if the account stamp is set.
+    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>
-    /// <c>true</c> if the access token with the given <c>jti</c> exists in the DB, is not revoked, and not expired;
-    /// otherwise <c>false</c>.
+    /// <c>true</c> if the <c>jti</c> row is active, the user is active, and the security stamp matches
+    /// (when the account has one); otherwise <c>false</c>.
     /// </returns>
     Task<bool> ValidateAccessTokenJtiAsync(
         Guid jti,
+        Guid? securityStamp,
         CancellationToken cancellationToken);
 
     /// <summary>
     /// Validate a refresh token by its string value.
     /// Expects the refresh token was issued by the server and exists in the refresh-tokens table.
+    /// Also requires <c>security_stamp</c> in the JWT to match the account when a stamp is set.
     /// </summary>
     /// <param name="refreshToken">Refresh token string.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns><c>true</c> if the token is valid (not revoked and not expired); otherwise <c>false</c>.</returns>
+    /// <returns><c>true</c> if the token is valid (not revoked, not expired, stamp ok); otherwise <c>false</c>.</returns>
     Task<bool> ValidateRefreshTokenAsync(
         string refreshToken,
         CancellationToken cancellationToken);

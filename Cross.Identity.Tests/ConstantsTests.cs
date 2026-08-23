@@ -19,6 +19,13 @@ public class ConstantsTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenClaimConstants_WhenSecurityStamp_ThenReturnsExpected()
+    {
+        ClaimConstants.SecurityStamp.Should().Be("security_stamp");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIdentityConstants_WhenRequestPatchBody_ThenReturnsExpected()
     {
         IdentityConstants.RequestPatchBody.Should().Be("RequestPatchBody");

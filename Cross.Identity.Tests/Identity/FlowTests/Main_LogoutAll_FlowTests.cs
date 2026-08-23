@@ -65,6 +65,15 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
             Email = "logout-all@example.com",
             UserName = "logout-all",
             NormalizedUserName = "logout-all",
+            SecurityStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserAccountEntity
+        {
+            Id = otherUserId,
+            Email = "logout-all-other@example.com",
+            UserName = "logout-all-other",
+            NormalizedUserName = "logout-all-other",
+            SecurityStamp = Guid.NewGuid(),
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(

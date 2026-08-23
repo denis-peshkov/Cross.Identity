@@ -293,7 +293,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.VerifyToken.json`
 
-**Purpose:** check whether an access token is still valid in storage (not revoked / not expired).
+**Purpose:** check whether an access token is still valid (crypto + storage + `security_stamp` vs `UserAccount.SecurityStamp`).
 
 | Step | kind | Details |
 |------|------|---------|
@@ -301,7 +301,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
 | `collectResult` | collectResult | `valid`, `user_id`, `jti` (user_id/jti only when valid). `next: null` |
 
-> Malformed or cryptographically invalid tokens yield `valid: false` (step `Ok`). Database or configuration errors fail the step (exception propagated to the host).
+> Malformed or cryptographically invalid tokens yield `valid: false` (step `Ok`). Tokens whose `security_stamp` claim no longer matches the account (e.g. after password change) also yield `valid: false`. Database or configuration errors fail the step (exception propagated to the host).
 
 ---
 

@@ -10,12 +10,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 15. `SecurityStamp` не участвует в валидации JWT
-Stamp ротируется при password change / OAuth unlink, но `ValidateAccessTokenAsync` проверяет только DB revoke list + crypto. Defense-in-depth gap.
-
-### 16. `PasswordAlgoEnum.SHA256`
-Obsolete; pepper в `HashSha256`/`VerifySha256` **игнорируется**; `NeedsRehashSha256` → false (нет upgrade на Argon2id). Риск при legacy/конфиге.
-
 ### 17. `ChangePassword` по `Id` без session proof
 Достаточно Guid + current password; refresh token не требуется. При утечке UUID + password — смена пароля (entropy UUID mitigates).
 
@@ -69,6 +63,9 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 ### `main.GetUserId` existence oracle — принято
 Успех возвращает `{ user_id }` и раскрывает существование пользователя. Продуктовое решение; шаги SendCode/VerifyCode/GetUserId на reject дают единый `Invalid credentials.`.
 
+### `PasswordAlgoEnum.SHA256` (#16) — принято
+Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет auto-upgrade на Argon2id. Default path — Argon2id/PBKDF2 + pepper. SHA256 только для явного legacy; хост не должен включать его для новых хешей.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -104,18 +101,19 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 | #8 Enumeration на шагах | единый `Invalid credentials.` + log |
 | #10 Phone fallback | account phone после email (OTP/notify rules) |
 | #11 OTP send rate limit | `Authentication:OtpSendRateLimit` в `CodeService.SendAsync` |
+| #15 SecurityStamp в JWT | claim `security_stamp` + check в ValidateAccess/Refresh |
 
 ---
 
 ## Что в библиотеке уже нормально
 
-- Crypto `ValidateAccessTokenAsync` (signature + DB `jti`).
+- Crypto `ValidateAccessTokenAsync` (signature + DB `jti` + `security_stamp`).
 - Refresh replay → family revoke (`REPLAY_DETECTED`).
 - OAuth state one-time use + expiry.
 - Refresh token hash в DB, не plain text.
 - External login link/unlink требует refresh token.
 - Unlink last method without password blocked.
-- Password change revokes all tokens + `SecurityStamp` rotation.
+- Password change revokes all tokens + `SecurityStamp` rotation (stamp also in JWT; mismatch fails validate).
 - E.164 gate на `collectForm` PhoneNumber.
 - `TokenPairIssuer` централизует выдачу пары.
 - SendCode ↔ VerifyCode channel resolution (`ResolveOtpTargetAsync`) согласованы между собой.
@@ -126,4 +124,4 @@ OTP: `Authentication:LockChannelAsEmail` → preferred verified → account emai
 
 ## Приоритет фиксов
 
-1. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
+1. **M13–M14, M17–M19:** half-validate API docs; ChangePassword session proof; OAuth ReturnUrl; OTP trim.

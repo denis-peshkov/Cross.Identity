@@ -117,3 +117,7 @@
 - явная семантика в БД (аудит: stamp изменился ⇒ был security event).
 
 Если завтра access станет stateless без DB — **без stamp-in-claim** disable/password-change не убьёт access до exp.
+
+**Сейчас (2.0):** access/refresh JWT несут `security_stamp` (`ClaimConstants.SecurityStamp`).
+`ValidateAccessTokenAsync` / `ValidateRefreshTokenAsync` / refresh rotation сверяют claim с `UsersAccounts.SecurityStamp`.
+`ValidateAccessTokenJtiAsync(jti, stamp, ct)` — для JwtBearer после crypto.

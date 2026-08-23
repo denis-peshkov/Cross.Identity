@@ -434,3 +434,16 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a confir
 Self-register and OAuth create accounts without an actor id; the column was never read by the library.
 
 **Action:** run `1_06_auth_UsersAccounts_DropCreatedBy.sql` on existing databases; greenfield `2_01_auth_UsersAccounts.sql` no longer creates `CreatedBy`. Drop any host mappings / queries that reference the column.
+
+### Access / refresh JWT: `security_stamp` claim
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| Access / refresh JWT claims | no account stamp | `security_stamp` (`ClaimConstants.SecurityStamp`) = current `UsersAccounts.SecurityStamp` |
+| `ValidateAccessTokenAsync` | crypto + `jti` row + `IsActive` | same **and** claim must match account stamp when stamp is set |
+| `ValidateRefreshTokenAsync` / refresh rotation | hash + idle/session binding + `IsActive` | same **and** stamp claim must match |
+| `ValidateAccessTokenJtiAsync` | `ValidateAccessTokenJtiAsync(jti, ct)` — `jti` + `IsActive` only | **`ValidateAccessTokenJtiAsync(jti, securityStamp, ct)`** — same + stamp match; no-stamp overload removed |
+
+Caller-supplied `security_stamp` claims are stripped on issue — the library always embeds the DB value.
+
+**Action:** after password change / OAuth unlink, expect existing access/refresh JWTs to fail validate even if revoke were skipped. In `OnTokenValidated`, pass the `security_stamp` claim into `ValidateAccessTokenJtiAsync(jti, stamp, ct)` (or use `ValidateAccessTokenAsync`). Update custom `IJwtTokenService` implementations — the `(jti, ct)` overload is gone.

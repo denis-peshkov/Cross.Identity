@@ -72,8 +72,9 @@ internal class JwtTokenService : IJwtTokenService
         CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
+        var securityStamp = await GetUserSecurityStampAsync(userId, cancellationToken).ConfigureAwait(false);
 
-        var claimsIdentity = claims
+        var claimsIdentity = StripAndApplySecurityStamp(claims, securityStamp)
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
             .AddIfNotNull(JwtRegisteredClaimNames.Typ, IdentityConstants.AccessToken);
 
@@ -140,8 +141,9 @@ internal class JwtTokenService : IJwtTokenService
         CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
+        var securityStamp = await GetUserSecurityStampAsync(userId, cancellationToken).ConfigureAwait(false);
 
-        var claimsIdentity = claims
+        var claimsIdentity = StripAndApplySecurityStamp(claims, securityStamp)
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
             .AddIfNotNull(JwtRegisteredClaimNames.Typ, IdentityConstants.RefreshToken);
 
@@ -221,20 +223,78 @@ internal class JwtTokenService : IJwtTokenService
         var entity = await _context.AccessTokens.FindAsync(new object[] { jtiGuid }, cancellationToken)
             .ConfigureAwait(false);
 
-        return entity is { RevokedAt: null }
-               && entity.ExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow
-               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+        if (entity is not { RevokedAt: null }
+            || entity.ExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow)
+        {
+            return false;
+        }
+
+        var tokenStamp = TryParseSecurityStampClaim(
+            validation.ClaimsIdentity.FindFirst(ClaimConstants.SecurityStamp)?.Value);
+
+        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, tokenStamp, cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<Guid?> GetUserSecurityStampAsync(Guid userId, CancellationToken cancellationToken)
     {
         return await _context.UsersAccounts
             .AsNoTracking()
             .Where(x => x.Id == userId)
-            .Select(x => x.IsActive)
+            .Select(x => x.SecurityStamp)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    private async Task<bool> IsUserAccountValidForTokenAsync(
+        Guid userId,
+        Guid? tokenSecurityStamp,
+        CancellationToken cancellationToken)
+    {
+        var row = await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => new { x.IsActive, x.SecurityStamp })
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (row is null || !row.IsActive)
+        {
+            return false;
+        }
+
+        return SecurityStampMatches(row.SecurityStamp, tokenSecurityStamp);
+    }
+
+    /// <summary>
+    /// When the account has a stamp, the token must carry the same value.
+    /// Accounts without a stamp are not stamp-gated (legacy / incomplete rows).
+    /// </summary>
+    private static bool SecurityStampMatches(Guid? accountStamp, Guid? tokenStamp)
+    {
+        if (accountStamp is null)
+        {
+            return true;
+        }
+
+        return tokenStamp == accountStamp;
+    }
+
+    private static Guid? TryParseSecurityStampClaim(string? value)
+    {
+        return Guid.TryParse(value, out var stamp) ? stamp : null;
+    }
+
+    private static List<Claim> StripAndApplySecurityStamp(List<Claim> claims, Guid? securityStamp)
+    {
+        ArgumentNullException.ThrowIfNull(claims);
+
+        var sanitized = claims
+            .Where(c => !string.Equals(c.Type, ClaimConstants.SecurityStamp, StringComparison.Ordinal))
+            .ToList();
+
+        return sanitized.AddIfNotNull(ClaimConstants.SecurityStamp, securityStamp?.ToString("D"));
     }
 
     private TokenValidationParameters CreateAccessTokenValidationParameters(bool requireDecryption)
@@ -261,15 +321,23 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ValidateAccessTokenJtiAsync(Guid jti, CancellationToken cancellationToken)
+    public async Task<bool> ValidateAccessTokenJtiAsync(
+        Guid jti,
+        Guid? securityStamp,
+        CancellationToken cancellationToken)
     {
         var entity = await _context.AccessTokens
             .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken).ConfigureAwait(false);
 
-        return entity is { RevokedAt: null }
-               && entity.ExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow
-               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+        if (entity is not { RevokedAt: null }
+            || entity.ExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow)
+        {
+            return false;
+        }
+
+        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, securityStamp, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -282,12 +350,18 @@ internal class JwtTokenService : IJwtTokenService
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return entity is { RevokedAt: null }
-               && entity.ExpiresAt >= DateTime.UtcNow
-               && entity.AbsoluteExpiresAt >= DateTime.UtcNow
-               && entity.CreatedAt <= DateTime.UtcNow
-               && !IsRefreshTokenIdleExpired(entity)
-               && await IsUserAccountActiveAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+        if (entity is not { RevokedAt: null }
+            || entity.ExpiresAt < DateTime.UtcNow
+            || entity.AbsoluteExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow
+            || IsRefreshTokenIdleExpired(entity))
+        {
+            return false;
+        }
+
+        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
+        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, tokenStamp, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
@@ -349,8 +423,25 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Account is disabled.");
         }
 
+        var accountStamp = await GetUserSecurityStampAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
+        if (!SecurityStampMatches(accountStamp, tokenStamp))
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
         await EnsureRefreshTokenIdleForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
         await EnsureSessionBindingForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return await _context.UsersAccounts
+            .AsNoTracking()
+            .Where(x => x.Id == userId)
+            .Select(x => x.IsActive)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

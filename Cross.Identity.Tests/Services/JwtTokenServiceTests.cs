@@ -34,13 +34,14 @@ public class JwtTokenServiceTests : EFTestsBase
         _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), options.Object);
     }
 
-    private void SeedUser(Guid userId, bool isActive = true)
+    private void SeedUser(Guid userId, bool isActive = true, Guid? securityStamp = null)
     {
         AddToDb(new UserAccountEntity
         {
             Id = userId,
             Email = $"{userId:N}@jwt.test",
             IsActive = isActive,
+            SecurityStamp = securityStamp ?? Guid.NewGuid(),
         });
     }
 
@@ -146,20 +147,114 @@ public class JwtTokenServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenAccessTokenEntity_WhenValidateAccessTokenJtiAsync_ThenReflectsRevokedStateAsync()
+    public async Task GivenAccessToken_WhenGenerated_ThenContainsSecurityStampClaimAsync()
+    {
+        var userId = Guid.NewGuid();
+        var stamp = Guid.NewGuid();
+        SeedUser(userId, securityStamp: stamp);
+        var token = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, Guid.NewGuid(), new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        _jwtTokenService.GetClaimValue(token, ClaimConstants.SecurityStamp).Should().Be(stamp.ToString("D"));
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenCallerSpoofsSecurityStamp_WhenGenerateAccessTokenAsync_ThenUsesAccountStampAsync()
+    {
+        var userId = Guid.NewGuid();
+        var accountStamp = Guid.NewGuid();
+        SeedUser(userId, securityStamp: accountStamp);
+        var spoofed = new List<Claim> { new(ClaimConstants.SecurityStamp, Guid.NewGuid().ToString("D")) };
+
+        var token = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, Guid.NewGuid(), new List<string>(), spoofed, ClientContext.Empty, CancellationToken.None);
+
+        _jwtTokenService.GetClaimValue(token, ClaimConstants.SecurityStamp).Should().Be(accountStamp.ToString("D"));
+        (await _jwtTokenService.ValidateAccessTokenAsync(token, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRotatedSecurityStamp_WhenValidateAccessTokenAsync_ThenReturnsFalseAsync()
     {
         var userId = Guid.NewGuid();
         SeedUser(userId);
+        var token = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, Guid.NewGuid(), new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
+        user.SecurityStamp = Guid.NewGuid();
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateAccessTokenAsync(token, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRotatedSecurityStamp_WhenValidateRefreshTokenAsync_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(
+            userId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
+        user.SecurityStamp = Guid.NewGuid();
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateRefreshTokenAsync(token, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenRotatedSecurityStamp_WhenValidateAccessTokenJtiAsyncWithStamp_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        var stamp = Guid.NewGuid();
+        SeedUser(userId, securityStamp: stamp);
+        var token = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, Guid.NewGuid(), new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var jti = Guid.Parse(_jwtTokenService.GetClaimValue(token, JwtRegisteredClaimNames.Jti)!);
+
+        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
+        user.SecurityStamp = Guid.NewGuid();
+        await Context.SaveChangesAsync();
+
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(jti, stamp, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAccessTokenEntity_WhenValidateAccessTokenJtiAsync_ThenReflectsRevokedStateAsync()
+    {
+        var userId = Guid.NewGuid();
+        var stamp = Guid.NewGuid();
+        SeedUser(userId, securityStamp: stamp);
         var familyId = Guid.NewGuid();
         _ = await _jwtTokenService.GenerateAccessTokenAsync(userId, familyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
         var entity = await Context.AccessTokens.FirstAsync(x => x.UserAccountId == userId);
 
-        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, CancellationToken.None)).Should().BeTrue();
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, stamp, CancellationToken.None)).Should().BeTrue();
 
         entity.RevokedAt = DateTime.UtcNow;
         await Context.SaveChangesAsync();
 
-        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(entity.Id, stamp, CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAccountSecurityStamp_WhenValidateAccessTokenJtiAsyncWithoutStamp_ThenReturnsFalseAsync()
+    {
+        var userId = Guid.NewGuid();
+        SeedUser(userId);
+        var token = await _jwtTokenService.GenerateAccessTokenAsync(
+            userId, Guid.NewGuid(), new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+        var jti = Guid.Parse(_jwtTokenService.GetClaimValue(token, JwtRegisteredClaimNames.Jti)!);
+
+        (await _jwtTokenService.ValidateAccessTokenJtiAsync(jti, securityStamp: null, CancellationToken.None))
+            .Should().BeFalse();
     }
 
     [Test]
