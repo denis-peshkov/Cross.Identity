@@ -544,6 +544,33 @@ public class CodeServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSameEmailDifferentUsers_WhenOneUserResendsCode_ThenOtherUsersActiveCodeRemainsValidAsync()
+    {
+        var sharedEmail = "shared@example.com";
+        var userAccountIdA = Guid.NewGuid();
+        var userAccountIdB = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountIdA, Email = sharedEmail, EmailVerified = false });
+        AddToDb(new UserAccountEntity { Id = userAccountIdB, Email = sharedEmail, EmailVerified = false });
+
+        var ttl = TimeSpan.FromMinutes(5);
+        var messageA = NotificationMessage.For(ChannelEnum.Email, sharedEmail)
+            .WithSubject("Test")
+            .WithTextBody("body");
+        var messageB = NotificationMessage.For(ChannelEnum.Email, sharedEmail)
+            .WithSubject("Test")
+            .WithTextBody("body");
+
+        await _codeService.SendAsync(messageA, "CODE-A", userAccountIdA, ttl, CancellationToken.None);
+        await _codeService.SendAsync(messageB, "CODE-B1", userAccountIdB, ttl, CancellationToken.None);
+        await _codeService.SendAsync(messageB, "CODE-B2", userAccountIdB, ttl, CancellationToken.None);
+
+        (await _codeService.VerifyAsync(userAccountIdA, ChannelEnum.Email, sharedEmail, "CODE-A", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(userAccountIdB, ChannelEnum.Email, sharedEmail, "CODE-B1", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountIdB, ChannelEnum.Email, sharedEmail, "CODE-B2", CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenCooldown_WhenSendAsyncTwice_ThenSecondThrowsValidationExceptionAsync()
     {
         var userAccountId = Guid.NewGuid();

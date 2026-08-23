@@ -15,9 +15,6 @@
 ### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
 Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 23. OTP supersede без `userId` (CR)
-`CodeService` — supersede active codes фильтрует только по email/phone; добавить `UserAccountId` в predicate.
-
 ### 26. `AuditEntityType` discriminator collision (CR)
 `LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
 
@@ -129,7 +126,8 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ GitHub email verified | только `verified: true` emails |
 | ✅ `IsActive` | `UserAccountGuard` + checks в auth pipeline |
 | ✅ Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
-| ✅ Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
+| ✅ Старые OTP при resend | supersede active codes per `UserAccountId` + destination (`ExpiresAt = now`) |
+| ✅ #23 OTP supersede scoped by user (CR) | `SupersedeActive*VerificationsAsync` фильтрует по `UserAccountId` + email/phone |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
 | ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` (opt-in); device/UA always when captured |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |

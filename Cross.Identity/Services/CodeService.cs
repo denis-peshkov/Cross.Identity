@@ -59,7 +59,7 @@ internal sealed class CodeService : ICodeService
                     await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 }
 
-                await SupersedeActiveEmailVerificationsAsync(normalizedDestination, now, cancellationToken).ConfigureAwait(false);
+                await SupersedeActiveEmailVerificationsAsync(userAccountId, normalizedDestination, now, cancellationToken).ConfigureAwait(false);
 
                 var emailEntity = new EmailVerificationEntity
                 {
@@ -83,7 +83,7 @@ internal sealed class CodeService : ICodeService
                     await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 }
 
-                await SupersedeActivePhoneVerificationsAsync(normalizedDestination, now, cancellationToken).ConfigureAwait(false);
+                await SupersedeActivePhoneVerificationsAsync(userAccountId, normalizedDestination, now, cancellationToken).ConfigureAwait(false);
 
                 var phoneEntity = new PhoneVerificationEntity
                 {
@@ -393,12 +393,16 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task SupersedeActiveEmailVerificationsAsync(
+        Guid userAccountId,
         string normalizedEmail,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var active = await _context.EmailVerifications
-            .Where(x => x.Email == normalizedEmail && x.UsedAt == null && x.ExpiresAt > now)
+            .Where(x => x.UserAccountId == userAccountId
+                        && x.Email == normalizedEmail
+                        && x.UsedAt == null
+                        && x.ExpiresAt > now)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -409,12 +413,16 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task SupersedeActivePhoneVerificationsAsync(
+        Guid userAccountId,
         string phoneNumber,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var active = await _context.PhoneVerifications
-            .Where(x => x.PhoneNumber == phoneNumber && x.UsedAt == null && x.ExpiresAt > now)
+            .Where(x => x.UserAccountId == userAccountId
+                        && x.PhoneNumber == phoneNumber
+                        && x.UsedAt == null
+                        && x.ExpiresAt > now)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
