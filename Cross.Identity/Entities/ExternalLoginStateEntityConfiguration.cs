@@ -2,6 +2,7 @@
 
 internal class ExternalLoginStateEntityConfiguration : IEntityTypeConfiguration<ExternalLoginStateEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<ExternalLoginStateEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.ExternalLoginStates), IdentityContext.DefaultSchema);
@@ -16,7 +17,11 @@ internal class ExternalLoginStateEntityConfiguration : IEntityTypeConfiguration<
         builder.HasIndex(x => x.Nonce)
             .IsUnique()
             .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.ExternalLoginStates)}_Nonce");
-        builder.HasIndex(x => x.ExpiresAt)
-            .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.ExternalLoginStates)}_ExpiresAt");
+        builder.HasOne(x => x.UserAccount)
+            .WithMany()
+            .HasForeignKey(x => x.UserAccountId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.ExternalLoginStates)}_UserAccount");
     }
 }

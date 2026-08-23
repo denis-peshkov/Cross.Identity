@@ -19,6 +19,13 @@ public class ConstantsTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenClaimConstants_WhenSecurityStamp_ThenReturnsExpected()
+    {
+        ClaimConstants.SecurityStamp.Should().Be("security_stamp");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenIdentityConstants_WhenRequestPatchBody_ThenReturnsExpected()
     {
         IdentityConstants.RequestPatchBody.Should().Be("RequestPatchBody");
@@ -31,18 +38,17 @@ public class ConstantsTests
         IdentityConstants.AccessToken.Should().Be("access_token");
         IdentityConstants.RefreshToken.Should().Be("refresh_token");
         IdentityConstants.IdToken.Should().Be("id_token");
-        IdentityConstants.UserId.Should().Be("user_id");
-        IdentityConstants.IsInvalidCode.Should().Be("is_invalid_code");
+        IdentityConstants.UserAccountId.Should().Be("user_account_id");
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
     public void GivenExternalLoginCompletion_WhenCreated_ThenExposesValues()
     {
-        var userId = Guid.NewGuid();
-        var completion = new ExternalLoginCompletion(userId, true);
+        var userAccountId = Guid.NewGuid();
+        var completion = new ExternalLoginCompletion(userAccountId, true);
 
-        completion.UserId.Should().Be(userId);
+        completion.UserAccountId.Should().Be(userAccountId);
         completion.IsLinking.Should().BeTrue();
     }
 

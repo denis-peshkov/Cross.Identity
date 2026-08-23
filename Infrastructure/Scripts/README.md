@@ -54,6 +54,14 @@ Examples:
 
 Point DbUp at the folder for your provider, e.g. `Infrastructure/Scripts/SqlServer`.
 
+## PreDeployment immutability
+
+Scripts in `1_PreDeployment/` are **append-only**: never edit, rename, or delete an existing file once it is in the repo. DbUp records applied scripts by file name; changing an old file does not upgrade databases that already ran it.
+
+For schema changes on existing databases, add a **new** script with the **next** sequence number (`1_07`, `1_08`, …) in **SqlServer**, **PostgreSQL**, and **MySQL**. Put only the delta in that file. Update `2_Initial` for greenfield installs separately.
+
+Agent workflow: `.cursor/skills/cross-identity-db-scripts/SKILL.md`.
+
 ## Host registration (EF Core)
 
 ```csharp
@@ -79,7 +87,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 | bool | `BIT` | `boolean` | `TINYINT(1)` |
 | byte[] hash | `BINARY(32)` | `bytea` | `BINARY(32)` |
 | Identity | `IDENTITY` | `GENERATED … AS IDENTITY` | `AUTO_INCREMENT` |
-| Unique nullable | filtered unique index | unique (NULLs distinct) | unique (multiple NULLs OK) |
+| Unique nullable | filtered unique index | unique WHERE verified | expression unique index |
 
 ## EF mapping
 
@@ -93,5 +101,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 | `auth.RefreshTokens` | `2_01_auth_RefreshTokens.sql` | `RefreshTokenEntity` |
 | `auth.EmailVerifications` | `2_01_auth_EmailVerifications.sql` | `EmailVerificationEntity` |
 | `auth.PhoneVerifications` | `2_01_auth_PhoneVerifications.sql` | `PhoneVerificationEntity` |
+| `auth.UsersCommunicationEndpoints` | `2_01_auth_UsersCommunicationEndpoints.sql` | `UserCommunicationEndpointEntity` |
+| `auth.Audits` | `2_01_auth_Audits.sql` | `AuditEntity` |
 
 When changing the schema, update the EF configuration and the corresponding SQL for **all three** providers.

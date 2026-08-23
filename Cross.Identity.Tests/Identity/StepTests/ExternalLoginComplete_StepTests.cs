@@ -19,10 +19,10 @@ public class ExternalLoginComplete_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenLinkingCompletion_WhenExecuteAsync_ThenSkipsTokenGenerationAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         _externalLoginService
             .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ExternalLoginCompletion(userId, true));
+            .ReturnsAsync(new ExternalLoginCompletion(userAccountId, true));
 
         var step = CreateStep();
         var bag = CreateBag();
@@ -30,11 +30,11 @@ public class ExternalLoginComplete_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<Guid>("externalLoginComplete.UserId").Should().Be(userId);
+        bag.Get<Guid>("externalLoginComplete.UserAccountId").Should().Be(userAccountId);
         bag.Get<bool>("externalLoginComplete.IsLinking").Should().BeTrue();
         bag.ContainsKey("externalLoginComplete.AccessToken").Should().BeFalse();
         _jwtTokenService.Verify(
-            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()),
+            j => j.GenerateAccessTokenAsync(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -42,10 +42,10 @@ public class ExternalLoginComplete_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenSuccessfulLogin_WhenExecuteAsync_ThenIssuesTokensAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var user = new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
             NormalizedUserName = "user",
@@ -53,16 +53,16 @@ public class ExternalLoginComplete_StepTests
 
         _externalLoginService
             .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ExternalLoginCompletion(userId, false));
+            .ReturnsAsync(new ExternalLoginCompletion(userAccountId, false));
         _userService
-            .Setup(u => u.GetUserByAsync("Id", userId.ToString(), It.IsAny<CancellationToken>()))
+            .Setup(u => u.GetUserByAsync("Id", userAccountId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(user);
         _jwtTokenService.Setup(j => j.AccessTokenExpiresInSeconds).Returns(3600);
         _jwtTokenService
-            .Setup(j => j.GenerateAccessTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
+            .Setup(j => j.GenerateAccessTokenAsync(userAccountId, It.IsAny<Guid>(), It.IsAny<List<string>>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("access-token");
         _jwtTokenService
-            .Setup(j => j.GenerateRefreshTokenAsync(userId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), It.IsAny<CancellationToken>()))
+            .Setup(j => j.GenerateRefreshTokenAsync(userAccountId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
 
         var step = CreateStep();
@@ -128,6 +128,7 @@ public class ExternalLoginComplete_StepTests
         };
 
         var bag = new Bag();
+        bag.Set("externalLoginComplete.Code", null);
         bag.Set("externalLoginComplete.State", "state");
         bag.Set("externalLoginComplete.Error", "access_denied");
         bag.Set("externalLoginComplete.ErrorDescription", "Denied");
@@ -153,6 +154,9 @@ public class ExternalLoginComplete_StepTests
         var bag = new Bag();
         bag.Set("externalLoginComplete.Code", "code");
         bag.Set("externalLoginComplete.State", "state");
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
         return bag;
     }
 }

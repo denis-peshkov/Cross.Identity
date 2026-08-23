@@ -1,7 +1,7 @@
 Bună,
 
 Ați solicitat resetarea parolei pentru {{email}}.
-Codul dvs.: {{code}} (valabil {{expires}} minute).
+Codul dvs.: {{code}} (valabil {{expires}}).
 
 Pentru a continua, deschideți acest link:
 {{url}}

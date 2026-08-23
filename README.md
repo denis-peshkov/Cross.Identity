@@ -22,11 +22,55 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
 - **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
-- **Security** — password hashing (Argon2), one-time codes, phone normalization.
+- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **External OAuth** — Google, Microsoft, GitHub, Apple; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
 - **Licensing (JWT)** — Peshkov license key check on the first flow call; without a key in dev/test, execution continues with a warning in logs.
+
+## Phone numbers (E.164)
+
+Cross.Identity accepts **only** E.164 phone numbers, for example `+79161234567`.
+
+- Gate: `collectForm` fields with `"type": "PhoneNumber"` — validated via `PhoneE164.IsValid` and stored with `PhoneE164.Require`.
+- Downstream (`UserService`, lookups, OTP) **trust** the bag value and do not re-validate/normalize.
+
+### Host helper: `PhoneE164`
+
+Use when the host fills the bag **without** going through `collectForm` (or before it):
+
+- **File:** [`Cross.Identity/Helpers/PhoneE164.cs`](Cross.Identity/Helpers/PhoneE164.cs)
+- **Namespace:** `Cross.Identity.Services.Crypto`
+
+| Method | Role |
+|--------|------|
+| `IsValid` / `Require` | Check or enforce already-E.164 |
+| `Normalize` / `NormalizeOrThrow` / `Ensure` | Convert national / free-form input to E.164 |
+
+```csharp
+using Cross.Identity.Services.Crypto;
+
+var phoneNumber = PhoneE164.Ensure(dto.PhoneNumber, defaultRegion: "RU");
+bag["PhoneNumber"] = phoneNumber;
+```
+
+No DI registration is required.
+
+## Host-supplied client context (`HostSuppliedClientContext`)
+
+The host Web API sets optional `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` from **server-side** metadata before calling the library ([`HostSuppliedClientContext`](../Cross.Identity/ProcessEngine/Core/HostSuppliedClientContext.cs)). On refresh, the library compares them with `Created*` captured when the session started (family anchor). Use the **same host-derived sources** on login and every refresh. Details: [`FLOWS.md`](Cross.Identity/FLOWS.md) — Host-supplied client context.
+
+```csharp
+using Cross.Identity.ProcessEngine.Core;
+
+var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
+
+bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
+bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
+bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
+
+await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
+```
 
 ## Requirements
 
@@ -37,16 +81,19 @@ A .NET identity and authentication library: configurable scenarios (registration
 ```
 Cross.Identity.slnx
 ├── Cross.Identity/                     # NuGet library
-│   ├── FlowExecutor.cs, IFlowExecutor.cs
+│   ├── Dtos/                           #
 │   ├── Entities/, Infrastructure/      # EF Core (users, tokens, verifications, external login)
-│   ├── Services/                       # User, Code, JwtToken; Crypto/; ExternalOAuth/
+│   ├── Enums/                          #
+│   ├── Extensions/                     #
+│   ├── Helpers/                        # PhoneE164
 │   ├── Licensing/                      # Peshkov JWT license (Accessor, Validator, ProductInfo)
+│   ├── Services/                       # User, Code, JwtToken; Crypto/, ExternalOAuth/
 │   ├── Options/                        # AuthenticationOptions, IdentityServiceConfiguration
-│   ├── Extensions/, Helpers/, Dtos/, Enums/
 │   ├── ProcessEngine/
 │   │   ├── Core/                       # Bag, StepRegistry, ProcessLoader, Forms/validation
-│   │   ├── Steps/, Factories/          # Steps and their DI factories
-│   │   └── Definitions/                # Flows/*.json, Templates/, Providers/
+│   │   ├── Definitions/                # Flows/*.json, Templates/, Providers/
+│   │   └── Steps/, Factories/          # Steps and their DI factories
+│   ├── FlowExecutor.cs, IFlowExecutor.cs
 │   ├── FLOWS.md                        # Flow and step documentation
 │   └── config.nuspec
 ├── Cross.Identity.Tests/               # NUnit (unit + integration)

@@ -11,8 +11,8 @@ internal sealed class ResetPasswordStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Key in <see cref="Bag"/> to read e-mail/login from. May be relative or absolute.</summary>
-    public required string SelectorKey { get; init; }
+    /// <summary>Identity selector (bag keys for field name + value).</summary>
+    public required Selector Selector { get; init; }
 
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
@@ -21,19 +21,43 @@ internal sealed class ResetPasswordStep : IStep
     public IUserService UserService { get; set; }
     public IEmailSenderService EmailSenderService { get; set; }
     public ISmsSenderService SmsSenderService { get; set; }
-    public IHttpContextAccessor HttpContextAccessor { get; set; }
-    public required ChannelEnum Channel { get; init; }
-    public required ResolveBy ResolveBy { get; init; }
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var selectorValue = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        var selector = Selector.Resolve(ctx);
+
         var passwordValue = ctx.Get<string>(BagKey.Qualify(Kind, PasswordKey));
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await UserService.SetPasswordAsync(ResolveBy.Field, selectorValue, passwordValue, cancellationToken).ConfigureAwait(false);
+        await UserService.SetPasswordAsync(selector.Field, selector.Value, passwordValue, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
-        var ip = HttpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
+        {
+            return StepResult.Ok(Next);
+        }
+
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveDeliveryTargetAsync(resolvedUserAccountId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException)
+        {
+            return StepResult.Ok(Next);
+        }
+
+        var channel = target.Channel.ToEmailOrSms();
+        if (!channel.SupportsOtp())
+        {
+            return StepResult.Ok(Next);
+        }
+
+        var ip = string.IsNullOrWhiteSpace(hostSuppliedClientContext.IpAddress) ? "unknown" : hostSuppliedClientContext.IpAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
         var subject = "Password changed";
         var textBody = $"Your password was changed at {changedAt} from IP {ip}. If this wasn't you, contact support immediately.";
@@ -41,13 +65,13 @@ internal sealed class ResetPasswordStep : IStep
 
         try
         {
-            switch (Channel)
+            switch (channel)
             {
                 case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", selectorValue, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
+                    await EmailSenderService.SendAsync("", target.Address, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
                     break;
                 case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(selectorValue, textBody, cancellationToken).ConfigureAwait(false);
+                    await SmsSenderService.SendAsync(target.Address, textBody, cancellationToken).ConfigureAwait(false);
                     break;
             }
         }

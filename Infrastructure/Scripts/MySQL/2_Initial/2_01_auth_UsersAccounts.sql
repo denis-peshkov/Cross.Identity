@@ -17,14 +17,13 @@ CREATE TABLE `auth`.`UsersAccounts`
     `SecurityStamp`         CHAR(36)     NULL,
     `ConcurrencyStamp`      CHAR(36)     NOT NULL,
 
-    `EmailConfirmed`        TINYINT(1)   NOT NULL,
-    `PhoneConfirmed`        TINYINT(1)   NOT NULL,
+    `EmailVerified`        TINYINT(1)   NOT NULL,
+    `PhoneNumberVerified`  TINYINT(1)   NOT NULL,
     `TwoFactorEnabled`      TINYINT(1)   NOT NULL,
 
     `IsActive`              TINYINT(1)   NOT NULL,
 
     `CreatedAt`             DATETIME(6)  NOT NULL,
-    `CreatedBy`             CHAR(36)     NOT NULL,
     `LastLoginAt`           DATETIME(6)  NULL,
 
     CONSTRAINT `PK_auth_UsersAccounts` PRIMARY KEY (`UserAccountId`)
@@ -35,7 +34,7 @@ CREATE UNIQUE INDEX `UX_auth_UsersAccounts_UserName`
     ON `auth`.`UsersAccounts` (`NormalizedUserName`);
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Email`
-    ON `auth`.`UsersAccounts` (`Email`);
+    ON `auth`.`UsersAccounts` ((IF(`EmailVerified`, `Email`, NULL)));
 
 CREATE UNIQUE INDEX `UX_auth_UsersAccounts_Phone`
-    ON `auth`.`UsersAccounts` (`PhoneNumber`);
+    ON `auth`.`UsersAccounts` ((IF(`PhoneNumberVerified`, `PhoneNumber`, NULL)));

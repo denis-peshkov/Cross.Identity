@@ -2,6 +2,7 @@
 
 internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<PhoneVerificationEntity>
 {
+    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<PhoneVerificationEntity> builder)
     {
         builder.ToTable(nameof(IdentityContext.PhoneVerifications), IdentityContext.DefaultSchema);
@@ -22,5 +23,11 @@ internal class PhoneVerificationEntityConfiguration : IEntityTypeConfiguration<P
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_CodeHash");
         builder.HasIndex(x => x.ExpiresAt)
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_ExpiresAt");
+
+        builder.HasOne(x => x.UserAccount)
+            .WithMany()
+            .HasForeignKey(x => x.UserAccountId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName($"FK_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.PhoneVerifications)}_UserAccount");
     }
 }

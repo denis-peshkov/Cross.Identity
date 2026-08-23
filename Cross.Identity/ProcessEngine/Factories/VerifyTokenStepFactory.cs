@@ -20,10 +20,10 @@ internal sealed class VerifyTokenStepFactory : IStepFactory
 
         return new VerifyTokenStep
         {
-            Kind             = Kind,
-            JwtTokenService  = jwtTokenService,
-            AccessTokenKey   = cfg.Str("accessTokenKey"),
-            Next             = cfg.StrOpt("next"),
+            Kind            = Kind,
+            JwtTokenService = jwtTokenService,
+            AccessTokenKey  = cfg.Str("accessTokenKey"),
+            Next            = cfg.StrOpt("next"),
         };
     }
 }

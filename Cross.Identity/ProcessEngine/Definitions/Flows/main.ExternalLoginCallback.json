@@ -8,7 +8,10 @@
           { "key": "Code", "type": "String", "required": false, "min": 1, "max": 2048 },
           { "key": "State", "type": "String", "required": true, "min": 1, "max": 4096 },
           { "key": "Error", "type": "String", "required": false, "max": 256 },
-          { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 }
+          { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ],
         "validators": [
           { "kind": "requiredIf", "when": { "field": "Error", "equals": "" }, "then": { "name": "Code", "required": true }, "message": "Provide an authorization code or an OAuth error." },
@@ -33,7 +36,7 @@
         "refresh_token": "externalLoginComplete.RefreshToken",
         "token_type": "externalLoginComplete.TokenType",
         "expires_in": "externalLoginComplete.ExpiresIn",
-        "user_id": "externalLoginComplete.UserId",
+        "user_account_id": "externalLoginComplete.UserAccountId",
         "is_linking": "externalLoginComplete.IsLinking"
       },
       "next": null

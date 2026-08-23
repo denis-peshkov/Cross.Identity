@@ -66,7 +66,7 @@ Content-Type: application/json
 
 ###
 # @name main-get-user-id
-POST {{HOST}}/api/identity/main/GetUserId
+POST {{HOST}}/api/identity/main/GetUserAccountId
 Content-Type: application/json
 
 {
@@ -102,7 +102,7 @@ Content-Type: application/json
   "Provider": "Google",
   "ReturnUrl": "{{HOST}}/swagger"
 }
-# Optional account-link (must match authenticated user): "LinkUserId": "<user-guid>"
+# Optional account-link: "UserAccountId": "<user-guid>", "RefreshToken": "<refresh_token for that user>"
 
 
 ###
@@ -119,18 +119,18 @@ Content-Type: application/json
 
 ###
 # @name main-external-login-unlink
-# Requires authenticated caller (Bearer ACCESS_TOKEN with sub = current user).
 POST {{HOST}}/api/identity/main/ExternalLoginUnlink
 Content-Type: application/json
-Authorization: Bearer {{ACCESS_TOKEN}}
 
 {
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}",
   "Provider": "Google"
 }
 
 ###
 # @name main-logout
-# Logout current session: revokes the presented refresh token (USER_LOGOUT). Idempotent.
+# Logout current session: revokes the presented refresh token and access tokens in the same family (USER_LOGOUT). Idempotent.
 POST {{HOST}}/api/identity/main/Logout
 Content-Type: application/json
 
@@ -156,4 +156,26 @@ Content-Type: application/json
 
 {
   "AccessToken": "{{ACCESS_TOKEN}}"
+}
+
+###
+# @name main-communication-endpoints-get-all
+POST {{HOST}}/api/identity/main/CommunicationEndpointsGetAll
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}"
+}
+
+###
+# @name main-communication-endpoint-set-preferred
+# Sets the single preferred communication endpoint (must be verified).
+POST {{HOST}}/api/identity/main/CommunicationEndpointSetPreferred
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "RefreshToken": "{{REFRESH_TOKEN}}",
+  "EndpointId": "{{ENDPOINT_ID}}"
 }

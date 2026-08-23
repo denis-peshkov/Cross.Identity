@@ -12,6 +12,7 @@ public class ExternalLogin_StepFactoryTests
         sc.AddSingleton<IExternalLoginService>(_ => Mock.Of<IExternalLoginService>());
         sc.AddSingleton<IJwtTokenService>(_ => Mock.Of<IJwtTokenService>());
         sc.AddSingleton<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 
@@ -28,7 +29,8 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginInitiate",
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
-              "linkUserIdKey": "LinkUserId",
+              "userAccountIdKey": "UserAccountId",
+              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -39,7 +41,8 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginInitiate");
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
-        step.LinkUserIdKey.Should().Be("LinkUserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
@@ -83,6 +86,8 @@ public class ExternalLogin_StepFactoryTests
             {
               "kind": "externalLoginUnlink",
               "providerKey": "Provider",
+              "userAccountIdKey": "UserAccountId",
+              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -92,6 +97,32 @@ public class ExternalLogin_StepFactoryTests
 
         step.Kind.Should().Be("externalLoginUnlink");
         step.ProviderKey.Should().Be("Provider");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
+        step.Next.Should().Be("done");
+        step.ExternalLoginService.Should().NotBeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenValidGetAllJson_WhenCreate_ThenReturnsConfiguredStep()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "externalLoginGetAll",
+              "userAccountIdKey": "UserAccountId",
+              "refreshTokenKey": "RefreshToken",
+              "next": "done"
+            }
+            """);
+
+        var factory = new ExternalLoginGetAllStepFactory();
+        var step = (ExternalLoginGetAllStep)factory.Create(json.RootElement, _sp);
+
+        step.Kind.Should().Be("externalLoginGetAll");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
+        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }

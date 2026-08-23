@@ -2,10 +2,11 @@
 
 public class EmailVerificationEntity : IHasConcurrencyStamp
 {
-    public long Id { get; set; }
+    public Guid Id { get; set; }
 
-    public Guid UserAccountId { get; set; }
-    public virtual UserAccountEntity UserAccount { get; set; }
+    public required Guid UserAccountId { get; set; }
+    public virtual required UserAccountEntity UserAccount { get; set; }
+
     public string Email { get; set; }
     /// <summary>SHA-256 -> 32 bytes</summary>
     public byte[] TokenHash { get; set; } = null!;

@@ -14,20 +14,12 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
         Initialize();
         LicenseCheckExtensions.ResetLicenseCheckForTests();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent",
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
-        AddRegistryStep<GetUserIdStepFactory>();
+        AddRegistryStep<GetUserAccountIdStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
 
         AddToDb(new UserAccountEntity
         {
@@ -38,26 +30,26 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenNoLicenseKey_WhenExecuteGetUserIdFlow_ThenCompletesAsync()
+    public async Task GivenNoLicenseKey_WhenExecuteGetUserAccountIdFlow_ThenCompletesAsync()
     {
         IsLicenseGateChecked().Should().BeFalse();
 
-        var result = await ExecuteGetUserIdFlowAsync();
+        var result = await ExecuteGetUserAccountIdFlowAsync();
 
         result.Data.Should().NotBeNull();
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        payload.Should().ContainKey("user_id");
+        payload.Should().ContainKey("user_account_id");
         IsLicenseGateChecked().Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidLicenseKey_WhenExecuteGetUserIdFlow_ThenStillCompletesAsync()
+    public async Task GivenInvalidLicenseKey_WhenExecuteGetUserAccountIdFlow_ThenStillCompletesAsync()
     {
         RegisterLicenseAccessor(new IdentityServiceConfiguration { LicenseKey = "aaa.bbb.ccc" });
         LicenseCheckExtensions.ResetLicenseCheckForTests();
 
-        var result = await ExecuteGetUserIdFlowAsync();
+        var result = await ExecuteGetUserAccountIdFlowAsync();
 
         result.Data.Should().NotBeNull();
         IsLicenseGateChecked().Should().BeFalse();
@@ -65,23 +57,23 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenSecondFlowCall_WhenExecuteGetUserIdFlow_ThenDoesNotResetLicenseGateAsync()
+    public async Task GivenSecondFlowCall_WhenExecuteGetUserAccountIdFlow_ThenDoesNotResetLicenseGateAsync()
     {
-        await ExecuteGetUserIdFlowAsync();
+        await ExecuteGetUserAccountIdFlowAsync();
         IsLicenseGateChecked().Should().BeFalse();
 
-        var second = await ExecuteGetUserIdFlowAsync();
+        var second = await ExecuteGetUserAccountIdFlowAsync();
 
         second.Data.Should().NotBeNull();
         IsLicenseGateChecked().Should().BeFalse();
     }
 
-    private Task<FlowResult> ExecuteGetUserIdFlowAsync()
+    private Task<FlowResult> ExecuteGetUserAccountIdFlowAsync()
     {
         return _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["Email"] = Email },
             Flow,
-            FlowOperationEnum.GetUserId,
+            FlowOperationEnum.GetUserAccountId,
             CancellationToken.None);
     }
 

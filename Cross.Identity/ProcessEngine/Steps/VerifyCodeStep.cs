@@ -1,16 +1,10 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Step for verifying a confirmation code (email/phone).
-/// Uses <see cref="ICodeService"/> to validate the code.
-/// <para>
-/// Key rules:
-/// <list type="bullet">
-///   <item><description><see cref="IdentityKey"/> and <see cref="CodeKey"/>:
-///     if relative (no dot), are read as <c>"{Name}.{Key}"</c>;
-///     to read data from another step, specify absolute keys such as <c>"other-step.Field"</c>.</description></item>
-/// </list>
-/// </para>
+/// Verifies an OTP against the same delivery target used for send
+/// (<see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>) and writes the user id into the bag.
+/// Unknown identity / invalid code surface as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
+/// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
 internal sealed class VerifyCodeStep : IStep
 {
@@ -20,35 +14,81 @@ internal sealed class VerifyCodeStep : IStep
     /// <inheritdoc/>
     public string? Next { get; init; }
 
-    /// <summary>Verification channel: "email" or "phone".</summary>
-    public required string Channel { get; init; }
+    /// <summary>Identity selector (bag keys for field name + value).</summary>
+    public required Selector Selector { get; init; }
 
-    /// <summary>
-    /// Key in <see cref="Bag"/> for the identifier (email/phone/username).
-    /// May be relative (qualified as <c>"{Kind}.IdentityKey"</c>) or absolute.
-    /// </summary>
-    public required string IdentityKey { get; init; }
-
-    /// <summary>
-    /// Key in <see cref="Bag"/> for the verification code.
-    /// May be relative (qualified as <c>"{Kind}.CodeKey"</c>) or absolute.
-    /// </summary>
+    /// <summary>Key in <see cref="Bag"/> for the verification code.</summary>
     public required string CodeKey { get; init; }
+
+    /// <summary>Key for storing the resolved user identifier.</summary>
+    public string UserAccountIdKey { get; init; } = "UserAccountId";
 
     /// <summary>Code service.</summary>
     public required ICodeService CodeService { get; init; }
 
+    /// <summary>User service (resolve id after successful verify).</summary>
+    public required IUserService UserService { get; init; }
+
+    /// <summary>Resolves OTP delivery target (must match send).</summary>
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
+
+    /// <summary>Logger (operational detail for rejected verifies).</summary>
+    public required ILogger Logger { get; init; }
+
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        // relative keys → "{Kind}.{Key}"
-        var identity = ctx.Get<string>(BagKey.Qualify(Kind, IdentityKey));
-        var code     = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
+        var selector = Selector.Resolve(ctx);
+        var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        var ok = await CodeService.VerifyAsync(Channel, identity, code, cancellationToken).ConfigureAwait(false);
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: user not found.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
 
-        return ok
-            ? StepResult.Ok(Next)
-            : StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveOtpTargetAsync(resolvedUserAccountId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException ex)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        if (!target.Channel.SupportsOtp())
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
+                selector.Field,
+                selector.Value,
+                target.Channel);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        var ok = await CodeService.VerifyAsync(resolvedUserAccountId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
+        if (!ok)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: invalid or expired verification code.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        ctx.Set(BagKey.Qualify(Kind, UserAccountIdKey), resolvedUserAccountId.ToString());
+        return StepResult.Ok(Next);
     }
 }

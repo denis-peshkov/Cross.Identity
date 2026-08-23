@@ -8,7 +8,7 @@
 > **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-07-15)
 > **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node docs/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **100** items — ✅ **59** (59%) · 🟨 **27** (27%) · ⬜ **14** (14%) · ❌ **0** (0%)
+**Checklist summary:** **98** items — ✅ **58** (59%) · 🟨 **28** (29%) · ⬜ **12** (12%) · ❌ **0** (0%)
 
 ---
 
@@ -69,8 +69,8 @@
 
 | Change | Was (master) | Now (dev) | Action |
 |-----------|---------------|-------------|----------|
-| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `main/GetUserId` |
-| Flow file | `main.GetUser.json` | **`main.GetUserId.json`** | Update custom overrides |
+| `GetUser` operation | `FlowOperationEnum.GetUser` | **`GetUserId`** | Update clients: `main/GetUserAccountId` |
+| Flow file | `main.GetUser.json` | **`main.GetUserAccountId.json`** | Update custom overrides |
 | Removed flows | `main.Auth.json`, `main.register1.json` | removed | Verify no one still calls them |
 | `collectResult` response with 1 field | bare value (`"abc"`) | **always an object** `{ "field": "abc" }` | Update deserialization on clients |
 | `IFlowExecutor` / `FlowExecutor` | public class | **internal class** | Public contract — only `IFlowExecutor` |
@@ -145,12 +145,12 @@ Env: `Authentication__ExternalLogin__CallbackUrl`, `Authentication__ExternalLogi
 | B2 | Provider not in config → `ValidationException` | Unit | ✅ |
 | B3 | Provider not in DB (`Providers` table) / disabled → `NotFoundException` | Unit | ✅ |
 | B4 | **Initiate:** `POST main/ExternalLogin` → `{ url }` with OAuth redirect | Integration | ✅ `Main_ExternalOAuth_FlowTests` |
-| B5 | **Callback:** `POST main/ExternalLoginCallback` → tokens + `user_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
+| B5 | **Callback:** `POST main/ExternalLoginCallback` → tokens + `user_account_id` | Integration | ✅ `ExternalLoginCallback_ShouldReturnTokens_*` |
 | B6 | OAuth error (`Error`, `ErrorDescription`) → correct error | Unit + Integration | ✅ |
 | B7 | State TTL expired → rejection | Unit | ✅ `CompleteAsync_ShouldThrow_WhenStateExpired` |
 | B8 | **New user** — auto-provision | Integration | ✅ callback creates user + external login in DB |
 | B9 | **Existing user** — login by provider+subject | Unit | ✅ `CompleteAsync_ShouldReturnExistingUser_*` |
-| B10 | **Linking:** `LinkUserId` → `is_linking: true` | Unit + Integration | 🟨 unit `CompleteAsync_ShouldLinkProviderToExistingUser`; flow ⬜ |
+| B10 | **Linking:** `UserId` → `is_linking: true` | Unit + Integration | 🟨 unit `CompleteAsync_ShouldLinkProviderToExistingUser`; flow ⬜ |
 | B11 | **Linking without auth** → `NotAuthorizedException` | Unit | ✅ |
 | B12 | Re-linking same provider → `ValidationException` | Unit | ✅ |
 | B13 | Google / Microsoft / GitHub / Apple — profile | Unit / Manual | 🟨 Google in flow tests; others — unit fetch only |
@@ -226,7 +226,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 | F1 | `main.Token` — password OR code (validation `atLeastOneRequired`) | Integration | ✅ |
 | F2 | `main.Token` — code only | Integration | ✅ |
 | F3 | RequestCode → Token end-to-end scenario | Integration | ✅ |
-| F4 | Invalid code → `IsInvalidCode` / empty token | Integration | 🟨 happy path ✅; negative scenario ⬜ |
+| F4 | Invalid credentials → `NotAuthorizedException` (no `is_invalid_code`) | Integration | ✅ `Main_Token_FlowTests` |
 | F5 | Expired code (TTL) | Unit | ✅ `CodeServiceTests` |
 | F6 | `MaxAttempts` exceeded (3) | Unit | ✅ `CodeServiceTests` |
 
@@ -251,7 +251,7 @@ Implemented via `AbsoluteExpiresAt` + `FamilyId` (see `RefreshToken.md`), not vi
 
 | # | Check | Status |
 |---|----------|--------|
-| H1 | `GetUserId` flow returns `{ user_id }` | ✅ `License_LicenseCheck_FlowTests` |
+| H1 | `GetUserId` flow returns `{ user_account_id }` | ✅ `License_LicenseCheck_FlowTests` |
 | H2 | `FlowExecutor` — `collectResult` always an object | ✅ flow tests return `Dictionary<string, object?>` |
 | H3 | `UserService` — provisioning, `ValidateCode`, `SetPassword` | ✅ `UserServiceTests` |
 | H4 | Removal of `NormalizedEmail` — case-insensitive email lookup | 🟨 `ToLowerInvariant` in `UserService`; explicit lookup test ⬜ |
@@ -307,7 +307,7 @@ dotnet run --project Sample.Api
 | Token by code | `main/Token` | `{ "Email": "...", "Code": "..." }` |
 | Token by password | `main/Token` | `{ "Email": "...", "Password": "..." }` |
 | Refresh | `main/RefreshToken` | `{ "RefreshToken": "..." }` |
-| GetUserId | `main/GetUserId` | `{ "Email": "..." }` |
+| GetUserId | `main/GetUserAccountId` | `{ "Email": "..." }` |
 | OAuth start | `main/ExternalLogin` | `{ "Provider": "Google" }` |
 | OAuth callback | `main/ExternalLoginCallback` | `{ "Code": "...", "State": "..." }` |
 
@@ -342,7 +342,7 @@ dotnet run --project Sample.Api
 | DOC3 | `RefreshToken.md` | ✅ current | — |
 | DOC4 | `config.nuspec` releaseNotes | 🟨 | licensing + OAuth; full breaking list ⬜ |
 | DOC5 | `LICENSE.md` | ✅ | updated (peshkov.biz) |
-| DOC6 | Migration guide for consumers | ⬜ | `docs/MIGRATION.md` not created |
+| DOC6 | Breaking-changes guide for consumers | 🟨 | `docs/BREAKING.md` (renamed from `MIGRATION.md`) |
 | DOC7 | CHANGELOG / GitHub Release | ⬜ | Before release |
 
 ---
@@ -371,7 +371,7 @@ CREATE TABLE auth.ExternalLoginStates (
   Nonce nvarchar(32) NOT NULL,
   Provider nvarchar(64) NOT NULL,
   ReturnUrl nvarchar(512) NULL,
-  LinkUserId uniqueidentifier NULL,
+  UserId uniqueidentifier NULL,
   ExpiresAt datetime2(7) NOT NULL,
   CreatedAt datetime2(7) NOT NULL,
   CONSTRAINT PK_auth_ExternalLoginStates PRIMARY KEY (ExternalLoginStateId),
@@ -397,7 +397,7 @@ CREATE INDEX IX_auth_ExternalLoginStates_ExpiresAt ON auth.ExternalLoginStates (
 | **P0** | No integration flow tests for External OAuth | ✅ `Main_ExternalOAuth_FlowTests` |
 | **P1** | `config.nuspec` — outdated dependencies | ✅ Synchronized with `.csproj` |
 | **P1** | `FLOWS.md` does not match code | ✅ Updated |
-| **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/MIGRATION.md` (file ⬜) |
+| **P1** | Breaking change `collectResult` (1 field) | 🟨 document in `docs/BREAKING.md` |
 | **P1** | OAuth state — multi-instance | ✅ `auth.ExternalLoginStates` instead of `IMemoryCache` |
 | **P2** | License soft-fail in production | Product decision |
 | **P2** | No EF migrations in repo | 🟨 SQL scripts in `Infrastructure/Scripts/` (reference copy); no EF `Migrations/` |
@@ -411,12 +411,12 @@ Execute in order; proceed to the next step after closing the previous one (or an
 
 - ✅ **1. P0 blockers** — `main.ResetPassword.json`, `Main_ResetPassword_FlowTests`, `Main_ExternalOAuth_FlowTests`
 - 🟨 **2. Tests** — `dotnet test` 301/301 ✅ locally; coverage (opencover) ⬜
-- 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/MIGRATION.md` + CHANGELOG ⬜
+- 🟨 **3. Documentation and package** — `config.nuspec`, `FLOWS.md` ✅; `docs/BREAKING.md` + CHANGELOG ⬜
 - 🟨 **4. DB** — SQL scripts ✅; staging apply + backfill/rollback runbook ⬜
 - 🟨 **5. E2E Sample.Api** — `rest-client/Sample.Api.http` prepared (10 ops); manual run ⬜
 - 🟨 **6. OAuth** — integration flow tests ✅ (mocked Google); real Google E2E ⬜
 - 🟨 **7. CI** — `dotnet.yml` ✅ on `dev`; SonarCloud QG ✅ on PR #5; triage ✅
-- 🟨 **8. Breaking changes** — described in plan; migration guide + consumer alignment ⬜
+- 🟨 **8. Breaking changes** — described in plan; `docs/BREAKING.md` + consumer alignment ⬜
 - ⬜ **9. Release** — merge into `master`, tag, NuGet publish
 
 ### Minimum go/no-go checklist
@@ -428,6 +428,6 @@ Execute in order; proceed to the next step after closing the previous one (or an
 - ⬜ Refresh rotation + absolute expiry verified manually
 - ⬜ DeveloperMode disabled in prod config
 - ⬜ LicenseKey configured (or consciously soft-fail)
-- 🟨 Breaking changes — in plan; `docs/MIGRATION.md` ⬜
+- 🟨 Breaking changes — in plan; `docs/BREAKING.md` present, consumer alignment ⬜
 - ✅ `config.nuspec` synchronized
 - 🟨 CI green on PR (`dotnet.yml` ✅ on `dev`; repeat after final push)

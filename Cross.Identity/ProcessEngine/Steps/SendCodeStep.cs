@@ -2,21 +2,9 @@
 
 /// <summary>
 /// Step for sending a one-time code to the user.
-/// <para>
-/// Uses <see cref="ICodeService"/> to generate and send a code on the specified channel
-/// (for example, email or phone).
-/// </para>
-/// Typical usage:
-/// <list type="number">
-///   <item>After the <c>collectForm</c> step, where Email/Phone are entered.</item>
-///   <item>Before the <c>verifyCode</c> step, which validates the submitted code.</item>
-/// </list>
-/// Key rules:
-/// <list type="bullet">
-///   <item><description><see cref="SelectorKey"/> — if relative (no dot), is read as <c>"{Kind}.{SelectorKey}"</c>;
-///       to read data from another step, specify an absolute key such as <c>"other-step.Field"</c>.</description></item>
-///   <item><description>For debugging, the code is stored in <c>"{Kind}.LastCode"</c> (remove in production if not needed).</description></item>
-/// </list>
+/// Delivery channel/address come from <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>.
+/// Unknown identity / missing OTP channel surface as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
+/// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
 internal sealed class SendCodeStep : IStep
 {
@@ -33,84 +21,118 @@ internal sealed class SendCodeStep : IStep
     public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
     public required ILogger Logger { get; init; }
 
-    /// <summary>Code delivery channel (for example, <c>"email"</c> or <c>"phone"</c>).</summary>
-    public required ChannelEnum Channel { get; init; }
+    /// <summary>Identity selector (bag keys for field name + value).</summary>
+    public required Selector Selector { get; init; }
 
-    /// <summary>
-    /// Key in <see cref="Bag"/> to read the destination address (email or phone) from.
-    /// May be relative (qualified as <c>"{Kind}.{SelectorKey}"</c>) or absolute.
-    /// </summary>
-    public required string SelectorKey { get; init; }
+    /// <summary>Resolves preferred / OTP delivery target from user endpoints.</summary>
+    public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <summary>
     /// Optional key in <see cref="Bag"/> for a per-request TTL (for example, <c>"collectForm.Ttl"</c>).
-    /// When set and present, overrides the default 5-minute lifetime.
     /// </summary>
     public string? TtlKey { get; init; }
 
-    /// <summary>User lookup settings: which field to search by (for example, "Email" or "Phone").</summary>
-    public required ResolveBy ResolveBy { get; init; }
+    /// <summary>Template name under Definitions/Templates. Defaults to <c>verify</c>.</summary>
+    /// <remarks>
+    /// Action link path: <c>reset</c> → <c>/reset-password</c>; other templates (e.g. <c>verify</c>) → <c>/verify</c>.
+    /// When selector is Email / PhoneNumber, <c>email</c> / <c>phone</c> query params are appended (deep-link identity; channel is still resolved server-side on verify).
+    /// </remarks>
+    public required string Template { get; init; }
+
+    /// <summary>Notification subject line. Defaults to <c>Verification Code</c>.</summary>
+    public required string Subject { get; init; }
 
     public IConfiguration Configuration { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var destination = ctx.Get<string>(BagKey.Qualify(Kind, SelectorKey));
+        var selector = Selector.Resolve(ctx);
+
+        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: user not found.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveOtpTargetAsync(resolvedUserAccountId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException ex)
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        if (!target.Channel.SupportsOtp())
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
+                selector.Field,
+                selector.Value,
+                target.Channel);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
         var ttl = ResolveTtl(ctx);
-
-        var userId = await UserService.GetUserIdByAsync(ResolveBy.Field, destination, cancellationToken).ConfigureAwait(false);
-
-        var code = Channel == ChannelEnum.Sms
-            ? CodeGeneratorHelper.GenerateNumericCode()
-            : CodeGeneratorHelper.GenerateCode();
-
-        var msg = NotificationMessage.For(Channel, destination)
-            .WithSubject("Verification Code");
+        var code = target.Channel.GenerateCode();
 
         var clientUrl = Configuration["Authentication:ClientUrl"]
             ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
 
+        var actionUrl = BuildActionUrl(clientUrl, code, selector);
         var year = DateTime.UtcNow.Year.ToString();
-        var verificationLink = $"{clientUrl}/reset-password?code={code}";
-        var helpLink = $"{clientUrl}/reset-password?code={code}";
-        var logoLink = $"{clientUrl}/reset-password?code={code}";
+        const string support = "support@peshkov.biz";
+        const string brand = "peshkov.biz";
 
         string Replace(string s) => s
             .Replace("{{company}}", "Peshkov")
-            .Replace("{{site}}", "peshkov.biz")
+            .Replace("{{site}}", brand)
+            .Replace("{{brand}}", brand)
+            .Replace("{{email}}", selector.Value)
             .Replace("{{code}}", code)
-            .Replace("{{verificationLink}}", $"{verificationLink}")
-            .Replace("{{helpLink}}", $"{helpLink}")
-            .Replace("{{logoLink}}", $"{logoLink}")
-            .Replace("{{logoWidth}}", $"34")
-            .Replace("{{logoHeight}}", $"34")
+            .Replace("{{url}}", actionUrl)
+            .Replace("{{verificationLink}}", actionUrl)
+            .Replace("{{helpLink}}", actionUrl)
+            .Replace("{{logoLink}}", actionUrl)
+            .Replace("{{imageLink}}", actionUrl)
+            .Replace("{{logoWidth}}", "34")
+            .Replace("{{logoHeight}}", "34")
+            .Replace("{{imageWidth}}", "34")
+            .Replace("{{imageHeight}}", "34")
             .Replace("{{fullName}}", "Denis Peshkov")
             .Replace("{{expires}}", ttl.ToHumanString())
             .Replace("{{year}}", year)
-            .Replace("{{supportEmail}}", "support@peshkov.biz")
-        ;
+            .Replace("{{support}}", support)
+            .Replace("{{supportEmail}}", support);
 
-        var textTemplate = ProcessDefinitionProvider.GetTemplate("verify", "en", "txt");
-        var htmlTemplate = ProcessDefinitionProvider.GetTemplate("verify", "en", "html");
+        var textTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "txt");
+        var htmlTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "html");
 
-        var textBody = Replace(textTemplate);
-        var htmlBody = Replace(htmlTemplate);
-
-        msg = msg
-            .WithTextBody(textBody)
-            .WithTextHtml(htmlBody);
+        var msg = NotificationMessage.For(target.Channel, target.Address)
+            .WithSubject(Subject)
+            .WithTextBody(Replace(textTemplate))
+            .WithTextHtml(Replace(htmlTemplate));
 
         try
         {
-            // The code must be stored and available for subsequent validation
-            await CodeService.SendAsync(msg, code, userId, ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, resolvedUserAccountId, ttl, cancellationToken).ConfigureAwait(false);
 
-            var developerMode = Configuration.GetValue<bool>("Authentication:DeveloperMode");
-            if (developerMode)
+            if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
             {
-                // For debugging/tests, store the last code
-                ctx.Set(BagKey.Qualify(Kind, "LastCode"), code); // todo: not shown in the schema, not visible that it exists; maybe expose as an Output field collection?
+                ctx.Set(BagKey.Qualify(Kind, "LastCode"), code);
             }
 
             return StepResult.Ok(Next);
@@ -122,15 +144,38 @@ internal sealed class SendCodeStep : IStep
         }
     }
 
+    private string BuildActionUrl(string clientUrl, string code, (string Field, string Value) selector)
+    {
+        var baseUrl = clientUrl.TrimEnd('/');
+        var encodedCode = Uri.EscapeDataString(code);
+        var path = Template.Equals("reset", StringComparison.OrdinalIgnoreCase)
+            ? "reset-password"
+            : "verify";
+        var url = $"{baseUrl}/{path}?code={encodedCode}";
+
+        if (selector.Field.Equals("Email", StringComparison.OrdinalIgnoreCase))
+        {
+            return url + $"&email={Uri.EscapeDataString(selector.Value)}";
+        }
+
+        if (selector.Field.Equals("PhoneNumber", StringComparison.OrdinalIgnoreCase)
+            || selector.Field.Equals("Phone", StringComparison.OrdinalIgnoreCase))
+        {
+            return url + $"&phone={Uri.EscapeDataString(selector.Value)}";
+        }
+
+        return url;
+    }
+
     private TimeSpan ResolveTtl(Bag ctx)
     {
         var ttlDefault = TimeSpan.FromMinutes(5);
 
         if (string.IsNullOrWhiteSpace(TtlKey))
+        {
             return ttlDefault;
+        }
 
-        return ctx.TryGet(BagKey.Qualify(Kind, TtlKey), out TimeSpan? ttl) && ttl is not null
-            ? ttl.Value
-            : ttlDefault;
+        return ctx.Get<TimeSpan?>(BagKey.Qualify(Kind, TtlKey)) ?? ttlDefault;
     }
 }

@@ -1,4 +1,4 @@
-namespace Cross.Identity.Tests.Common;
+﻿namespace Cross.Identity.Tests.Common;
 
 public static class TestCategory
 {

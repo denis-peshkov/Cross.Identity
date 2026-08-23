@@ -11,8 +11,6 @@ internal sealed class CreateUserStepFactory : IStepFactory
     /// <inheritdoc />
     public IStep Create(JsonElement cfg, IServiceProvider sp)
     {
-        var userService = sp.GetRequiredService<IUserService>();
-
         // map of "user field" -> "Bag key" (may be absolute or relative)
         var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in cfg.GetProperty("map").EnumerateObject())
@@ -21,10 +19,9 @@ internal sealed class CreateUserStepFactory : IStepFactory
         return new CreateUserStep
         {
             Kind        = Kind,
-            UserService = userService,
+            UserService = sp.GetRequiredService<IUserService>(),
             Map         = map,
-            SelectorKey = cfg.Str("selectorKey"),
-            UserIdKey   = cfg.StrOpt("userIdKey") ?? "UserId", // relative by default
+            UserAccountIdKey   = cfg.StrOpt("userAccountIdKey") ?? "UserAccountId",
             Next        = cfg.StrOpt("next")
         };
     }

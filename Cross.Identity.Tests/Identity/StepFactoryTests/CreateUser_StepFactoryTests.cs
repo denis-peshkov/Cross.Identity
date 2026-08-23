@@ -10,6 +10,7 @@ public class CreateUser_StepFactoryTests
     {
         var sc = new ServiceCollection();
         sc.AddScoped<IUserService>(p => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
     }
 
@@ -30,8 +31,7 @@ public class CreateUser_StepFactoryTests
                 "Password": "collectForm.Password",
                 "FullName": "collectForm.FullName"
               },
-              "selectorKey": "collectForm.Email",
-              "userIdKey": "UserId",
+              "userAccountIdKey": "UserAccountId",
               "next": "sendCode"
             }
             """);
@@ -44,8 +44,7 @@ public class CreateUser_StepFactoryTests
         // Assert
         step.Kind.Should().Be("createUser");
         step.Next.Should().Be("sendCode");
-        step.SelectorKey.Should().Be("collectForm.Email");
-        step.UserIdKey.Should().Be("UserId");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.Map.Should().HaveCount(3);
         step.Map["Email"].Should().Be("collectForm.Email");
         step.Map["Password"].Should().Be("collectForm.Password");
@@ -55,7 +54,7 @@ public class CreateUser_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenJsonWithoutUserIdKey_WhenCreate_ThenUsesDefaultUserIdKey()
+    public void GivenJsonWithoutUserAccountIdKey_WhenCreate_ThenUsesDefaultUserAccountIdKey()
     {
         // Arrange
         using var json = JsonDocument.Parse(
@@ -64,8 +63,7 @@ public class CreateUser_StepFactoryTests
               "kind": "createUser",
               "map": {
                 "Email": "collectForm.Email"
-              },
-              "selectorKey": "collectForm.Email"
+              }
             }
             """);
 
@@ -75,7 +73,7 @@ public class CreateUser_StepFactoryTests
         var step = (CreateUserStep)factory.Create(json.RootElement, _sp);
 
         // Assert
-        step.UserIdKey.Should().Be("UserId"); // default value
+        step.UserAccountIdKey.Should().Be("UserAccountId");
     }
 
     [Test]
@@ -91,8 +89,7 @@ public class CreateUser_StepFactoryTests
                 "Email": "Email",
                 "Password": "Password"
               },
-              "selectorKey": "Email",
-              "userIdKey": "UserId"
+              "userAccountIdKey": "UserAccountId"
             }
             """);
 
@@ -104,6 +101,5 @@ public class CreateUser_StepFactoryTests
         // Assert
         step.Map["Email"].Should().Be("Email");
         step.Map["Password"].Should().Be("Password");
-        step.SelectorKey.Should().Be("Email");
     }
 }

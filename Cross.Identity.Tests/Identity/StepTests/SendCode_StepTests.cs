@@ -5,6 +5,7 @@ public class SendCode_StepTests
 {
     private Faker _faker = null!;
     private Mock<ICodeService> _codeService = null!;
+    private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
     private Mock<IUserService> _userService = null!;
     private Mock<IHostEnvironment> _environment = null!;
     private Mock<IProcessDefinitionProvider> _processDefinitionProvider = null!;
@@ -12,9 +13,26 @@ public class SendCode_StepTests
     private IConfiguration _defaultConfiguration = null!;
     private IConfiguration _developerConfiguration = null!;
 
+    private static Selector DefaultSelector { get; } = new();
+
+    private void SetupOtpTarget(ChannelEnum channel, string address)
+    {
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = channel, Address = address });
+    }
+
+
     [SetUp]
     public void SetUp()
     {
+        _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = "default@example.com" });
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = "default@example.com" });
         _faker = new Faker();
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();
@@ -43,10 +61,11 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -57,7 +76,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -71,14 +90,16 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -91,8 +112,64 @@ public class SendCode_StepTests
                     m.Channel == ChannelEnum.Email &&
                     m.Destination == email),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenVerifyTemplate_WhenExecuteAsync_ThenUsesVerifyActionUrlAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Verify {{code}} {{url}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>{{url}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = "verifyCode",
+        };
+
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.TextBody!.Contains("http://localhost:4200/verify?code=")
+                    && m.TextBody.Contains($"email={Uri.EscapeDataString(email)}")),
+                It.IsAny<string>(),
+                userAccountId,
+                It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -102,11 +179,12 @@ public class SendCode_StepTests
     public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
         var ttl = TimeSpan.FromMinutes(17);
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
             .Returns("Your code: {{code}}");
@@ -115,7 +193,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -129,15 +207,17 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
         bag.Set("collectForm.Ttl", ttl);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -146,7 +226,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 ttl,
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -154,13 +234,14 @@ public class SendCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenTtlKeyMissingInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
+    public async Task GivenTtlKeyNullInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
             .Returns("Your code: {{code}}");
@@ -169,7 +250,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -183,15 +264,18 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             TtlKey = "collectForm.Ttl",
-            ResolveBy = new ResolveBy { Field = "Email" },
             Next = "verifyCode"
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+        bag.Set("collectForm.Ttl", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -199,7 +283,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -211,10 +295,11 @@ public class SendCode_StepTests
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Phone", phone, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserAccountIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Sms, phone);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -231,14 +316,16 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Sms,
-            SelectorKey = "collectForm.Phone",
-            ResolveBy = new ResolveBy { Field = "Phone" },
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Phone", phone);
+        bag.Set("collectForm.Field", "PhoneNumber");
+        bag.Set("collectForm.Value", phone);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -247,7 +334,7 @@ public class SendCode_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         var code = bag.Get<string>("sendCode.LastCode");
         code.Should().NotBeNullOrEmpty();
-        code.Should().MatchRegex("^[0-9]+$"); // Verify that the code contains only digits for SMS
+        code.Should().MatchRegex("^[0-9]+$");
     }
 
     [Test]
@@ -256,10 +343,11 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -270,7 +358,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("smtp down"));
@@ -284,14 +372,16 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
@@ -303,7 +393,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -311,13 +401,13 @@ public class SendCode_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserNotFound_WhenExecuteAsync_ThenThrowsNotFoundExceptionAsync()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsInvalidCredentialsFailureAsync()
     {
         // Arrange
         var email = _faker.Internet.Email();
 
-        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException("User not found"));
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Guid?)null);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -334,18 +424,185 @@ public class SendCode_StepTests
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
-            Channel = ChannelEnum.Email,
-            SelectorKey = "collectForm.Email",
-            ResolveBy = new ResolveBy { Field = "Email" },
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
             Next = null
         };
 
         var bag = new Bag();
-        bag.Set("collectForm.Email", email);
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
 
-        // Act & Assert
-        var act = async () => await step.ExecuteAsync(bag, CancellationToken.None);
-        await act.Should()
-            .ThrowAsync<NotFoundException>();
+        // Act
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        // Assert
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenKnownUserWithoutOtpChannel_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ValidationException("No preferred verified communication channel and no email."));
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = null
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenResetTemplate_WhenExecuteAsync_ThenUsesResetCopyAndEmailInUrlAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
+            .Returns("Reset {{email}} {{code}} {{url}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "html"))
+            .Returns("<html>{{email}} {{url}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _developerConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "reset",
+            Subject = "Reset your password",
+            Selector = DefaultSelector,
+            Next = "collectResult",
+        };
+
+        var bag = new Bag()
+            .Set("collectForm.Field", "Email")
+            .Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.Subject == "Reset your password"
+                    && m.TextBody!.Contains(email)
+                    && m.TextBody.Contains("http://localhost:4200/reset-password?code=")
+                    && m.TextBody.Contains("email=")),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenUserNameSelector_WhenExecuteAsync_ThenSendsToPreferredEndpointAddressAsync()
+    {
+        var userName = "alice";
+        var email = "alice@example.com";
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(s => s.GetUserAccountIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Email, email);
+        _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
+            .Returns("<html>Your code: {{code}}</html>");
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = "verifyCode"
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "UserName");
+        bag.Set("collectForm.Value", userName);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _codeService.Verify(c => c.SendAsync(
+                It.Is<NotificationMessage>(m =>
+                    m.Channel == ChannelEnum.Email &&
+                    m.Destination == email),
+                It.IsAny<string>(),
+                userAccountId,
+                TimeSpan.FromMinutes(5),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
     }
 }

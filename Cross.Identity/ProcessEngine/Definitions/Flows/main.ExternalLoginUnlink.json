@@ -5,7 +5,12 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "Provider", "type": "String", "required": true, "min": 2, "max": 32 }
+          { "key": "UserAccountId", "type": "String", "required": true, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 },
+          { "key": "Provider", "type": "String", "required": true, "min": 2, "max": 32 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "externalLoginUnlink"
@@ -13,6 +18,8 @@
     {
       "kind": "externalLoginUnlink",
       "providerKey": "collectForm.Provider",
+      "userAccountIdKey": "collectForm.UserAccountId",
+      "refreshTokenKey": "collectForm.RefreshToken",
       "next": "collectResult"
     },
     {

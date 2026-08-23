@@ -1,5 +1,5 @@
 ALTER TABLE `auth`.`AccessTokens`
-    ADD CONSTRAINT `FK_auth_AccessTokens_User`
-        FOREIGN KEY (`UserId`)
+    ADD CONSTRAINT `FK_auth_AccessTokens_UserAccount`
+        FOREIGN KEY (`UserAccountId`)
             REFERENCES `auth`.`UsersAccounts` (`UserAccountId`)
             ON DELETE CASCADE;

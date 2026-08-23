@@ -1,8 +1,8 @@
 ﻿namespace Cross.Identity.ProcessEngine.Steps;
 
 /// <summary>
-/// Logout current session: revokes the presented refresh token with
-/// <see cref="RefreshTokenRevokeReason.USER_LOGOUT"/>.
+/// Logout current session: revokes the presented refresh token and access tokens in the same
+/// family with <see cref="RefreshTokenRevokedReason.USER_LOGOUT"/>.
 /// Missing or already-revoked tokens are a no-op (idempotent).
 /// </summary>
 internal sealed class LogoutStep : IStep
@@ -23,8 +23,9 @@ internal sealed class LogoutStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
 
-        await JwtTokenService.RevokeRefreshTokenForLogoutAsync(refreshToken, cancellationToken).ConfigureAwait(false);
+        await JwtTokenService.RevokeRefreshTokenForLogoutAsync(refreshToken, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Revoked"), true);
 

@@ -24,12 +24,10 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceProviderMock = new Mock<IServiceProvider>();
         // Register all step factories, as in the AddCrossIdentity DI extension
         _registry = new StepRegistry();
-        _registry.Register(new CodeAuthStepFactory());
         _registry.Register(new CollectFormStepFactory());
         _registry.Register(new CollectResultStepFactory());
         _registry.Register(new CreateUserStepFactory());
-        _registry.Register(new ForgotPasswordStepFactory());
-        _registry.Register(new GetUserIdStepFactory());
+        _registry.Register(new GetUserAccountIdStepFactory());
         _registry.Register(new PasswordAuthStepFactory());
         _registry.Register(new RefreshTokenStepFactory());
         _registry.Register(new ResetPasswordStepFactory());
@@ -39,9 +37,12 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new ExternalLoginInitiateStepFactory());
         _registry.Register(new ExternalLoginCompleteStepFactory());
         _registry.Register(new ExternalLoginUnlinkStepFactory());
+        _registry.Register(new ExternalLoginGetAllStepFactory());
         _registry.Register(new LogoutStepFactory());
         _registry.Register(new LogoutAllStepFactory());
         _registry.Register(new VerifyTokenStepFactory());
+        _registry.Register(new CommunicationEndpointsGetAllStepFactory());
+        _registry.Register(new CommunicationEndpointSetPreferredStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -113,6 +114,15 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
+
+        var jwtMock = new Mock<IJwtTokenService>();
+        jwtMock
+            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
+
+        RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
+            new CommunicationEndpointService(Context, new AuditService(Context), jwtMock.Object, TestAuthOptions.Snapshot()));
     }
 
     protected void RegisterToServiceProvider<I, T>(T instance)
@@ -123,7 +133,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(instance);
     }
 
-    protected UserService CreateUserService(IHeadersContextAccessor headersContextAccessor)
+    protected UserService CreateUserService()
     {
         var pepperVault = new Mock<IPepperVaultProvider>();
         pepperVault.Setup(p => p.CurrentVersion).Returns((short)1);
@@ -141,19 +151,40 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>()))
             .Returns("$pbkdf2-test-hash");
 
-        var phoneNormalizer = new Mock<IPhoneNormalizer>();
-        phoneNormalizer
-            .Setup(p => p.NormalizeToE164(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns<string, string>((phone, _) => phone);
+        var jwtMock = new Mock<IJwtTokenService>();
+        jwtMock
+            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        jwtMock
+            .Setup(j => j.RevokeAllTokensForUserAsync(
+                It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var communicationEndpoints = new CommunicationEndpointService(
+            Context,
+            new AuditService(Context),
+            jwtMock.Object,
+            TestAuthOptions.Snapshot());
 
         return new UserService(
             Context,
             Mock.Of<ILogger<UserService>>(),
             pepperVault.Object,
             passwordHasher.Object,
-            phoneNormalizer.Object,
-            headersContextAccessor,
-            Mock.Of<IJwtTokenService>());
+            jwtMock.Object,
+            communicationEndpoints,
+            communicationEndpoints,
+            CreateUserServiceOptions());
+    }
+
+    private static IOptionsSnapshot<AuthenticationOptions> CreateUserServiceOptions()
+    {
+        var mock = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        mock.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Lockout = new AuthenticationOptions.LockoutOptions(),
+        });
+        return mock.Object;
     }
 
     /// <summary>

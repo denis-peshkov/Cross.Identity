@@ -13,20 +13,11 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<SendCodeStepFactory>();
         AddRegistryStep<TokenStepFactory>();
-
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
-        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService(headersContextAccessor));
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
 
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
@@ -40,7 +31,15 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
                 Mock.Of<ISmsSenderService>(),
-                configuration));
+                configuration,
+                TestAuthOptions.Snapshot(new AuthenticationOptions
+                {
+                    OtpSendRateLimit = new AuthenticationOptions.OtpSendRateLimitOptions
+                    {
+                        Cooldown = TimeSpan.Zero,
+                        MaxSendsPerWindow = 0,
+                    },
+                })));
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
@@ -63,10 +62,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         context.Request.Headers["User-Agent"] = "MyTestUA";
         httpContextAccessor.Setup(x => x.HttpContext).Returns(context);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(
-                Context,
-                optionsSnapshot.Object,
-                httpContextAccessor.Object));
+            new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object));
 
         _userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -101,6 +97,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(lastCode),
             TokenLength = (byte)lastCode.Length,
@@ -123,9 +120,8 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         tokens.Should().ContainKey("access_token");
         tokens.Should().ContainKey("refresh_token");
-        tokens.Should().ContainKey("user_id");
-        tokens["is_invalid_code"].Should().Be(false);
-        tokens["user_id"].Should().Be(_userId);
+        tokens.Should().ContainKey("user_account_id");
+        tokens["user_account_id"].Should().Be(_userId);
     }
 
     [Test]
@@ -161,6 +157,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD11111"),
             TokenLength = 8,
@@ -172,6 +169,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = _userId,
+            UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash(latestCode),
             TokenLength = (byte)latestCode.Length,
@@ -192,7 +190,6 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
             CancellationToken.None);
 
         var tokens = tokenResult.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
-        tokens["is_invalid_code"].Should().Be(false);
         tokens.Should().ContainKey("access_token");
     }
 }

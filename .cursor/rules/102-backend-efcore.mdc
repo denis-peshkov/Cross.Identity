@@ -14,3 +14,4 @@ Example:
 
 - **Versioning** - use numbering for migration versioning
 - **Comments** - add comments to the file name when needed
+- **PreDeployment immutability** - never edit, rename, or delete scripts under `*/1_PreDeployment/`; append the next numbered script with the delta only. Full workflow: skill `cross-identity-db-scripts`.

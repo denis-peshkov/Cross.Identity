@@ -5,7 +5,10 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 }
+          { "key": "RefreshToken", "type": "String", "required": true, "min": 32, "max": 2048 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ]
       },
       "next": "refreshToken"
@@ -22,7 +25,7 @@
         "refresh_token": "refreshToken.RefreshToken",
         "token_type": "refreshToken.TokenType",
         "expires_in": "refreshToken.ExpiresIn",
-        "user_id": "refreshToken.UserId"
+        "user_account_id": "refreshToken.UserAccountId"
       },
       "next": null
     }

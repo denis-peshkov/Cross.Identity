@@ -17,14 +17,13 @@ CREATE TABLE auth."UsersAccounts"
     "SecurityStamp"         uuid         NULL,
     "ConcurrencyStamp"      uuid         NOT NULL,
 
-    "EmailConfirmed"        boolean      NOT NULL,
-    "PhoneConfirmed"        boolean      NOT NULL,
+    "EmailVerified"        boolean      NOT NULL,
+    "PhoneNumberVerified"  boolean      NOT NULL,
     "TwoFactorEnabled"      boolean      NOT NULL,
 
     "IsActive"              boolean      NOT NULL,
 
     "CreatedAt"             timestamp without time zone NOT NULL,
-    "CreatedBy"             uuid         NOT NULL,
     "LastLoginAt"           timestamp without time zone NULL,
 
     CONSTRAINT "PK_auth_UsersAccounts" PRIMARY KEY ("UserAccountId")
@@ -35,7 +34,9 @@ CREATE UNIQUE INDEX "UX_auth_UsersAccounts_UserName"
     ON auth."UsersAccounts" ("NormalizedUserName");
 
 CREATE UNIQUE INDEX "UX_auth_UsersAccounts_Email"
-    ON auth."UsersAccounts" ("Email");
+    ON auth."UsersAccounts" ("Email")
+    WHERE "Email" IS NOT NULL AND "EmailVerified" = true;
 
 CREATE UNIQUE INDEX "UX_auth_UsersAccounts_Phone"
-    ON auth."UsersAccounts" ("PhoneNumber");
+    ON auth."UsersAccounts" ("PhoneNumber")
+    WHERE "PhoneNumber" IS NOT NULL AND "PhoneNumberVerified" = true;

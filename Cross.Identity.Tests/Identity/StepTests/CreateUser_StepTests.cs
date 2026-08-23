@@ -18,13 +18,13 @@ public class CreateUser_StepTests
         // Arrange
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -35,8 +35,7 @@ public class CreateUser_StepTests
                 ["Email"] = "collectForm.Email",
                 ["Password"] = "collectForm.Password"
             },
-            UserIdKey = "UserId",
-            SelectorKey = "collectForm.Email",
+            UserAccountIdKey = "UserAccountId",
             Next = "sendCode"
         };
 
@@ -50,8 +49,7 @@ public class CreateUser_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("sendCode");
-        bag.Get<string>("createUser.UserId").Should().Be(userId);
-        bag.Get<string>("createUser.selectorKey").Should().Be(email);
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&
@@ -67,13 +65,13 @@ public class CreateUser_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -81,10 +79,9 @@ public class CreateUser_StepTests
             UserService = userService.Object,
             Map = new Dictionary<string, string>
             {
-                ["Email"] = "Email" // relative key
+                ["Email"] = "Email"
             },
-            UserIdKey = "UserId",
-            SelectorKey = "Email",
+            UserAccountIdKey = "UserAccountId",
             Next = null
         };
 
@@ -96,7 +93,7 @@ public class CreateUser_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userId);
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.IsAny<IDictionary<string, object?>>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -108,13 +105,13 @@ public class CreateUser_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -123,23 +120,21 @@ public class CreateUser_StepTests
             Map = new Dictionary<string, string>
             {
                 ["Email"] = "collectForm.Email",
-                ["Password"] = "collectForm.Password" // missing from Bag
+                ["Password"] = "collectForm.Password"
             },
-            UserIdKey = "UserId",
-            SelectorKey = "collectForm.Email",
+            UserAccountIdKey = "UserAccountId",
             Next = null
         };
 
         var bag = new Bag();
         bag.Set("collectForm.Email", email);
-        // Password is missing
 
         // Act
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userId);
+        bag.Get<string>("createUser.UserAccountId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&

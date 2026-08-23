@@ -17,6 +17,7 @@ public class CollectForm_StepFactoryTests
         // Fake IRequestInput — we will manually Set(...) before step execution
         sc.AddScoped<IRequestInput, RequestInput>();
 
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         _sp = sc.BuildServiceProvider();
         _faker = new Faker();
     }
@@ -35,13 +36,13 @@ public class CollectForm_StepFactoryTests
               "schemaDef": {
                 "fields": [
                   { "key": "Email", "type": "Email", "required": true },
-                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 64 },
+                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
                   { "key": "Legacy", "type": "String", "required": false }
                 ]
               },
               "schemaPatch": {
                 "add": [
-                  { "key": "OtpCode", "type": "String", "required": true, "min": 4, "max": 8 }
+                  { "key": "OtpCode", "type": "String", "required": true, "min": 6, "max": 12 }
                 ],
                 "override": [
                   { "key": "Password", "min": 12 }
@@ -135,8 +136,8 @@ public class CollectForm_StepFactoryTests
               "schemaDef": {
                 "fields": [
                   { "key": "Email", "type": "Email", "required": true },
-                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 },
-                  { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 128 }
+                  { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
+                  { "key": "ConfirmPassword", "type": "Password", "required": true, "min": 8, "max": 32 }
                 ],
                 "validators": [
                   { "kind": "equal", "left": "Password", "right": "ConfirmPassword", "message": "Passwords do not match." }

@@ -6,9 +6,17 @@
       "schemaDef": {
         "fields": [
           { "key": "Email", "type": "Email", "required": true },
-          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 128 }
+          { "key": "PhoneNumber", "type": "PhoneNumber", "required": false, "max": 16 },
+          { "key": "UserName", "type": "String", "required": false, "min": 3, "max": 64 },
+          { "key": "Password", "type": "Password", "required": true, "min": 8, "max": 32 },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ],
         "validators": []
+      },
+      "selector": {
+        "candidates": ["Email", "PhoneNumber", "UserName"]
       },
       "next": "createUser"
     },
@@ -16,24 +24,24 @@
       "kind": "createUser",
       "map": {
         "Email": "collectForm.Email",
-        "Password": "collectForm.Password"
+        "Password": "collectForm.Password",
+        "PhoneNumber": "collectForm.PhoneNumber",
+        "UserName": "collectForm.UserName"
       },
-      "userIdKey": "UserId",
-      "selectorKey": "collectForm.Email",
+      "userAccountIdKey": "UserAccountId",
       "next": "sendCode"
     },
     {
       "kind": "sendCode",
-      "channel": "email",
-      "selectorKey": "createUser.selectorKey",
-      "resolveBy": { "field": "Email" },
+      "template": "verify",
+      "subject": "Verification Code",
       "next": "collectResult"
     },
     {
       "kind": "collectResult",
       "map": {
         "LastCode": "sendCode.LastCode",
-        "UserId": "createUser.UserId"
+        "UserAccountId": "createUser.UserAccountId"
       },
       "next": null
     }

@@ -1,7 +1,7 @@
 Hello,
 
 You requested a password reset for {{email}}.
-Your code: {{code}} (valid for {{expires}} minutes).
+Your code: {{code}} (valid for {{expires}}).
 
 To continue, open this link:
 {{url}}

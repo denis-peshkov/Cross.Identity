@@ -17,7 +17,7 @@ public class Logout_StepTests
     {
         var refreshToken = "refresh-token-value";
         _jwtTokenService
-            .Setup(j => j.RevokeRefreshTokenForLogoutAsync(refreshToken, It.IsAny<CancellationToken>()))
+            .Setup(j => j.RevokeRefreshTokenForLogoutAsync(refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new LogoutStep
@@ -30,6 +30,9 @@ public class Logout_StepTests
 
         var bag = new Bag();
         bag.Set("logout.RefreshToken", refreshToken);
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -37,7 +40,7 @@ public class Logout_StepTests
         result.Next.Should().Be("done");
         bag.Get<bool>("logout.Revoked").Should().BeTrue();
         _jwtTokenService.Verify(
-            j => j.RevokeRefreshTokenForLogoutAsync(refreshToken, It.IsAny<CancellationToken>()),
+            j => j.RevokeRefreshTokenForLogoutAsync(refreshToken, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

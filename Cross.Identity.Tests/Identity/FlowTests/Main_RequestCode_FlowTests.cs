@@ -12,31 +12,15 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
 
         Initialize();
 
-        var headersContextAccessor = new HeadersContextAccessor
-        {
-            LanguageCode = "EN",
-            CurrencyCode = "USD",
-            UserAgent = "TestAgent"
-        };
-
         // Register step factories
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<SendCodeStepFactory>();
 
         // Configure service provider to return requested services
-        RegisterToServiceProvider<IHeadersContextAccessor, IHeadersContextAccessor>(
-            headersContextAccessor);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(
             _processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(
-            new UserService(
-                Context,
-                Mock.Of<ILogger<UserService>>(),
-                Mock.Of<IPepperVaultProvider>(),
-                Mock.Of<IPasswordHasher>(),
-                Mock.Of<IPhoneNormalizer>(),
-                headersContextAccessor,
-                Mock.Of<IJwtTokenService>()));
+            CreateUserService());
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
@@ -50,8 +34,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions
@@ -74,10 +57,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
         context.Request.Headers["User-Agent"] = "MyTestUA";
         httpContextAccessor.Setup(x => x.HttpContext).Returns(context);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(
-            new JwtTokenService(
-                Context,
-                optionsSnapshot.Object,
-                httpContextAccessor.Object));
+            new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object));
 
         AddToDb(new UserAccountEntity
         {
@@ -158,5 +138,22 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*"); // verify that an error message is present
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnknownEmail_WhenExecuteRequestCodeFlow_ThenReturnsInvalidCredentialsAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = "unknown@example.com",
+            ["Ttl"] = TimeSpan.FromMinutes(5),
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.RequestCode, CancellationToken.None))
+            .Should()
+            .ThrowAsync<NotAuthorizedException>()
+            .WithMessage("Invalid credentials.");
     }
 }

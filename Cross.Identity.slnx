@@ -28,7 +28,8 @@
     <File Path="cross-identity-deploy-key" />
     <File Path="cross-identity-deploy-key.pub" />
     <File Path="GitVersion.yml" />
-    <File Path="TODO.md" />
+    <File Path="RELEASE-PLAN.md" />
+    <File Path="Roadmap-SecurityStamp.md" />
   </Folder>
   <Project Path="Cross.Identity.Tests\Cross.Identity.Tests.csproj" />
   <Project Path="Cross.Identity\Cross.Identity.csproj" />

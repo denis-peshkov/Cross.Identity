@@ -1,0 +1,47 @@
+﻿namespace Cross.Identity.Entities;
+
+/// <summary>
+/// A verified or candidate destination for user communication (email, SMS, messengers).
+/// Exactly one endpoint per user may be <see cref="IsPreferred"/> — the default delivery target.
+/// </summary>
+public class UserCommunicationEndpointEntity : IHasConcurrencyStamp
+{
+    /// <summary>Primary key.</summary>
+    public Guid Id { get; set; }
+
+    /// <summary>Owner account id.</summary>
+    public required Guid UserAccountId { get; set; }
+
+    /// <summary>Owner account navigation.</summary>
+    public virtual required UserAccountEntity UserAccount { get; set; }
+
+    /// <summary>How the endpoint was obtained (account field, manual, external provider, …).</summary>
+    public CommunicationEndpointSource Source { get; set; }
+
+    /// <summary>
+    /// Optional id of the source entity (e.g. <c>UsersExternalLogins</c> id when
+    /// <see cref="Source"/> is <see cref="CommunicationEndpointSource.ExternalProvider"/>).
+    /// </summary>
+    public Guid? EntityId { get; set; }
+
+    /// <summary>Delivery channel.</summary>
+    public ChannelEnum Channel { get; set; }
+
+    /// <summary>Destination address: email (lowercased), E.164 phone, or messenger chat id.</summary>
+    public string Address { get; set; } = null!;
+
+    /// <summary>Only verified endpoints may be preferred or used for trusted communication.</summary>
+    public bool IsVerified { get; set; }
+
+    /// <summary>Default communication target for the user. At most one per <see cref="UserAccountId"/>.</summary>
+    public bool IsPreferred { get; set; }
+
+    /// <summary>UTC time the row was last updated.</summary>
+    public DateTime? UpdatedAt { get; set; }
+
+    /// <summary>UTC time the row was created.</summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <inheritdoc />
+    public Guid ConcurrencyStamp { get; set; }
+}

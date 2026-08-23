@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Basic in-memory implementation of <see cref="IUserService"/>.
-/// Supports creation, lookup by Email/UserName/Phone, and password verification (PBKDF2).
+/// Supports creation, lookup by Email/UserName/PhoneNumber, and password verification (PBKDF2).
 /// </summary>
 internal sealed class UserService : IUserService
 {
@@ -10,52 +10,40 @@ internal sealed class UserService : IUserService
     private readonly ILogger<UserService> _logger;
     private readonly IPepperVaultProvider _pepperVault;
     private readonly IPasswordHasher _hasher;
-    private readonly IPhoneNormalizer _phoneNormalizer;
-    private readonly IHeadersContextAccessor _headersContextAccessor;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly ICommunicationEndpointService _communicationEndpoints;
+    private readonly ICommunicationEndpointUpsertService _communicationEndpointUpsert;
+    private readonly AuthenticationOptions _options;
 
     public UserService(
         IdentityContext context,
         ILogger<UserService> logger,
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
-        IPhoneNormalizer phoneNormalizer,
-        IHeadersContextAccessor headersContextAccessor,
-        IJwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService,
+        ICommunicationEndpointService communicationEndpoints,
+        ICommunicationEndpointUpsertService communicationEndpointUpsert,
+        IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
         _logger = logger;
         _pepperVault = pepperVault;
         _hasher = hasher;
-        _phoneNormalizer = phoneNormalizer;
-        _headersContextAccessor = headersContextAccessor;
         _jwtTokenService = jwtTokenService;
+        _communicationEndpoints = communicationEndpoints;
+        _communicationEndpointUpsert = communicationEndpointUpsert;
+        _options = options.Value;
     }
 
     /// <inheritdoc/>
-    public async Task<string> GetUserIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
+    public async Task<Guid?> GetUserAccountIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // map to the expected property name
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
-
-        string value = selectorValue.ToLowerInvariant();
-
-        return await _context.UsersAccounts
-                   .AsNoTracking()
-                   .Where(u => EF.Property<string>(u, field) == value)
-                   .Select(u => u.Id.ToString())
-                   .FirstOrDefaultAsync(cancellationToken)
-                   .ConfigureAwait(false)
-               ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
+        return user?.Id;
     }
 
     public async Task<UserAccountEntity> GetUserByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
@@ -63,67 +51,61 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
-        // map to the expected property name
-        var field = selectorField.ToLowerInvariant() switch
-        {
-            "id" => nameof(UserAccountEntity.Id), // does not work because Guid != String
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+        var field = ResolveSelectorField(selectorField);
+        var userAccounts = _context.UsersAccounts.AsNoTracking();
 
-        var value = selectorValue.ToLowerInvariant();
-
-        var userAccounts = _context.UsersAccounts
-            .AsNoTracking();
         IQueryable<UserAccountEntity> userAccountsFiltered;
         if (field == nameof(UserAccountEntity.Id))
         {
-            Guid.TryParse(selectorValue, out var id);
-            userAccountsFiltered = userAccounts
-                .Where(u => EF.Property<Guid>(u, field) == id);
+            if (!TryParseUserAccountId(selectorValue, out var id))
+                throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
+
+            userAccountsFiltered = userAccounts.Where(u => u.Id == id);
         }
         else
         {
-            userAccountsFiltered = userAccounts
-                .Where(u => EF.Property<string>(u, field) == value);
+            var displayValue = NormalizeSelectorValue(field, selectorValue)
+                ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
+            userAccountsFiltered = userAccounts.Where(u => EF.Property<string>(u, field) == displayValue);
         }
 
-        var result = await userAccountsFiltered
-                         .FirstOrDefaultAsync(cancellationToken)
-                         .ConfigureAwait(false)
-                     ?? throw new NotFoundException($"User with given {field} '{value}' not found");
-
-        return result;
+        return await PreferVerifiedContact(userAccountsFiltered, field)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false)
+            ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
     }
 
     /// <inheritdoc/>
-    public async Task<string> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
     {
         // 1) Extract fields
         map.TryGetValue("Email", out var emailRaw);
         map.TryGetValue("UserName", out var userNameRaw);
-        map.TryGetValue("Phone", out var phoneRaw);
+        map.TryGetValue("PhoneNumber", out var phoneRaw);
         map.TryGetValue("Password", out var passwordRaw);
 
         // 2) Normalization
-        var normalizedUserName = userNameRaw?.ToString()?.Trim().ToLowerInvariant();
+        var userName = userNameRaw?.ToString()?.Trim();
+        var normalizedUserName = userName?.ToLowerInvariant();
         var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        var normalizedPhone = phoneRaw is string phone
-            ? _phoneNormalizer.NormalizeToE164(phone, _headersContextAccessor.LanguageCode!)
-            : null;
+        var normalizedPhone = phoneRaw?.ToString()?.Trim();
+        if (string.IsNullOrWhiteSpace(normalizedPhone))
+            normalizedPhone = null;
 
         // 3) Uniqueness
         if (normalizedUserName is not null
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("UserName already exists.");
+            throw new ConflictException("UserName already exists.");
         if (normalizedEmail is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.Email == normalizedEmail, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("Email already exists.");
+            && await _context.UsersAccounts.AnyAsync(
+                u => u.Email == normalizedEmail && u.EmailVerified,
+                cancellationToken).ConfigureAwait(false))
+            throw new ConflictException("Email already exists.");
         if (normalizedPhone is not null
-            && await _context.UsersAccounts.AnyAsync(u => u.PhoneNumber == normalizedPhone, cancellationToken).ConfigureAwait(false))
-            throw new InvalidOperationException("PhoneNumber already exists.");
+            && await _context.UsersAccounts.AnyAsync(
+                u => u.PhoneNumber == normalizedPhone && u.PhoneNumberVerified,
+                cancellationToken).ConfigureAwait(false))
+            throw new ConflictException("PhoneNumber already exists.");
 
         // 4) Password hash (PHC) + current pepper version
         var pepperVersion = _pepperVault.CurrentVersion;
@@ -138,24 +120,27 @@ internal sealed class UserService : IUserService
         {
             Id = Guid.NewGuid(),
             Email = normalizedEmail,
-            UserName = userNameRaw as string,
+            PhoneNumber = normalizedPhone,
+            UserName = userName,
             NormalizedUserName = normalizedUserName,
             PasswordPhc = passwordPhc,
             PasswordPepperVersion = pepperVersion,
-            EmailConfirmed = false,
-            PhoneConfirmed = false,
+            EmailVerified = false,
+            PhoneNumberVerified = false,
             TwoFactorEnabled = false,
+            LockoutEnabled = _options.Lockout.LockoutEnabled,
+            AccessFailedCount = 0,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         };
 
-        await _context.UsersAccounts.AddAsync(user).ConfigureAwait(false);
+        await _context.UsersAccounts.AddAsync(user, cancellationToken).ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return user.Id.ToString();
+        return user.Id;
     }
 
     public async Task<bool> ValidatePasswordAsync(string selectorField, string selectorValue, string password, CancellationToken cancellationToken)
@@ -165,39 +150,24 @@ internal sealed class UserService : IUserService
         ArgumentNullException.ThrowIfNull(password);
 
         // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
 
-        string? value = field switch
-        {
-            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
-                => selectorValue.Trim().ToLowerInvariant(),
-            nameof(UserAccountEntity.PhoneNumber)
-                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
-            _ => selectorValue
-        };
-
-        if (string.IsNullOrWhiteSpace(value))
+        if (user is null || string.IsNullOrEmpty(user.PasswordPhc) || !user.IsActive)
             return false;
 
-        // 2) Find the user (tracked, without AsNoTracking — so we can update hash/pepper version if needed)
-        var user = await _context.UsersAccounts
-            .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (user is null || string.IsNullOrEmpty(user.PasswordPhc))
+        var now = DateTimeOffset.UtcNow;
+        if (UserAccountLockout.IsLockedOut(user, now))
+        {
+            _logger.LogWarning("Password validation rejected for locked-out user {UserAccountId}", user.Id);
             return false;
+        }
 
         // 3) Get pepper by the version stored on the user
         if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
             _logger.LogError(
-                "Pepper with version {Version} not found for user {UserId}. Password validation failed.",
+                "Pepper with version {Version} not found for user {UserAccountId}. Password validation failed.",
                 user.PasswordPepperVersion,
                 user.Id);
             return false;
@@ -206,7 +176,13 @@ internal sealed class UserService : IUserService
         // 4) Verify password
         var result = _hasher.Verify(password, user.PasswordPhc, pepper);
         if (result == PasswordVerificationEnum.Failed)
+        {
+            UserAccountLockout.RecordFailedAccess(user, _options.Lockout, now);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return false;
+        }
+
+        UserAccountLockout.Reset(user);
 
         // 5) Re-hash with current parameters/pepper version if needed
         var currentVersion = _pepperVault.CurrentVersion;
@@ -218,16 +194,16 @@ internal sealed class UserService : IUserService
         {
             user.PasswordPhc = _hasher.Hash(password, currentPepper);
             user.PasswordPepperVersion = currentVersion;
+        }
 
-            try
-            {
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                // Do not fail successful authentication due to re-hash issues; log only
-                _logger.LogError(ex, "Failed to re-hash password for user {UserId}", user.Id);
-            }
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException ex) when (needRehash)
+        {
+            // Do not fail successful authentication due to re-hash persistence issues; log only
+            _logger.LogError(ex, "Failed to re-hash password for user {UserAccountId}", user.Id);
         }
 
         return true;
@@ -240,90 +216,125 @@ internal sealed class UserService : IUserService
         ArgumentException.ThrowIfNullOrWhiteSpace(code);
         code = code.Trim();
 
-        var user = await GetUserByAsync(selectorField, selectorValue.Trim(), cancellationToken).ConfigureAwait(false);
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue.Trim(), cancellationToken).ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
-        // 1) Resolve the DB field and normalize the selector value the same way as when creating a user
-        var field = selectorField.ToLowerInvariant() switch
+        if (!user.IsActive)
         {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
+            _logger.LogWarning(
+                "Code validation rejected for disabled account, {Channel} channel, identity: {Identity}",
+                field,
+                selectorValue);
+            return false;
+        }
 
-        var isValid = false;
+        var lockoutNow = DateTimeOffset.UtcNow;
+        if (UserAccountLockout.IsLockedOut(user, lockoutNow))
+        {
+            _logger.LogWarning("Code validation rejected for locked-out user {UserAccountId}", user.Id);
+            return false;
+        }
+
+        // Same channel as SendCodeStep / VerifyCodeStep: preferred → email fallback (not selector field).
+        var otpTarget = await _communicationEndpoints
+            .ResolveOtpTargetAsync(user.Id, cancellationToken)
+            .ConfigureAwait(false);
+
         var now = DateTime.UtcNow;
-        switch (field)
-        {
-            case nameof(UserAccountEntity.Email):
-                isValid = await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case nameof(UserAccountEntity.PhoneNumber):
-                isValid = await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
-                break;
-        }
-
-        if (isValid)
-        {
-            var account = await _context.UsersAccounts
-                .FirstOrDefaultAsync(u => u.Id == user.Id, cancellationToken)
-                .ConfigureAwait(false);
-
-            if (account != null)
-            {
-                if (field == nameof(UserAccountEntity.Email))
-                    account.EmailConfirmed = true;
-                else
-                    account.PhoneConfirmed = true;
-            }
-        }
-
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        var isValid = otpTarget.Channel == ChannelEnum.Email
+            ? await TryValidateEmailCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false)
+            : await TryValidatePhoneCodeAsync(user.Id, code, now, cancellationToken).ConfigureAwait(false);
 
         if (!isValid)
         {
+            UserAccountLockout.RecordFailedAccess(user, _options.Lockout, lockoutNow);
+            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             _logger.LogWarning(
                 "Code validation failed for {Channel} channel, identity: {Identity}",
                 field,
                 selectorValue);
+            return false;
         }
 
-        return isValid;
+        UserAccountLockout.Reset(user);
+
+        await ApplyVerifiedContactFromOtpTargetAsync(user, otpTarget, cancellationToken).ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        await _communicationEndpointUpsert.SyncAccountContactsAsync(user.Id, cancellationToken).ConfigureAwait(false);
+        return true;
     }
 
-    public async Task SetPasswordAsync(string selectorField, string selectorValue, string newPassword, CancellationToken cancellationToken)
+    private async Task ApplyVerifiedContactFromOtpTargetAsync(
+        UserAccountEntity user,
+        DeliveryTarget otpTarget,
+        CancellationToken cancellationToken)
+    {
+        if (otpTarget.Channel == ChannelEnum.Email)
+        {
+            var normalizedEmail = ChannelEnum.Email.NormalizeAddress(otpTarget.Address);
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                user.Email = normalizedEmail;
+            }
+
+            if (!string.Equals(
+                    ChannelEnum.Email.NormalizeAddress(user.Email!),
+                    normalizedEmail,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            await UserAccountGuard.EnsureNoOtherVerifiedEmailAsync(
+                _context,
+                user.Id,
+                normalizedEmail,
+                cancellationToken).ConfigureAwait(false);
+            user.EmailVerified = true;
+            return;
+        }
+
+        if (otpTarget.Channel == ChannelEnum.Sms)
+        {
+            var normalizedPhone = ChannelEnum.Sms.NormalizeAddress(otpTarget.Address);
+            if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+            {
+                user.PhoneNumber = normalizedPhone;
+            }
+
+            if (!string.Equals(
+                    ChannelEnum.Sms.NormalizeAddress(user.PhoneNumber!),
+                    normalizedPhone,
+                    StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            await UserAccountGuard.EnsureNoOtherVerifiedPhoneAsync(
+                _context,
+                user.Id,
+                normalizedPhone,
+                cancellationToken).ConfigureAwait(false);
+            user.PhoneNumberVerified = true;
+        }
+    }
+
+    public async Task SetPasswordAsync(
+        string selectorField,
+        string selectorValue,
+        string newPassword,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
         ArgumentNullException.ThrowIfNull(newPassword);
 
-        string field = selectorField.ToLowerInvariant() switch
-        {
-            "email" => nameof(UserAccountEntity.Email),
-            "username" => nameof(UserAccountEntity.NormalizedUserName),
-            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
-            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported.")
-        };
-
-        string? value = field switch
-        {
-            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
-                => selectorValue.Trim().ToLowerInvariant(),
-            nameof(UserAccountEntity.PhoneNumber)
-                => _phoneNormalizer.NormalizeToE164(selectorValue, _headersContextAccessor.LanguageCode),
-            _ => selectorValue
-        };
-
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            throw new ValidationException("Selector value is invalid.");
-        }
-
-        var user = await _context.UsersAccounts
-                       .FirstOrDefaultAsync(u => EF.Property<string>(u, field) == value, cancellationToken)
-                       .ConfigureAwait(false)
-                   ?? throw new NotFoundException($"User with given {field} '{value}' not found");
+        var field = ResolveSelectorField(selectorField);
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false)
+                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
         if (!_pepperVault.TryGetCurrentValue(out var pepper) || string.IsNullOrWhiteSpace(pepper))
         {
@@ -332,24 +343,96 @@ internal sealed class UserService : IUserService
 
         user.PasswordPhc = _hasher.Hash(newPassword, pepper);
         user.PasswordPepperVersion = _pepperVault.CurrentVersion;
+        UserAccountLockout.Reset(user);
         // Invalidate existing sessions: stamp rotation + revoke all tokens (PASSWORD_CHANGED).
         user.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokeReason.PASSWORD_CHANGED, cancellationToken)
+            .RevokeAllTokensForUserAsync(user.Id, RefreshTokenRevokedReason.PASSWORD_CHANGED, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    private static string ResolveSelectorField(string selectorField)
+    {
+        return selectorField.ToLowerInvariant() switch
+        {
+            "id" or "userid" or "useraccountid" => nameof(UserAccountEntity.Id),
+            "email" => nameof(UserAccountEntity.Email),
+            "username" => nameof(UserAccountEntity.NormalizedUserName),
+            "phone" or "phonenumber" => nameof(UserAccountEntity.PhoneNumber),
+            _ => throw new NotSupportedException($"Selector field '{selectorField}' is not supported."),
+        };
+    }
+
+    private static bool TryParseUserAccountId(string selectorValue, out Guid id)
+    {
+        return Guid.TryParse(selectorValue.Trim(), out id) && id != Guid.Empty;
+    }
+
+    private async Task<UserAccountEntity?> FindTrackedUserBySelectorAsync(
+        string field,
+        string selectorValue,
+        CancellationToken cancellationToken)
+    {
+        if (field == nameof(UserAccountEntity.Id))
+        {
+            if (!TryParseUserAccountId(selectorValue, out var id))
+                return null;
+
+            return await _context.UsersAccounts
+                .Where(u => u.Id == id)
+                .FirstOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        var value = NormalizeSelectorValue(field, selectorValue);
+        if (string.IsNullOrWhiteSpace(value))
+            return null;
+
+        return await PreferVerifiedContact(
+                _context.UsersAccounts.Where(u => EF.Property<string>(u, field) == value),
+                field)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// When several rows share Email/Phone (unique only among verified), prefer the verified one.
+    /// </summary>
+    private static IQueryable<UserAccountEntity> PreferVerifiedContact(
+        IQueryable<UserAccountEntity> query,
+        string field)
+    {
+        return field switch
+        {
+            nameof(UserAccountEntity.Email) => query.OrderByDescending(u => u.EmailVerified),
+            nameof(UserAccountEntity.PhoneNumber) => query.OrderByDescending(u => u.PhoneNumberVerified),
+            _ => query,
+        };
+    }
+
+    private string? NormalizeSelectorValue(string field, string selectorValue)
+    {
+        return field switch
+        {
+            nameof(UserAccountEntity.Email) or nameof(UserAccountEntity.NormalizedUserName)
+                => selectorValue.Trim().ToLowerInvariant(),
+            nameof(UserAccountEntity.PhoneNumber)
+                => selectorValue,
+            _ => selectorValue,
+        };
+    }
+
     private async Task<bool> TryValidateEmailCodeAsync(
-        Guid userId,
+        Guid userAccountId,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var verification = await _context.EmailVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -381,13 +464,13 @@ internal sealed class UserService : IUserService
     }
 
     private async Task<bool> TryValidatePhoneCodeAsync(
-        Guid userId,
+        Guid userAccountId,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var verification = await _context.PhoneVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)

@@ -29,60 +29,32 @@ internal sealed class ExternalLoginCompleteStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         // Code may be absent when the provider returned Error (OAuth error redirect).
-        ctx.TryGet(BagKey.Qualify(Kind, CodeKey), out string? code);
+        var code = ctx.Get<string?>(BagKey.Qualify(Kind, CodeKey));
         var state = ctx.Get<string>(BagKey.Qualify(Kind, StateKey));
-        string? error = null;
-        string? errorDescription = null;
-        if (!string.IsNullOrWhiteSpace(ErrorKey))
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, ErrorKey), out error);
-        }
+        var error = !string.IsNullOrWhiteSpace(ErrorKey)
+            ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorKey))
+            : null;
+        var errorDescription = !string.IsNullOrWhiteSpace(ErrorDescriptionKey)
+            ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorDescriptionKey))
+            : null;
 
-        if (!string.IsNullOrWhiteSpace(ErrorDescriptionKey))
-        {
-            ctx.TryGet(BagKey.Qualify(Kind, ErrorDescriptionKey), out errorDescription);
-        }
+        var completion = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
-        var userId = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
+        ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), completion.UserAccountId);
+        ctx.Set(BagKey.Qualify(Kind, "IsLinking"), completion.IsLinking);
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), userId.UserId);
-        ctx.Set(BagKey.Qualify(Kind, "IsLinking"), userId.IsLinking);
-
-        if (userId.IsLinking)
+        if (completion.IsLinking)
         {
             return StepResult.Ok(Next);
         }
 
-        var user = (await UserService.GetUserByAsync("Id", userId.UserId.ToString(), cancellationToken).ConfigureAwait(false)).ToBag();
-        var email = user.TryGetValue("Email", out var emailObj) ? emailObj?.ToString() : null;
-        var phone = user.TryGetValue("Phone", out var phoneObj) ? phoneObj?.ToString() : null;
-        var username = user.TryGetValue("UserName", out var usernameObj) ? usernameObj?.ToString() : null;
+        var user = await UserService.GetUserByAsync("Id", completion.UserAccountId.ToString(), cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(user);
 
-        var familyId = Guid.NewGuid();
-        var accessClaims = new List<Claim>
-            {
-                new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString()),
-            }
-            .AddIfNotNull(ClaimTypes.Email, email)
-            .AddIfNotNull(ClaimTypes.MobilePhone, phone)
-            .AddIfNotNull(ClaimConstants.Username, username);
-
-        var accessToken = await JwtTokenService.GenerateAccessTokenAsync(userId.UserId, familyId, new List<string>(), accessClaims, cancellationToken).ConfigureAwait(false);
-        var refreshToken = await JwtTokenService
-            .GenerateRefreshTokenAsync(
-                userId.UserId,
-                familyId,
-                new List<Claim>
-                {
-                    new(JwtRegisteredClaimNames.Sub, userId.UserId.ToString())
-                },
-                cancellationToken)
+        var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
+        await TokenPairIssuer
+            .IssueTokenPairAsync(JwtTokenService, ctx, Kind, user, Guid.NewGuid(), hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
-
-        ctx.Set(BagKey.Qualify(Kind, "AccessToken"), accessToken);
-        ctx.Set(BagKey.Qualify(Kind, "RefreshToken"), refreshToken);
-        ctx.Set(BagKey.Qualify(Kind, "TokenType"), "Bearer");
-        ctx.Set(BagKey.Qualify(Kind, "ExpiresIn"), JwtTokenService.AccessTokenExpiresInSeconds);
 
         return StepResult.Ok(Next);
     }

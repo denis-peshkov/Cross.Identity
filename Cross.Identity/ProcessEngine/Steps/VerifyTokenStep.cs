@@ -2,8 +2,9 @@
 
 /// <summary>
 /// Validates an access token (crypto + storage) via <see cref="IJwtTokenService.ValidateAccessTokenAsync"/>.
-/// Sets <c>Valid</c>; when valid, also <c>UserId</c> and <c>Jti</c> from claims.
-/// Invalid tokens yield <c>Valid = false</c> (no throw).
+/// Sets <c>Valid</c>; when valid, also <c>UserAccountId</c> and <c>Jti</c> from claims.
+/// Invalid or malformed tokens yield <c>Valid = false</c> with <see cref="StepResult.Ok"/>.
+/// Operational failures (database, configuration, etc.) return <see cref="StepResult.Fail"/>.
 /// </summary>
 internal sealed class VerifyTokenStep : IStep
 {
@@ -24,14 +25,18 @@ internal sealed class VerifyTokenStep : IStep
     {
         var accessToken = ctx.Get<string>(BagKey.Qualify(Kind, AccessTokenKey));
 
-        var valid = false;
+        bool valid;
         try
         {
             valid = await JwtTokenService.ValidateAccessTokenAsync(accessToken, cancellationToken).ConfigureAwait(false);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException or FormatException)
         {
             valid = false;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return StepResult.Fail(ex);
         }
 
         ctx.Set(BagKey.Qualify(Kind, "Valid"), valid);
@@ -39,9 +44,9 @@ internal sealed class VerifyTokenStep : IStep
         if (valid)
         {
             var sub = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(sub, out var userId))
+            if (Guid.TryParse(sub, out var userAccountId))
             {
-                ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
+                ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), userAccountId);
             }
 
             var jti = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);

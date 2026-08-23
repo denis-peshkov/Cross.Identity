@@ -10,6 +10,9 @@ public class VerifyCode_StepFactoryTests
     {
         var sc = new ServiceCollection();
         sc.AddScoped<ICodeService>(p => Mock.Of<ICodeService>());
+        sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
+        sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
+        sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         _sp = sc.BuildServiceProvider();
     }
 
@@ -20,78 +23,83 @@ public class VerifyCode_StepFactoryTests
     [Category(TestCategory.UNIT)]
     public void GivenValidJson_WhenCreate_ThenReturnsConfiguredStep()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "verifyCode",
               "channel": "email",
-              "identityKey": "collectForm.Email",
               "codeKey": "collectForm.Code",
               "next": "token"
             }
             """);
 
         var factory = new VerifyCodeStepFactory();
-
-        // Act
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
         step.Kind.Should().Be("verifyCode");
-        step.Channel.Should().Be("email");
-        step.IdentityKey.Should().Be("collectForm.Email");
+        step.Selector.FieldKey.Should().Be("collectForm.Field");
+        step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.CodeKey.Should().Be("collectForm.Code");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
         step.Next.Should().Be("token");
         step.CodeService.Should().NotBeNull();
+        step.UserService.Should().NotBeNull();
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenPhoneChannelJson_WhenCreate_ThenReturnsConfiguredStep()
+    public void GivenSmsChannelJson_WhenCreate_ThenReturnsConfiguredStep()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "verifyCode",
-              "channel": "phone",
-              "identityKey": "collectForm.Phone",
+              "channel": "sms",
               "codeKey": "collectForm.Code"
             }
             """);
 
         var factory = new VerifyCodeStepFactory();
-
-        // Act
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
-
-        // Assert
-        step.Channel.Should().Be("phone");
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenRelativeKeysJson_WhenCreate_ThenReturnsConfiguredStep()
+    public void GivenUserAccountIdKeyInJson_WhenCreate_ThenBindsUserAccountIdKey()
     {
-        // Arrange
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "verifyCode",
               "channel": "email",
-              "identityKey": "Email",
-              "codeKey": "Code"
+              "codeKey": "Code",
+              "userAccountIdKey": "Id"
             }
             """);
 
         var factory = new VerifyCodeStepFactory();
-
-        // Act
         var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
 
-        // Assert
-        step.IdentityKey.Should().Be("Email");
         step.CodeKey.Should().Be("Code");
+        step.UserAccountIdKey.Should().Be("Id");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "verifyCode",
+              "codeKey": "collectForm.Code"
+            }
+            """);
+
+        var factory = new VerifyCodeStepFactory();
+        var step = (VerifyCodeStep)factory.Create(json.RootElement, _sp);
+
+        step.CodeKey.Should().Be("collectForm.Code");
+        step.CommunicationEndpoints.Should().NotBeNull();
     }
 }
