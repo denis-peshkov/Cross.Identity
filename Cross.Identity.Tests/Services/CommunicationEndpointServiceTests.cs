@@ -16,7 +16,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         _jwt
             .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _service = new CommunicationEndpointService(Context, new AuditService(Context), _jwt.Object, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
+        _service = new CommunicationEndpointService(Context, new AuditService(Context), _jwt.Object, TestAuthOptions.Snapshot());
     }
 
     [Test]

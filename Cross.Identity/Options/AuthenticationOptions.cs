@@ -19,8 +19,12 @@ public sealed class AuthenticationOptions
     /// </summary>
     public bool LockChannelAsEmail { get; set; }
 
+    /// <summary>Limits how often OTP codes may be sent (see <c>CodeService.SendAsync</c>).</summary>
+    public OtpSendRateLimitOptions OtpSendRateLimit { get; set; } = new();
+
     /// <summary>Background cleanup interval for expired refresh tokens.</summary>
     public TimeSpan TokenCleanupInterval { get; set; } = TimeSpan.FromHours(1);
+
 
     /// <summary>JWT issuance options.</summary>
     public sealed class JwtOptions
@@ -62,5 +66,24 @@ public sealed class AuthenticationOptions
 
         /// <summary>How long the account stays locked after the threshold is reached.</summary>
         public TimeSpan LockoutTimeout { get; set; } = TimeSpan.FromMinutes(15);
+    }
+
+    /// <summary>Rate limits for OTP send (<c>SendCode</c> / <c>ICodeService.SendAsync</c>).</summary>
+    public sealed class OtpSendRateLimitOptions
+    {
+        /// <summary>
+        /// Minimum interval between sends for the same user + destination.
+        /// <see cref="TimeSpan.Zero"/> disables the cooldown.
+        /// </summary>
+        public TimeSpan Cooldown { get; set; } = TimeSpan.FromSeconds(60);
+
+        /// <summary>
+        /// Maximum number of sends for the same user + destination within <see cref="Window"/>.
+        /// <c>0</c> disables the window cap.
+        /// </summary>
+        public int MaxSendsPerWindow { get; set; } = 5;
+
+        /// <summary>Window for <see cref="MaxSendsPerWindow"/> (ignored when max is <c>0</c>).</summary>
+        public TimeSpan Window { get; set; } = TimeSpan.FromHours(1);
     }
 }

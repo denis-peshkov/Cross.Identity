@@ -10,19 +10,22 @@ internal sealed class CodeService : ICodeService
     private readonly IEmailSenderService _email;
     private readonly ISmsSenderService _sms;
     private readonly IConfiguration _configuration;
+    private readonly AuthenticationOptions _options;
 
     public CodeService(
         IdentityContext context,
         ILogger<CodeService> logger,
         IEmailSenderService email,
         ISmsSenderService sms,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IOptionsSnapshot<AuthenticationOptions> options)
     {
         _context = context;
         _logger = logger;
         _email = email;
         _sms = sms;
         _configuration = configuration;
+        _options = options.Value;
     }
 
     /// <inheritdoc />
@@ -42,6 +45,11 @@ internal sealed class CodeService : ICodeService
             throw new NotSupportedException($"OTP send via {msg.Channel} is not supported. Use Email or Sms; messenger delivery is not implemented yet.");
         }
 
+        var normalizedDestination = destination.ToLowerInvariant();
+
+        await EnsureOtpSendAllowedAsync(id, msg.Channel, normalizedDestination, now, cancellationToken)
+            .ConfigureAwait(false);
+
         switch (msg.Channel)
         {
             case ChannelEnum.Email:
@@ -50,15 +58,14 @@ internal sealed class CodeService : ICodeService
                     await _email.SendAsync("", destination, msg.Subject, msg.TextBody, msg.HtmlBody, cancellationToken).ConfigureAwait(false);
                 }
 
-                var normalizedEmail = destination.ToLowerInvariant();
-                await SupersedeActiveEmailVerificationsAsync(normalizedEmail, now, cancellationToken).ConfigureAwait(false);
+                await SupersedeActiveEmailVerificationsAsync(normalizedDestination, now, cancellationToken).ConfigureAwait(false);
 
                 var emailEntity = new EmailVerificationEntity
                 {
                     Id = Guid.NewGuid(),
                     UserAccountId = id,
                     UserAccount = null!,
-                    Email = normalizedEmail,
+                    Email = normalizedDestination,
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
                     TokenLength = (byte)code.Length,
                     Attempts = 0,
@@ -75,14 +82,14 @@ internal sealed class CodeService : ICodeService
                     await _sms.SendAsync(destination, msg.TextBody, cancellationToken).ConfigureAwait(false);
                 }
 
-                await SupersedeActivePhoneVerificationsAsync(destination, now, cancellationToken).ConfigureAwait(false);
+                await SupersedeActivePhoneVerificationsAsync(normalizedDestination, now, cancellationToken).ConfigureAwait(false);
 
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     Id = Guid.NewGuid(),
                     UserAccountId = id,
                     UserAccount = null!,
-                    PhoneNumber = destination,
+                    PhoneNumber = normalizedDestination,
                     CodeHash = CodeGeneratorHelper.GenerateHash(code),
                     CodeLength = (byte)code.Length,
                     Attempts = 0,
@@ -267,6 +274,120 @@ internal sealed class CodeService : ICodeService
         {
             _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedPhone);
             return false;
+        }
+    }
+
+    private async Task EnsureOtpSendAllowedAsync(
+        Guid userId,
+        ChannelEnum channel,
+        string normalizedDestination,
+        DateTime now,
+        CancellationToken cancellationToken)
+    {
+        var limits = _options.OtpSendRateLimit;
+        var cooldownEnabled = limits.Cooldown > TimeSpan.Zero;
+        var windowEnabled = limits.MaxSendsPerWindow > 0 && limits.Window > TimeSpan.Zero;
+        if (!cooldownEnabled && !windowEnabled)
+        {
+            return;
+        }
+
+        if (channel == ChannelEnum.Email)
+        {
+            if (cooldownEnabled)
+            {
+                var lastCreatedAt = await _context.EmailVerifications
+                    .AsNoTracking()
+                    .Where(x => x.UserAccountId == userId && x.Email == normalizedDestination)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Select(x => (DateTime?)x.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (lastCreatedAt.HasValue && now - lastCreatedAt.Value < limits.Cooldown)
+                {
+                    _logger.LogInformation(
+                        "OTP send cooldown for user {UserId} email {Email}: last send at {LastSendAt}",
+                        userId,
+                        normalizedDestination,
+                        lastCreatedAt.Value);
+                    throw new ValidationException("Please wait before requesting another code.");
+                }
+            }
+
+            if (windowEnabled)
+            {
+                var since = now - limits.Window;
+                var count = await _context.EmailVerifications
+                    .AsNoTracking()
+                    .CountAsync(
+                        x => x.UserAccountId == userId
+                             && x.Email == normalizedDestination
+                             && x.CreatedAt >= since,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (count >= limits.MaxSendsPerWindow)
+                {
+                    _logger.LogInformation(
+                        "OTP send window limit for user {UserId} email {Email}: {Count} sends since {Since}",
+                        userId,
+                        normalizedDestination,
+                        count,
+                        since);
+                    throw new ValidationException("Too many verification codes requested. Please try again later.");
+                }
+            }
+
+            return;
+        }
+
+        if (channel == ChannelEnum.Sms)
+        {
+            if (cooldownEnabled)
+            {
+                var lastCreatedAt = await _context.PhoneVerifications
+                    .AsNoTracking()
+                    .Where(x => x.UserAccountId == userId && x.PhoneNumber == normalizedDestination)
+                    .OrderByDescending(x => x.CreatedAt)
+                    .Select(x => (DateTime?)x.CreatedAt)
+                    .FirstOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (lastCreatedAt.HasValue && now - lastCreatedAt.Value < limits.Cooldown)
+                {
+                    _logger.LogInformation(
+                        "OTP send cooldown for user {UserId} phone {Phone}: last send at {LastSendAt}",
+                        userId,
+                        normalizedDestination,
+                        lastCreatedAt.Value);
+                    throw new ValidationException("Please wait before requesting another code.");
+                }
+            }
+
+            if (windowEnabled)
+            {
+                var since = now - limits.Window;
+                var count = await _context.PhoneVerifications
+                    .AsNoTracking()
+                    .CountAsync(
+                        x => x.UserAccountId == userId
+                             && x.PhoneNumber == normalizedDestination
+                             && x.CreatedAt >= since,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (count >= limits.MaxSendsPerWindow)
+                {
+                    _logger.LogInformation(
+                        "OTP send window limit for user {UserId} phone {Phone}: {Count} sends since {Since}",
+                        userId,
+                        normalizedDestination,
+                        count,
+                        since);
+                    throw new ValidationException("Too many verification codes requested. Please try again later.");
+                }
+            }
         }
     }
 

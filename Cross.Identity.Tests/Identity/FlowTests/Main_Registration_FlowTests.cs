@@ -33,8 +33,7 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
     }
 
     [Test]

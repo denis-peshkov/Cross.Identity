@@ -34,8 +34,7 @@ internal class Main_RequestCode_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         var optionsSnapshot = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         optionsSnapshot.Setup(o => o.Value).Returns(new AuthenticationOptions

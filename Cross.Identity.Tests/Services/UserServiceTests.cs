@@ -39,7 +39,7 @@ public class UserServiceTests : EFTestsBase
             Context,
             new AuditService(Context),
             _jwtTokenService.Object,
-            Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
+            TestAuthOptions.Snapshot());
 
         _userService = new UserService(
             Context,
@@ -881,7 +881,7 @@ public class UserServiceTests : EFTestsBase
         var userId = Guid.NewGuid();
         var userName = "alice";
         var email = "alice@example.com";
-        var communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService.Object, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
+        var communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService.Object, TestAuthOptions.Snapshot());
         var userService = new UserService(
             Context,
             _logger.Object,

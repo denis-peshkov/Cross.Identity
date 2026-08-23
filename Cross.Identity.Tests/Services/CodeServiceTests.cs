@@ -21,7 +21,41 @@ public class CodeServiceTests : EFTestsBase
                 ["Authentication:DeveloperMode"] = "false"
             })
             .Build();
-        _codeService = new CodeService(Context, _logger.Object, _emailService.Object, _smsService.Object, configuration);
+        // Disable send rate limits by default so resend / multi-send unit tests stay focused.
+        _codeService = new CodeService(
+            Context,
+            _logger.Object,
+            _emailService.Object,
+            _smsService.Object,
+            configuration,
+            TestAuthOptions.Snapshot(new AuthenticationOptions
+            {
+                OtpSendRateLimit = new AuthenticationOptions.OtpSendRateLimitOptions
+                {
+                    Cooldown = TimeSpan.Zero,
+                    MaxSendsPerWindow = 0,
+                },
+            }));
+    }
+
+    private CodeService CreateCodeServiceWithRateLimit(AuthenticationOptions.OtpSendRateLimitOptions limits)
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true"
+            })
+            .Build();
+        return new CodeService(
+            Context,
+            _logger.Object,
+            _emailService.Object,
+            _smsService.Object,
+            configuration,
+            TestAuthOptions.Snapshot(new AuthenticationOptions
+            {
+                OtpSendRateLimit = limits,
+            }));
     }
 
     [Test]
@@ -453,6 +487,59 @@ public class CodeServiceTests : EFTestsBase
         (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
 
         (await Context.EmailVerifications.CountAsync(x => x.UsedAt != null)).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenCooldown_WhenSendAsyncTwice_ThenSecondThrowsValidationExceptionAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "cooldown@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
+        {
+            Cooldown = TimeSpan.FromMinutes(1),
+            MaxSendsPerWindow = 0,
+        });
+        var message = NotificationMessage.For(ChannelEnum.Email, email)
+            .WithSubject("Test")
+            .WithTextBody("body");
+
+        await sut.SendAsync(message, "111111", userId.ToString(), TimeSpan.FromMinutes(5), CancellationToken.None);
+
+        await FluentActions.Invoking(() =>
+                sut.SendAsync(message, "222222", userId.ToString(), TimeSpan.FromMinutes(5), CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*wait*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenWindowCap_WhenSendAsyncExceedsMax_ThenThrowsValidationExceptionAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "window@example.com";
+        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
+        {
+            Cooldown = TimeSpan.Zero,
+            MaxSendsPerWindow = 2,
+            Window = TimeSpan.FromHours(1),
+        });
+        var message = NotificationMessage.For(ChannelEnum.Email, email)
+            .WithSubject("Test")
+            .WithTextBody("body");
+        var ttl = TimeSpan.FromMinutes(5);
+
+        await sut.SendAsync(message, "111111", userId.ToString(), ttl, CancellationToken.None);
+        await sut.SendAsync(message, "222222", userId.ToString(), ttl, CancellationToken.None);
+
+        await FluentActions.Invoking(() =>
+                sut.SendAsync(message, "333333", userId.ToString(), ttl, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*Too many*");
     }
 
     [Test]

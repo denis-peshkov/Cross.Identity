@@ -12,6 +12,7 @@ internal interface ICodeService
 {
     /// <summary>
     /// Send a one-time code to the specified channel/destination with a TTL.
+    /// Enforces <c>Authentication:OtpSendRateLimit</c> (cooldown / per-window cap) for the same user + destination.
     /// </summary>
     /// <param name="msg">Notification payload (includes <see cref="NotificationMessage.Channel"/>).</param>
     /// <param name="code">Code text (generated outside the service or by the service — architecture choice).</param>
@@ -19,6 +20,7 @@ internal interface ICodeService
     /// <param name="ttl">Code lifetime.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotSupportedException">Messenger channels (Telegram, Viber, WhatsApp) are not implemented for OTP send.</exception>
+    /// <exception cref="ValidationException">OTP send rate limit exceeded (cooldown or window cap).</exception>
     Task SendAsync(
         NotificationMessage msg,
         string code,

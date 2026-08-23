@@ -32,7 +32,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         });
 
         _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
-        _endpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService, Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions()));
+        _endpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService, TestAuthOptions.Snapshot());
 
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CommunicationEndpointsGetAllStepFactory>();

@@ -366,7 +366,18 @@ Host must pass `UserId` in the bag (no ambient auth user).
 
 **Note:** `VerifyCodeStep` (ForgotPassword / ResetPassword recovery) does not apply lockout — recovery remains available while the account is locked for sign-in.
 
-**Action:** configure `Authentication:Lockout` if defaults do not fit; ensure host still applies rate limits (lockout is per-account, not per-IP).
+**Action:** configure `Authentication:Lockout` if defaults do not fit; ensure host still applies **IP** rate limits (account lockout and OTP send limits are per-account / per destination, not per-IP).
+
+### OTP send rate limit (`Authentication:OtpSendRateLimit`)
+
+| Area | Was | Now |
+|------|-----|-----|
+| OTP resend | unlimited | cooldown + optional window cap in `CodeService.SendAsync` |
+| Defaults | — | `Cooldown` = `00:01:00`, `MaxSendsPerWindow` = `5`, `Window` = `01:00:00` |
+| Disable | — | `Cooldown` = `00:00:00` and `MaxSendsPerWindow` = `0` |
+| Exceeded | — | `ValidationException` (`Please wait…` / `Too many verification codes…`) |
+
+**Action:** bind `Authentication:OtpSendRateLimit` in host config; map `ValidationException` from sendCode to 400/429 as appropriate. Per-IP throttling remains a host concern.
 
 ### `sendCode` / `verifyCode` / `getUserId`: unknown identity → `Invalid credentials.` (not `NotFound`)
 

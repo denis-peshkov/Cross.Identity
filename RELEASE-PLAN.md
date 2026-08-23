@@ -68,11 +68,10 @@
 **Impact:** ValidationException для phone-only пользователей без synced endpoints.  
 **Stock flows:** SendCode, ResetPassword notify.
 
-### 11. Нет rate limiting на отправку OTP
-`CodeService` / `SendCodeStep` — нет cooldown / per-identity / per-IP limits в библиотеке.
+### 11. ~~Нет rate limiting на отправку OTP~~ ✅ закрыто
+~~`CodeService` / `SendCodeStep` — нет cooldown / per-identity limits.~~
 
-**Impact:** spam, cost abuse (SMS/email), DoS на identity.  
-**Stock flows:** SendCode, ForgotPassword, RequestCode, Register.
+**Исправлено (2.0):** `Authentication:OtpSendRateLimit` — cooldown (default 60s) и cap в окне (default 5 / 1h) на пару user + destination в `CodeService.SendAsync`. `Cooldown = 0` и `MaxSendsPerWindow = 0` отключают.
 
 ### 12. Apple provider в registry, но не реализован
 `FetchAppleProfileAsync` → `NotSupportedException`. Initiate строит URL; Complete падает.

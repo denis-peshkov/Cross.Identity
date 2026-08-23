@@ -33,8 +33,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         RegisterToServiceProvider<IHostEnvironment, IHostEnvironment>(new HostingEnvironment
         {
@@ -83,8 +82,7 @@ internal class Main_ForgotPassword_FlowTests : RunFlowCommandHandlerTestsBase
                 Context,
                 Mock.Of<ILogger<CodeService>>(),
                 Mock.Of<IEmailSenderService>(),
-                Mock.Of<ISmsSenderService>(),
-                configuration));
+                Mock.Of<ISmsSenderService>(), configuration, TestAuthOptions.Snapshot()));
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["Email"] = Email },
