@@ -679,7 +679,8 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         var deviceMismatch = IsSessionBindingMismatch(anchor.DeviceFingerprint, hostSuppliedClientContext.DeviceFingerprint);
-        var ipMismatch = IsSessionBindingMismatch(anchor.IpAddress, hostSuppliedClientContext.IpAddress);
+        var ipMismatch = _options.Jwt.SessionBindingCheckIp
+            && IsSessionBindingMismatch(anchor.IpAddress, hostSuppliedClientContext.IpAddress);
         var userAgentMismatch = IsSessionBindingMismatch(anchor.UserAgent, hostSuppliedClientContext.UserAgent);
 
         if (!deviceMismatch && !ipMismatch && !userAgentMismatch)

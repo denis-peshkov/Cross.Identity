@@ -1005,6 +1005,29 @@ public class JwtTokenServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenIpBinding_WhenIpMismatchOnRefresh_ThenRevokesFamilyWithIpMismatchAsync()
     {
+        var jwtTokenService = CreateJwtTokenServiceWithSessionBindingCheckIp(checkIp: true);
+        var userAccountId = Guid.NewGuid();
+        SeedUser(userAccountId);
+        var familyId = Guid.NewGuid();
+        var issueContext = new HostSuppliedClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+        var mismatchContext = new HostSuppliedClientContext("10.0.0.9", "Agent/1.0", "fp-abc");
+
+        var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(
+            userAccountId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
+
+        await act.Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Session binding validation failed*");
+
+        Context.Audits.Should().Contain(a =>
+            a.RevokedReason == RefreshTokenRevokedReason.IP_MISMATCH);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenIpBindingDisabled_WhenIpMismatchOnRefresh_ThenDoesNotThrowAsync()
+    {
         var userAccountId = Guid.NewGuid();
         SeedUser(userAccountId);
         var familyId = Guid.NewGuid();
@@ -1016,11 +1039,7 @@ public class JwtTokenServiceTests : EFTestsBase
 
         var act = () => _jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(refreshToken, mismatchContext, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Session binding validation failed*");
-
-        Context.Audits.Should().Contain(a =>
-            a.RevokedReason == RefreshTokenRevokedReason.IP_MISMATCH);
+        await act.Should().NotThrowAsync();
     }
 
     [Test]
@@ -1053,7 +1072,7 @@ public class JwtTokenServiceTests : EFTestsBase
         SeedUser(userAccountId);
         var familyId = Guid.NewGuid();
         var issueContext = new HostSuppliedClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
-        var mismatchContext = new HostSuppliedClientContext("10.0.0.9", "Agent/1.0", "fp-stolen");
+        var mismatchContext = new HostSuppliedClientContext("10.0.0.1", "Agent/9.0", "fp-stolen");
 
         var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
             userAccountId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
@@ -1194,6 +1213,28 @@ public class JwtTokenServiceTests : EFTestsBase
                 RefreshTokenExpires = TimeSpan.FromDays(30),
                 RefreshTokenAbsoluteExpires = TimeSpan.FromDays(90),
                 RefreshTokenIdleTimeout = idleTimeout,
+            },
+        });
+
+        return new JwtTokenService(Context, new AuditService(Context), options.Object);
+    }
+
+    private JwtTokenService CreateJwtTokenServiceWithSessionBindingCheckIp(bool checkIp)
+    {
+        var options = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
+        options.Setup(o => o.Value).Returns(new AuthenticationOptions
+        {
+            Jwt = new AuthenticationOptions.JwtOptions
+            {
+                Issuer = "test-issuer",
+                Audience = "test-audience",
+                Key = SignKeyBase64,
+                EncryptionKey = EncKeyBase64,
+                UseEncryption = false,
+                AccessTokenExpires = TimeSpan.FromMinutes(15),
+                RefreshTokenExpires = TimeSpan.FromMinutes(60),
+                RefreshTokenAbsoluteExpires = TimeSpan.FromDays(30),
+                SessionBindingCheckIp = checkIp,
             },
         });
 

@@ -124,9 +124,10 @@ public interface IJwtTokenService
     /// When session metadata was captured at family start, refresh compares the current
     /// <see cref="HostSuppliedClientContext"/> (host-supplied <c>collectForm</c> fields) with the family anchor.
     /// Mismatch revokes the family with <see cref="RefreshTokenRevokedReason.DEVICE_MISMATCH"/>,
-    /// <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
     /// <see cref="RefreshTokenRevokedReason.TOKEN_STOLEN"/> when multiple dimensions differ.
+    /// IP is compared only when <c>Authentication:Jwt:SessionBindingCheckIp</c> is <c>true</c>
+    /// (<see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>).
     /// When <c>Authentication:Jwt:RefreshTokenIdleTimeout</c> is set, refresh also fails with
     /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/> if <c>LastActivityAt</c> is older than the idle window.
     /// </remarks>

@@ -53,6 +53,14 @@ public sealed class AuthenticationOptions
         /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/>. <c>Zero</c> disables the check.
         /// </summary>
         public TimeSpan RefreshTokenIdleTimeout { get; set; }
+
+        /// <summary>
+        /// When <c>true</c>, refresh compares the family anchor IP with the current request IP;
+        /// mismatch revokes with <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>.
+        /// Default <c>false</c> (opt-in; avoids false positives on NAT/mobile).
+        /// Device fingerprint and User-Agent are always checked when captured at family start.
+        /// </summary>
+        public bool SessionBindingCheckIp { get; set; }
     }
 
     /// <summary>Lockout policy for password-based authentication.</summary>

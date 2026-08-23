@@ -33,9 +33,6 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### 33. `Bag` nullable `Convert.ChangeType` (CR)
 `Bag.Get` / `TryGet` — для `T?` value-types передавать underlying type в `Convert.ChangeType`.
 
-### 34. Session IP binding не конфигурируется (CR)
-`JwtTokenService` — IP-only mismatch как opt-in (NAT/mobile), не всегда hard-fail.
-
 ### 35. `WatsApp` obsolete alias (CR)
 `ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
 
@@ -134,6 +131,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
 | ✅ Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
 | ✅ Session binding на refresh | `Created*` на refresh + compare `HostSuppliedClientContext` |
+| ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` (opt-in); device/UA always when captured |
 | ✅ Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
 | ✅ UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
 | ✅ #36 Password max 32 (CR 128 отклонён) | stock Password fields `max: 32`; см. «Принято» |
@@ -195,6 +193,6 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
-3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+3. **CR M26, M32–M33, M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; idle double-audit.
 4. **M40–M41:** явный выбор канала; messenger send + bot verification.
 5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).

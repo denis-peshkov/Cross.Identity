@@ -213,6 +213,14 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `
 
 **Action:** run `1_04_auth_RefreshTokens_SessionBinding.sql` on existing databases; greenfield `2_01_auth_RefreshTokens.sql` already includes `Created*`.
 
+### Session binding: IP check opt-in (`SessionBindingCheckIp`)
+
+| Area | Now |
+|------|-----|
+| `Authentication:Jwt:SessionBindingCheckIp` | When `true`, refresh compares family anchor IP with current request IP; mismatch → `IP_MISMATCH`. Default: `false` (device fingerprint and User-Agent are still checked when captured) |
+
+**Action:** set `SessionBindingCheckIp: true` in host configuration when strict IP binding is required (e.g. fixed-IP clients). Leave default for NAT/mobile-friendly refresh.
+
 ### Refresh idle timeout: `LastActivityAt` + `RefreshTokenIdleTimeout`
 
 | Area | Now |

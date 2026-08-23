@@ -131,7 +131,7 @@ public string? CreatedUserAgent { get; set; }
 public string? CreatedDeviceFingerprint { get; set; }
 ```
 
-On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `IP_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). See `FLOWS.md` — Client context (host).
+On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). See `FLOWS.md` — Client context (host).
 
 **Host vs library**
 
@@ -191,7 +191,10 @@ Good practice — bind up to three dimensions (each optional; only non-empty val
 | `DeviceFingerprint` | `bdb38b8f2c0a6a17884e23f9a7b05c4e` | Validated device id / host-computed hash |
 | `UserAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...` | `HttpContext.Request.Headers.User-Agent` |
 | `IpAddress` | `203.0.113.42` | `RemoteIpAddress` after `ForwardedHeaders` |
+| `SessionBindingCheckIp` | `Authentication:Jwt:SessionBindingCheckIp` | When `true`, anchor IP vs current IP on refresh (`IP_MISMATCH`); default `false` |
 | `IdleTimeout` | `Authentication:Jwt:RefreshTokenIdleTimeout` | Compared against `LastActivityAt` on refresh (`SESSION_EXPIRED`) |
+
+**IP binding:** when `SessionBindingCheckIp` is `true`, refresh compares family anchor IP with the current request IP. Default: disabled (NAT/mobile-friendly). Device fingerprint and User-Agent are always checked when captured.
 
 **Idle timeout:** when `RefreshTokenIdleTimeout` is greater than zero, refresh compares `UtcNow` with `LastActivityAt` on the presented token. Exceeded idle revokes the family with `SESSION_EXPIRED`. Each successful login/rotation sets `LastActivityAt = UtcNow` on the new refresh row. Default: disabled (`00:00:00`).
 
