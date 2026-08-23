@@ -39,9 +39,6 @@ Conflict на email/phone бросает `InvalidOperationException` вмест�
 ### 35. `WatsApp` obsolete alias (CR)
 `ChannelEnum` — вернуть obsolete `WatsApp` для source/serialization compat (сейчас breaking rename в 2.0).
 
-### 38. `AuditEntity` хранит Ip/UA/Fingerprint (CR) — спорно
-CR: минимизировать PII; сейчас намеренно для revoke forensics (`Audits`).
-
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
@@ -116,6 +113,9 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 ### OAuth unverified squat + verified profile (#29) — принято
 `ExternalLoginService.ResolveOrCreateUserAsync`: если local row с тем же email **unverified**, а OAuth-провайдер вернул **verified** email — создаётся **новый** аккаунт с `EmailVerified = true` (squat остаётся unverified). Auto-link только при **обоих verified** (см. «OAuth takeover по email»). CodeRabbit: блокировать при unverified squat — отклонено: verified OAuth = доказательство владения email; жертва squat получает свой verified-аккаунт; squat не блокирует legitimate OAuth signup. Unverified OAuth + squat по-прежнему `ValidationException`.
 
+### Audit PII в `auth.Audits` (#38) — принято
+`AuditEntity.IpAddress` / `UserAgent` / `DeviceFingerprint` — намеренно для issue/revoke forensics (`AuditService.RecordTokenIssued` / `RecordTokenRevoked`); на token rows только `RevokedAt`. CR M38 (минимизировать PII) **отклонён**: retention и доступ к `auth.Audits` — ответственность хоста; см. `docs/BREAKING.md` (revoke audit metadata).
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -164,6 +164,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 | ✅ #37 HostSuppliedClientContext в ExternalLogin form (CR отклонён) | collectForm Ip/UA/Fingerprint — host trusted pipeline; см. «Принято» |
+| ✅ #38 Audit PII в `auth.Audits` (CR отклонён) | Ip/UA/Fingerprint на issue/revoke — forensics by design; retention/access — хост; см. «Принято» |
 | ✅ #42 GetUserId → GetUserAccountId | operation `GetUserAccountId`, step `getUserAccountId`, `GetUserAccountIdByAsync`, `main.GetUserAccountId.json` |
 | ✅ #43 Bag keys `UserId` → `UserAccountId` | `userAccountIdKey`, step output, collectForm; `collectResult` → `user_account_id` |
 | ✅ #44 `ClientContext` → `HostSuppliedClientContext` | type/file/API param `hostSuppliedClientContext`; `Empty` / `Read(bag)`; `docs/BREAKING.md` |
@@ -195,6 +196,5 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
 3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
-4. **CR M38:** Audit PII — принять или минимизировать.
-5. **M40–M41:** явный выбор канала; messenger send + bot verification.
-6. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
+4. **M40–M41:** явный выбор канала; messenger send + bot verification.
+5. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility / idle double-audit (#39).
