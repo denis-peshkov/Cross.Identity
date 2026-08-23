@@ -18,8 +18,13 @@ internal class UserCommunicationEndpointEntityConfiguration : IEntityTypeConfigu
             .IsUnique()
             .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_User_Channel_Address");
 
-        builder.HasIndex(x => x.UserAccountId)
+        builder.HasIndex(x => x.UserAccountId, $"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserAccountId")
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_UserAccountId");
+
+        builder.HasIndex(x => x.UserAccountId, $"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_User_Preferred")
+            .IsUnique()
+            .HasFilter("[IsPreferred] = 1")
+            .HasDatabaseName($"UX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_User_Preferred");
 
         builder.HasIndex(x => x.EntityId)
             .HasDatabaseName($"IX_{IdentityContext.DefaultSchema}_{nameof(IdentityContext.UsersCommunicationEndpoints)}_EntityId");

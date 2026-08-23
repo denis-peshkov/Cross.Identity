@@ -17,6 +17,9 @@ CREATE TABLE auth."UsersCommunicationEndpoints"
 
 CREATE UNIQUE INDEX "UX_auth_UsersCommunicationEndpoints_User_Channel_Address"
     ON auth."UsersCommunicationEndpoints" ("UserAccountId", "Channel", "Address");
+CREATE UNIQUE INDEX "UX_auth_UsersCommunicationEndpoints_User_Preferred"
+    ON auth."UsersCommunicationEndpoints" ("UserAccountId")
+    WHERE "IsPreferred" = true;
 CREATE INDEX "IX_auth_UsersCommunicationEndpoints_UserAccountId"
     ON auth."UsersCommunicationEndpoints" ("UserAccountId");
 CREATE INDEX "IX_auth_UsersCommunicationEndpoints_EntityId"

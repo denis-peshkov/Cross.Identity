@@ -434,6 +434,15 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verifi
 
 **Action:** on existing databases run, in order: `1_07_auth_UsersAccounts_RenameConfirmedToVerified.sql`, then `1_08_auth_UsersAccounts_EmailVerifiedUnique.sql`, then `1_09_auth_UsersAccounts_PhoneNumberVerifiedUnique.sql`. Do **not** edit or re-run `1_02` / `1_03` (PreDeployment scripts are append-only). Update host EF mappings / queries. Greenfield `2_01_auth_UsersAccounts.sql` already uses `*Verified`.
 
+### `UsersCommunicationEndpoints`: one preferred endpoint per user
+
+| Area | Was | Now |
+|------|-----|-----|
+| DB constraint | app-only (`SetPreferredAsync` clears others) | filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` on `UserAccountId` where `IsPreferred` |
+| EF | no index | `UserCommunicationEndpointEntityConfiguration` matches DDL |
+
+**Action:** run `1_10_auth_UsersCommunicationEndpoints_PreferredUnique.sql` on existing databases (dedupes duplicate preferred rows, then creates index). Greenfield `2_01_auth_UsersCommunicationEndpoints.sql` already includes the index.
+
 ### `UsersAccounts.CreatedBy` removed
 
 | Area | Was (1.10) | Now (2.0+) |

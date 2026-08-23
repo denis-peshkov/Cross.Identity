@@ -33,8 +33,8 @@
 ### 26. `AuditEntityType` discriminator collision (CR)
 `LinkedMessenger` / `UserCommunicationEndpoint` / `ExternalLoginState` — одинаковые numeric values.
 
-### 27. Preferred endpoint unique index (CR)
-`UserCommunicationEndpointEntityConfiguration` — нет filtered unique index: один `IsPreferred` на user.
+### ✅ 27. Preferred endpoint unique index (CR)
+Filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` — один `IsPreferred` на user; migration `1_10_*`.
 
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
@@ -179,6 +179,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | ✅ #22 OTP confirm channel | `ValidateCodeAsync` — verified flags по `otpTarget.Channel`, не selector field |
 | ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
+| ✅ #27 Preferred unique index | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
@@ -204,8 +205,8 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ## Приоритет фиксов
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **CR M20, M26–M28:** PII logs; AuditEntityType; preferred unique; action URL.
-3. **CR M29–M35, M39:** OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+2. **CR M20, M28:** PII logs; action URL.
+3. **CR M26, M29–M35, M39:** AuditEntityType; OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
 6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.

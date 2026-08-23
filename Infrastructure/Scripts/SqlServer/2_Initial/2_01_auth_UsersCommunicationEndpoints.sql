@@ -19,6 +19,10 @@ GO
 CREATE UNIQUE INDEX [UX_auth_UsersCommunicationEndpoints_User_Channel_Address]
     ON [auth].[UsersCommunicationEndpoints]([UserAccountId], [Channel], [Address]);
 GO
+CREATE UNIQUE INDEX [UX_auth_UsersCommunicationEndpoints_User_Preferred]
+    ON [auth].[UsersCommunicationEndpoints]([UserAccountId])
+    WHERE [IsPreferred] = 1;
+GO
 CREATE INDEX [IX_auth_UsersCommunicationEndpoints_UserAccountId]
     ON [auth].[UsersCommunicationEndpoints]([UserAccountId]);
 GO
