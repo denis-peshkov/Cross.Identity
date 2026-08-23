@@ -30,11 +30,6 @@
       "kind": "token",
       "passwordKey": "collectForm.Password",
       "codeKey": "collectForm.Code",
-      "channel": "email",
-      "accessTokenKey": "AccessToken",
-      "refreshTokenKey": "RefreshToken",
-      "tokenTypeKey": "TokenType",
-      "expiresInKey": "ExpiresIn",
       "next": "collectResult"
     },
     {

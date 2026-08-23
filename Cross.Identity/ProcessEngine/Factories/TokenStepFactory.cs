@@ -15,8 +15,6 @@ internal sealed class TokenStepFactory : IStepFactory
         var jwtTokenService = sp.GetRequiredService<IJwtTokenService>();
         var userService = sp.GetRequiredService<IUserService>();
 
-        _ = cfg.EnumReq<ChannelEnum>("channel");
-
         return new TokenStep
         {
             Kind                 = Kind,

@@ -151,7 +151,7 @@ Obsolete, но всё ещё в коде — слабый алгоритм пр�
 
 ## Низкий (техдолг / несогласованности)
 
-- Мёртвые ключи в `main.Token.json` (`accessTokenKey`, …) — factory не читает.
+- ~~Мёртвые ключи в `main.Token.json` (`accessTokenKey`, …)~~ ✅ удалены (`channel` тоже — factory не использовал).
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - ~~`CreatedBy` не заполняется при register~~ ✅ удалено (колонка убрана из entity/DDL; PreDeployment `1_06`).
 - `AuditService.Record` без `SaveChanges` — audit теряется при ошибке между revoke и commit.

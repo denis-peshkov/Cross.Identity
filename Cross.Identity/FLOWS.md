@@ -200,7 +200,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 6–12); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
-| `token` | token | `passwordKey`, `codeKey`, `channel: email`. → `collectResult` |
+| `token` | token | `passwordKey`, `codeKey`. Bag output keys are fixed by `TokenPairIssuer` (`AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`, `UserId`). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_id`. Invalid credentials → `NotAuthorizedException` (same as `passwordAuth` / `verifyCode`). `next: null` |
 
 ---
