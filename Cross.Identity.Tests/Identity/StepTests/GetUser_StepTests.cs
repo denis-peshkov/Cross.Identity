@@ -20,7 +20,7 @@ public class GetUser_StepTests
     public async Task GivenExistingUser_WhenExecuteAsync_ThenStoresUserIdAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString("N");
+        var userId = Guid.NewGuid();
 
         var users = new Mock<IUserService>(MockBehavior.Strict);
         users.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
@@ -43,7 +43,7 @@ public class GetUser_StepTests
 
         res.Status.Should().Be(StepStatusEnum.Ok);
         res.Next.Should().Be("done");
-        bag.Get<string>("lookup.UserId").Should().Be(userId);
+        bag.Get<string>("lookup.UserId").Should().Be(userId.ToString());
 
         users.VerifyAll();
     }
@@ -55,7 +55,7 @@ public class GetUser_StepTests
         var phone = _faker.Phone.PhoneNumber("+407########");
         var users = new Mock<IUserService>(MockBehavior.Strict);
         users.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException("User with given PhoneNumber not found"));
+            .ReturnsAsync((Guid?)null);
 
         var step = new GetUserIdStep
         {

@@ -27,31 +27,17 @@ internal sealed class GetUserIdStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        string userId;
-        try
-        {
-            userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        }
-        catch (NotFoundException ex)
+        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userId is not { } resolvedUserId || resolvedUserId == Guid.Empty)
         {
             Logger.LogInformation(
-                "Get user id rejected for {Field} identity {Identity}: {Reason}",
-                selector.Field,
-                selector.Value,
-                ex.Message);
-            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
-        }
-
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            Logger.LogInformation(
-                "Get user id rejected for {Field} identity {Identity}: resolved user id is missing.",
+                "Get user id rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
                 selector.Value);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), resolvedUserId.ToString());
 
         return StepResult.Ok(Next);
     }

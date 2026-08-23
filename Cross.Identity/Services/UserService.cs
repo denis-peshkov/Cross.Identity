@@ -33,16 +33,14 @@ internal sealed class UserService : IUserService
     }
 
     /// <inheritdoc/>
-    public async Task<string> GetUserIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
+    public async Task<Guid?> GetUserIdByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(selectorField);
         ArgumentNullException.ThrowIfNull(selectorValue);
 
         var field = ResolveSelectorField(selectorField);
-        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false)
-                   ?? throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
-
-        return user.Id.ToString();
+        var user = await FindTrackedUserBySelectorAsync(field, selectorValue, cancellationToken).ConfigureAwait(false);
+        return user?.Id;
     }
 
     public async Task<UserAccountEntity> GetUserByAsync(string selectorField, string selectorValue, CancellationToken cancellationToken)
@@ -75,7 +73,7 @@ internal sealed class UserService : IUserService
     }
 
     /// <inheritdoc/>
-    public async Task<string> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
+    public async Task<Guid> CreateUserAsync(IDictionary<string, object?> map, CancellationToken cancellationToken)
     {
         // 1) Extract fields
         map.TryGetValue("Email", out var emailRaw);
@@ -139,7 +137,7 @@ internal sealed class UserService : IUserService
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return user.Id.ToString();
+        return user.Id;
     }
 
     public async Task<bool> ValidatePasswordAsync(string selectorField, string selectorValue, string password, CancellationToken cancellationToken)

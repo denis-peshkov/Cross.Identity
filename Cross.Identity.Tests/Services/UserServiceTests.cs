@@ -90,8 +90,8 @@ public class UserServiceTests : EFTestsBase
         var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
         // Assert
-        userId.Should().NotBeNullOrEmpty();
-        var user = await Context.UsersAccounts.FirstOrDefaultAsync(u => u.Id == Guid.Parse(userId));
+        userId.Should().NotBe(Guid.Empty);
+        var user = await Context.UsersAccounts.FirstOrDefaultAsync(u => u.Id == userId);
         user.Should().NotBeNull();
         user!.Email.Should().Be(email.ToLowerInvariant());
         user.PasswordPhc.Should().Be(hashedPassword);
@@ -143,7 +143,7 @@ public class UserServiceTests : EFTestsBase
 
         var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
-        userId.Should().NotBeNullOrEmpty();
+        userId.Should().NotBe(Guid.Empty);
         (await Context.UsersAccounts.CountAsync(x => x.Email == email)).Should().Be(2);
         (await Context.UsersAccounts.CountAsync(x => x.Email == email && x.EmailVerified)).Should().Be(0);
     }
@@ -192,7 +192,7 @@ public class UserServiceTests : EFTestsBase
 
         var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
-        userId.Should().NotBeNullOrEmpty();
+        userId.Should().NotBe(Guid.Empty);
         (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone)).Should().Be(2);
         (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone && x.PhoneNumberVerified)).Should().Be(0);
     }
@@ -210,7 +210,7 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserIdByAsync("Id", userId.ToString(), CancellationToken.None);
 
-        result.Should().Be(userId.ToString());
+        result.Should().Be(userId);
     }
 
     [Test]
@@ -226,7 +226,7 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserIdByAsync("UserId", userId.ToString(), CancellationToken.None);
 
-        result.Should().Be(userId.ToString());
+        result.Should().Be(userId);
     }
 
     [Test]
@@ -246,18 +246,16 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.GetUserIdByAsync("Email", email, CancellationToken.None);
 
         // Assert
-        result.Should().Be(userId.ToString());
+        result.Should().Be(userId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMissingUserByEmail_WhenGetUserIdByAsync_ThenThrowsNotFoundExceptionAsync()
+    public async Task GivenMissingUserByEmail_WhenGetUserIdByAsync_ThenReturnsNullAsync()
     {
-        // Act & Assert
-        await FluentActions.Invoking(() => _userService.GetUserIdByAsync("Email", "nonexistent@example.com", CancellationToken.None))
-            .Should()
-            .ThrowAsync<NotFoundException>()
-            .WithMessage("*not found*");
+        var result = await _userService.GetUserIdByAsync("Email", "nonexistent@example.com", CancellationToken.None);
+
+        result.Should().BeNull();
     }
 
     [Test]
@@ -276,7 +274,7 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
 
-        result.Should().Be(userId.ToString());
+        result.Should().Be(userId);
     }
 
     [Test]
@@ -293,7 +291,7 @@ public class UserServiceTests : EFTestsBase
         });
         var result = await _userService.GetUserIdByAsync("PhoneNumber", phone, CancellationToken.None);
 
-        result.Should().Be(userId.ToString());
+        result.Should().Be(userId);
     }
 
 

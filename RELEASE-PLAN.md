@@ -45,8 +45,8 @@ Filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` — �
 ### 30. `ICodeService.SendAsync` `userId: string` (CR)
 `SendAsync(string userId)` vs `VerifyAsync(Guid)` — выровнять на `Guid`.
 
-### 31. `GetUserIdByAsync` nullability (CR)
-Документ: null-on-missing; сигнатура `Task<string>` без `?`.
+### ✅ 31. `GetUserIdByAsync` nullability (CR)
+Сигнатура `Task<Guid?>`; при отсутствии user — `null` (не `NotFoundException`). В `Bag` по-прежнему строка (`ToString()`).
 
 ### 32. `UserAccountGuard` → `InvalidOperationException` (CR)
 Conflict на email/phone бросает `InvalidOperationException` вместо Conflict/Validation.
@@ -180,6 +180,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 | ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
 | ✅ #27 Preferred unique index | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
+| ✅ #31 GetUserIdByAsync nullability | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
 
@@ -206,7 +207,7 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
-3. **CR M26, M29–M35, M39:** AuditEntityType; OAuth collision; SendAsync Guid; nullability; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+3. **CR M26, M29–M30, M32–M35, M39:** AuditEntityType; OAuth collision; SendAsync Guid; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
 4. **CR M36–M38:** решить принять/отклонить (password 128, ClientContext form, Audit PII) — сейчас конфликт с принятым/закрытым.
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
 6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.

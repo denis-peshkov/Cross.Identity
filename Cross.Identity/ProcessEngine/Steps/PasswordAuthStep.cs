@@ -36,7 +36,7 @@ internal sealed class PasswordAuthStep : IStep
         var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false)
             ?? throw new InvalidOperationException("User not found after password validation.");
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId);
+        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId.ToString());
 
         return StepResult.Ok(Next);
     }

@@ -45,25 +45,11 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        string userIdRaw;
-        try
-        {
-            userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        }
-        catch (NotFoundException ex)
+        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userId is not { } resolvedUserId || resolvedUserId == Guid.Empty)
         {
             Logger.LogInformation(
-                "Send code rejected for {Field} identity {Identity}: {Reason}",
-                selector.Field,
-                selector.Value,
-                ex.Message);
-            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
-        }
-
-        if (!Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
-        {
-            Logger.LogInformation(
-                "Send code rejected for {Field} identity {Identity}: resolved user id is missing or invalid.",
+                "Send code rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
                 selector.Value);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
@@ -73,7 +59,7 @@ internal sealed class SendCodeStep : IStep
         try
         {
             target = await CommunicationEndpoints
-                .ResolveOtpTargetAsync(userId, cancellationToken)
+                .ResolveOtpTargetAsync(resolvedUserId, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (ValidationException ex)
@@ -138,7 +124,7 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
-            await CodeService.SendAsync(msg, code, userIdRaw, ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, resolvedUserId.ToString(), ttl, cancellationToken).ConfigureAwait(false);
 
             if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
             {

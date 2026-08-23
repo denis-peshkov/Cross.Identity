@@ -41,25 +41,11 @@ internal sealed class VerifyCodeStep : IStep
         var selector = Selector.Resolve(ctx);
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        string userIdRaw;
-        try
-        {
-            userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        }
-        catch (NotFoundException ex)
+        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userId is not { } resolvedUserId || resolvedUserId == Guid.Empty)
         {
             Logger.LogInformation(
-                "Verify code rejected for {Field} identity {Identity}: {Reason}",
-                selector.Field,
-                selector.Value,
-                ex.Message);
-            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
-        }
-
-        if (string.IsNullOrWhiteSpace(userIdRaw) || !Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
-        {
-            Logger.LogInformation(
-                "Verify code rejected for {Field} identity {Identity}: resolved user id is missing or invalid.",
+                "Verify code rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
                 selector.Value);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
@@ -69,7 +55,7 @@ internal sealed class VerifyCodeStep : IStep
         try
         {
             target = await CommunicationEndpoints
-                .ResolveOtpTargetAsync(userId, cancellationToken)
+                .ResolveOtpTargetAsync(resolvedUserId, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (ValidationException ex)
@@ -92,7 +78,7 @@ internal sealed class VerifyCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        var ok = await CodeService.VerifyAsync(userId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
+        var ok = await CodeService.VerifyAsync(resolvedUserId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
         if (!ok)
         {
             Logger.LogInformation(
@@ -102,7 +88,7 @@ internal sealed class VerifyCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userIdRaw);
+        ctx.Set(BagKey.Qualify(Kind, UserIdKey), resolvedUserId.ToString());
         return StepResult.Ok(Next);
     }
 }

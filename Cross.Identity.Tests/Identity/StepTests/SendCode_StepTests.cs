@@ -61,7 +61,7 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -123,7 +123,7 @@ public class SendCode_StepTests
     public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
         var ttl = TimeSpan.FromMinutes(17);
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
@@ -181,7 +181,7 @@ public class SendCode_StepTests
     public async Task GivenTtlKeyNullInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -239,7 +239,7 @@ public class SendCode_StepTests
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -287,7 +287,7 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -351,7 +351,7 @@ public class SendCode_StepTests
         var email = _faker.Internet.Email();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new NotFoundException($"User with given Email '{email}' not found"));
+            .ReturnsAsync((Guid?)null);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -396,7 +396,7 @@ public class SendCode_StepTests
     public async Task GivenKnownUserWithoutOtpChannel_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -439,7 +439,7 @@ public class SendCode_StepTests
     public async Task GivenResetTemplate_WhenExecuteAsync_ThenUsesResetCopyAndEmailInUrlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userId);
@@ -501,7 +501,7 @@ public class SendCode_StepTests
         var userId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId.ToString());
+            .ReturnsAsync(userId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
