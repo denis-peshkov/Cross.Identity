@@ -3,6 +3,8 @@
 /// <summary>
 /// Verifies an OTP against the same delivery target used for send
 /// (<see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>) and writes the user id into the bag.
+/// Unknown identity / invalid code surface as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
+/// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
 internal sealed class VerifyCodeStep : IStep
 {
@@ -30,30 +32,74 @@ internal sealed class VerifyCodeStep : IStep
     /// <summary>Resolves OTP delivery target (must match send).</summary>
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
+    /// <summary>Logger (operational detail for rejected verifies).</summary>
+    public required ILogger Logger { get; init; }
+
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        var userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(userIdRaw) || !Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+        string userIdRaw;
+        try
         {
-            return StepResult.Fail(new KeyNotFoundException("User not found."));
+            userIdRaw = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        }
+        catch (NotFoundException ex)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        var target = await CommunicationEndpoints
-            .ResolveOtpTargetAsync(userId, cancellationToken)
-            .ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(userIdRaw) || !Guid.TryParse(userIdRaw, out var userId) || userId == Guid.Empty)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: resolved user id is missing or invalid.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveOtpTargetAsync(userId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException ex)
+        {
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
         if (!target.Channel.SupportsOtp())
         {
-            throw new ValidationException("Provide an email or a phone number to verify a code.");
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
+                selector.Field,
+                selector.Value,
+                target.Channel);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
         var ok = await CodeService.VerifyAsync(userId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
         if (!ok)
         {
-            return StepResult.Fail(new NotAuthorizedException("Invalid or expired verification code."));
+            Logger.LogInformation(
+                "Verify code rejected for {Field} identity {Identity}: invalid or expired verification code.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
         ctx.Set(BagKey.Qualify(Kind, UserIdKey), userIdRaw);

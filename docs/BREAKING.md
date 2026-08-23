@@ -357,23 +357,27 @@ Host must pass `UserId` in the bag (no ambient auth user).
 
 | Area | Was (1.10) | Now (2.0+) |
 |------|------------|------------|
-| `LockoutEnd` / `AccessFailedCount` / `LockoutEnabled` on `UsersAccounts` | columns only | enforced in `ValidatePasswordAsync` |
-| Failed password | always `false`, no counter | increments `AccessFailedCount`; at threshold sets `LockoutEnd` |
-| Locked account | ignored | password validation returns `false` until `LockoutEnd` elapses |
+| `LockoutEnd` / `AccessFailedCount` / `LockoutEnabled` on `UsersAccounts` | columns only | enforced in `ValidatePasswordAsync` **and** `ValidateCodeAsync` (Token code-login) |
+| Failed password / OTP code | always `false`, no counter | increments `AccessFailedCount`; at threshold sets `LockoutEnd` |
+| Locked account | ignored | password **and** code-login validation returns `false` until `LockoutEnd` elapses |
 | Successful login / `SetPasswordAsync` | no reset | clears counter and `LockoutEnd` |
 
 **Configuration (defaults):** `Lockout:LockoutEnabled` = `true`, `MaxFailedAccessAttempts` = `5`, `LockoutTimeout` = `00:15:00`. Set `MaxFailedAccessAttempts` to `0` to disable counting.
 
+**Note:** `VerifyCodeStep` (ForgotPassword / ResetPassword recovery) does not apply lockout — recovery remains available while the account is locked for sign-in.
+
 **Action:** configure `Authentication:Lockout` if defaults do not fit; ensure host still applies rate limits (lockout is per-account, not per-IP).
 
-### `sendCode`: unknown identity → `Invalid credentials.` (not `NotFound`)
+### `sendCode` / `verifyCode` / `getUserId`: unknown identity → `Invalid credentials.` (not `NotFound`)
 
 | Area | Was (1.10) | Now (2.0+) |
 |------|------------|------------|
 | `SendCodeStep` when user missing | `NotFoundException` (`User not found.` / `User with given … not found`) | `NotAuthorizedException` (`Invalid credentials.`) — no OTP sent |
-| Operational detail | exposed to client | `LogInformation` in `SendCodeStep` (field, identity, underlying reason) |
+| `SendCodeStep` when user exists but no OTP channel | `ValidationException` (distinct message) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
+| `VerifyCodeStep` when user missing / bad code / no OTP channel | `KeyNotFoundException` / distinct messages | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
+| `GetUserIdStep` when user missing | `KeyNotFoundException` (`User not found.`) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
 
-**Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode.
+**Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode / ResetPassword / GetUserId.
 
 ### Delivery channel: preferred / email / `LockChannelAsEmail`
 

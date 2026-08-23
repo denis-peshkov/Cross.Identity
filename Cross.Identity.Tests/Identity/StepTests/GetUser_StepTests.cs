@@ -4,6 +4,7 @@
 public class GetUser_StepTests
 {
     private Faker _faker = null!;
+    private Mock<ILogger> _logger = null!;
 
     private static Selector DefaultSelector { get; } = new();
 
@@ -11,6 +12,7 @@ public class GetUser_StepTests
     public void SetUp()
     {
         _faker = new Faker();
+        _logger = new Mock<ILogger>();
     }
 
     [Test]
@@ -29,6 +31,7 @@ public class GetUser_StepTests
             Kind = "lookup",
             UserService = users.Object,
             Selector = DefaultSelector,
+            Logger = _logger.Object,
             Next = "done"
         };
 
@@ -47,18 +50,19 @@ public class GetUser_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
     {
         var phone = _faker.Phone.PhoneNumber("+407########");
         var users = new Mock<IUserService>(MockBehavior.Strict);
         users.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
+            .ThrowsAsync(new NotFoundException("User with given PhoneNumber not found"));
 
         var step = new GetUserIdStep
         {
             Kind = "lookup",
             UserService = users.Object,
             Selector = DefaultSelector,
+            Logger = _logger.Object,
             Next = null
         };
 
@@ -69,7 +73,8 @@ public class GetUser_StepTests
         var res = await step.ExecuteAsync(bag, CancellationToken.None);
 
         res.Status.Should().Be(StepStatusEnum.Fail);
-        res.Error.Should().BeOfType<KeyNotFoundException>();
+        res.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
 
         users.VerifyAll();
     }

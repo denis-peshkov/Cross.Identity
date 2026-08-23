@@ -13,7 +13,7 @@ public enum FlowOperationEnum
     ChangePassword,
     ResetPassword,
     ForgotPassword,
-    GetUserId,
+    [Obsolete("Potential security issue here")] GetUserId,
     ExternalLogin,
     ExternalLoginCallback,
     ExternalLoginUnlink,

@@ -11,6 +11,7 @@ public class GetUser_StepFactoryTests
         var sc = new ServiceCollection();
         sc.AddScoped<IUserService>(p => Mock.Of<IUserService>());
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
+        sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         _sp = sc.BuildServiceProvider();
     }
 

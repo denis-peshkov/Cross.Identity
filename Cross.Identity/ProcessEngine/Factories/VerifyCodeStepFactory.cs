@@ -20,6 +20,7 @@ internal sealed class VerifyCodeStepFactory : IStepFactory
             CodeService            = sp.GetRequiredService<ICodeService>(),
             UserService            = sp.GetRequiredService<IUserService>(),
             CommunicationEndpoints = sp.GetRequiredService<ICommunicationEndpointService>(),
+            Logger                 = sp.GetRequiredService<ILoggerFactory>().CreateLogger(nameof(VerifyCodeStep)),
             Next                   = cfg.StrOpt("next")
         };
     }

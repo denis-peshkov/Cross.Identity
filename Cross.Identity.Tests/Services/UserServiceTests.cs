@@ -531,7 +531,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userId, Email = email, LockoutEnabled = true });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userId,
@@ -547,6 +547,122 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.ValidateCodeAsync("Email", email, "WRONG", CancellationToken.None);
         result.Should().BeFalse();
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLockedOutUser_WhenValidateCodeAsync_ThenReturnsFalseEvenWithValidCodeAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "locked-code@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            LockoutEnabled = true,
+            AccessFailedCount = 5,
+            LockoutEnd = DateTimeOffset.UtcNow.AddMinutes(30),
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        var result = await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None);
+
+        result.Should().BeFalse();
+        (await Context.EmailVerifications.SingleAsync(x => x.UserAccountId == userId)).UsedAt.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMaxFailedCodeAttempts_WhenValidateCodeAsyncRepeatedly_ThenLocksOutAccountAsync()
+    {
+        _options = CreateOptionsSnapshot(maxFailedAccessAttempts: 3, lockoutTimeout: TimeSpan.FromMinutes(10));
+        _userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            _communicationEndpoints,
+            _options.Object);
+
+        var userId = Guid.NewGuid();
+        var email = "code-lockout@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            LockoutEnabled = true,
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 10,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        for (var i = 0; i < 3; i++)
+        {
+            (await _userService.ValidateCodeAsync("Email", email, "WRONG", CancellationToken.None)).Should().BeFalse();
+        }
+
+        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        locked.AccessFailedCount.Should().Be(3);
+        locked.LockoutEnd.Should().NotBeNull();
+
+        (await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None)).Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenPriorFailedAttempts_WhenValidateCodeAsyncSucceeds_ThenResetsLockoutAsync()
+    {
+        var userId = Guid.NewGuid();
+        var email = "code-reset-lockout@example.com";
+        AddToDb(new UserAccountEntity
+        {
+            Id = userId,
+            Email = email,
+            LockoutEnabled = true,
+            AccessFailedCount = 2,
+        });
+        AddToDb(new EmailVerificationEntity
+        {
+            UserAccountId = userId,
+            UserAccount = null!,
+            Email = email,
+            TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
+            TokenLength = 6,
+            Attempts = 0,
+            MaxAttempts = 3,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+            CreatedAt = DateTime.UtcNow,
+        });
+
+        (await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None)).Should().BeTrue();
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        user.AccessFailedCount.Should().Be(0);
+        user.LockoutEnd.Should().BeNull();
     }
 
     [Test]

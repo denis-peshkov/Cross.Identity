@@ -2,6 +2,8 @@
 
 /// <summary>
 /// Step that looks up a user and publishes their identifier into the process context (<see cref="Bag"/>).
+/// Unknown identity surfaces as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
+/// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
 internal sealed class GetUserIdStep : IStep
 {
@@ -17,14 +19,37 @@ internal sealed class GetUserIdStep : IStep
     /// <summary>Identity selector (bag keys for field name + value).</summary>
     public required Selector Selector { get; init; }
 
+    /// <summary>Logger (operational detail for rejected lookups).</summary>
+    public required ILogger Logger { get; init; }
+
     /// <inheritdoc />
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var selector = Selector.Resolve(ctx);
 
-        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (userId is null)
-            return StepResult.Fail(new KeyNotFoundException("User not found."));
+        string userId;
+        try
+        {
+            userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        }
+        catch (NotFoundException ex)
+        {
+            Logger.LogInformation(
+                "Get user id rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            Logger.LogInformation(
+                "Get user id rejected for {Field} identity {Identity}: resolved user id is missing.",
+                selector.Field,
+                selector.Value);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
 
         ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
 

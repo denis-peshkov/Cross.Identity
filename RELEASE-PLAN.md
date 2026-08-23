@@ -46,15 +46,15 @@
 
 **Исправлено (2.0):** `ValidateCodeAsync` — `IsLockedOut` → отказ; неверный код → `RecordFailedAccess`; успех → `Reset`. (`VerifyCodeStep` / ForgotPassword без изменений — recovery отдельно от code-login.)
 
-### 8. User enumeration — разные ответы шагов
-| Шаг | Поведение |
-|-----|-----------|
-| `SendCodeStep` | unknown user → `Invalid credentials.` |
-| `SendCodeStep` | known user без channel → `ValidationException` (другой текст) |
-| `VerifyCodeStep` / `GetUserIdStep` | `NotFoundException` / «User not found» |
-| `main.GetUserId` | явный oracle существования |
+### 8. ~~User enumeration — разные ответы шагов~~ ✅ закрыто (кроме oracle `GetUserId`)
+| Шаг | Было | Сейчас |
+|-----|------|--------|
+| `SendCodeStep` | unknown → `Invalid credentials.` | ✅ |
+| `SendCodeStep` | known без channel → `ValidationException` | ✅ `Invalid credentials.` + log |
+| `VerifyCodeStep` / `GetUserIdStep` | `NotFound` / «User not found» | ✅ `Invalid credentials.` + log |
+| `main.GetUserId` | oracle существования | **остаётся** (успех = `{ user_id }`) — продуктовое решение |
 
-**Stock flows:** ForgotPassword, RequestCode, ResetPassword, GetUserId.
+**Исправлено (2.0):** единый клиентский ответ на reject identity/channel; детали в Information-логе. Публичный lookup `GetUserId` по-прежнему раскрывает существование при успехе.
 
 ### 9. Messenger preferred → SMS с тем же `Address`
 `ResolveOtpTargetAsync` → `ToEmailOrSms()`: Telegram/Viber/WhatsApp мапится в `Sms`, address не переписывается на E.164 phone.

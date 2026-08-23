@@ -12,6 +12,7 @@ public class VerifyCode_StepFactoryTests
         sc.AddScoped<ICodeService>(p => Mock.Of<ICodeService>());
         sc.AddScoped<IUserService>(_ => Mock.Of<IUserService>());
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
+        sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         _sp = sc.BuildServiceProvider();
     }
 

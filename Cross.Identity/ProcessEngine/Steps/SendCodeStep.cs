@@ -3,6 +3,8 @@
 /// <summary>
 /// Step for sending a one-time code to the user.
 /// Delivery channel/address come from <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>.
+/// Unknown identity / missing OTP channel surface as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
+/// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
 internal sealed class SendCodeStep : IStep
 {
@@ -67,12 +69,31 @@ internal sealed class SendCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        var target = await CommunicationEndpoints
-            .ResolveOtpTargetAsync(userId, cancellationToken)
-            .ConfigureAwait(false);
+        DeliveryTarget target;
+        try
+        {
+            target = await CommunicationEndpoints
+                .ResolveOtpTargetAsync(userId, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (ValidationException ex)
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: {Reason}",
+                selector.Field,
+                selector.Value,
+                ex.Message);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
+        }
+
         if (!target.Channel.SupportsOtp())
         {
-            throw new ValidationException("Provide an email or a phone number to send a code.");
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
+                selector.Field,
+                selector.Value,
+                target.Channel);
+            return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
         var ttl = ResolveTtl(ctx);

@@ -8,6 +8,8 @@ public class VerifyCode_StepTests
     private Mock<IUserService> _userService = null!;
     private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
 
+    private Mock<ILogger> _logger = null!;
+
     private static Selector DefaultSelector { get; } = new();
 
     [SetUp]
@@ -17,7 +19,25 @@ public class VerifyCode_StepTests
         _codeService = new Mock<ICodeService>();
         _userService = new Mock<IUserService>();
         _communicationEndpoints = new Mock<ICommunicationEndpointService>();
+        _logger = new Mock<ILogger>();
     }
+
+    private VerifyCodeStep CreateStep(
+        string codeKey = "collectForm.Code",
+        string? userIdKey = "UserId",
+        string? next = "nextStep")
+        => new()
+        {
+            Kind = "verifyCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Logger = _logger.Object,
+            Selector = DefaultSelector,
+            CodeKey = codeKey,
+            UserIdKey = userIdKey ?? "UserId",
+            Next = next,
+        };
 
     private void SetupOtpTarget(ChannelEnum channel, string address)
     {
@@ -40,17 +60,7 @@ public class VerifyCode_StepTests
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var step = new VerifyCodeStep
-        {
-            Kind = "verifyCode",
-            CodeService = _codeService.Object,
-            UserService = _userService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Selector = DefaultSelector,
-            CodeKey = "collectForm.Code",
-            UserIdKey = "UserId",
-            Next = "nextStep"
-        };
+        var step = CreateStep();
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Email");
@@ -80,16 +90,7 @@ public class VerifyCode_StepTests
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
-        var step = new VerifyCodeStep
-        {
-            Kind = "verifyCode",
-            CodeService = _codeService.Object,
-            UserService = _userService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Selector = DefaultSelector,
-            CodeKey = "collectForm.Code",
-            Next = null
-        };
+        var step = CreateStep(next: null);
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Email");
@@ -99,29 +100,21 @@ public class VerifyCode_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Fail);
-        result.Error.Should().BeOfType<NotAuthorizedException>();
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsFailAsync()
+    public async Task GivenUserNotFound_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
     {
         var email = _faker.Internet.Email();
         var code = "ABC123";
 
         _userService.Setup(u => u.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((string?)null);
+            .ThrowsAsync(new NotFoundException("User with given Email not found"));
 
-        var step = new VerifyCodeStep
-        {
-            Kind = "verifyCode",
-            CodeService = _codeService.Object,
-            UserService = _userService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Selector = DefaultSelector,
-            CodeKey = "collectForm.Code",
-            Next = null
-        };
+        var step = CreateStep(next: null);
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Email");
@@ -131,7 +124,8 @@ public class VerifyCode_StepTests
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Fail);
-        result.Error.Should().BeOfType<KeyNotFoundException>();
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
         _codeService.Verify(
             c => c.VerifyAsync(It.IsAny<Guid>(), It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -151,16 +145,7 @@ public class VerifyCode_StepTests
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Sms, phone, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var step = new VerifyCodeStep
-        {
-            Kind = "verifyCode",
-            CodeService = _codeService.Object,
-            UserService = _userService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Selector = DefaultSelector,
-            CodeKey = "Code",
-            Next = null
-        };
+        var step = CreateStep(codeKey: "Code", next: null);
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "PhoneNumber");
@@ -189,17 +174,7 @@ public class VerifyCode_StepTests
         _codeService.Setup(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        var step = new VerifyCodeStep
-        {
-            Kind = "verifyCode",
-            CodeService = _codeService.Object,
-            UserService = _userService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Selector = DefaultSelector,
-            CodeKey = "collectForm.Code",
-            UserIdKey = "UserId",
-            Next = null
-        };
+        var step = CreateStep(next: null);
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "UserName");

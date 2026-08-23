@@ -115,7 +115,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | Step | kind | Details |
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `getUserId` |
-| `getUserId` | getUserId | resolves via `Selector`; writes `getUserId.UserId`. → `collectResult` |
+| `getUserId` | getUserId | resolves via `Selector`; writes `getUserId.UserId`. Unknown → `Invalid credentials.` (logged). → `collectResult` |
 | `collectResult` | collectResult | `user_id = getUserId.UserId`. `next: null` |
 
 ---
@@ -336,11 +336,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email, including unconfirmed for email confirmation). `reset` also adds email/phone to the action URL. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
-| `verifyCode` | Verify OTP and write `UserId` to the bag |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email, including unconfirmed for email confirmation). `reset` also adds email/phone to the action URL. Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `verifyCode` | Verify OTP and write `UserId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `getUserId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `passwordAuth` | Verify identity + password; writes `UserId` |
 | `resetPassword` | Set new password (identity from `Selector`) |
-| `getUserId` | Find user, return `UserId` |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
 | `externalLoginInitiate` | OAuth redirect URL |

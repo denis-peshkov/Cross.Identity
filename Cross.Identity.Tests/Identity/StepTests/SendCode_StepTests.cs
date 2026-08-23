@@ -390,6 +390,50 @@ public class SendCode_StepTests
             s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenKnownUserWithoutOtpChannel_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userId = Guid.NewGuid().ToString();
+
+        _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userId);
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ValidationException("No preferred verified communication channel and no email."));
+
+        var step = new SendCodeStep
+        {
+            Kind = "sendCode",
+            CodeService = _codeService.Object,
+            UserService = _userService.Object,
+            Environment = _environment.Object,
+            ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Configuration = _defaultConfiguration,
+            Logger = _logger.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            Template = "verify",
+            Subject = "Verification Code",
+            Selector = DefaultSelector,
+            Next = null
+        };
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
     [Test]
     [Category(TestCategory.UNIT)]
     public async Task GivenResetTemplate_WhenExecuteAsync_ThenUsesResetCopyAndEmailInUrlAsync()
