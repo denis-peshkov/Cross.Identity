@@ -18,13 +18,13 @@ public class CreateUser_StepTests
         // Arrange
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -49,7 +49,7 @@ public class CreateUser_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("sendCode");
-        bag.Get<string>("createUser.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&
@@ -65,13 +65,13 @@ public class CreateUser_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -93,7 +93,7 @@ public class CreateUser_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.IsAny<IDictionary<string, object?>>(),
             It.IsAny<CancellationToken>()), Times.Once);
@@ -105,13 +105,13 @@ public class CreateUser_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         var userService = new Mock<IUserService>(MockBehavior.Strict);
         userService.Setup(s => s.CreateUserAsync(
                 It.IsAny<IDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new CreateUserStep
         {
@@ -134,7 +134,7 @@ public class CreateUser_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("createUser.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("createUser.UserId").Should().Be(userAccountId.ToString());
         userService.Verify(s => s.CreateUserAsync(
             It.Is<IDictionary<string, object?>>(m =>
                 m.ContainsKey("Email") &&

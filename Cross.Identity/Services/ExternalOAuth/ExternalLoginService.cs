@@ -37,7 +37,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     public async Task<string> InitiateAsync(
         string provider,
         string? returnUrl,
-        Guid? userId,
+        Guid? userAccountId,
         string? refreshToken,
         CancellationToken cancellationToken)
     {
@@ -68,16 +68,16 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new NotFoundException($"Provider '{provider}' is not enabled.");
         }
 
-        if (userId.HasValue)
+        if (userAccountId.HasValue)
         {
-            if (userId.Value == Guid.Empty)
+            if (userAccountId.Value == Guid.Empty)
             {
                 throw new ValidationException("UserId is required for account linking.");
             }
 
             var accountExists = await _identityContext.UsersAccounts
                 .AsNoTracking()
-                .AnyAsync(x => x.Id == userId.Value, cancellationToken)
+                .AnyAsync(x => x.Id == userAccountId.Value, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!accountExists)
@@ -86,12 +86,12 @@ internal sealed class ExternalLoginService : IExternalLoginService
             }
 
             await _jwtTokenService
-                .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId.Value, cancellationToken)
+                .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId.Value, cancellationToken)
                 .ConfigureAwait(false);
 
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
-                .AnyAsync(x => x.UserAccountId == userId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
+                .AnyAsync(x => x.UserAccountId == userAccountId.Value && x.ProviderId == providerEntity.Id, cancellationToken)
                 .ConfigureAwait(false);
 
             if (alreadyLinked)
@@ -106,7 +106,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = Guid.NewGuid().ToString("N"),
             Provider = providerEntity.Name,
             ReturnUrl = returnUrl,
-            UserId = userId,
+            UserAccountId = userAccountId,
         };
 
         await _identityContext.ExternalLoginStates.AddAsync(new ExternalLoginStateEntity
@@ -115,7 +115,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = payload.Nonce,
             Provider = payload.Provider,
             ReturnUrl = payload.ReturnUrl,
-            UserAccountId = payload.UserId,
+            UserAccountId = payload.UserAccountId,
             CreatedAt = now,
             ExpiresAt = now.Add(_options.StateLifetime),
         }, cancellationToken).ConfigureAwait(false);
@@ -139,10 +139,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         var payload = await ResolveStateAsync(state, cancellationToken).ConfigureAwait(false);
-        var isLinking = payload.UserId.HasValue
+        var isLinking = payload.UserAccountId.HasValue
             || IsExternalLoginLinkReturnUrl(payload.ReturnUrl);
 
-        if (isLinking && !payload.UserId.HasValue)
+        if (isLinking && !payload.UserAccountId.HasValue)
         {
             throw new NotAuthorizedException("Authentication is required to link an external login.");
         }
@@ -171,38 +171,38 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new InvalidOperationException("External provider user id was not returned.");
         }
 
-        var userId = await ResolveOrCreateUserAsync(
+        var userAccountId = await ResolveOrCreateUserAsync(
             providerEntity,
             profile,
-            payload.UserId,
+            payload.UserAccountId,
             cancellationToken).ConfigureAwait(false);
 
-        await UserAccountGuard.EnsureIsActiveAsync(_identityContext, userId, cancellationToken).ConfigureAwait(false);
+        await UserAccountGuard.EnsureIsActiveAsync(_identityContext, userAccountId, cancellationToken).ConfigureAwait(false);
 
         if (_userProvisioner is not null)
         {
-            await _userProvisioner.ProvisionAsync(userId, profile, cancellationToken).ConfigureAwait(false);
+            await _userProvisioner.ProvisionAsync(userAccountId, profile, cancellationToken).ConfigureAwait(false);
         }
 
-        await UpsertExternalLoginAsync(providerEntity, userId, profile, cancellationToken).ConfigureAwait(false);
+        await UpsertExternalLoginAsync(providerEntity, userAccountId, profile, cancellationToken).ConfigureAwait(false);
 
-        return new ExternalLoginCompletion(userId, isLinking);
+        return new ExternalLoginCompletion(userAccountId, isLinking);
     }
 
     /// <inheritdoc/>
     public async Task UnlinkAsync(
         string provider,
-        Guid userId,
+        Guid userAccountId,
         string refreshToken,
         ClientContext clientContext,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
-        if (userId == Guid.Empty)
+        if (userAccountId == Guid.Empty)
             throw new ValidationException("UserId is required to unlink an external login.");
 
         await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
             .ConfigureAwait(false);
 
         var providerEntity = await _identityContext.Providers
@@ -215,18 +215,18 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         var login = await _identityContext.UsersExternalLogins
             .FirstOrDefaultAsync(
-                x => x.UserAccountId == userId && x.ProviderId == providerEntity.Id,
+                x => x.UserAccountId == userAccountId && x.ProviderId == providerEntity.Id,
                 cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException($"Provider '{provider}' is not linked to the current user.");
 
         var account = await _identityContext.UsersAccounts
-            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == userAccountId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException("Current user account was not found.");
 
         var remainingExternalLogins = await _identityContext.UsersExternalLogins
-            .CountAsync(x => x.UserAccountId == userId && x.Id != login.Id, cancellationToken)
+            .CountAsync(x => x.UserAccountId == userAccountId && x.Id != login.Id, cancellationToken)
             .ConfigureAwait(false);
 
         var hasPassword = !string.IsNullOrWhiteSpace(account.PasswordPhc);
@@ -240,33 +240,33 @@ internal sealed class ExternalLoginService : IExternalLoginService
         account.SecurityStamp = Guid.NewGuid();
 
         await _jwtTokenService
-            .RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, clientContext, cancellationToken)
+            .RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, clientContext, cancellationToken)
             .ConfigureAwait(false);
 
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
         _logger.LogInformation(
-            "Unlinked external login. UserId={UserId} Provider={Provider}",
-            userId,
+            "Unlinked external login. UserId={UserAccountId} Provider={Provider}",
+            userAccountId,
             providerEntity.Name);
     }
 
     /// <inheritdoc/>
     public async Task<ExternalLoginOverviewDto> GetAllAsync(
-        Guid userId,
+        Guid userAccountId,
         string refreshToken,
         CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (userAccountId == Guid.Empty)
             throw new ValidationException("UserId is required to list external logins.");
 
         await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
             .ConfigureAwait(false);
 
         var account = await _identityContext.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => new { x.Email })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false)
@@ -281,7 +281,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         var connectedLogins = await _identityContext.UsersExternalLogins
             .AsNoTracking()
-            .Where(x => x.UserAccountId == userId)
+            .Where(x => x.UserAccountId == userAccountId)
             .Select(x => new { x.ProviderId, x.ProviderEmail, x.AvatarUrl, x.ProfileUrl })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -440,7 +440,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             Nonce = entity.Nonce,
             Provider = entity.Provider,
             ReturnUrl = entity.ReturnUrl,
-            UserId = entity.UserAccountId,
+            UserAccountId = entity.UserAccountId,
         };
 
         _identityContext.ExternalLoginStates.Remove(entity);
@@ -460,7 +460,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private async Task<Guid> ResolveOrCreateUserAsync(
         ProviderEntity providerEntity,
         ExternalOAuthProfile profile,
-        Guid? linkUserId,
+        Guid? linkUserAccountId,
         CancellationToken cancellationToken)
     {
         var existingLink = await _identityContext.UsersExternalLogins
@@ -469,23 +469,23 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .Select(x => x.UserAccountId)
             .FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
 
-        if (linkUserId.HasValue)
+        if (linkUserAccountId.HasValue)
         {
             var accountExists = await _identityContext.UsersAccounts
                 .AsNoTracking()
-                .AnyAsync(x => x.Id == linkUserId.Value, cancellationToken).ConfigureAwait(false);
+                .AnyAsync(x => x.Id == linkUserAccountId.Value, cancellationToken).ConfigureAwait(false);
 
             if (!accountExists)
             {
                 throw new NotFoundException("Current user account was not found.");
             }
 
-            if (existingLink != Guid.Empty && existingLink != linkUserId.Value)
+            if (existingLink != Guid.Empty && existingLink != linkUserAccountId.Value)
             {
                 throw new ValidationException("This external account is already linked to another user.");
             }
 
-            return linkUserId.Value;
+            return linkUserAccountId.Value;
         }
 
         if (existingLink != Guid.Empty)
@@ -496,14 +496,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
         if (!string.IsNullOrWhiteSpace(normalizedEmail))
         {
-            var verifiedUserId = await _identityContext.UsersAccounts
+            var verifiedUserAccountId = await _identityContext.UsersAccounts
                 .AsNoTracking()
                 .Where(x => x.Email == normalizedEmail && x.EmailVerified)
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            if (verifiedUserId != Guid.Empty)
+            if (verifiedUserAccountId != Guid.Empty)
             {
                 if (!profile.EmailVerified)
                 {
@@ -511,7 +511,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                         "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
                 }
 
-                return verifiedUserId;
+                return verifiedUserAccountId;
             }
 
             if (!profile.EmailVerified)
@@ -534,14 +534,14 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     private async Task<Guid> CreateUserAsync(ExternalOAuthProfile profile, CancellationToken cancellationToken)
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
         var now = DateTime.UtcNow;
         var userName = profile.Email ?? profile.DisplayName ?? profile.ProviderUserId;
 
         var account = new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = normalizedEmail,
             UserName = userName,
             NormalizedUserName = userName.Trim().ToLowerInvariant(),
@@ -560,12 +560,12 @@ internal sealed class ExternalLoginService : IExternalLoginService
         await _identityContext.UsersAccounts.AddAsync(account, cancellationToken).ConfigureAwait(false);
         await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        return userId;
+        return userAccountId;
     }
 
     private async Task UpsertExternalLoginAsync(
         ProviderEntity providerEntity,
-        Guid userId,
+        Guid userAccountId,
         ExternalOAuthProfile profile,
         CancellationToken cancellationToken)
     {
@@ -576,7 +576,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         if (existing is not null)
         {
-            if (existing.UserAccountId != userId)
+            if (existing.UserAccountId != userAccountId)
             {
                 throw new ValidationException("This external account is already linked to another user.");
             }
@@ -586,13 +586,13 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.AvatarUrl = profile.AvatarUrl;
             existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await SyncProviderEmailEndpointAsync(userId, existing.Id, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+            await SyncProviderEmailEndpointAsync(userAccountId, existing.Id, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
             return;
         }
 
         var conflict = await _identityContext.UsersExternalLogins
             .AsNoTracking()
-            .AnyAsync(x => x.UserAccountId == userId && x.ProviderId == providerEntity.Id, cancellationToken).ConfigureAwait(false);
+            .AnyAsync(x => x.UserAccountId == userAccountId && x.ProviderId == providerEntity.Id, cancellationToken).ConfigureAwait(false);
 
         if (conflict)
         {
@@ -602,7 +602,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         await _identityContext.UsersExternalLogins.AddAsync(new UserExternalLoginEntity
         {
             Id = Guid.NewGuid(),
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             ProviderId = providerEntity.Id,
             ProviderEntity = null!,
@@ -615,7 +615,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }, cancellationToken).ConfigureAwait(false);
 
         var account = await _identityContext.UsersAccounts
-            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken).ConfigureAwait(false);
+            .FirstOrDefaultAsync(x => x.Id == userAccountId, cancellationToken).ConfigureAwait(false);
 
         if (account is not null)
         {
@@ -631,11 +631,11 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .FirstAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        await SyncProviderEmailEndpointAsync(userId, loginId, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+        await SyncProviderEmailEndpointAsync(userAccountId, loginId, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
     }
 
     private async Task SyncProviderEmailEndpointAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid externalLoginId,
         string? providerEmail,
         bool emailVerified,
@@ -648,7 +648,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         await _communicationEndpoints
             .UpsertAsync(
-                userId,
+                userAccountId,
                 ChannelEnum.Email,
                 providerEmail,
                 CommunicationEndpointSource.ExternalProvider,

@@ -20,10 +20,10 @@ internal sealed class CommunicationEndpointsGetAllStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
 
-        var endpoints = await CommunicationEndpoints.GetAllAsync(userId, refreshToken, cancellationToken).ConfigureAwait(false);
+        var endpoints = await CommunicationEndpoints.GetAllAsync(userAccountId, refreshToken, cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Endpoints"), endpoints);
         return StepResult.Ok(Next);
     }

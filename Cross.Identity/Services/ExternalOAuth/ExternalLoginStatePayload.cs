@@ -8,5 +8,5 @@ internal sealed class ExternalLoginStatePayload
 
     public string? ReturnUrl { get; init; }
 
-    public Guid? UserId { get; init; }
+    public Guid? UserAccountId { get; init; }
 }

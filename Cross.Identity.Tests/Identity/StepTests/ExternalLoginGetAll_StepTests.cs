@@ -15,7 +15,7 @@ public class ExternalLoginGetAll_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenOverview_WhenExecuteAsync_ThenWritesAccountEmailAndProvidersAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         var overview = new ExternalLoginOverviewDto
         {
@@ -33,7 +33,7 @@ public class ExternalLoginGetAll_StepTests
             },
         };
         _externalLoginService
-            .Setup(s => s.GetAllAsync(userId, refreshToken, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetAllAsync(userAccountId, refreshToken, It.IsAny<CancellationToken>()))
             .ReturnsAsync(overview);
 
         var step = new ExternalLoginGetAllStep
@@ -46,7 +46,7 @@ public class ExternalLoginGetAll_StepTests
         };
 
         var bag = new Bag();
-        bag.Set("externalLoginGetAll.UserId", userId);
+        bag.Set("externalLoginGetAll.UserId", userAccountId);
         bag.Set("externalLoginGetAll.RefreshToken", refreshToken);
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -57,7 +57,7 @@ public class ExternalLoginGetAll_StepTests
             .Should()
             .BeEquivalentTo(overview.Providers);
         _externalLoginService.Verify(
-            s => s.GetAllAsync(userId, refreshToken, It.IsAny<CancellationToken>()),
+            s => s.GetAllAsync(userAccountId, refreshToken, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

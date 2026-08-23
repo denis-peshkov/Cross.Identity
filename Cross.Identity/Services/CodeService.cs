@@ -29,11 +29,11 @@ internal sealed class CodeService : ICodeService
     }
 
     /// <inheritdoc />
-    public async Task SendAsync(NotificationMessage msg, string code, Guid userId, TimeSpan ttl, CancellationToken cancellationToken)
+    public async Task SendAsync(NotificationMessage msg, string code, Guid userAccountId, TimeSpan ttl, CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (userAccountId == Guid.Empty)
         {
-            throw new ArgumentException("Invalid user id", nameof(userId));
+            throw new ArgumentException("Invalid user id", nameof(userAccountId));
         }
 
         var destination = msg.Destination.Trim();
@@ -48,7 +48,7 @@ internal sealed class CodeService : ICodeService
 
         var normalizedDestination = msg.Channel.NormalizeAddress(destination);
 
-        await EnsureOtpSendAllowedAsync(userId, msg.Channel, normalizedDestination, now, cancellationToken)
+        await EnsureOtpSendAllowedAsync(userAccountId, msg.Channel, normalizedDestination, now, cancellationToken)
             .ConfigureAwait(false);
 
         switch (msg.Channel)
@@ -64,7 +64,7 @@ internal sealed class CodeService : ICodeService
                 var emailEntity = new EmailVerificationEntity
                 {
                     Id = Guid.NewGuid(),
-                    UserAccountId = userId,
+                    UserAccountId = userAccountId,
                     UserAccount = null!,
                     Email = normalizedDestination,
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
@@ -88,7 +88,7 @@ internal sealed class CodeService : ICodeService
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     Id = Guid.NewGuid(),
-                    UserAccountId = userId,
+                    UserAccountId = userAccountId,
                     UserAccount = null!,
                     PhoneNumber = normalizedDestination,
                     CodeHash = CodeGeneratorHelper.GenerateHash(code),
@@ -113,7 +113,7 @@ internal sealed class CodeService : ICodeService
 
     /// <inheritdoc />
     public async Task<bool> VerifyAsync(
-        Guid userId,
+        Guid userAccountId,
         ChannelEnum channel,
         string identity,
         string code,
@@ -121,7 +121,7 @@ internal sealed class CodeService : ICodeService
     {
         ArgumentNullException.ThrowIfNull(identity);
         ArgumentNullException.ThrowIfNull(code);
-        if (userId == Guid.Empty)
+        if (userAccountId == Guid.Empty)
         {
             return false;
         }
@@ -139,9 +139,9 @@ internal sealed class CodeService : ICodeService
         switch (channel)
         {
             case ChannelEnum.Email:
-                return await VerifyEmailAsync(userId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
+                return await VerifyEmailAsync(userAccountId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             case ChannelEnum.Sms:
-                return await VerifyPhoneAsync(userId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
+                return await VerifyPhoneAsync(userAccountId, normalizedIdentity, code, now, cancellationToken).ConfigureAwait(false);
             default:
                 _logger.LogWarning("Unsupported channel for code verification: {Channel}", channel);
                 return false;
@@ -149,7 +149,7 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task<bool> VerifyEmailAsync(
-        Guid userId,
+        Guid userAccountId,
         string normalizedEmail,
         string code,
         DateTime now,
@@ -157,7 +157,7 @@ internal sealed class CodeService : ICodeService
     {
         // Latest active email verification for this user + identity (hash is checked below).
         var entity = await _context.EmailVerifications
-            .Where(x => x.UserAccountId == userId
+            .Where(x => x.UserAccountId == userAccountId
                         && x.Email == normalizedEmail
                         && x.ExpiresAt >= now
                         && x.UsedAt == null)
@@ -172,7 +172,7 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
-        if (!await IsUserAccountActiveAsync(userId, cancellationToken).ConfigureAwait(false))
+        if (!await IsUserAccountActiveAsync(userAccountId, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("Email verification rejected for disabled account {Email}", normalizedEmail);
             return false;
@@ -214,7 +214,7 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task<bool> VerifyPhoneAsync(
-        Guid userId,
+        Guid userAccountId,
         string normalizedPhone,
         string code,
         DateTime now,
@@ -222,7 +222,7 @@ internal sealed class CodeService : ICodeService
     {
         // Latest unused phone verification for this user + identity (hash is checked below).
         var entity = await _context.PhoneVerifications
-            .Where(x => x.UserAccountId == userId
+            .Where(x => x.UserAccountId == userAccountId
                         && x.PhoneNumber == normalizedPhone
                         && x.ExpiresAt >= now
                         && x.UsedAt == null)
@@ -237,7 +237,7 @@ internal sealed class CodeService : ICodeService
             return false;
         }
 
-        if (!await IsUserAccountActiveAsync(userId, cancellationToken).ConfigureAwait(false))
+        if (!await IsUserAccountActiveAsync(userAccountId, cancellationToken).ConfigureAwait(false))
         {
             _logger.LogWarning("PhoneNumber verification rejected for disabled account {PhoneNumber}", normalizedPhone);
             return false;
@@ -279,7 +279,7 @@ internal sealed class CodeService : ICodeService
     }
 
     private async Task EnsureOtpSendAllowedAsync(
-        Guid userId,
+        Guid userAccountId,
         ChannelEnum channel,
         string normalizedDestination,
         DateTime now,
@@ -299,7 +299,7 @@ internal sealed class CodeService : ICodeService
             {
                 var lastCreatedAt = await _context.EmailVerifications
                     .AsNoTracking()
-                    .Where(x => x.UserAccountId == userId && x.Email == normalizedDestination)
+                    .Where(x => x.UserAccountId == userAccountId && x.Email == normalizedDestination)
                     .OrderByDescending(x => x.CreatedAt)
                     .Select(x => (DateTime?)x.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken)
@@ -308,8 +308,8 @@ internal sealed class CodeService : ICodeService
                 if (lastCreatedAt.HasValue && now - lastCreatedAt.Value < limits.Cooldown)
                 {
                     _logger.LogInformation(
-                        "OTP send cooldown for user {UserId} email {Email}: last send at {LastSendAt}",
-                        userId,
+                        "OTP send cooldown for user {UserAccountId} email {Email}: last send at {LastSendAt}",
+                        userAccountId,
                         normalizedDestination,
                         lastCreatedAt.Value);
                     throw new ValidationException("Please wait before requesting another code.");
@@ -322,7 +322,7 @@ internal sealed class CodeService : ICodeService
                 var count = await _context.EmailVerifications
                     .AsNoTracking()
                     .CountAsync(
-                        x => x.UserAccountId == userId
+                        x => x.UserAccountId == userAccountId
                              && x.Email == normalizedDestination
                              && x.CreatedAt >= since,
                         cancellationToken)
@@ -331,8 +331,8 @@ internal sealed class CodeService : ICodeService
                 if (count >= limits.MaxSendsPerWindow)
                 {
                     _logger.LogInformation(
-                        "OTP send window limit for user {UserId} email {Email}: {Count} sends since {Since}",
-                        userId,
+                        "OTP send window limit for user {UserAccountId} email {Email}: {Count} sends since {Since}",
+                        userAccountId,
                         normalizedDestination,
                         count,
                         since);
@@ -349,7 +349,7 @@ internal sealed class CodeService : ICodeService
             {
                 var lastCreatedAt = await _context.PhoneVerifications
                     .AsNoTracking()
-                    .Where(x => x.UserAccountId == userId && x.PhoneNumber == normalizedDestination)
+                    .Where(x => x.UserAccountId == userAccountId && x.PhoneNumber == normalizedDestination)
                     .OrderByDescending(x => x.CreatedAt)
                     .Select(x => (DateTime?)x.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken)
@@ -358,8 +358,8 @@ internal sealed class CodeService : ICodeService
                 if (lastCreatedAt.HasValue && now - lastCreatedAt.Value < limits.Cooldown)
                 {
                     _logger.LogInformation(
-                        "OTP send cooldown for user {UserId} phone {Phone}: last send at {LastSendAt}",
-                        userId,
+                        "OTP send cooldown for user {UserAccountId} phone {Phone}: last send at {LastSendAt}",
+                        userAccountId,
                         normalizedDestination,
                         lastCreatedAt.Value);
                     throw new ValidationException("Please wait before requesting another code.");
@@ -372,7 +372,7 @@ internal sealed class CodeService : ICodeService
                 var count = await _context.PhoneVerifications
                     .AsNoTracking()
                     .CountAsync(
-                        x => x.UserAccountId == userId
+                        x => x.UserAccountId == userAccountId
                              && x.PhoneNumber == normalizedDestination
                              && x.CreatedAt >= since,
                         cancellationToken)
@@ -381,8 +381,8 @@ internal sealed class CodeService : ICodeService
                 if (count >= limits.MaxSendsPerWindow)
                 {
                     _logger.LogInformation(
-                        "OTP send window limit for user {UserId} phone {Phone}: {Count} sends since {Since}",
-                        userId,
+                        "OTP send window limit for user {UserAccountId} phone {Phone}: {Count} sends since {Since}",
+                        userAccountId,
                         normalizedDestination,
                         count,
                         since);
@@ -424,11 +424,11 @@ internal sealed class CodeService : ICodeService
         }
     }
 
-    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<bool> IsUserAccountActiveAsync(Guid userAccountId, CancellationToken cancellationToken)
     {
         return await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => x.IsActive)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);

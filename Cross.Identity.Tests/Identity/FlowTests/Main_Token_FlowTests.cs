@@ -20,7 +20,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
         // Configure service provider to return requested services
         // Mock IUserService to controllably return successful authentication
         var userServiceMock = new Mock<IUserService>();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         userServiceMock
             .Setup(s => s.ValidatePasswordAsync("Email", "test@example.com", "P@ssw0rd!", It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
@@ -31,7 +31,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.GetUserByAsync("Email", "test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserAccountEntity
             {
-                Id = userId,
+                Id = userAccountId,
                 Email = "test@example.com",
             });
         RegisterToServiceProvider<IUserService, IUserService>(userServiceMock.Object);

@@ -36,9 +36,9 @@ internal sealed class CreateUserStep : IStep
                 userFields[userField] = value;
         }
 
-        var userId = await UserService.CreateUserAsync(userFields, cancellationToken).ConfigureAwait(false);
+        var userAccountId = await UserService.CreateUserAsync(userFields, cancellationToken).ConfigureAwait(false);
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, UserIdKey), userAccountId.ToString());
 
         return StepResult.Ok(Next);
     }

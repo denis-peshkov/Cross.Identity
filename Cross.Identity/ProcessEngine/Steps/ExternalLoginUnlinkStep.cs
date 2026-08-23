@@ -23,11 +23,11 @@ internal sealed class ExternalLoginUnlinkStep : IStep
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var provider = ctx.Get<string>(BagKey.Qualify(Kind, ProviderKey));
-        var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var clientContext = ClientContext.Read(ctx);
 
-        await ExternalLoginService.UnlinkAsync(provider, userId, refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
+        await ExternalLoginService.UnlinkAsync(provider, userAccountId, refreshToken, clientContext, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "Unlinked"), true);
 

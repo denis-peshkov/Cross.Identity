@@ -23,7 +23,7 @@ internal sealed class CommunicationEndpointSetPreferredStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var raw = ctx.Get<object?>(BagKey.Qualify(Kind, EndpointIdKey));
         if (raw is null || !Guid.TryParse(raw.ToString(), out var endpointId) || endpointId == Guid.Empty)
@@ -31,7 +31,7 @@ internal sealed class CommunicationEndpointSetPreferredStep : IStep
 
         var clientContext = ClientContext.Read(ctx);
         await CommunicationEndpoints
-            .SetPreferredAsync(userId, endpointId, refreshToken, clientContext, cancellationToken)
+            .SetPreferredAsync(userAccountId, endpointId, refreshToken, clientContext, cancellationToken)
             .ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Preferred"), true);
         return StepResult.Ok(Next);

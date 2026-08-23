@@ -44,10 +44,10 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
-    private async Task<string> IssueRefreshTokenAsync(Guid userId)
+    private async Task<string> IssueRefreshTokenAsync(Guid userAccountId)
     {
         return await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId,
+            userAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
             ClientContext.Empty,
@@ -57,15 +57,15 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     [Test]
     public async Task CommunicationEndpointsGetAll_WhenUserIdProvided_ShouldReturnEndpoints()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "c@example.com", EmailVerified = true });
-        await _endpoints.SyncAccountContactsAsync(userId);
-        var refresh = await IssueRefreshTokenAsync(userId);
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "c@example.com", EmailVerified = true });
+        await _endpoints.SyncAccountContactsAsync(userAccountId);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userId.ToString(),
+                ["UserId"] = userAccountId.ToString(),
                 ["RefreshToken"] = refresh,
             },
             Flow,
@@ -80,24 +80,24 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     [Test]
     public async Task CommunicationEndpointSetPreferred_ShouldSwitchPreferred()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "a@example.com",
             PhoneNumber = "+79161234567",
             EmailVerified = true,
             PhoneNumberVerified = true,
         });
-        await _endpoints.SyncAccountContactsAsync(userId);
-        var refresh = await IssueRefreshTokenAsync(userId);
-        var all = await _endpoints.GetAllAsync(userId, refresh);
+        await _endpoints.SyncAccountContactsAsync(userAccountId);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
+        var all = await _endpoints.GetAllAsync(userAccountId, refresh);
         var sms = all.Single(x => x.Channel == ChannelEnum.Sms);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userId.ToString(),
+                ["UserId"] = userAccountId.ToString(),
                 ["RefreshToken"] = refresh,
                 ["EndpointId"] = sms.Id.ToString(),
                 ["IpAddress"] = "10.0.0.42",
@@ -109,7 +109,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["preferred"].Should().Be(true);
-        (await _endpoints.GetPreferredAsync(userId))!.Id.Should().Be(sms.Id);
+        (await _endpoints.GetPreferredAsync(userAccountId))!.Id.Should().Be(sms.Id);
         Context.Audits.Should().Contain(a =>
             a.Operation == AuditOperation.CommunicationEndpointChanged
             && a.IpAddress == "10.0.0.42"
@@ -119,16 +119,16 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     [Test]
     public async Task CommunicationEndpointsGetAll_WhenRefreshTokenDoesNotMatchUserId_ShouldThrowNotAuthorizedAsync()
     {
-        var ownerUserId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = ownerUserId, Email = "owner@example.com", EmailVerified = true });
-        AddToDb(new UserAccountEntity { Id = otherUserId, Email = "other@example.com", EmailVerified = true });
-        var ownerRefresh = await IssueRefreshTokenAsync(ownerUserId);
+        var ownerUserAccountId = Guid.NewGuid();
+        var otherUserAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = ownerUserAccountId, Email = "owner@example.com", EmailVerified = true });
+        AddToDb(new UserAccountEntity { Id = otherUserAccountId, Email = "other@example.com", EmailVerified = true });
+        var ownerRefresh = await IssueRefreshTokenAsync(ownerUserAccountId);
 
         await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
                 new Dictionary<string, object?>
                 {
-                    ["UserId"] = otherUserId.ToString(),
+                    ["UserId"] = otherUserAccountId.ToString(),
                     ["RefreshToken"] = ownerRefresh,
                 },
                 Flow,

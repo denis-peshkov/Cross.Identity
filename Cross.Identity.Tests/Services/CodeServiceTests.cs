@@ -68,13 +68,13 @@ public class CodeServiceTests : EFTestsBase
             .WithTextBody("Test body")
             .WithTextHtml("<html>Test body</html>");
         var ttl = TimeSpan.FromMinutes(5);
-        var userId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var userAccountId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         _emailService.Setup(s => s.SendAsync("", "test@example.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        await _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "123456", userAccountId, ttl, CancellationToken.None);
 
         // Assert
         _emailService.Verify(s => s.SendAsync("", "test@example.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()), Times.Once);
@@ -88,13 +88,13 @@ public class CodeServiceTests : EFTestsBase
         var message = NotificationMessage.For(ChannelEnum.Sms, "+1234567890")
             .WithTextBody("Your code is 123456");
         var ttl = TimeSpan.FromMinutes(5);
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _smsService.Setup(s => s.SendAsync("+1234567890", "Your code is 123456", It.IsAny<CancellationToken>()))
             .ReturnsAsync("sms-id");
 
         // Act
-        await _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "123456", userAccountId, ttl, CancellationToken.None);
 
         // Assert
         _smsService.Verify(s => s.SendAsync("+1234567890", "Your code is 123456", It.IsAny<CancellationToken>()), Times.Once);
@@ -107,10 +107,10 @@ public class CodeServiceTests : EFTestsBase
         var message = NotificationMessage.For(ChannelEnum.Telegram, "chat-id")
             .WithTextBody("Your code is 123456");
         var ttl = TimeSpan.FromMinutes(5);
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         await FluentActions.Invoking(() =>
-                _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None))
+                _codeService.SendAsync(message, "123456", userAccountId, ttl, CancellationToken.None))
             .Should()
             .ThrowAsync<NotSupportedException>()
             .WithMessage("*not supported*");
@@ -127,9 +127,9 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenSmsSendAndVerify_WhenDestinationTrimmedOnly_ThenMatchesStoredPhoneAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var storedPhone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = storedPhone, IsActive = true });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = storedPhone, IsActive = true });
         var message = NotificationMessage.For(ChannelEnum.Sms, "  +1234567890  ")
             .WithTextBody("Your code is 123456");
         var ttl = TimeSpan.FromMinutes(5);
@@ -137,11 +137,11 @@ public class CodeServiceTests : EFTestsBase
         _smsService.Setup(s => s.SendAsync(storedPhone, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("sms-id");
 
-        await _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "123456", userAccountId, ttl, CancellationToken.None);
 
         (await Context.PhoneVerifications.SingleAsync()).PhoneNumber.Should().Be(storedPhone);
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, "  +1234567890  ", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, "  +1234567890  ", "123456", CancellationToken.None);
 
         result.Should().BeTrue();
     }
@@ -151,15 +151,15 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenValidEmailCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
         // Arrange — current implementation checks the database record
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "test@example.com",
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -171,7 +171,7 @@ public class CodeServiceTests : EFTestsBase
         });
 
         // Act
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         // Assert
         result.Should().BeTrue();
@@ -183,15 +183,15 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCodeWithWhitespace_WhenVerifyAsync_ThenTrimsAndReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "test@example.com",
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -203,7 +203,7 @@ public class CodeServiceTests : EFTestsBase
         });
 
         var result = await _codeService.VerifyAsync(
-            userId, ChannelEnum.Email, "test@example.com", "  123456  ", CancellationToken.None);
+            userAccountId, ChannelEnum.Email, "test@example.com", "  123456  ", CancellationToken.None);
 
         result.Should().BeTrue();
         (await Context.EmailVerifications.SingleAsync()).UsedAt.Should().NotBeNull();
@@ -213,11 +213,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUsedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -229,7 +229,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
 
         result.Should().BeFalse();
     }
@@ -238,11 +238,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenPreviouslyVerifiedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -253,8 +253,8 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
     }
 
     [Test]
@@ -269,11 +269,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -284,7 +284,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-10)
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -292,12 +292,12 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPhoneCode_WhenVerifyAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -308,7 +308,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeTrue();
         var stored = await Context.PhoneVerifications.SingleAsync();
         stored.UsedAt.Should().NotBeNull();
@@ -318,12 +318,12 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUsedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -335,7 +335,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow.AddMinutes(-2),
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -351,12 +351,12 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExpiredPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -367,7 +367,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -375,12 +375,12 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMismatchedPhoneCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("correct"),
@@ -391,7 +391,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, phone, "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
         (await Context.PhoneVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
@@ -400,12 +400,12 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenPhoneMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -416,7 +416,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Sms, phone, "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -424,11 +424,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMismatchedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("correct"),
@@ -439,7 +439,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "wrongcode", CancellationToken.None);
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(1);
     }
@@ -448,11 +448,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -463,7 +463,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None);
         result.Should().BeFalse();
     }
 
@@ -471,11 +471,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenWrongIdentity_WhenVerifyAsync_ThenDoesNotIncrementAttemptsAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "victim@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "victim@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "victim@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -486,7 +486,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, "attacker@example.com", "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "attacker@example.com", "123456", CancellationToken.None);
 
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);
@@ -496,11 +496,11 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenRepeatedWrongEmailCode_WhenVerifyAsync_ThenBlocksAfterMaxAttemptsAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, Email = "test@example.com" });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = "test@example.com",
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -511,10 +511,10 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong1", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong2", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "wrong3", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "wrong1", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "wrong2", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "wrong3", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, "test@example.com", "123456", CancellationToken.None)).Should().BeFalse();
 
         var stored = await Context.EmailVerifications.SingleAsync();
         stored.Attempts.Should().Be(3);
@@ -525,19 +525,19 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenResentEmailCode_WhenVerifyAsyncWithPreviousCode_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
         var ttl = TimeSpan.FromMinutes(5);
         var message = NotificationMessage.For(ChannelEnum.Email, email)
             .WithSubject("Test")
             .WithTextBody("body");
 
-        await _codeService.SendAsync(message, "OLD-CODE", userId, ttl, CancellationToken.None);
-        await _codeService.SendAsync(message, "NEW-CODE", userId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "OLD-CODE", userAccountId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "NEW-CODE", userAccountId, ttl, CancellationToken.None);
 
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
-        (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
+        (await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
 
         (await Context.EmailVerifications.CountAsync(x => x.UsedAt != null)).Should().Be(1);
     }
@@ -546,9 +546,9 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenCooldown_WhenSendAsyncTwice_ThenSecondThrowsValidationExceptionAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "cooldown@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
         var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
         {
             Cooldown = TimeSpan.FromMinutes(1),
@@ -558,10 +558,10 @@ public class CodeServiceTests : EFTestsBase
             .WithSubject("Test")
             .WithTextBody("body");
 
-        await sut.SendAsync(message, "111111", userId, TimeSpan.FromMinutes(5), CancellationToken.None);
+        await sut.SendAsync(message, "111111", userAccountId, TimeSpan.FromMinutes(5), CancellationToken.None);
 
         await FluentActions.Invoking(() =>
-                sut.SendAsync(message, "222222", userId, TimeSpan.FromMinutes(5), CancellationToken.None))
+                sut.SendAsync(message, "222222", userAccountId, TimeSpan.FromMinutes(5), CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*wait*");
@@ -571,9 +571,9 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenWindowCap_WhenSendAsyncExceedsMax_ThenThrowsValidationExceptionAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "window@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
         var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
         {
             Cooldown = TimeSpan.Zero,
@@ -585,11 +585,11 @@ public class CodeServiceTests : EFTestsBase
             .WithTextBody("body");
         var ttl = TimeSpan.FromMinutes(5);
 
-        await sut.SendAsync(message, "111111", userId, ttl, CancellationToken.None);
-        await sut.SendAsync(message, "222222", userId, ttl, CancellationToken.None);
+        await sut.SendAsync(message, "111111", userAccountId, ttl, CancellationToken.None);
+        await sut.SendAsync(message, "222222", userAccountId, ttl, CancellationToken.None);
 
         await FluentActions.Invoking(() =>
-                sut.SendAsync(message, "333333", userId, ttl, CancellationToken.None))
+                sut.SendAsync(message, "333333", userAccountId, ttl, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*Too many*");
@@ -599,17 +599,17 @@ public class CodeServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenInactiveUser_WhenVerifyAsync_ThenReturnsFalseWithoutIncrementingAttemptsAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "inactive@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             IsActive = false,
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -620,7 +620,7 @@ public class CodeServiceTests : EFTestsBase
             CreatedAt = DateTime.UtcNow,
         });
 
-        var result = await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "123456", CancellationToken.None);
+        var result = await _codeService.VerifyAsync(userAccountId, ChannelEnum.Email, email, "123456", CancellationToken.None);
 
         result.Should().BeFalse();
         (await Context.EmailVerifications.SingleAsync()).Attempts.Should().Be(0);

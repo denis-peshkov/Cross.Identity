@@ -16,14 +16,14 @@ public interface ICommunicationEndpointService
 {
     /// <summary>
     /// List all communication endpoints for a user.
-    /// Requires an active refresh token belonging to <paramref name="userId"/> (session proof).
+    /// Requires an active refresh token belonging to <paramref name="userAccountId"/> (session proof).
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
-    /// <param name="refreshToken">Active refresh token for <paramref name="userId"/>.</param>
+    /// <param name="userAccountId">Local user account id.</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/>.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Endpoints for the user (may be empty).</returns>
     Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(
-        Guid userId,
+        Guid userAccountId,
         string refreshToken,
         CancellationToken cancellationToken = default);
 
@@ -32,7 +32,7 @@ public interface ICommunicationEndpointService
     /// When <paramref name="isVerified"/> is <c>true</c> and the user has no preferred endpoint yet,
     /// the new/updated endpoint becomes preferred.
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id.</param>
     /// <param name="channel">Delivery channel (email, SMS, messenger, …).</param>
     /// <param name="address">Channel-specific address (normalized by the implementation).</param>
     /// <param name="source">How the endpoint was obtained (account sync, manual, external provider, …).</param>
@@ -43,7 +43,7 @@ public interface ICommunicationEndpointService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The upserted endpoint DTO.</returns>
     Task<CommunicationEndpointDto> UpsertAsync(
-        Guid userId,
+        Guid userAccountId,
         ChannelEnum channel,
         string address,
         CommunicationEndpointSource source,
@@ -53,15 +53,15 @@ public interface ICommunicationEndpointService
 
     /// <summary>
     /// Mark a verified endpoint as the only preferred communication target for the user.
-    /// Requires an active refresh token belonging to <paramref name="userId"/> (session proof).
+    /// Requires an active refresh token belonging to <paramref name="userAccountId"/> (session proof).
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
-    /// <param name="endpointId">Endpoint id that must belong to <paramref name="userId"/> and be verified.</param>
-    /// <param name="refreshToken">Active refresh token for <paramref name="userId"/>.</param>
+    /// <param name="userAccountId">Local user account id.</param>
+    /// <param name="endpointId">Endpoint id that must belong to <paramref name="userAccountId"/> and be verified.</param>
+    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/>.</param>
     /// <param name="clientContext">Client metadata recorded in audit (use <see cref="ClientContext.Empty"/> when unknown).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SetPreferredAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid endpointId,
         string refreshToken,
         ClientContext clientContext,
@@ -73,14 +73,14 @@ public interface ICommunicationEndpointService
     /// (verified email endpoint, else verified <c>UsersAccounts.Email</c>) → phone
     /// (verified SMS endpoint, else verified <c>UsersAccounts.PhoneNumber</c>).
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Channel and address for delivery.</returns>
     /// <exception cref="ValidationException">
     /// No preferred verified channel and no verified account email or phone (or no email when lock-as-email is on).
     /// </exception>
     Task<DeliveryTarget> ResolveDeliveryTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -89,24 +89,24 @@ public interface ICommunicationEndpointService
     /// (chicken-and-egg for confirmation). Messenger channels map to <see cref="ChannelEnum.Sms"/>
     /// until messenger OTP senders are implemented.
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>OTP channel (<see cref="ChannelEnum.Email"/> or <see cref="ChannelEnum.Sms"/>) and address.</returns>
     /// <exception cref="ValidationException">
     /// No preferred verified channel and no account email or phone (or no email when lock-as-email is on).
     /// </exception>
     Task<DeliveryTarget> ResolveOtpTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Preferred verified endpoint for the user, or <c>null</c> if none is set.
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Preferred endpoint DTO, or <c>null</c>.</returns>
     Task<CommunicationEndpointDto?> GetPreferredAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -114,9 +114,9 @@ public interface ICommunicationEndpointService
     /// verification flags are set (<c>EmailVerified</c> / <c>PhoneNumberVerified</c>).
     /// Called after successful code validation that verifies those contacts.
     /// </summary>
-    /// <param name="userId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SyncAccountContactsAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default);
 }

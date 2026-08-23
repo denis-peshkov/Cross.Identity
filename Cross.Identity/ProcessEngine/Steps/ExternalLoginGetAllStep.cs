@@ -20,9 +20,9 @@ internal sealed class ExternalLoginGetAllStep : IStep
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
-        var userId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
+        var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserIdKey));
         var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
-        var overview = await ExternalLoginService.GetAllAsync(userId, refreshToken, cancellationToken).ConfigureAwait(false);
+        var overview = await ExternalLoginService.GetAllAsync(userAccountId, refreshToken, cancellationToken).ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "AccountEmail"), overview.AccountEmail);
         ctx.Set(BagKey.Qualify(Kind, "Providers"), overview.Providers);

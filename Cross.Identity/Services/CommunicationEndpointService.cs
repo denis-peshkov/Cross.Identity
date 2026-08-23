@@ -21,17 +21,17 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(
-        Guid userId,
+        Guid userAccountId,
         string refreshToken,
         CancellationToken cancellationToken = default)
     {
         await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
             .ConfigureAwait(false);
 
         var rows = await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .Where(x => x.UserAccountId == userId)
+            .Where(x => x.UserAccountId == userAccountId)
             .OrderByDescending(x => x.IsPreferred)
             .ThenBy(x => x.Channel)
             .ThenBy(x => x.Address)
@@ -43,7 +43,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     /// <inheritdoc />
     public async Task<CommunicationEndpointDto> UpsertAsync(
-        Guid userId,
+        Guid userAccountId,
         ChannelEnum channel,
         string address,
         CommunicationEndpointSource source,
@@ -56,7 +56,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
         var entity = await _context.UsersCommunicationEndpoints
             .FirstOrDefaultAsync(
-                x => x.UserAccountId == userId && x.Channel == channel && x.Address == normalized,
+                x => x.UserAccountId == userAccountId && x.Channel == channel && x.Address == normalized,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -66,7 +66,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             entity = new UserCommunicationEndpointEntity
             {
                 Id = Guid.NewGuid(),
-                UserAccountId = userId,
+                UserAccountId = userAccountId,
                 UserAccount = null!,
                 Channel = channel,
                 Address = normalized,
@@ -93,7 +93,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         if (entity.IsVerified)
         {
             var hasPreferred = await _context.UsersCommunicationEndpoints
-                .AnyAsync(x => x.UserAccountId == userId && x.IsPreferred, cancellationToken)
+                .AnyAsync(x => x.UserAccountId == userAccountId && x.IsPreferred, cancellationToken)
                 .ConfigureAwait(false);
             if (!hasPreferred)
             {
@@ -107,18 +107,18 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     /// <inheritdoc />
     public async Task SetPreferredAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid endpointId,
         string refreshToken,
         ClientContext clientContext,
         CancellationToken cancellationToken = default)
     {
         await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userId, cancellationToken)
+            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
             .ConfigureAwait(false);
 
         var entity = await _context.UsersCommunicationEndpoints
-            .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserAccountId == userId, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserAccountId == userAccountId, cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException("Communication endpoint was not found.");
 
@@ -128,7 +128,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         }
 
         var others = await _context.UsersCommunicationEndpoints
-            .Where(x => x.UserAccountId == userId && x.IsPreferred && x.Id != endpointId)
+            .Where(x => x.UserAccountId == userAccountId && x.IsPreferred && x.Id != endpointId)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -145,7 +145,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         {
             Id = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow,
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Operation = AuditOperation.CommunicationEndpointChanged,
             EntityType = AuditEntityType.UserCommunicationEndpoint,
@@ -161,16 +161,16 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     /// <inheritdoc />
     public async Task<DeliveryTarget> ResolveDeliveryTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default)
-        => await ResolveTargetCoreAsync(userId, allowUnverifiedAccountContact: false, cancellationToken).ConfigureAwait(false);
+        => await ResolveTargetCoreAsync(userAccountId, allowUnverifiedAccountContact: false, cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task<DeliveryTarget> ResolveOtpTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default)
     {
-        var target = await ResolveTargetCoreAsync(userId, allowUnverifiedAccountContact: true, cancellationToken).ConfigureAwait(false);
+        var target = await ResolveTargetCoreAsync(userAccountId, allowUnverifiedAccountContact: true, cancellationToken).ConfigureAwait(false);
         return new DeliveryTarget
         {
             Channel = target.Channel.ToEmailOrSms(),
@@ -180,19 +180,19 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
     /// <inheritdoc />
     public async Task<CommunicationEndpointDto?> GetPreferredAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken = default)
     {
-        var entity = await GetPreferredEntityAsync(userId, cancellationToken).ConfigureAwait(false);
+        var entity = await GetPreferredEntityAsync(userAccountId, cancellationToken).ConfigureAwait(false);
         return entity is null ? null : ToDto(entity);
     }
 
     /// <inheritdoc />
-    public async Task SyncAccountContactsAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task SyncAccountContactsAsync(Guid userAccountId, CancellationToken cancellationToken = default)
     {
         var account = await _context.UsersAccounts
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == userId, cancellationToken)
+            .FirstOrDefaultAsync(x => x.Id == userAccountId, cancellationToken)
             .ConfigureAwait(false);
 
         if (account is null)
@@ -203,7 +203,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         if (!string.IsNullOrWhiteSpace(account.Email) && account.EmailVerified)
         {
             await UpsertAsync(
-                    userId,
+                    userAccountId,
                     ChannelEnum.Email,
                     account.Email,
                     CommunicationEndpointSource.Account,
@@ -215,7 +215,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
         if (!string.IsNullOrWhiteSpace(account.PhoneNumber) && account.PhoneNumberVerified)
         {
             await UpsertAsync(
-                    userId,
+                    userAccountId,
                     ChannelEnum.Sms,
                     account.PhoneNumber,
                     CommunicationEndpointSource.Account,
@@ -226,30 +226,30 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     private async Task<DeliveryTarget> ResolveTargetCoreAsync(
-        Guid userId,
+        Guid userAccountId,
         bool allowUnverifiedAccountContact,
         CancellationToken cancellationToken)
     {
         if (_options.LockChannelAsEmail)
         {
-            return await RequireEmailTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
+            return await RequireEmailTargetAsync(userAccountId, allowUnverifiedAccountContact, cancellationToken)
                 .ConfigureAwait(false);
         }
 
-        var preferred = await GetPreferredEntityAsync(userId, cancellationToken).ConfigureAwait(false);
+        var preferred = await GetPreferredEntityAsync(userAccountId, cancellationToken).ConfigureAwait(false);
         if (preferred is not null)
         {
             return ToTarget(preferred);
         }
 
-        var email = await FindEmailTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
+        var email = await FindEmailTargetAsync(userAccountId, allowUnverifiedAccountContact, cancellationToken)
             .ConfigureAwait(false);
         if (email is not null)
         {
             return email;
         }
 
-        var phone = await FindPhoneTargetAsync(userId, allowUnverifiedAccountContact, cancellationToken)
+        var phone = await FindPhoneTargetAsync(userAccountId, allowUnverifiedAccountContact, cancellationToken)
             .ConfigureAwait(false);
         if (phone is not null)
         {
@@ -263,11 +263,11 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     private async Task<DeliveryTarget> RequireEmailTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         bool allowUnverifiedAccountEmail,
         CancellationToken cancellationToken)
     {
-        var email = await FindEmailTargetAsync(userId, allowUnverifiedAccountEmail, cancellationToken)
+        var email = await FindEmailTargetAsync(userAccountId, allowUnverifiedAccountEmail, cancellationToken)
             .ConfigureAwait(false);
         if (email is not null)
         {
@@ -281,13 +281,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     private async Task<DeliveryTarget?> FindEmailTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         bool allowUnverifiedAccountEmail,
         CancellationToken cancellationToken)
     {
         var endpoint = await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .Where(x => x.UserAccountId == userId && x.IsVerified && x.Channel == ChannelEnum.Email)
+            .Where(x => x.UserAccountId == userAccountId && x.IsVerified && x.Channel == ChannelEnum.Email)
             .OrderByDescending(x => x.IsPreferred)
             .ThenByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken)
@@ -300,7 +300,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
         var account = await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => new { x.Email, x.EmailVerified })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -323,13 +323,13 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     private async Task<DeliveryTarget?> FindPhoneTargetAsync(
-        Guid userId,
+        Guid userAccountId,
         bool allowUnverifiedAccountPhone,
         CancellationToken cancellationToken)
     {
         var endpoint = await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .Where(x => x.UserAccountId == userId && x.IsVerified && x.Channel == ChannelEnum.Sms)
+            .Where(x => x.UserAccountId == userAccountId && x.IsVerified && x.Channel == ChannelEnum.Sms)
             .OrderByDescending(x => x.IsPreferred)
             .ThenByDescending(x => x.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken)
@@ -342,7 +342,7 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 
         var account = await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => new { x.PhoneNumber, x.PhoneNumberVerified })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -365,12 +365,12 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     private async Task<UserCommunicationEndpointEntity?> GetPreferredEntityAsync(
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken)
     {
         return await _context.UsersCommunicationEndpoints
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.UserAccountId == userId && x.IsPreferred && x.IsVerified, cancellationToken)
+            .FirstOrDefaultAsync(x => x.UserAccountId == userAccountId && x.IsPreferred && x.IsVerified, cancellationToken)
             .ConfigureAwait(false);
     }
 

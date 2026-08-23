@@ -56,7 +56,7 @@ public sealed class EntitiesAndJwtKeysTests
     [Category(TestCategory.UNIT)]
     public void GivenAudit_WhenCreated_ThenSetsProperties()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var tokenId = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
 
@@ -64,7 +64,7 @@ public sealed class EntitiesAndJwtKeysTests
         {
             Id = Guid.NewGuid(),
             CreatedAt = createdAt,
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Operation = AuditOperation.TokenRevoked,
             EntityType = AuditEntityType.RefreshToken,
@@ -81,7 +81,7 @@ public sealed class EntitiesAndJwtKeysTests
         audit.EntityId.Should().Be(tokenId.ToString());
         audit.RevokedReason.Should().Be(RefreshTokenRevokedReason.USER_LOGOUT);
         audit.Notes.Should().Be("Logout from current device");
-        audit.UserAccountId.Should().Be(userId);
+        audit.UserAccountId.Should().Be(userAccountId);
         audit.CreatedAt.Should().Be(createdAt);
     }
 

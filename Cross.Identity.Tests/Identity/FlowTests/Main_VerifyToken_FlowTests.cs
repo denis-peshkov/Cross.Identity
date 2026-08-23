@@ -54,14 +54,14 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidAccessToken_WhenVerifyTokenFlow_ThenReturnsValidWithClaimsAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId,
+            userAccountId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },
@@ -71,7 +71,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userId);
+        payload["user_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -105,14 +105,14 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
         _jwtTokenService = new JwtTokenService(Context, new AuditService(Context), optionsSnapshot.Object);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
 
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId,
+            userAccountId,
             familyId,
             new List<string>(),
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         accessToken.Split('.').Length.Should().Be(5);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -123,7 +123,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["valid"].Should().Be(true);
-        payload["user_id"].Should().Be(userId);
+        payload["user_id"].Should().Be(userAccountId);
         payload.Should().ContainKey("jti");
         payload["jti"].Should().NotBeNull();
     }
@@ -132,11 +132,11 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenRevokedAccessToken_WhenVerifyTokenFlow_ThenReturnsValidFalseAsync()
     {
-        var userId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userId, IsActive = true });
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { Id = userAccountId, IsActive = true });
         var familyId = Guid.NewGuid();
         var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyId, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
 
         var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();

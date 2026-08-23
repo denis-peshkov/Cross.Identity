@@ -54,20 +54,20 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenRefreshTokenFlow_ThenReturnsNewTokenPairAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "refresh@example.com",
             UserName = "refresh-user",
             NormalizedUserName = "refresh-user",
         });
 
         var oldRefreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId,
+            userAccountId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
@@ -81,7 +81,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         payload["access_token"].Should().NotBeNull();
         payload["refresh_token"].Should().NotBeNull().And.NotBe(oldRefreshToken);
         payload["token_type"].Should().Be("Bearer");
-        payload["user_id"].Should().Be(userId);
+        payload["user_id"].Should().Be(userAccountId);
     }
 
     [Test]
@@ -118,20 +118,20 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
     public async Task GivenReusedRefreshTokenAfterRotation_WhenRefreshTokenFlow_ThenRevokesFamilyAndThrowsConflictAsync()
     {
         // Attacker rotated first (R1 → R2); victim reuses R1 → REPLAY_DETECTED kills R2.
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "replay@example.com",
             UserName = "replay-user",
             NormalizedUserName = "replay-user",
         });
 
         var r1 = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId,
+            userAccountId,
             familyId,
-            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var first = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = r1 },

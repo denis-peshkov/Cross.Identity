@@ -68,7 +68,7 @@ internal class FlowExecutor : IFlowExecutor
                 var trimmed = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (k, v) in resultPairs)
                 {
-                    var name = k.Substring(prefix.Length); // "userId" from "collectResult.userId"
+                    var name = k.Substring(prefix.Length); // "userAccountId" from "collectResult.userAccountId"
                     trimmed[name] = v;
                 }
                 data = trimmed;

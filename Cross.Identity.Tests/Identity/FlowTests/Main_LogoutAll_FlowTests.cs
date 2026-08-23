@@ -54,14 +54,14 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
     {
-        var userId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
+        var otherUserAccountId = Guid.NewGuid();
         var familyA = Guid.NewGuid();
         var familyB = Guid.NewGuid();
 
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "logout-all@example.com",
             UserName = "logout-all",
             NormalizedUserName = "logout-all",
@@ -69,7 +69,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         });
         AddToDb(new UserAccountEntity
         {
-            Id = otherUserId,
+            Id = otherUserAccountId,
             Email = "logout-all-other@example.com",
             UserName = "logout-all-other",
             NormalizedUserName = "logout-all-other",
@@ -77,13 +77,13 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyA, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<string>(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
         var otherRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
-            otherUserId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
+            otherUserAccountId, Guid.NewGuid(), new List<Claim>(), ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
@@ -99,10 +99,10 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
 
-        var userRefresh = await Context.RefreshTokens.Where(x => x.UserAccountId == userId).ToListAsync();
+        var userRefresh = await Context.RefreshTokens.Where(x => x.UserAccountId == userAccountId).ToListAsync();
         userRefresh.Should().OnlyContain(t => t.RevokedAt != null);
         Context.Audits.Should().Contain(a =>
-            a.UserAccountId == userId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
+            a.UserAccountId == userAccountId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
     }
 
     [Test]

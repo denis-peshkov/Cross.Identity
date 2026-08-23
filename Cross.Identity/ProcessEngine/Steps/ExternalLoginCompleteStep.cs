@@ -40,7 +40,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
         var completion = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
 
-        ctx.Set(BagKey.Qualify(Kind, "UserId"), completion.UserId);
+        ctx.Set(BagKey.Qualify(Kind, "UserId"), completion.UserAccountId);
         ctx.Set(BagKey.Qualify(Kind, "IsLinking"), completion.IsLinking);
 
         if (completion.IsLinking)
@@ -48,7 +48,7 @@ internal sealed class ExternalLoginCompleteStep : IStep
             return StepResult.Ok(Next);
         }
 
-        var user = await UserService.GetUserByAsync("Id", completion.UserId.ToString(), cancellationToken).ConfigureAwait(false);
+        var user = await UserService.GetUserByAsync("Id", completion.UserAccountId.ToString(), cancellationToken).ConfigureAwait(false);
         ArgumentNullException.ThrowIfNull(user);
 
         var clientContext = ClientContext.Read(ctx);

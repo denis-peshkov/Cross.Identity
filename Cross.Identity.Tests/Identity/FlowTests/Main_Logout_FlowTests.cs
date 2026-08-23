@@ -54,26 +54,26 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidRefreshToken_WhenLogoutFlow_ThenRevokesOnlyThatTokenAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var familyA = Guid.NewGuid();
         var familyB = Guid.NewGuid();
 
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "logout@example.com",
             UserName = "logout-user",
             NormalizedUserName = "logout-user",
         });
 
         var refreshA = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var refreshB = await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyB, new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var accessA = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyA, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyA, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
         var accessB = await _jwtTokenService.GenerateAccessTokenAsync(
-            userId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userId.ToString()) }, ClientContext.Empty, CancellationToken.None);
+            userAccountId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, ClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["RefreshToken"] = refreshA },

@@ -78,14 +78,14 @@ public class ResetPassword_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenUserIdSelector_WhenExecuteAsync_ThenSetsPasswordAndNotifiesResolvedTargetAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var password = "P@ssw0rd!";
-        var userIdText = userId.ToString();
+        var userAccountIdText = userAccountId.ToString();
 
-        _userService.Setup(u => u.SetPasswordAsync("Id", userIdText, password, ClientContext.Empty, It.IsAny<CancellationToken>()))
+        _userService.Setup(u => u.SetPasswordAsync("Id", userAccountIdText, password, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _userService.Setup(u => u.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(u => u.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
 
         var step = new ResetPasswordStep
         {
@@ -102,7 +102,7 @@ public class ResetPassword_StepTests
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Id");
-        bag.Set("collectForm.Value", userIdText);
+        bag.Set("collectForm.Value", userAccountIdText);
         bag.Set("collectForm.NewPassword", password);
         bag.Set("collectForm.IpAddress", null);
         bag.Set("collectForm.UserAgent", null);
@@ -113,7 +113,7 @@ public class ResetPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Id", userIdText, password, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Id", userAccountIdText, password, ClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
         _userService.Verify(
             u => u.GetUserByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),

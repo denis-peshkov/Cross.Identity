@@ -20,11 +20,11 @@ public class GetUser_StepTests
     public async Task GivenExistingUser_WhenExecuteAsync_ThenStoresUserIdAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         var users = new Mock<IUserService>(MockBehavior.Strict);
         users.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new GetUserIdStep
         {
@@ -43,7 +43,7 @@ public class GetUser_StepTests
 
         res.Status.Should().Be(StepStatusEnum.Ok);
         res.Next.Should().Be("done");
-        bag.Get<string>("lookup.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("lookup.UserId").Should().Be(userAccountId.ToString());
 
         users.VerifyAll();
     }

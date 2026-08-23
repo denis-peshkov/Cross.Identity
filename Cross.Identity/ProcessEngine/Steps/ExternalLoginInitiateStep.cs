@@ -30,7 +30,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
             ? null
             : ctx.Get<string?>(BagKey.Qualify(Kind, ReturnUrlKey));
 
-        var linkUserId = string.IsNullOrWhiteSpace(UserIdKey)
+        var linkUserAccountId = string.IsNullOrWhiteSpace(UserIdKey)
             ? null
             : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserIdKey));
 
@@ -41,7 +41,7 @@ internal sealed class ExternalLoginInitiateStep : IStep
         var url = await ExternalLoginService.InitiateAsync(
             provider,
             returnUrl,
-            linkUserId,
+            linkUserAccountId,
             refreshToken,
             cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Url"), url);

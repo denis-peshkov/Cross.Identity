@@ -45,10 +45,10 @@ public class ConstantsTests
     [Category(TestCategory.UNIT)]
     public void GivenExternalLoginCompletion_WhenCreated_ThenExposesValues()
     {
-        var userId = Guid.NewGuid();
-        var completion = new ExternalLoginCompletion(userId, true);
+        var userAccountId = Guid.NewGuid();
+        var completion = new ExternalLoginCompletion(userAccountId, true);
 
-        completion.UserId.Should().Be(userId);
+        completion.UserAccountId.Should().Be(userAccountId);
         completion.IsLinking.Should().BeTrue();
     }
 

@@ -54,7 +54,7 @@ internal sealed class UserService : IUserService
         IQueryable<UserAccountEntity> userAccountsFiltered;
         if (field == nameof(UserAccountEntity.Id))
         {
-            if (!TryParseUserId(selectorValue, out var id))
+            if (!TryParseUserAccountId(selectorValue, out var id))
                 throw new NotFoundException($"User with given {field} '{selectorValue}' not found");
 
             userAccountsFiltered = userAccounts.Where(u => u.Id == id);
@@ -156,7 +156,7 @@ internal sealed class UserService : IUserService
         var now = DateTimeOffset.UtcNow;
         if (UserAccountLockout.IsLockedOut(user, now))
         {
-            _logger.LogWarning("Password validation rejected for locked-out user {UserId}", user.Id);
+            _logger.LogWarning("Password validation rejected for locked-out user {UserAccountId}", user.Id);
             return false;
         }
 
@@ -164,7 +164,7 @@ internal sealed class UserService : IUserService
         if (!_pepperVault.TryGetValue(user.PasswordPepperVersion, out var pepper) || pepper is null)
         {
             _logger.LogError(
-                "Pepper with version {Version} not found for user {UserId}. Password validation failed.",
+                "Pepper with version {Version} not found for user {UserAccountId}. Password validation failed.",
                 user.PasswordPepperVersion,
                 user.Id);
             return false;
@@ -202,7 +202,7 @@ internal sealed class UserService : IUserService
             if (needRehash)
             {
                 // Do not fail successful authentication due to re-hash issues; log only
-                _logger.LogError(ex, "Failed to re-hash password for user {UserId}", user.Id);
+                _logger.LogError(ex, "Failed to re-hash password for user {UserAccountId}", user.Id);
             }
             else
             {
@@ -236,7 +236,7 @@ internal sealed class UserService : IUserService
         var lockoutNow = DateTimeOffset.UtcNow;
         if (UserAccountLockout.IsLockedOut(user, lockoutNow))
         {
-            _logger.LogWarning("Code validation rejected for locked-out user {UserId}", user.Id);
+            _logger.LogWarning("Code validation rejected for locked-out user {UserAccountId}", user.Id);
             return false;
         }
 
@@ -370,7 +370,7 @@ internal sealed class UserService : IUserService
         };
     }
 
-    private static bool TryParseUserId(string selectorValue, out Guid id)
+    private static bool TryParseUserAccountId(string selectorValue, out Guid id)
     {
         return Guid.TryParse(selectorValue.Trim(), out id) && id != Guid.Empty;
     }
@@ -382,7 +382,7 @@ internal sealed class UserService : IUserService
     {
         if (field == nameof(UserAccountEntity.Id))
         {
-            if (!TryParseUserId(selectorValue, out var id))
+            if (!TryParseUserAccountId(selectorValue, out var id))
                 return null;
 
             return await _context.UsersAccounts
@@ -430,13 +430,13 @@ internal sealed class UserService : IUserService
     }
 
     private async Task<bool> TryValidateEmailCodeAsync(
-        Guid userId,
+        Guid userAccountId,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var verification = await _context.EmailVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)
@@ -468,13 +468,13 @@ internal sealed class UserService : IUserService
     }
 
     private async Task<bool> TryValidatePhoneCodeAsync(
-        Guid userId,
+        Guid userAccountId,
         string code,
         DateTime now,
         CancellationToken cancellationToken)
     {
         var verification = await _context.PhoneVerifications
-            .Where(x => x.UserAccountId == userId && x.ExpiresAt >= now && x.UsedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.ExpiresAt >= now && x.UsedAt == null)
             .OrderByDescending(x => x.CreatedAt)
             .ThenByDescending(x => x.Id)
             .FirstOrDefaultAsync(cancellationToken)

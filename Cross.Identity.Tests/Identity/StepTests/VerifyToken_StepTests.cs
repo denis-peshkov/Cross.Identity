@@ -16,7 +16,7 @@ public class VerifyToken_StepTests
     public async Task GivenValidAccessToken_WhenExecuteAsync_ThenSetsValidAndClaimsAsync()
     {
         var accessToken = "access-token-value";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var jti = Guid.NewGuid().ToString();
 
         _jwtTokenService
@@ -24,7 +24,7 @@ public class VerifyToken_StepTests
             .ReturnsAsync(true);
         _jwtTokenService
             .Setup(j => j.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier))
-            .Returns(userId.ToString());
+            .Returns(userAccountId.ToString());
         _jwtTokenService
             .Setup(j => j.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti))
             .Returns(jti);
@@ -45,7 +45,7 @@ public class VerifyToken_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         bag.Get<bool>("verifyToken.Valid").Should().BeTrue();
-        bag.Get<Guid>("verifyToken.UserId").Should().Be(userId);
+        bag.Get<Guid>("verifyToken.UserId").Should().Be(userAccountId);
         bag.Get<string>("verifyToken.Jti").Should().Be(jti);
     }
 

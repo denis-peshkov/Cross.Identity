@@ -23,7 +23,7 @@ public interface IJwtTokenService
     /// Issue an access token (JWT) for API authorization and persist its <c>jti</c> in storage.
     /// When encryption is enabled, the token is issued as JWE.
     /// </summary>
-    /// <param name="userId">User ID.</param>
+    /// <param name="userAccountId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="permissions">Permissions to add as claims.</param>
     /// <param name="claims">Additional token claims.</param>
@@ -31,7 +31,7 @@ public interface IJwtTokenService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Access token string in compact form.</returns>
     Task<string> GenerateAccessTokenAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid familyId,
         List<string> permissions,
         List<Claim> claims,
@@ -41,14 +41,14 @@ public interface IJwtTokenService
     /// <summary>
     /// Issue a refresh token (JWT) for session rotation and persist its hash in storage.
     /// </summary>
-    /// <param name="userId">User ID.</param>
+    /// <param name="userAccountId">User ID.</param>
     /// <param name="familyId">Family/context ID.</param>
     /// <param name="claims">Additional refresh-token claims.</param>
     /// <param name="clientContext">Optional client metadata for audit fields on the persisted token.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Refresh token string.</returns>
     Task<string> GenerateRefreshTokenAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid familyId,
         List<Claim> claims,
         ClientContext clientContext,
@@ -100,18 +100,18 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Ensures the refresh token is present, valid, and issued to <paramref name="userId"/>
+    /// Ensures the refresh token is present, valid, and issued to <paramref name="userAccountId"/>
     /// (session proof for user-scoped flow operations).
     /// </summary>
     /// <param name="refreshToken">Refresh token string from the authenticated session.</param>
-    /// <param name="userId">User account id the caller claims to act on.</param>
+    /// <param name="userAccountId">User account id the caller claims to act on.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">
     /// Token is missing, invalid, expired, or belongs to another user.
     /// </exception>
     Task EnsureRefreshTokenBelongsToUserAsync(
         string? refreshToken,
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -256,12 +256,12 @@ public interface IJwtTokenService
     /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
     /// Does not call <c>SaveChanges</c> — the caller persists changes on the shared <c>IdentityContext</c>.
     /// </summary>
-    /// <param name="userId">User whose sessions must be invalidated.</param>
+    /// <param name="userAccountId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
     /// <param name="clientContext">Optional client metadata for revoke audit fields.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeAllTokensForUserAsync(
-        Guid userId,
+        Guid userAccountId,
         RefreshTokenRevokedReason reason,
         ClientContext clientContext,
         CancellationToken cancellationToken);

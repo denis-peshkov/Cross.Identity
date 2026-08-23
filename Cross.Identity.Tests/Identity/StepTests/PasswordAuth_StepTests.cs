@@ -22,12 +22,12 @@ public class PasswordAuth_StepTests
         // Arrange
         var email = _faker.Internet.Email();
         var password = "P@ssw0rd!";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.ValidatePasswordAsync("Email", email, password, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new PasswordAuthStep
         {
@@ -50,7 +50,7 @@ public class PasswordAuth_StepTests
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("token");
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountId.ToString());
         _userService.Verify(s => s.ValidatePasswordAsync("Email", email, password, It.IsAny<CancellationToken>()), Times.Once);
         _userService.Verify(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()), Times.Once);
     }
@@ -97,12 +97,12 @@ public class PasswordAuth_StepTests
         // Arrange
         var username = _faker.Internet.UserName();
         var password = "P@ssw0rd!";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.ValidatePasswordAsync("UserName", username, password, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userService.Setup(s => s.GetUserIdByAsync("UserName", username, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
 
         var step = new PasswordAuthStep
         {
@@ -124,21 +124,21 @@ public class PasswordAuth_StepTests
 
         // Assert
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userId.ToString());
+        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountId.ToString());
     }
 
     [Test]
     [Category(TestCategory.UNIT)]
     public async Task GivenIdSelector_WhenExecuteAsync_ThenAuthenticatesAndSetsUserIdAsync()
     {
-        var userId = Guid.NewGuid();
-        var userIdText = userId.ToString();
+        var userAccountId = Guid.NewGuid();
+        var userAccountIdText = userAccountId.ToString();
         var password = "P@ssw0rd!";
 
-        _userService.Setup(s => s.ValidatePasswordAsync("Id", userIdText, password, It.IsAny<CancellationToken>()))
+        _userService.Setup(s => s.ValidatePasswordAsync("Id", userAccountIdText, password, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _userService.Setup(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+        _userService.Setup(s => s.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
 
         var step = new PasswordAuthStep
         {
@@ -152,14 +152,14 @@ public class PasswordAuth_StepTests
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Id");
-        bag.Set("collectForm.Value", userIdText);
+        bag.Set("collectForm.Value", userAccountIdText);
         bag.Set("collectForm.CurrentPassword", password);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
         result.Status.Should().Be(StepStatusEnum.Ok);
-        bag.Get<string>("passwordAuth.UserId").Should().Be(userIdText);
-        _userService.Verify(s => s.ValidatePasswordAsync("Id", userIdText, password, It.IsAny<CancellationToken>()), Times.Once);
-        _userService.Verify(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()), Times.Once);
+        bag.Get<string>("passwordAuth.UserId").Should().Be(userAccountIdText);
+        _userService.Verify(s => s.ValidatePasswordAsync("Id", userAccountIdText, password, It.IsAny<CancellationToken>()), Times.Once);
+        _userService.Verify(s => s.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

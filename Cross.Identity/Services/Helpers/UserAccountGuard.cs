@@ -17,17 +17,17 @@ internal static class UserAccountGuard
 
     public static async Task EnsureIsActiveAsync(
         IdentityContext context,
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken)
     {
-        if (userId == Guid.Empty)
+        if (userAccountId == Guid.Empty)
         {
             throw new NotAuthorizedException("Account is disabled.");
         }
 
         var isActive = await context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => x.IsActive)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -40,7 +40,7 @@ internal static class UserAccountGuard
 
     public static async Task EnsureNoOtherVerifiedEmailAsync(
         IdentityContext context,
-        Guid userId,
+        Guid userAccountId,
         string normalizedEmail,
         CancellationToken cancellationToken)
     {
@@ -49,7 +49,7 @@ internal static class UserAccountGuard
         var conflict = await context.UsersAccounts
             .AsNoTracking()
             .AnyAsync(
-                x => x.Email == normalizedEmail && x.EmailVerified && x.Id != userId,
+                x => x.Email == normalizedEmail && x.EmailVerified && x.Id != userAccountId,
                 cancellationToken)
             .ConfigureAwait(false);
 
@@ -61,7 +61,7 @@ internal static class UserAccountGuard
 
     public static async Task EnsureNoOtherVerifiedPhoneAsync(
         IdentityContext context,
-        Guid userId,
+        Guid userAccountId,
         string normalizedPhone,
         CancellationToken cancellationToken)
     {
@@ -70,7 +70,7 @@ internal static class UserAccountGuard
         var conflict = await context.UsersAccounts
             .AsNoTracking()
             .AnyAsync(
-                x => x.PhoneNumber == normalizedPhone && x.PhoneNumberVerified && x.Id != userId,
+                x => x.PhoneNumber == normalizedPhone && x.PhoneNumberVerified && x.Id != userAccountId,
                 cancellationToken)
             .ConfigureAwait(false);
 

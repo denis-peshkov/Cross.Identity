@@ -44,9 +44,9 @@ internal sealed class VerifyTokenStep : IStep
         if (valid)
         {
             var sub = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Sub, ClaimTypes.NameIdentifier);
-            if (Guid.TryParse(sub, out var userId))
+            if (Guid.TryParse(sub, out var userAccountId))
             {
-                ctx.Set(BagKey.Qualify(Kind, "UserId"), userId);
+                ctx.Set(BagKey.Qualify(Kind, "UserId"), userAccountId);
             }
 
             var jti = JwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);

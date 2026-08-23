@@ -15,10 +15,10 @@ public class ExternalLoginUnlink_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenProviderUserIdAndRefreshToken_WhenExecuteAsync_ThenUnlinksAndSetsFlagAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         _externalLoginService
-            .Setup(s => s.UnlinkAsync("Google", userId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Setup(s => s.UnlinkAsync("Google", userAccountId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new ExternalLoginUnlinkStep
@@ -33,7 +33,7 @@ public class ExternalLoginUnlink_StepTests
 
         var bag = new Bag();
         bag.Set("externalLoginUnlink.Provider", "Google");
-        bag.Set("externalLoginUnlink.UserId", userId);
+        bag.Set("externalLoginUnlink.UserId", userAccountId);
         bag.Set("externalLoginUnlink.RefreshToken", refreshToken);
         bag.Set("collectForm.IpAddress", null);
         bag.Set("collectForm.UserAgent", null);
@@ -45,7 +45,7 @@ public class ExternalLoginUnlink_StepTests
         result.Next.Should().Be("done");
         bag.Get<bool>("externalLoginUnlink.Unlinked").Should().BeTrue();
         _externalLoginService.Verify(
-            s => s.UnlinkAsync("Google", userId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.UnlinkAsync("Google", userAccountId, refreshToken, ClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

@@ -19,9 +19,9 @@ internal sealed class License
             SubscriptionId = subscriptionId;
         }
 
-        if (Guid.TryParse(claims.FindFirst("user_id")?.Value, out var userId))
+        if (Guid.TryParse(claims.FindFirst("user_id")?.Value, out var userAccountId))
         {
-            UserId = userId;
+            UserAccountId = userAccountId;
         }
 
         if (long.TryParse(claims.FindFirst("iat")?.Value, out var iat))
@@ -50,7 +50,7 @@ internal sealed class License
         }
 
         IsConfigured = SubscriptionId != null
-                       && UserId != null
+                       && UserAccountId != null
                        && NotBeforeDate != null
                        && StartDate != null
                        && ExpirationDate != null
@@ -58,7 +58,7 @@ internal sealed class License
                        && ProductType != null;
     }
 
-    public Guid? UserId { get; }
+    public Guid? UserAccountId { get; }
 
     public Guid? SubscriptionId { get; }
 

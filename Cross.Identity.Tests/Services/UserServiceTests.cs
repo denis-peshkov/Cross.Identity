@@ -87,11 +87,11 @@ public class UserServiceTests : EFTestsBase
         };
 
         // Act
-        var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
         // Assert
-        userId.Should().NotBe(Guid.Empty);
-        var user = await Context.UsersAccounts.FirstOrDefaultAsync(u => u.Id == userId);
+        userAccountId.Should().NotBe(Guid.Empty);
+        var user = await Context.UsersAccounts.FirstOrDefaultAsync(u => u.Id == userAccountId);
         user.Should().NotBeNull();
         user!.Email.Should().Be(email.ToLowerInvariant());
         user.PasswordPhc.Should().Be(hashedPassword);
@@ -141,9 +141,9 @@ public class UserServiceTests : EFTestsBase
             ["Password"] = "P@ssw0rd!"
         };
 
-        var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
-        userId.Should().NotBe(Guid.Empty);
+        userAccountId.Should().NotBe(Guid.Empty);
         (await Context.UsersAccounts.CountAsync(x => x.Email == email)).Should().Be(2);
         (await Context.UsersAccounts.CountAsync(x => x.Email == email && x.EmailVerified)).Should().Be(0);
     }
@@ -190,9 +190,9 @@ public class UserServiceTests : EFTestsBase
             ["Password"] = "P@ssw0rd!"
         };
 
-        var userId = await _userService.CreateUserAsync(map, CancellationToken.None);
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
 
-        userId.Should().NotBe(Guid.Empty);
+        userAccountId.Should().NotBe(Guid.Empty);
         (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone)).Should().Be(2);
         (await Context.UsersAccounts.CountAsync(x => x.PhoneNumber == phone && x.PhoneNumberVerified)).Should().Be(0);
     }
@@ -201,32 +201,32 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserById_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "test@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("Id", userId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserIdByAsync("Id", userAccountId.ToString(), CancellationToken.None);
 
-        result.Should().Be(userId);
+        result.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByUserId_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "userid-alias@example.com",
         });
 
-        var result = await _userService.GetUserIdByAsync("UserId", userId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserIdByAsync("UserId", userAccountId.ToString(), CancellationToken.None);
 
-        result.Should().Be(userId);
+        result.Should().Be(userAccountId);
     }
 
     [Test]
@@ -234,11 +234,11 @@ public class UserServiceTests : EFTestsBase
     public async Task GivenExistingUserByEmail_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
         // Arrange
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
         });
 
@@ -246,7 +246,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.GetUserIdByAsync("Email", email, CancellationToken.None);
 
         // Assert
-        result.Should().Be(userId);
+        result.Should().Be(userAccountId);
     }
 
     [Test]
@@ -262,11 +262,11 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByUserName_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var userName = "testuser";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
             Email = "test@example.com",
@@ -274,24 +274,24 @@ public class UserServiceTests : EFTestsBase
 
         var result = await _userService.GetUserIdByAsync("UserName", userName, CancellationToken.None);
 
-        result.Should().Be(userId);
+        result.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByPhone_WhenGetUserIdByAsync_ThenReturnsUserIdAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+12125551234";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             PhoneNumber = phone,
             Email = "test@example.com",
         });
         var result = await _userService.GetUserIdByAsync("PhoneNumber", phone, CancellationToken.None);
 
-        result.Should().Be(userId);
+        result.Should().Be(userAccountId);
     }
 
 
@@ -310,11 +310,11 @@ public class UserServiceTests : EFTestsBase
     public async Task GivenExistingUserByEmail_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
         // Arrange
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             UserName = "testuser",
             NormalizedUserName = "testuser"
@@ -325,7 +325,7 @@ public class UserServiceTests : EFTestsBase
 
         // Assert
         result.Should().NotBeNull();
-        result.Id.Should().Be(userId);
+        result.Id.Should().Be(userAccountId);
         result.Email.Should().Be(email);
     }
 
@@ -408,30 +408,30 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserById_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "test@example.com",
             UserName = "u",
             NormalizedUserName = "u"
         });
 
-        var result = await _userService.GetUserByAsync("Id", userId.ToString(), CancellationToken.None);
+        var result = await _userService.GetUserByAsync("Id", userAccountId.ToString(), CancellationToken.None);
 
         result.Should().NotBeNull();
-        result.Id.Should().Be(userId);
+        result.Id.Should().Be(userAccountId);
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUserByUserName_WhenGetUserByAsync_ThenReturnsUserAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var userName = "myuser";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
             Email = "e@e.com"
@@ -440,7 +440,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.GetUserByAsync("UserName", userName, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result.Id.Should().Be(userId);
+        result.Id.Should().Be(userAccountId);
         result.UserName.Should().Be(userName);
     }
 
@@ -457,12 +457,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidEmailCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
@@ -481,12 +481,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMultipleEmailVerifications_WhenValidateCodeAsync_ThenUsesLatestActiveVerificationAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("OLD111"),
@@ -498,7 +498,7 @@ public class UserServiceTests : EFTestsBase
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("NEW222"),
@@ -514,7 +514,7 @@ public class UserServiceTests : EFTestsBase
         result.Should().BeTrue();
 
         var verifications = Context.EmailVerifications
-            .Where(x => x.UserAccountId == userId)
+            .Where(x => x.UserAccountId == userAccountId)
             .OrderBy(x => x.CreatedAt)
             .ToList();
 
@@ -527,12 +527,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenWrongEmailCode_WhenValidateCodeAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userId, Email = email, LockoutEnabled = true });
+        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email, LockoutEnabled = true });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("RIGHT"),
@@ -546,7 +546,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.ValidateCodeAsync("Email", email, "WRONG", CancellationToken.None);
         result.Should().BeFalse();
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(1);
     }
 
@@ -554,11 +554,11 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenLockedOutUser_WhenValidateCodeAsync_ThenReturnsFalseEvenWithValidCodeAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "locked-code@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
             AccessFailedCount = 5,
@@ -566,7 +566,7 @@ public class UserServiceTests : EFTestsBase
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
@@ -580,7 +580,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None);
 
         result.Should().BeFalse();
-        (await Context.EmailVerifications.SingleAsync(x => x.UserAccountId == userId)).UsedAt.Should().BeNull();
+        (await Context.EmailVerifications.SingleAsync(x => x.UserAccountId == userAccountId)).UsedAt.Should().BeNull();
     }
 
     [Test]
@@ -597,17 +597,17 @@ public class UserServiceTests : EFTestsBase
             _communicationEndpoints,
             _options.Object);
 
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "code-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
@@ -623,7 +623,7 @@ public class UserServiceTests : EFTestsBase
             (await _userService.ValidateCodeAsync("Email", email, "WRONG", CancellationToken.None)).Should().BeFalse();
         }
 
-        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         locked.AccessFailedCount.Should().Be(3);
         locked.LockoutEnd.Should().NotBeNull();
 
@@ -634,18 +634,18 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenPriorFailedAttempts_WhenValidateCodeAsyncSucceeds_ThenResetsLockoutAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "code-reset-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
             AccessFailedCount = 2,
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
@@ -658,7 +658,7 @@ public class UserServiceTests : EFTestsBase
 
         (await _userService.ValidateCodeAsync("Email", email, "ABC123", CancellationToken.None)).Should().BeTrue();
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(0);
         user.LockoutEnd.Should().BeNull();
     }
@@ -667,15 +667,15 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPhoneCode_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var phone = "+12125551234";
-        AddToDb(new UserAccountEntity { Id = userId, PhoneNumber = phone, PhoneNumberVerified = true });
+        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
         var sms = await _communicationEndpoints.UpsertAsync(
-            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
+            userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -694,12 +694,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailSelectorAndSmsOtp_WhenValidateCodeAsync_ThenVerifiesPhoneNotEmailAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "login@example.com";
         var phone = "+12125559876";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             EmailVerified = false,
             PhoneNumber = phone,
@@ -707,13 +707,13 @@ public class UserServiceTests : EFTestsBase
             IsActive = true,
         });
         await _communicationEndpoints.UpsertAsync(
-            userId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: false);
+            userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: false);
         var sms = await _communicationEndpoints.UpsertAsync(
-            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
+            userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("654321"),
@@ -727,7 +727,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.ValidateCodeAsync("Email", email, "654321", CancellationToken.None);
 
         result.Should().BeTrue();
-        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == userId);
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
         account.EmailVerified.Should().BeFalse();
         account.PhoneNumberVerified.Should().BeTrue();
     }
@@ -736,12 +736,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailSelectorAndPreferredSms_WhenValidateCodeAsync_ThenAcceptsPhoneCodeAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "login@example.com";
         var phone = "+12125559876";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             EmailVerified = true,
             PhoneNumber = phone,
@@ -749,13 +749,13 @@ public class UserServiceTests : EFTestsBase
             IsActive = true,
         });
         await _communicationEndpoints.UpsertAsync(
-            userId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: true);
+            userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: true);
         var sms = await _communicationEndpoints.UpsertAsync(
-            userId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userId, sms.Id, "session-refresh", ClientContext.Empty);
+            userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", ClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             PhoneNumber = phone,
             CodeHash = CodeGeneratorHelper.GenerateHash("654321"),
@@ -775,12 +775,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPasswordById_WhenValidatePasswordAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var password = "P@ssw0rd!";
         var hashed = "$pbkdf2$";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "test@example.com",
             PasswordPhc = hashed,
             PasswordPepperVersion = 1,
@@ -792,7 +792,7 @@ public class UserServiceTests : EFTestsBase
         });
         _hasher.Setup(h => h.Verify(password, hashed, "test-pepper")).Returns(PasswordVerificationEnum.Success);
 
-        var result = await _userService.ValidatePasswordAsync("Id", userId.ToString(), password, CancellationToken.None);
+        var result = await _userService.ValidatePasswordAsync("Id", userAccountId.ToString(), password, CancellationToken.None);
 
         result.Should().BeTrue();
     }
@@ -801,13 +801,13 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidPassword_WhenValidatePasswordAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         var password = "P@ssw0rd!";
         var hashed = "$pbkdf2$";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = hashed,
             PasswordPepperVersion = 1
@@ -827,11 +827,11 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidPassword_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1,
@@ -848,7 +848,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None);
         result.Should().BeFalse();
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(1);
         user.LockoutEnd.Should().BeNull();
     }
@@ -857,14 +857,14 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenInactiveUser_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "inactive@example.com";
         var password = "P@ssw0rd!";
         var hashedPassword = "$pbkdf2-test-hash";
 
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = hashedPassword,
             PasswordPepperVersion = 1,
@@ -887,17 +887,17 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenInactiveUser_WhenValidateCodeAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "inactive@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             IsActive = false,
         });
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("123456"),
@@ -918,7 +918,7 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenValidCodeByUserName_WhenValidateCodeAsync_ThenReturnsTrueAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var userName = "alice";
         var email = "alice@example.com";
         var communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService.Object, TestAuthOptions.Snapshot());
@@ -933,7 +933,7 @@ public class UserServiceTests : EFTestsBase
 
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             UserName = userName,
             NormalizedUserName = userName,
             Email = email,
@@ -941,14 +941,14 @@ public class UserServiceTests : EFTestsBase
             IsActive = true,
         });
         await communicationEndpoints.UpsertAsync(
-            userId,
+            userAccountId,
             ChannelEnum.Email,
             email,
             CommunicationEndpointSource.Account,
             isVerified: true);
         AddToDb(new EmailVerificationEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             Email = email,
             TokenHash = CodeGeneratorHelper.GenerateHash("ABC123"),
@@ -968,11 +968,11 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMissingPepperVersion_WhenValidatePasswordAsync_ThenReturnsFalseAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "hash",
             PasswordPepperVersion = 99
@@ -992,13 +992,13 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenPasswordNeedingRehash_WhenValidatePasswordAsync_ThenUpdatesPasswordPhcAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         var password = "P@ssw0rd!";
         var oldHash = "$pbkdf2$old";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = oldHash,
             PasswordPepperVersion = 1
@@ -1020,7 +1020,7 @@ public class UserServiceTests : EFTestsBase
         var result = await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None);
 
         result.Should().BeTrue();
-        var user = await Context.UsersAccounts.FindAsync(userId);
+        var user = await Context.UsersAccounts.FindAsync(userAccountId);
         user!.PasswordPhc.Should().Be("$pbkdf2$new");
         user.PasswordPepperVersion.Should().Be((short)2);
     }
@@ -1046,12 +1046,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingUser_WhenSetPasswordAsync_ThenUpdatesPasswordHashAndVersionAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
         var oldStamp = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$old",
             PasswordPepperVersion = 1,
@@ -1068,14 +1068,14 @@ public class UserServiceTests : EFTestsBase
 
         await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
 
-        var user = await Context.UsersAccounts.FindAsync(userId);
+        var user = await Context.UsersAccounts.FindAsync(userAccountId);
         user.Should().NotBeNull();
         user!.PasswordPhc.Should().Be("$pbkdf2$new");
         user.PasswordPepperVersion.Should().Be((short)2);
         user.SecurityStamp.Should().NotBeNull();
         user.SecurityStamp.Should().NotBe(oldStamp);
         _jwtTokenService.Verify(
-            j => j.RevokeAllTokensForUserAsync(userId, RefreshTokenRevokedReason.PASSWORD_CHANGED, ClientContext.Empty, It.IsAny<CancellationToken>()),
+            j => j.RevokeAllTokensForUserAsync(userAccountId, RefreshTokenRevokedReason.PASSWORD_CHANGED, ClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -1096,10 +1096,10 @@ public class UserServiceTests : EFTestsBase
         await using var ctx1 = InMemoryDbHelper.CreateContext(dbName);
         await using var ctx2 = InMemoryDbHelper.CreateContext(dbName);
 
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         ctx1.UsersAccounts.Add(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "concurrency@example.com",
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
@@ -1107,8 +1107,8 @@ public class UserServiceTests : EFTestsBase
         });
         await ctx1.SaveChangesAsync();
 
-        var user1 = await ctx1.UsersAccounts.SingleAsync(x => x.Id == userId);
-        var user2 = await ctx2.UsersAccounts.SingleAsync(x => x.Id == userId);
+        var user1 = await ctx1.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
+        var user2 = await ctx2.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
 
         user1.EmailVerified = true;
         await ctx1.SaveChangesAsync();
@@ -1133,11 +1133,11 @@ public class UserServiceTests : EFTestsBase
             Mock.Of<ICommunicationEndpointService>(),
             _options.Object);
 
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "expired-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1,
@@ -1155,7 +1155,7 @@ public class UserServiceTests : EFTestsBase
 
         (await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None)).Should().BeFalse();
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(1);
         user.LockoutEnd.Should().BeNull();
     }
@@ -1174,11 +1174,11 @@ public class UserServiceTests : EFTestsBase
             Mock.Of<ICommunicationEndpointService>(),
             _options.Object);
 
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "lockout@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1,
@@ -1197,7 +1197,7 @@ public class UserServiceTests : EFTestsBase
             (await _userService.ValidatePasswordAsync("Email", email, "wrong", CancellationToken.None)).Should().BeFalse();
         }
 
-        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var locked = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         locked.AccessFailedCount.Should().Be(3);
         locked.LockoutEnd.Should().NotBeNull();
         locked.LockoutEnd!.Value.Should().BeAfter(DateTimeOffset.UtcNow);
@@ -1212,12 +1212,12 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenPriorFailedAttempts_WhenValidatePasswordAsyncSucceeds_ThenResetsLockoutAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "reset-lockout@example.com";
         var password = "P@ssw0rd!";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
             PasswordPepperVersion = 1,
@@ -1234,7 +1234,7 @@ public class UserServiceTests : EFTestsBase
 
         (await _userService.ValidatePasswordAsync("Email", email, password, CancellationToken.None)).Should().BeTrue();
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(0);
         user.LockoutEnd.Should().BeNull();
     }
@@ -1243,11 +1243,11 @@ public class UserServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenLockedOutUser_WhenSetPasswordAsync_ThenClearsLockoutAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var email = "locked@example.com";
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$old",
             PasswordPepperVersion = 1,
@@ -1264,7 +1264,7 @@ public class UserServiceTests : EFTestsBase
 
         await _userService.SetPasswordAsync("Email", email, "newPass", ClientContext.Empty, CancellationToken.None);
 
-        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userId);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(0);
         user.LockoutEnd.Should().BeNull();
     }

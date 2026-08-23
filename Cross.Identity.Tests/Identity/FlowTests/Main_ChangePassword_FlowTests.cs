@@ -21,16 +21,16 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<PasswordAuthStepFactory>();
         AddRegistryStep<ResetPasswordStepFactory>();
 
-        var userIdText = UserId.ToString();
+        var userAccountIdText = UserId.ToString();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.ValidatePasswordAsync("Id", userIdText, CurrentPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.ValidatePasswordAsync("Id", userAccountIdText, CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Id", userIdText, NewPassword, ClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("Id", userAccountIdText, NewPassword, ClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
-            .Setup(s => s.GetUserIdByAsync("Id", userIdText, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetUserIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserId);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);

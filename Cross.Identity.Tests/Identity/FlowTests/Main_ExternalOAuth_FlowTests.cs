@@ -56,18 +56,18 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(_jwtTokenService);
     }
 
-    private void SetAuthenticatedUser(Guid userId)
+    private void SetAuthenticatedUser(Guid userAccountId)
     {
         var identity = new ClaimsIdentity(
-            new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) },
+            new[] { new Claim(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) },
             authenticationType: "Test");
         _httpContextAccessor.HttpContext!.User = new ClaimsPrincipal(identity);
     }
 
-    private async Task<string> IssueRefreshTokenAsync(Guid userId)
+    private async Task<string> IssueRefreshTokenAsync(Guid userAccountId)
     {
         return await _jwtTokenService.GenerateRefreshTokenAsync(
-            userId,
+            userAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
             ClientContext.Empty,
@@ -99,11 +99,11 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenAuthenticatedUserWithLinkedProvider_WhenExternalLoginUnlink_ThenUnlinksProviderAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var provider = await Context.Providers.SingleAsync(x => x.Name == "Google");
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "unlink@example.com",
             UserName = "unlink",
             NormalizedUserName = "unlink",
@@ -114,7 +114,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
         AddToDb(new UserExternalLoginEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             ProviderId = provider.Id,
             ProviderEntity = null!,
@@ -122,13 +122,13 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
         });
-        SetAuthenticatedUser(userId);
-        var refresh = await IssueRefreshTokenAsync(userId);
+        SetAuthenticatedUser(userAccountId);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userId,
+                ["UserId"] = userAccountId,
                 ["RefreshToken"] = refresh,
                 ["Provider"] = "Google",
             },
@@ -145,7 +145,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenAuthenticatedUser_WhenExternalLoginGetAll_ThenReturnsAccountEmailAndProvidersAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         AddToDb(new ProviderEntity
         {
             Name = "Microsoft",
@@ -162,7 +162,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
         AddToDb(new UserAccountEntity
         {
-            Id = userId,
+            Id = userAccountId,
             Email = "owner@example.com",
             UserName = "owner",
             NormalizedUserName = "owner",
@@ -173,7 +173,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var google = await Context.Providers.SingleAsync(x => x.Name == "Google");
         AddToDb(new UserExternalLoginEntity
         {
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             ProviderId = google.Id,
             ProviderEntity = null!,
@@ -183,7 +183,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             CreatedAt = DateTime.UtcNow,
             ConcurrencyStamp = Guid.NewGuid(),
         });
-        SetAuthenticatedUser(userId);
+        SetAuthenticatedUser(userAccountId);
 
         _externalLoginService = CreateExternalLoginService(
             GoogleSuccessHandler(),
@@ -196,12 +196,12 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 };
             });
         RegisterToServiceProvider<IExternalLoginService, IExternalLoginService>(_externalLoginService);
-        var refresh = await IssueRefreshTokenAsync(userId);
+        var refresh = await IssueRefreshTokenAsync(userAccountId);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?>
             {
-                ["UserId"] = userId,
+                ["UserId"] = userAccountId,
                 ["RefreshToken"] = refresh,
             },
             Flow,
@@ -227,10 +227,10 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenMatchingUserId_WhenExternalLogin_ThenAcceptsAsync()
     {
-        var linkUserId = Guid.NewGuid();
+        var linkUserAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
-            Id = linkUserId,
+            Id = linkUserAccountId,
             Email = "link@example.com",
             UserName = "link",
             NormalizedUserName = "link",
@@ -239,7 +239,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             ConcurrencyStamp = Guid.NewGuid(),
         });
         var refreshToken = await _jwtTokenService.GenerateRefreshTokenAsync(
-            linkUserId,
+            linkUserAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
             ClientContext.Empty,
@@ -250,7 +250,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             {
                 ["Provider"] = "Google",
                 ["ReturnUrl"] = "/home",
-                ["UserId"] = linkUserId.ToString(),
+                ["UserId"] = linkUserAccountId.ToString(),
                 ["RefreshToken"] = refreshToken,
             },
             Flow,
@@ -265,12 +265,12 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenUserIdWithoutMatchingRefreshToken_WhenExternalLogin_ThenThrowsNotAuthorizedAsync()
     {
-        var ownerUserId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
+        var ownerUserAccountId = Guid.NewGuid();
+        var otherUserAccountId = Guid.NewGuid();
         AddToDb(
             new UserAccountEntity
             {
-                Id = ownerUserId,
+                Id = ownerUserAccountId,
                 Email = "owner@example.com",
                 UserName = "owner",
                 NormalizedUserName = "owner",
@@ -280,7 +280,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             },
             new UserAccountEntity
             {
-                Id = otherUserId,
+                Id = otherUserAccountId,
                 Email = "other@example.com",
                 UserName = "other",
                 NormalizedUserName = "other",
@@ -289,7 +289,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 ConcurrencyStamp = Guid.NewGuid(),
             });
         var ownerRefresh = await _jwtTokenService.GenerateRefreshTokenAsync(
-            ownerUserId,
+            ownerUserAccountId,
             Guid.NewGuid(),
             new List<Claim>(),
             ClientContext.Empty,
@@ -299,7 +299,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 new Dictionary<string, object?>
                 {
                     ["Provider"] = "Google",
-                    ["UserId"] = otherUserId.ToString(),
+                    ["UserId"] = otherUserAccountId.ToString(),
                     ["RefreshToken"] = ownerRefresh,
                 },
                 Flow,

@@ -45,8 +45,8 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (userId is not { } resolvedUserId || resolvedUserId == Guid.Empty)
+        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
         {
             Logger.LogInformation(
                 "Send code rejected for {Field} identity {Identity}: user not found.",
@@ -59,7 +59,7 @@ internal sealed class SendCodeStep : IStep
         try
         {
             target = await CommunicationEndpoints
-                .ResolveOtpTargetAsync(resolvedUserId, cancellationToken)
+                .ResolveOtpTargetAsync(resolvedUserAccountId, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (ValidationException ex)
@@ -124,7 +124,7 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
-            await CodeService.SendAsync(msg, code, resolvedUserId, ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, resolvedUserAccountId, ttl, cancellationToken).ConfigureAwait(false);
 
             if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
             {

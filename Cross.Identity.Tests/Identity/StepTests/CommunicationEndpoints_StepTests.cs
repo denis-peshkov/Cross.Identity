@@ -15,7 +15,7 @@ public class CommunicationEndpoints_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenUserIdAndRefreshToken_WhenGetAll_ThenWritesEndpointsAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         var list = new List<CommunicationEndpointDto>
         {
@@ -29,7 +29,7 @@ public class CommunicationEndpoints_StepTests
                 Source = CommunicationEndpointSource.Account,
             },
         };
-        _endpoints.Setup(s => s.GetAllAsync(userId, refreshToken, It.IsAny<CancellationToken>())).ReturnsAsync(list);
+        _endpoints.Setup(s => s.GetAllAsync(userAccountId, refreshToken, It.IsAny<CancellationToken>())).ReturnsAsync(list);
 
         var step = new CommunicationEndpointsGetAllStep
         {
@@ -41,7 +41,7 @@ public class CommunicationEndpoints_StepTests
         };
 
         var bag = new Bag()
-            .Set("communicationEndpointsGetAll.UserId", userId)
+            .Set("communicationEndpointsGetAll.UserId", userAccountId)
             .Set("communicationEndpointsGetAll.RefreshToken", refreshToken);
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -53,11 +53,11 @@ public class CommunicationEndpoints_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenUserIdEndpointAndRefreshToken_WhenSetPreferred_ThenPassesClientContextAsync()
     {
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var endpointId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         _endpoints
-            .Setup(s => s.SetPreferredAsync(userId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         var step = new CommunicationEndpointSetPreferredStep
@@ -71,7 +71,7 @@ public class CommunicationEndpoints_StepTests
         };
 
         var bag = new Bag()
-            .Set("communicationEndpointSetPreferred.UserId", userId)
+            .Set("communicationEndpointSetPreferred.UserId", userAccountId)
             .Set("communicationEndpointSetPreferred.EndpointId", endpointId.ToString())
             .Set("communicationEndpointSetPreferred.RefreshToken", refreshToken)
             .Set("collectForm.IpAddress", "1.2.3.4")
@@ -83,7 +83,7 @@ public class CommunicationEndpoints_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         bag.Get<bool>("communicationEndpointSetPreferred.Preferred").Should().BeTrue();
         _endpoints.Verify(
-            s => s.SetPreferredAsync(userId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()),
+            s => s.SetPreferredAsync(userAccountId, endpointId, refreshToken, new ClientContext("1.2.3.4", "ua", "fp"), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

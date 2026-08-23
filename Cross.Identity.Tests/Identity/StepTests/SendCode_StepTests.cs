@@ -61,10 +61,10 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
@@ -123,11 +123,11 @@ public class SendCode_StepTests
     public async Task GivenTtlKeyInBag_WhenExecuteAsync_ThenUsesBagTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
         var ttl = TimeSpan.FromMinutes(17);
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -181,10 +181,10 @@ public class SendCode_StepTests
     public async Task GivenTtlKeyNullInBag_WhenExecuteAsync_ThenUsesDefaultTtlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -239,10 +239,10 @@ public class SendCode_StepTests
     {
         // Arrange
         var phone = _faker.Phone.PhoneNumber("+1##########");
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("PhoneNumber", phone, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Sms, phone);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
@@ -287,10 +287,10 @@ public class SendCode_StepTests
     {
         // Arrange
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
@@ -396,10 +396,10 @@ public class SendCode_StepTests
     public async Task GivenKnownUserWithoutOtpChannel_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         _communicationEndpoints
             .Setup(c => c.ResolveOtpTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ValidationException("No preferred verified communication channel and no email."));
@@ -439,10 +439,10 @@ public class SendCode_StepTests
     public async Task GivenResetTemplate_WhenExecuteAsync_ThenUsesResetCopyAndEmailInUrlAsync()
     {
         var email = _faker.Internet.Email();
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("Email", email, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _processDefinitionProvider.Setup(p => p.GetTemplate("reset", "en", "txt"))
             .Returns("Reset {{email}} {{code}} {{url}}");
@@ -498,10 +498,10 @@ public class SendCode_StepTests
     {
         var userName = "alice";
         var email = "alice@example.com";
-        var userId = Guid.NewGuid();
+        var userAccountId = Guid.NewGuid();
 
         _userService.Setup(s => s.GetUserIdByAsync("UserName", userName, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(userId);
+            .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Production);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -544,7 +544,7 @@ public class SendCode_StepTests
                     m.Channel == ChannelEnum.Email &&
                     m.Destination == email),
                 It.IsAny<string>(),
-                userId,
+                userAccountId,
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);

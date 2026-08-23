@@ -41,8 +41,8 @@ internal sealed class VerifyCodeStep : IStep
         var selector = Selector.Resolve(ctx);
         var code = ctx.Get<string>(BagKey.Qualify(Kind, CodeKey));
 
-        var userId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (userId is not { } resolvedUserId || resolvedUserId == Guid.Empty)
+        var userAccountId = await UserService.GetUserIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
         {
             Logger.LogInformation(
                 "Verify code rejected for {Field} identity {Identity}: user not found.",
@@ -55,7 +55,7 @@ internal sealed class VerifyCodeStep : IStep
         try
         {
             target = await CommunicationEndpoints
-                .ResolveOtpTargetAsync(resolvedUserId, cancellationToken)
+                .ResolveOtpTargetAsync(resolvedUserAccountId, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (ValidationException ex)
@@ -78,7 +78,7 @@ internal sealed class VerifyCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        var ok = await CodeService.VerifyAsync(resolvedUserId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
+        var ok = await CodeService.VerifyAsync(resolvedUserAccountId, target.Channel, target.Address, code, cancellationToken).ConfigureAwait(false);
         if (!ok)
         {
             Logger.LogInformation(
@@ -88,7 +88,7 @@ internal sealed class VerifyCodeStep : IStep
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
-        ctx.Set(BagKey.Qualify(Kind, UserIdKey), resolvedUserId.ToString());
+        ctx.Set(BagKey.Qualify(Kind, UserIdKey), resolvedUserAccountId.ToString());
         return StepResult.Ok(Next);
     }
 }

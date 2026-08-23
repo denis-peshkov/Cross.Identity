@@ -43,10 +43,10 @@ public class ExternalLoginInitiate_StepTests
     [Category(TestCategory.UNIT)]
     public async Task GivenGuidOrStringUserIdAndRefreshToken_WhenExecuteAsync_ThenForwardsBothAsync()
     {
-        var linkUserId = Guid.NewGuid();
+        var linkUserAccountId = Guid.NewGuid();
         const string refreshToken = "refresh-token-value";
         _externalLoginService
-            .Setup(s => s.InitiateAsync("Google", null, linkUserId, refreshToken, It.IsAny<CancellationToken>()))
+            .Setup(s => s.InitiateAsync("Google", null, linkUserAccountId, refreshToken, It.IsAny<CancellationToken>()))
             .ReturnsAsync("https://provider/auth");
 
         var step = new ExternalLoginInitiateStep
@@ -60,18 +60,18 @@ public class ExternalLoginInitiate_StepTests
 
         var bagWithGuid = new Bag();
         bagWithGuid.Set("externalLoginInitiate.Provider", "Google");
-        bagWithGuid.Set("externalLoginInitiate.UserId", linkUserId);
+        bagWithGuid.Set("externalLoginInitiate.UserId", linkUserAccountId);
         bagWithGuid.Set("externalLoginInitiate.RefreshToken", refreshToken);
         await step.ExecuteAsync(bagWithGuid, CancellationToken.None);
 
         var bagWithString = new Bag();
         bagWithString.Set("externalLoginInitiate.Provider", "Google");
-        bagWithString.Set("externalLoginInitiate.UserId", linkUserId.ToString());
+        bagWithString.Set("externalLoginInitiate.UserId", linkUserAccountId.ToString());
         bagWithString.Set("externalLoginInitiate.RefreshToken", refreshToken);
         await step.ExecuteAsync(bagWithString, CancellationToken.None);
 
         _externalLoginService.Verify(
-            s => s.InitiateAsync("Google", null, linkUserId, refreshToken, It.IsAny<CancellationToken>()),
+            s => s.InitiateAsync("Google", null, linkUserAccountId, refreshToken, It.IsAny<CancellationToken>()),
             Times.Exactly(2));
     }
 

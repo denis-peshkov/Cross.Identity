@@ -5,5 +5,5 @@
 /// </summary>
 public interface IExternalLoginUserProvisioner
 {
-    Task ProvisionAsync(Guid userId, ExternalOAuthProfile profile, CancellationToken cancellationToken);
+    Task ProvisionAsync(Guid userAccountId, ExternalOAuthProfile profile, CancellationToken cancellationToken);
 }

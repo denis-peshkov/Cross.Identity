@@ -64,7 +64,7 @@ internal class JwtTokenService : IJwtTokenService
 
     /// <inheritdoc/>
     public async Task<string> GenerateAccessTokenAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid familyId,
         List<string> permissions,
         List<Claim> claims,
@@ -72,7 +72,7 @@ internal class JwtTokenService : IJwtTokenService
         CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
-        var securityStamp = await GetUserSecurityStampAsync(userId, cancellationToken).ConfigureAwait(false);
+        var securityStamp = await GetUserSecurityStampAsync(userAccountId, cancellationToken).ConfigureAwait(false);
 
         var claimsIdentity = StripAndApplySecurityStamp(claims, securityStamp)
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
@@ -110,7 +110,7 @@ internal class JwtTokenService : IJwtTokenService
         {
             Id = jti,
             FamilyId = familyId,
-            UserAccountId = userId,
+            UserAccountId = userAccountId,
             UserAccount = null!,
             TokenHash = tokenHash,
             ExpiresAt = expiresAt,
@@ -120,7 +120,7 @@ internal class JwtTokenService : IJwtTokenService
         // Persist jti in the access-tokens table (blacklist, audit, and revocation)
         await _context.AccessTokens.AddAsync(entity, cancellationToken).ConfigureAwait(false);
         _audit.RecordTokenIssued(
-            userId,
+            userAccountId,
             AuditEntityType.AccessToken,
             jti,
             clientContext.IpAddress,
@@ -134,14 +134,14 @@ internal class JwtTokenService : IJwtTokenService
 
     /// <inheritdoc/>
     public async Task<string> GenerateRefreshTokenAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid familyId,
         List<Claim> claims,
         ClientContext clientContext,
         CancellationToken cancellationToken)
     {
         var jti = Guid.NewGuid();
-        var securityStamp = await GetUserSecurityStampAsync(userId, cancellationToken).ConfigureAwait(false);
+        var securityStamp = await GetUserSecurityStampAsync(userAccountId, cancellationToken).ConfigureAwait(false);
 
         var claimsIdentity = StripAndApplySecurityStamp(claims, securityStamp)
             .AddIfNotNull(JwtRegisteredClaimNames.Jti, jti.ToString())
@@ -172,7 +172,7 @@ internal class JwtTokenService : IJwtTokenService
             {
                 Id = jti,
                 FamilyId = familyId,
-                UserAccountId = userId,
+                UserAccountId = userAccountId,
                 UserAccount = null!,
                 TokenHash = tokenHash,
                 ExpiresAt = expiresAt,
@@ -186,7 +186,7 @@ internal class JwtTokenService : IJwtTokenService
             cancellationToken)
             .ConfigureAwait(false);
         _audit.RecordTokenIssued(
-            userId,
+            userAccountId,
             AuditEntityType.RefreshToken,
             jti,
             clientContext.IpAddress,
@@ -237,24 +237,24 @@ internal class JwtTokenService : IJwtTokenService
             .ConfigureAwait(false);
     }
 
-    private async Task<Guid?> GetUserSecurityStampAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<Guid?> GetUserSecurityStampAsync(Guid userAccountId, CancellationToken cancellationToken)
     {
         return await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => x.SecurityStamp)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
     }
 
     private async Task<bool> IsUserAccountValidForTokenAsync(
-        Guid userId,
+        Guid userAccountId,
         Guid? tokenSecurityStamp,
         CancellationToken cancellationToken)
     {
         var row = await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => new { x.IsActive, x.SecurityStamp })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -367,7 +367,7 @@ internal class JwtTokenService : IJwtTokenService
     /// <inheritdoc/>
     public async Task EnsureRefreshTokenBelongsToUserAsync(
         string? refreshToken,
-        Guid userId,
+        Guid userAccountId,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(refreshToken))
@@ -381,7 +381,7 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         var entity = await GetRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
-        if (entity is null || entity.UserAccountId != userId)
+        if (entity is null || entity.UserAccountId != userAccountId)
         {
             throw new NotAuthorizedException("Refresh token does not match the specified user.");
         }
@@ -434,11 +434,11 @@ internal class JwtTokenService : IJwtTokenService
         await EnsureSessionBindingForRotationAsync(entity, clientContext, cancellationToken).ConfigureAwait(false);
     }
 
-    private async Task<bool> IsUserAccountActiveAsync(Guid userId, CancellationToken cancellationToken)
+    private async Task<bool> IsUserAccountActiveAsync(Guid userAccountId, CancellationToken cancellationToken)
     {
         return await _context.UsersAccounts
             .AsNoTracking()
-            .Where(x => x.Id == userId)
+            .Where(x => x.Id == userAccountId)
             .Select(x => x.IsActive)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -990,7 +990,7 @@ internal class JwtTokenService : IJwtTokenService
 
     /// <inheritdoc/>
     public async Task RevokeAllTokensForUserAsync(
-        Guid userId,
+        Guid userAccountId,
         RefreshTokenRevokedReason reason,
         ClientContext clientContext,
         CancellationToken cancellationToken)
@@ -998,7 +998,7 @@ internal class JwtTokenService : IJwtTokenService
         var now = DateTime.UtcNow;
 
         var refreshTokens = await _context.RefreshTokens
-            .Where(x => x.UserAccountId == userId && x.RevokedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.RevokedAt == null)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
@@ -1016,7 +1016,7 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         var accessTokens = await _context.AccessTokens
-            .Where(x => x.UserAccountId == userId && x.RevokedAt == null)
+            .Where(x => x.UserAccountId == userAccountId && x.RevokedAt == null)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
