@@ -18,7 +18,9 @@
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
-### 39. Idle revoke double-audit? (CR)
+---
+
+## Низкий (техдолг / несогласованности)
 
 - `TwoFactorEnabled` — мёртвое поле в entity, в auth pipeline не используется.
 - `DeveloperMode` → `LastCode` в bag + skip send (`Authentication:DeveloperMode`). Утечка OTP через API response, если включить в prod.
