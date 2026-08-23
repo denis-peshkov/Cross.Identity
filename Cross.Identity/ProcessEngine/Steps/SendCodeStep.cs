@@ -124,7 +124,7 @@ internal sealed class SendCodeStep : IStep
 
         try
         {
-            await CodeService.SendAsync(msg, code, resolvedUserId.ToString(), ttl, cancellationToken).ConfigureAwait(false);
+            await CodeService.SendAsync(msg, code, resolvedUserId, ttl, cancellationToken).ConfigureAwait(false);
 
             if (Configuration.GetValue<bool>("Authentication:DeveloperMode"))
             {

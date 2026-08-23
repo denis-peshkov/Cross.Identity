@@ -68,7 +68,7 @@ public class CodeServiceTests : EFTestsBase
             .WithTextBody("Test body")
             .WithTextHtml("<html>Test body</html>");
         var ttl = TimeSpan.FromMinutes(5);
-        const string userId = "00000000-0000-0000-0000-000000000001";
+        var userId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         _emailService.Setup(s => s.SendAsync("", "test@example.com", "Test", "Test body", "<html>Test body</html>", It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -88,7 +88,7 @@ public class CodeServiceTests : EFTestsBase
         var message = NotificationMessage.For(ChannelEnum.Sms, "+1234567890")
             .WithTextBody("Your code is 123456");
         var ttl = TimeSpan.FromMinutes(5);
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         _smsService.Setup(s => s.SendAsync("+1234567890", "Your code is 123456", It.IsAny<CancellationToken>()))
             .ReturnsAsync("sms-id");
@@ -107,7 +107,7 @@ public class CodeServiceTests : EFTestsBase
         var message = NotificationMessage.For(ChannelEnum.Telegram, "chat-id")
             .WithTextBody("Your code is 123456");
         var ttl = TimeSpan.FromMinutes(5);
-        var userId = Guid.NewGuid().ToString();
+        var userId = Guid.NewGuid();
 
         await FluentActions.Invoking(() =>
                 _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None))
@@ -137,7 +137,7 @@ public class CodeServiceTests : EFTestsBase
         _smsService.Setup(s => s.SendAsync(storedPhone, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("sms-id");
 
-        await _codeService.SendAsync(message, "123456", userId.ToString(), ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "123456", userId, ttl, CancellationToken.None);
 
         (await Context.PhoneVerifications.SingleAsync()).PhoneNumber.Should().Be(storedPhone);
 
@@ -533,8 +533,8 @@ public class CodeServiceTests : EFTestsBase
             .WithSubject("Test")
             .WithTextBody("body");
 
-        await _codeService.SendAsync(message, "OLD-CODE", userId.ToString(), ttl, CancellationToken.None);
-        await _codeService.SendAsync(message, "NEW-CODE", userId.ToString(), ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "OLD-CODE", userId, ttl, CancellationToken.None);
+        await _codeService.SendAsync(message, "NEW-CODE", userId, ttl, CancellationToken.None);
 
         (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "OLD-CODE", CancellationToken.None)).Should().BeFalse();
         (await _codeService.VerifyAsync(userId, ChannelEnum.Email, email, "NEW-CODE", CancellationToken.None)).Should().BeTrue();
@@ -558,10 +558,10 @@ public class CodeServiceTests : EFTestsBase
             .WithSubject("Test")
             .WithTextBody("body");
 
-        await sut.SendAsync(message, "111111", userId.ToString(), TimeSpan.FromMinutes(5), CancellationToken.None);
+        await sut.SendAsync(message, "111111", userId, TimeSpan.FromMinutes(5), CancellationToken.None);
 
         await FluentActions.Invoking(() =>
-                sut.SendAsync(message, "222222", userId.ToString(), TimeSpan.FromMinutes(5), CancellationToken.None))
+                sut.SendAsync(message, "222222", userId, TimeSpan.FromMinutes(5), CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*wait*");
@@ -585,11 +585,11 @@ public class CodeServiceTests : EFTestsBase
             .WithTextBody("body");
         var ttl = TimeSpan.FromMinutes(5);
 
-        await sut.SendAsync(message, "111111", userId.ToString(), ttl, CancellationToken.None);
-        await sut.SendAsync(message, "222222", userId.ToString(), ttl, CancellationToken.None);
+        await sut.SendAsync(message, "111111", userId, ttl, CancellationToken.None);
+        await sut.SendAsync(message, "222222", userId, ttl, CancellationToken.None);
 
         await FluentActions.Invoking(() =>
-                sut.SendAsync(message, "333333", userId.ToString(), ttl, CancellationToken.None))
+                sut.SendAsync(message, "333333", userId, ttl, CancellationToken.None))
             .Should()
             .ThrowAsync<ValidationException>()
             .WithMessage("*Too many*");

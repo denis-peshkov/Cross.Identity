@@ -76,7 +76,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -112,7 +112,7 @@ public class SendCode_StepTests
                     m.Channel == ChannelEnum.Email &&
                     m.Destination == email),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -137,7 +137,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -170,7 +170,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 ttl,
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -194,7 +194,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -227,7 +227,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -302,7 +302,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("smtp down"));
@@ -337,7 +337,7 @@ public class SendCode_StepTests
         _codeService.Verify(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -387,7 +387,7 @@ public class SendCode_StepTests
         result.Error.Should().BeOfType<NotAuthorizedException>()
             .Which.Message.Should().Be("Invalid credentials.");
         _codeService.Verify(
-            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -430,7 +430,7 @@ public class SendCode_StepTests
         result.Error.Should().BeOfType<NotAuthorizedException>()
             .Which.Message.Should().Be("Invalid credentials.");
         _codeService.Verify(
-            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
+            s => s.SendAsync(It.IsAny<NotificationMessage>(), It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()),
             Times.Never);
     }
 
@@ -451,7 +451,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -486,7 +486,7 @@ public class SendCode_StepTests
                     && m.TextBody.Contains("http://localhost:4200/reset-password?code=")
                     && m.TextBody.Contains("email=")),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -511,7 +511,7 @@ public class SendCode_StepTests
         _codeService.Setup(c => c.SendAsync(
                 It.IsAny<NotificationMessage>(),
                 It.IsAny<string>(),
-                It.IsAny<string>(),
+                It.IsAny<Guid>(),
                 It.IsAny<TimeSpan>(),
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -544,7 +544,7 @@ public class SendCode_StepTests
                     m.Channel == ChannelEnum.Email &&
                     m.Destination == email),
                 It.IsAny<string>(),
-                userId.ToString(),
+                userId,
                 TimeSpan.FromMinutes(5),
                 It.IsAny<CancellationToken>()),
             Times.Once);

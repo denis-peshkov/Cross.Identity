@@ -39,11 +39,11 @@ Filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` — �
 ### 28. SendCode action URL всегда `/reset-password` (CR)
 `SendCodeStep.BuildActionUrl` — path не зависит от `Template` (verify/register vs reset).
 
-### 29. OAuth unverified email collision (CR)
-`ExternalLoginService` — даже при `profile.EmailVerified` отвергать merge, если локальный email уже есть как unverified row.
+### ✅ 29. OAuth unverified email collision (CR отклонён)
+При `profile.EmailVerified` и локальном unverified squat — **создаётся новый verified-аккаунт** (не блокировка). CR предлагал отклонять — **принято** текущее поведение (см. «Принято» ниже).
 
-### 30. `ICodeService.SendAsync` `userId: string` (CR)
-`SendAsync(string userId)` vs `VerifyAsync(Guid)` — выровнять на `Guid`.
+### ✅ 30. `ICodeService.SendAsync` `userId: Guid` (CR)
+`SendAsync(Guid userId)` — выровнено с `VerifyAsync(Guid)`; `Guid.TryParse` убран.
 
 ### ✅ 31. `GetUserIdByAsync` nullability (CR)
 Сигнатура `Task<Guid?>`; при отсутствии user — `null` (не `NotFoundException`). В `Bag` по-прежнему строка (`ToString()`).
@@ -141,12 +141,16 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 ### Password max 32 (#36) — принято
 Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.ChangePassword`, …): `min: 8`, `max: 32`. Лимит — контракт stock JSON / UX, не ограничение hasher или колонки БД. CodeRabbit max 128 отклонён: 32 уже закрыто в коде; хост может поднять `max` в кастомном flow override или своей валидации до submit.
 
+### OAuth unverified squat + verified profile (#29) — принято
+`ExternalLoginService.ResolveOrCreateUserAsync`: если local row с тем же email **unverified**, а OAuth-провайдер вернул **verified** email — создаётся **новый** аккаунт с `EmailVerified = true` (squat остаётся unverified). Auto-link только при **обоих verified** (см. «OAuth takeover по email»). CodeRabbit: блокировать при unverified squat — отклонено: verified OAuth = доказательство владения email; жертва squat получает свой verified-аккаунт; squat не блокирует legitimate OAuth signup. Unverified OAuth + squat по-прежнему `ValidationException`.
+
 ---
 
 ## Закрыто (проверено в коде)
 
 | # | Суть |
 |---|------|
+| ✅ #29 OAuth unverified squat (CR отклонён) | verified OAuth + local unverified → новый verified account; см. «Принято» |
 | ✅ OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
 | ✅ Account linking без auth | linking требует `RefreshToken` того же user |
 | ✅ IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
@@ -183,6 +187,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 | ✅ #24 SMS normalize | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | ✅ #25 Lockout after expiry | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
 | ✅ #27 Preferred unique index | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
+| ✅ #30 SendAsync userId Guid | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
 | ✅ #31 GetUserIdByAsync nullability | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
@@ -210,7 +215,7 @@ Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **CR M20, M28:** PII logs; action URL.
-3. **CR M26, M29–M30, M32–M35, M39:** AuditEntityType; OAuth collision; SendAsync Guid; Guard exceptions; Bag nullable; IP binding config; idle double-audit.
+3. **CR M26, M32–M35, M39:** AuditEntityType; Guard exceptions; Bag nullable; IP binding config; idle double-audit. M29 принято (OAuth unverified squat); M30 закрыт (SendAsync Guid).
 4. **CR M37–M38:** решить принять/отклонить (ClientContext form, Audit PII); M36 принято (password 32).
 5. **M40–M41 (бывший TO-DO):** явный выбор канала; messenger send + bot verification.
 6. **CR minor:** XML docs / PhoneE164 / JsonHelpers hygiene.

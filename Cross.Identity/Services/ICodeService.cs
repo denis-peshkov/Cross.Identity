@@ -24,7 +24,7 @@ internal interface ICodeService
     Task SendAsync(
         NotificationMessage msg,
         string code,
-        string userId,
+        Guid userId,
         TimeSpan ttl,
         CancellationToken cancellationToken);
 

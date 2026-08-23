@@ -29,13 +29,14 @@ internal sealed class CodeService : ICodeService
     }
 
     /// <inheritdoc />
-    public async Task SendAsync(NotificationMessage msg, string code, string userId, TimeSpan ttl, CancellationToken cancellationToken)
+    public async Task SendAsync(NotificationMessage msg, string code, Guid userId, TimeSpan ttl, CancellationToken cancellationToken)
     {
-        var destination = msg.Destination.Trim();
+        if (userId == Guid.Empty)
+        {
+            throw new ArgumentException("Invalid user id", nameof(userId));
+        }
 
-        var id = Guid.TryParse(userId, out var guid)
-            ? guid
-            : throw new ArgumentException("Invalid user id", nameof(userId));
+        var destination = msg.Destination.Trim();
 
         var developerMode = _configuration.GetValue<bool>("Authentication:DeveloperMode");
         var now = DateTime.UtcNow;
@@ -47,7 +48,7 @@ internal sealed class CodeService : ICodeService
 
         var normalizedDestination = msg.Channel.NormalizeAddress(destination);
 
-        await EnsureOtpSendAllowedAsync(id, msg.Channel, normalizedDestination, now, cancellationToken)
+        await EnsureOtpSendAllowedAsync(userId, msg.Channel, normalizedDestination, now, cancellationToken)
             .ConfigureAwait(false);
 
         switch (msg.Channel)
@@ -63,7 +64,7 @@ internal sealed class CodeService : ICodeService
                 var emailEntity = new EmailVerificationEntity
                 {
                     Id = Guid.NewGuid(),
-                    UserAccountId = id,
+                    UserAccountId = userId,
                     UserAccount = null!,
                     Email = normalizedDestination,
                     TokenHash = CodeGeneratorHelper.GenerateHash(code),
@@ -87,7 +88,7 @@ internal sealed class CodeService : ICodeService
                 var phoneEntity = new PhoneVerificationEntity
                 {
                     Id = Guid.NewGuid(),
-                    UserAccountId = id,
+                    UserAccountId = userId,
                     UserAccount = null!,
                     PhoneNumber = normalizedDestination,
                     CodeHash = CodeGeneratorHelper.GenerateHash(code),
