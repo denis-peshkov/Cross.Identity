@@ -552,7 +552,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
             AccessFailedCount = 0,
             IsActive = true,
             CreatedAt = now,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
             LastLoginAt = now,

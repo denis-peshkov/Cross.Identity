@@ -111,7 +111,6 @@ public class UserAccountEntity : IHasConcurrencyStamp
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; }
-    public Guid CreatedBy { get; set; }
 
     public virtual ICollection<UserExternalLoginEntity> ExternalLogins { get; set; } = new List<UserExternalLoginEntity>();
 

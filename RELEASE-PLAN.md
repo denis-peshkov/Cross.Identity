@@ -153,7 +153,7 @@ Obsolete, но всё ещё в коде — слабый алгоритм пр�
 
 - Мёртвые ключи в `main.Token.json` (`accessTokenKey`, …) — factory не читает.
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
-- `CreatedBy` не заполняется при register (OAuth ставит `Guid.Empty`).
+- ~~`CreatedBy` не заполняется при register~~ ✅ удалено (колонка убрана из entity/DDL; PreDeployment `1_06`).
 - `AuditService.Record` без `SaveChanges` — audit теряется при ошибке между revoke и commit.
 - `DeveloperMode` → `LastCode` в bag (утечка OTP в dev, если включить в prod).
 - `ReturnUrl` в OAuth state без allowlist — open redirect на стороне хоста, если тот редиректит вслепую.

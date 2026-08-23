@@ -25,7 +25,6 @@ CREATE TABLE [auth].[UsersAccounts]
     [IsActive]              BIT               NOT NULL,
 
     [CreatedAt]             DATETIME2(7)      NOT NULL,
-    [CreatedBy]             UNIQUEIDENTIFIER  NOT NULL,
     [LastLoginAt]           DATETIME2(7)      NULL,
 
     CONSTRAINT [PK_auth_UsersAccounts] PRIMARY KEY ([UserAccountId])

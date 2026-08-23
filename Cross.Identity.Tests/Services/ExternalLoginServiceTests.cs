@@ -70,7 +70,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = email,
             NormalizedUserName = email,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         };
@@ -388,7 +387,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = "linked",
             NormalizedUserName = "linked",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -428,7 +426,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             EmailConfirmed = true,
             IsActive = false,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -467,7 +464,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             NormalizedUserName = "squatter",
             EmailConfirmed = false,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -500,7 +496,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             NormalizedUserName = "existing",
             EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -544,7 +539,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             NormalizedUserName = "existing",
             EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -572,7 +566,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = "link",
             NormalizedUserName = "link",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -602,7 +595,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = "owner",
             NormalizedUserName = "owner",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -648,7 +640,6 @@ public class ExternalLoginServiceTests : EFTestsBase
                 UserName = "current",
                 NormalizedUserName = "current",
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.Empty,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
             },
@@ -659,7 +650,6 @@ public class ExternalLoginServiceTests : EFTestsBase
                 UserName = "other",
                 NormalizedUserName = "other",
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.Empty,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
             });
@@ -699,7 +689,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = "user",
             NormalizedUserName = "user",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -985,7 +974,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             NormalizedUserName = "user",
             EmailConfirmed = true,
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -1158,7 +1146,6 @@ public class ExternalLoginServiceTests : EFTestsBase
             UserName = "owner",
             NormalizedUserName = "owner",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });

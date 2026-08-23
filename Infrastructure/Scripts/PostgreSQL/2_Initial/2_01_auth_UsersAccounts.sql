@@ -24,7 +24,6 @@ CREATE TABLE auth."UsersAccounts"
     "IsActive"              boolean      NOT NULL,
 
     "CreatedAt"             timestamp without time zone NOT NULL,
-    "CreatedBy"             uuid         NOT NULL,
     "LastLoginAt"           timestamp without time zone NULL,
 
     CONSTRAINT "PK_auth_UsersAccounts" PRIMARY KEY ("UserAccountId")

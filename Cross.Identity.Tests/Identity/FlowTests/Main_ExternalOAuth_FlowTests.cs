@@ -109,7 +109,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             NormalizedUserName = "unlink",
             PasswordPhc = "$pbkdf2$has-password",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -168,7 +167,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             UserName = "owner",
             NormalizedUserName = "owner",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -237,7 +235,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             UserName = "link",
             NormalizedUserName = "link",
             CreatedAt = DateTime.UtcNow,
-            CreatedBy = Guid.Empty,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
         });
@@ -278,7 +275,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 UserName = "owner",
                 NormalizedUserName = "owner",
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.Empty,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
             },
@@ -289,7 +285,6 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
                 UserName = "other",
                 NormalizedUserName = "other",
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = Guid.Empty,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
             });

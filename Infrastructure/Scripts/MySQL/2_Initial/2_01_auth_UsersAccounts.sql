@@ -24,7 +24,6 @@ CREATE TABLE `auth`.`UsersAccounts`
     `IsActive`              TINYINT(1)   NOT NULL,
 
     `CreatedAt`             DATETIME(6)  NOT NULL,
-    `CreatedBy`             CHAR(36)     NOT NULL,
     `LastLoginAt`           DATETIME(6)  NULL,
 
     CONSTRAINT `PK_auth_UsersAccounts` PRIMARY KEY (`UserAccountId`)

@@ -61,6 +61,7 @@ global using Cross.Identity.ProcessEngine.Steps;
 global using Cross.Identity.Services;
 global using Cross.Identity.Services.Crypto;
 global using Cross.Identity.Services.ExternalOAuth;
+global using Cross.Identity.Services.Helpers;
 global using Cross.Messaging.Email.Options;
 global using Cross.Messaging.Email.Services;
 global using Cross.Messaging.Sms.Services;

@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services;
+namespace Cross.Identity.Services.Helpers;
 
 /// <summary>
 /// Account-level guards: activation state and confirmed contact uniqueness.

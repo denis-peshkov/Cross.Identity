@@ -373,3 +373,14 @@ Host must pass `UserId` in the bag (no ambient auth user).
 | Operational detail | exposed to client | `LogInformation` in `SendCodeStep` (field, identity, underlying reason) |
 
 **Action:** map to 401 like other auth failures; do not rely on 404 for «user does not exist» on ForgotPassword / RequestCode.
+
+### `UsersAccounts.CreatedBy` removed
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| `UserAccountEntity.CreatedBy` | `Guid` column (unused; register left default / OAuth wrote `Guid.Empty`) | **removed** |
+| DDL | `CreatedBy` on `auth.UsersAccounts` | column dropped |
+
+Self-register and OAuth create accounts without an actor id; the column was never read by the library.
+
+**Action:** run `1_06_auth_UsersAccounts_DropCreatedBy.sql` on existing databases; greenfield `2_01_auth_UsersAccounts.sql` no longer creates `CreatedBy`. Drop any host mappings / queries that reference the column.

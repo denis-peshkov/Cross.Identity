@@ -1,4 +1,4 @@
-namespace Cross.Identity.Services;
+namespace Cross.Identity.Services.Helpers;
 
 /// <summary>
 /// Account lockout after repeated failed password attempts (ASP.NET Identity-style fields on <see cref="UserAccountEntity"/>).
