@@ -3,7 +3,9 @@
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 **Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**CodeRabbit (local CLI, 2026-08-23):** `coderabbit review --committed --base origin/dev --dir Cross.Identity` — **13 findings** (11 major / 2 minor), 142 files. Лог: `/tmp/cr-identity-20260823-2249.log`. Часть замечаний — intentional 2.0 breaking или уже в «Принято» / «Закрыто» (см. ниже).
+**CodeRabbit (local CLI):**
+- **2026-08-23 23:24** — `release/add-new-flows` vs `origin/dev`, `--dir Cross.Identity` — **4 findings** (4 minor), 143 files. Лог: `/tmp/cr-identity-20260823-2324.log`.
+- **2026-08-23 22:49** — **13 findings** (11 major / 2 minor), 142 files. Лог: `/tmp/cr-identity-20260823-2249.log`. Major (#48–#53 и др.) → «Закрыто» / «Принято» (см. ниже).
 
 ---
 
@@ -28,15 +30,22 @@
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
 - Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
 
-### 53. ~~Public `ICommunicationEndpointService.UpsertAsync` без session proof~~ ✅
-`UpsertAsync` и `SyncAccountContactsAsync` на internal `ICommunicationEndpointUpsertService`; публичный контракт — session-proof операции + read-only resolve.
-
 ### CodeRabbit minor (XML / style / hygiene)
+
+**Open (CR 2026-08-23, run 2324):**
+- `HostSuppliedClientContext` — XML для record properties `IpAddress` / `UserAgent` / `DeviceFingerprint` (#46 закрыл param/type docs; properties — ⬜).
+- `AuditEntity` — XML для public properties (`Id`, `UserAccountId`, `UserAccount`, `IpAddress`, `UserAgent`, `DeviceFingerprint`, `CreatedAt`, …).
+- `FLOWS.md` `main.Register` — в таблице `userAccountIdKey: UserId`, в JSON и `collectResult` — `UserAccountId`; хост может читать неверный bag key.
+- `main.CommunicationEndpointSetPreferred.json` — `EndpointId`: только `min/max: 36`, без GUID regex (как у `UserAccountId` в других flows).
+
+**Open (CR 2026-08-23, run 2249 / backlog):**
 - `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
 - `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
 - `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
-- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — UserName fixed (#52).
 - `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
+
+**Закрыто в коде:**
+- `UserService.CreateUserAsync`: PhoneNumber через `ToString()` как Email/UserName — UserName fixed (#52).
 
 ---
 
@@ -167,7 +176,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #43 Bag keys `UserId` → `UserAccountId` | `userAccountIdKey`, step output, collectForm; `collectResult` → `user_account_id` |
 | ✅ #44 `ClientContext` → `HostSuppliedClientContext` | type/file/API param `hostSuppliedClientContext`; `Empty` / `Read(bag)`; `docs/BREAKING.md` |
 | ✅ #45 License JWT claim `user_id` | `License.UserId` / claim `"user_id"` — отдельно от identity `user_account_id` |
-| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param docs |
+| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param/type docs; record **properties** — см. CR 2324 open |
 | ✅ #47 `Sample.Api.http` | `UserAccountId` / `USER_ACCOUNT_ID` на identity flows (не license) |
 | ✅ EmailVerified rename (CR отклонён как open) | PreDeployment `1_07`–`1_09`; `docs/BREAKING.md` § `EmailConfirmed` → `EmailVerified` |
 | ✅ RefreshToken / VerifyToken `user_account_id` (CR stale) | intentional 2.0 output; см. #43 / `BREAKING.md` (не `user_id`) |
@@ -204,4 +213,5 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 1. **M13–M14:** half-validate API docs / misuse guidance.
 2. **M39:** idle double-audit.
-3. **CR minor:** PhoneE164 / JsonHelpers / PhoneChannels visibility.
+3. **CR minor (2324):** `FLOWS.md` Register bag key; `EndpointId` GUID regex; `HostSuppliedClientContext` / `AuditEntity` XML.
+4. **CR minor (backlog):** PhoneE164 / JsonHelpers / PhoneChannels visibility.
