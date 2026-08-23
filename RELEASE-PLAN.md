@@ -1,162 +1,172 @@
-Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Release/docs/категории тестов не трогаю.
+Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
 ---
 
 ## Критично (безопасность)
 
-### 1. ~~OAuth takeover по email~~ ✅ закрыто
-~~`ExternalLoginService.ResolveOrCreateUserAsync`: при логине без `UserId` (link) ищется аккаунт по `profile.Email` и сразу привязывается provider. **Нет проверки**, что email у жертвы подтверждён или что он принадлежит OAuth-субъекту.~~
+### 1. OTP plaintext в логах
+`CodeService.SendAsync` после отправки пишет в лог `msg.TextBody` — шаблон уже с подставленным `{{code}}`.
 
-~~При регистрации жертвы с `victim@corp.com` (email не подтверждён) атакующий логинится через OAuth с тем же email → попадает в чужой аккаунт. Плюс `EmailConfirmed = true` при создании через OAuth.~~
+**Impact:** компрометация OTP через log aggregation / SIEM / support-доступ; обход лимита попыток.  
+**Stock flows:** любой `sendCode` (Register, RequestCode, ForgotPassword).
 
-**Исправлено (2.0):** auto-link по email только при `profile.EmailVerified` к **подтверждённому** локальному аккаунту. Уникальность email и phone в БД — только среди `EmailConfirmed` / `PhoneNumberConfirmed = true`; неподтверждённые регистрации не блокируют владельца.
+### 2. `TokenStep` (code-login) не совпадает с каналом `SendCodeStep`
+- `SendCodeStep` / `VerifyCodeStep` → `ResolveOtpTargetAsync(userId)` (preferred → email fallback).
+- `TokenStep` → `UserService.ValidateCodeAsync`: для selector `Email` / `PhoneNumber` проверяет `TryValidateEmailCodeAsync` / `TryValidatePhoneCodeAsync` **по типу selector**, не по фактическому OTP-target.
 
-### 2. ~~Account linking без аутентификации~~ ✅ закрыто
-~~`main.ExternalLogin.json`: опциональный `UserId` в bag → `ExternalLoginInitiateStep` → state. **Библиотека не проверяет**, что вызывающий — этот пользователь.~~
-
-~~Атакующий передаёт `UserId` жертвы, проходит OAuth своим аккаунтом → provider привязан к чужому аккаунту.~~
-
-**Исправлено (2.0):** при linking обязателен `RefreshToken` того же пользователя (`requiredIf` в `main.ExternalLogin.json`, `EnsureLinkRefreshTokenAsync` в `ExternalLoginService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
-
-### 3. ~~IDOR на flows с `UserId` из bag~~ ✅ закрыто
-~~То же для:~~
-~~- `ExternalLoginUnlink` / `ExternalLoginGetAll`~~
-~~- `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`~~
-
-~~Библиотека **не делает authz** — только доверяет `UserId` из input. Без проверки bearer на хосте — отвязка OAuth, чтение/смена endpoints чужого пользователя.~~
-
-**Исправлено (2.0):** на всех перечисленных flows обязателен `RefreshToken`, принадлежащий `UserId` (`EnsureRefreshTokenBelongsToUserAsync` в `IJwtTokenService`). См. `docs/BREAKING.md` → From 1.10.x to 2.0.0.
-
-### 4. ~~Brute-force OTP в `CodeService.VerifyAsync`~~ ✅ закрыто
-~~Поиск: `Email == identity && TokenHash == codeHash`. При неверном коде строка **не находится** → `Attempts` **не растёт** → `MaxAttempts` не работает.~~
-
-~~`ResetPassword` / `VerifyCodeStep` идут через `CodeService`. Для 6-значного SMS — неограниченный перебор.~~
-
-**Исправлено (2.0):** поиск по email/phone (последняя активная запись); `Attempts++` только при совпадении identity и неверном коде; чужой identity не трогает счётчик. Логика как в `UserService.TryValidate*CodeAsync`.
-
-### 5. ~~Logout не убивает access token~~ ✅ закрыто
-~~`RevokeRefreshTokenForLogoutAsync` — revoke **только refresh**. Access tokens той же сессии живут до `ExpiresAt`.~~
-
-~~`LogoutAll` вызывает `RevokeAllTokensForUserAsync` и revoke access — **несимметрично**: single logout слабее, чем ожидает пользователь.~~
-
-**Исправлено (2.0):** `RevokeRefreshTokenForLogoutAsync` отзывает access tokens той же `FamilyId` с `USER_LOGOUT`; другие сессии пользователя не затрагиваются.
-
-### 6. ~~`System.Random` для OTP~~ ✅ закрыто
-~~`CodeGeneratorHelper.GenerateNumericCode` / `GenerateCode` — не CSPRNG. Для коротких SMS-кодов это слабое место (особенно при массовой выдаче).~~
-
-**Исправлено (2.0):** OTP генерируется через `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper`.
-
-### 7. ~~GitHub: email без `verified`~~ ✅ закрыто (вместе с #1)
-~~`FetchGitHubProfileAsync` берёт primary email из `/user/emails` **без** проверки `verified: true`. Усиливает takeover по email (#1).~~
-
-**Исправлено (2.0):** GitHub profile использует только `verified: true` emails (primary verified, иначе первый verified).
+**Impact:** code-login в `main.Token` ломается, когда preferred channel ≠ selector (login по Email, OTP ушёл на preferred phone).  
+**Stock flows:** `main.Token.json` (ветка Code).
 
 ---
 
 ## Высокий (логика / auth model)
 
-### 8. ~~`IsActive` не проверяется~~ ✅ закрыто
-~~Поле есть в `UserAccountEntity`, выставляется при создании, но **нигде не читается** в `ValidatePasswordAsync`, `ValidateCodeAsync`, OAuth, `TokenPairIssuer`. Деактивированный пользователь продолжает логиниться.~~
+### 3. `CodeService.VerifyAsync` не привязывает код к `userId`
+Поиск последней активной записи по email/phone **без** `entity.UserAccountId == resolvedUserId`. При нескольких unconfirmed аккаунтах с одним адресом (unique index только на confirmed) возможен cross-user accept.
 
-**Исправлено (2.0):** `UserAccountGuard` + проверки в `UserService`, `CodeService`, `TokenPairIssuer`, `ExternalLoginService.CompleteAsync`, `JwtTokenService` (validate access/refresh и rotation).
+**Impact:** IDOR на уровне OTP.  
+**Stock flows:** VerifyCode, ResetPassword (verifyCode), потенциально Token после fix #2.
 
-### 9. ~~Lockout не реализован~~ ✅ закрыто
-~~`LockoutEnd`, `LockoutEnabled`, `AccessFailedCount` в entity — **мертвые колонки**. Брутфорс пароля не ограничен на уровне библиотеки.~~
+### 4. Lookup Email/Phone: `FirstOrDefault` без приоритета confirmed
+`FindTrackedUserBySelectorAsync` / `GetUserByAsync` — `FirstOrDefault` без `OrderBy EmailConfirmed`. Уникальность email/phone только среди confirmed; несколько unconfirmed + один confirmed допустимы.
 
-**Исправлено (2.0):** `ValidatePasswordAsync` — проверка lockout, `AccessFailedCount++` при неверном пароле, lockout по `Authentication:Lockout` (`MaxFailedAccessAttempts`, `LockoutTimeout`); сброс при успешном входе и `SetPasswordAsync`.
+**Impact:** login / ForgotPassword / OTP / Reset могут попасть на squat-аккаунт с тем же контактом; усиливает #3.  
+**Stock flows:** Token, ForgotPassword, RequestCode, ResetPassword, Register + OAuth create.
 
-### 10. ~~Два несовместимых пути верификации OTP~~ ✅ закрыто (вместе с #4)
-~~| Путь | Где | Поведение |~~
-~~| `UserService.ValidateCodeAsync` | `TokenStep` | По `userId`, attempts работают |~~
-~~| `CodeService.VerifyAsync` | `VerifyCodeStep`, reset | По identity+hash в WHERE, attempts сломаны |~~
+### 5. Microsoft OAuth: `EmailVerified` без attestation
+`FetchMicrosoftProfileAsync`: `EmailVerified = !string.IsNullOrWhiteSpace(email)`. Google/GitHub проверяют флаг; Microsoft — нет.
 
-**Исправлено (2.0):** `CodeService.VerifyAsync` — поиск по identity, `Attempts++` при неверном коде; логика согласована с `UserService`.
+**Impact:** auto-link к confirmed локальному аккаунту по UPN/mail без подтверждённого mailbox → account takeover.  
+**Stock flows:** ExternalLogin sign-in / auto-link.
 
-### 11. ~~Старые OTP остаются валидными~~ ✅ закрыто
-~~`CodeService.SendAsync` **добавляет** новую запись, старые не инвалидирует.~~
+### 6. OTP на неподтверждённый email
+`CommunicationEndpointService.FindEmailTargetAsync` fallback на `UsersAccounts.Email` **без** `EmailConfirmed`.
 
-**Исправлено (2.0):** при resend активные коды для того же email/phone истекают (`ExpiresAt = now`); verify принимает только последнюю неиспользованную непросроченную запись. TTL по-прежнему ограничивает срок жизни каждого кода.
+**Impact:** OTP/notify на адрес, который пользователь не подтвердил.  
+**Stock flows:** SendCode, VerifyCode, ResetPassword notify (при `LockChannelAsEmail` или email-fallback).
 
-### 12. ~~Refresh rotation без атомарности~~ ✅ принято (контракт хоста)
-~~`RefreshTokenStep`: check → issue → invalidate. Между шагами нет транзакции/блокировки внутри библиотеки. Параллельные refresh с одним token — окно с несколькими активными парами; при replay — mass revoke family (DoS сессий).~~
+### 7. Lockout обходится OTP-логином
+`ValidatePasswordAsync` проверяет lockout; `ValidateCodeAsync` — **нет**. После lockout по паролю вход по коду всё ещё возможен.
 
-**Принято (2.0):** библиотека **не** открывает DB-транзакцию в `RefreshTokenStep`; хост оборачивает refresh (тот же scoped `IdentityContext`) во **внешнюю транзакцию**, чтобы validate + issue + invalidate коммитились вместе. Документация: `FLOWS.md` → `main.RefreshToken.json`, XML на `RefreshTokenStep`.
+**Impact:** неполная lockout policy.  
+**Stock flows:** Token (code branch), flows с verifyCode.
 
-**Остаётся осознанный edge:** два **параллельных** refresh с одним token — race до commit (две активные пары или `REPLAY_DETECTED` + revoke family). Это не закрывается одной транзакцией на запрос; нужен pessimistic lock / сериализация rotation — вне scope stock-библиотеки. Replay detection (`REPLAY_DETECTED`) — намеренный trade-off против theft race.
+### 8. User enumeration — разные ответы шагов
+| Шаг | Поведение |
+|-----|-----------|
+| `SendCodeStep` | unknown user → `Invalid credentials.` |
+| `SendCodeStep` | known user без channel → `ValidationException` (другой текст) |
+| `VerifyCodeStep` / `GetUserIdStep` | `NotFoundException` / «User not found» |
+| `main.GetUserId` | явный oracle существования |
 
-### 13. ~~`ClientContext` полностью client-controlled~~ ✅ принято (контракт хоста)
-~~`IpAddress`, `UserAgent`, `DeviceFingerprint` из bag/form. Audit, revoke metadata, письма (`ResetPasswordStep`) — **подделываемы** вызывающим кодом. Это не баг контракта 2.0, но forensic/notification integrity слабая.~~
+**Stock flows:** ForgotPassword, RequestCode, ResetPassword, GetUserId.
 
-**Принято (2.0):** **trusted pipeline** — ответственность **хоста**; библиотека не читает `HttpContext` и считает `ClientContext` / `collectForm.*` уже доверенными. Хост перезаписывает `IpAddress` / `UserAgent` / `DeviceFingerprint` из server-side metadata перед `ExecuteAsync`. Документация: `FLOWS.md` → Client context (host), `README.md`, `BREAKING.md`, XML на `ClientContext`.
+### 9. Messenger preferred → SMS с тем же `Address`
+`ResolveOtpTargetAsync` → `ToEmailOrSms()`: Telegram/Viber/WhatsApp мапится в `Sms`, address не переписывается на E.164 phone.
 
-### 13b. ~~Session binding на refresh не реализован~~ ✅ закрыто
-~~Enum `DEVICE_MISMATCH` / `IP_MISMATCH` / `USER_AGENT_MISMATCH` / `TOKEN_STOLEN` без сравнения при rotation.~~
+**Impact:** OTP не доходит или verify по chat-id.  
+**Stock flows:** если хост сделал preferred messenger endpoint.
 
-**Исправлено (2.0):** колонки `Created*` на `RefreshTokens`; при refresh сравнение `ClientContext` (host-supplied metadata из trusted pipeline) с family anchor. `LastActivityAt` + `Authentication:Jwt:RefreshTokenIdleTimeout` — idle-check при refresh (`SESSION_EXPIRED`). PreDeployment `1_04` / `1_05` (3 провайдера).
+### 10. Нет fallback на confirmed phone в `ResolveDeliveryTargetAsync`
+Цепочка: `LockChannelAsEmail` → preferred verified → email. Нет fallback на `UsersAccounts.PhoneNumber` при `PhoneNumberConfirmed`, если н нет строки в `UsersCommunicationEndpoints`.
+
+**Impact:** ValidationException для phone-only пользователей без synced endpoints.  
+**Stock flows:** SendCode, ResetPassword notify.
+
+### 11. Нет rate limiting на отправку OTP
+`CodeService` / `SendCodeStep` — нет cooldown / per-identity / per-IP limits в библиотеке.
+
+**Impact:** spam, cost abuse (SMS/email), DoS на identity.  
+**Stock flows:** SendCode, ForgotPassword, RequestCode, Register.
+
+### 12. Apple provider в registry, но не реализован
+`FetchAppleProfileAsync` → `NotSupportedException`. Initiate строит URL; Complete падает.
+
+**Impact:** broken auth surface, если провайдер enabled в БД.
 
 ---
 
 ## Средний (противоречия / баги контрактов)
 
-### 14. ~~UserName + Code не работает~~ ✅ закрыто
-~~`main.Token.json` / `main.ResetPassword.json` разрешают `UserName` в selector, но:~~
-~~- `ValidateCodeAsync` — только Email/PhoneNumber~~
-~~- `VerifyCodeStep` для UserName → `ChannelForField` = null → fallback `email` → verify по email == username~~
-
-**Исправлено (2.0):** `ValidateCodeAsync` для `UserName` резолвит OTP-канал через `CommunicationEndpoints` и проверяет код по `userId`. `VerifyCodeStep` для `UserName` делегирует в `ValidateCodeAsync`; `SendCodeStep` шлёт на preferred verified endpoint.
-
-### 15. ~~Лимит пароля: Register 128, Token 32~~ ✅ закрыто
-~~`main.Register.json`: password `max: 128`. `main.Token.json`: `max: 32`. Пользователь с длинным паролем **не войдёт** через login flow.~~
-
-**Исправлено (2.0):** `max: 32` для всех полей `type: Password` в stock flows (`Register`, `Token`, `ResetPassword`, `ChangePassword`).
-
-### 16. ~~`TokenStep` при неверных credentials → `Ok`~~ ✅ закрыто
-~~`IsInvalidCode=true`, `StepResult.Ok` (есть `// todo`). `PasswordAuthStep` бросает `NotAuthorizedException`. Разная семантика; хост без проверки флага может считать login успешным.~~
-
-**Исправлено (2.0):** `TokenStep` → `StepResult.Fail(NotAuthorizedException)`; `is_invalid_code` убран из `main.Token` `collectResult`.
-
-### 17. ~~User enumeration в `SendCodeStep`~~ ✅ закрыто
-~~`GetUserIdByAsync` → `NotFoundException("User not found.")` на ForgotPassword/RequestCode. Перебор email/phone.~~
-
-**Исправлено (2.0):** неизвестный identity → `StepResult.Fail(NotAuthorizedException("Invalid credentials."))` без отправки кода; деталь (`NotFoundException` message и т.п.) — `LogInformation` в `SendCodeStep`.
-
-### 18. ~~Messenger-каналы в `SendCode`~~ ✅ закрыто
-~~`ChannelEnum.Telegram/Viber/WhatsApp` в `SendAsync` → `default: break` — **молча** ничего не отправляет и не падает. TO-DO в продукте, в коде — тихий no-op.~~
-
-**Исправлено (2.0):** `CodeService.SendAsync` → `NotSupportedException` для каналов без OTP (`SupportsOtp` / messenger). Доставка OTP через `ResolveOtpTargetAsync` (messenger → SMS).
-
-### 19. `GetClaimValue` для JWS без подписи
+### 13. `GetClaimValue` для JWS без подписи
 Публичный API: 3-part JWT — parse payload без crypto. В `VerifyTokenStep` перед этим есть `ValidateAccessTokenAsync` — ок. Риск — **misuse** API напрямую.
 
-### 20. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
-Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра.
+### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
+Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
 
-### 21. ~~`VerifyTokenStep` глотает исключения~~ ✅ закрыто
-~~Любая ошибка (DB, decrypt) → `valid: false`. Operational failure неотличим от invalid token.~~
+### 15. `SecurityStamp` не участвует в валидации JWT
+Stamp ротируется при password change / OAuth unlink, но `ValidateAccessTokenAsync` проверяет только DB revoke list + crypto. Defense-in-depth gap.
 
-**Исправлено (2.0):** только `SecurityTokenException` / `ArgumentException` / `FormatException` → `Valid = false`, `StepResult.Ok`. Остальные ошибки (DB, конфиг и т.д.) не маскируются как invalid token — пробрасываются через `StepResult.Fail` / исключение executor.
+### 16. `PasswordAlgoEnum.SHA256`
+Obsolete; pepper в `HashSha256`/`VerifySha256` **игнорируется**; `NeedsRehashSha256` → false (нет upgrade на Argon2id). Риск при legacy/конфиге.
 
-### 22. ~~Sync-over-async~~ ✅ принято (осознанный trade-off)
-~~`GetClaimValueFromJweToken` → `ValidateTokenAsync(...).GetAwaiter().GetResult()`. Теоретический deadlock при «липком» `SynchronizationContext` (legacy ASP.NET, UI).~~
+### 17. `ChangePassword` по `Id` без session proof
+Достаточно Guid + current password; refresh token не требуется. При утечке UUID + password — смена пароля (entropy UUID mitigates).
 
-**Принято (2.0):** sync `GetClaimValue` для JWE оставляем — отдельный async API не добавляем. В типичном хосте (**ASP.NET Core**, без request-scoped `SynchronizationContext`) deadlock практически не воспроизводится. Основной сценарий — JWS refresh (`RefreshTokenStep`, 3 части) без async I/O; JWE access в `VerifyTokenStep` уже проходит `ValidateAccessTokenAsync` до `GetClaimValue`. Риск — блокировка worker thread на decrypt при редком sync-вызове JWE; для stock flows допустимо.
+### 18. OAuth `ReturnUrl` без allowlist
+Произвольный `ReturnUrl` в state. Open redirect на стороне хоста, если тот редиректит вслепую.
 
-### 23. `PasswordAlgoEnum.SHA256`
-Obsolete, но всё ещё в коде — слабый алгоритм при старой конфигурации.
-
-### 24. `TwoFactorEnabled` — мёртвое поле
-В entity, в auth pipeline не используется.
+### 19. `CodeService.VerifyAsync` — code без trim
+`UserService.ValidateCodeAsync` делает `code.Trim()`; `CodeService.VerifyAsync` — нет. Minor mismatch на whitespace.
 
 ---
 
 ## Низкий (техдолг / несогласованности)
 
-- ~~Мёртвые ключи в `main.Token.json` (`accessTokenKey`, …)~~ ✅ удалены (`channel` тоже — factory не использовал).
+- `TwoFactorEnabled` — мёртвое поле в entity, в auth pipeline не используется.
+- `DeveloperMode` → `LastCode` в bag + skip send (`Authentication:DeveloperMode`). Утечка OTP через API response, если включить в prod.
+- `AuditService.Record` без собственного `SaveChanges` — audit теряется, если caller не закоммитит.
 - Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
-- ~~`CreatedBy` не заполняется при register~~ ✅ удалено (колонка убрана из entity/DDL; PreDeployment `1_06`).
-- `AuditService.Record` без `SaveChanges` — audit теряется при ошибке между revoke и commit.
-- `DeveloperMode` → `LastCode` в bag (утечка OTP в dev, если включить в prod).
-- `ReturnUrl` в OAuth state без allowlist — open redirect на стороне хоста, если тот редиректит вслепую.
+- Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
+- Inconsistent code trimming (#19).
+
+---
+
+## Принято (осознанный trade-off / контракт хоста)
+
+### Refresh rotation без атомарности
+`RefreshTokenStep`: validate → issue → invalidate без DB-транзакции внутри библиотеки. Хост оборачивает refresh во **внешнюю транзакцию** (`FLOWS.md`).
+
+**Edge:** параллельные refresh с одним token — race до commit; `REPLAY_DETECTED` + family revoke — намеренный trade-off.
+
+### Sync-over-async в `GetClaimValue` (JWE)
+`GetClaimValueFromJweToken` → `GetAwaiter().GetResult()`. В ASP.NET Core deadlock маловероятен; основной путь — JWS refresh без async I/O.
+
+### `ClientContext` — trusted pipeline хоста
+`IpAddress` / `UserAgent` / `DeviceFingerprint` из bag/form. Библиотека не читает `HttpContext`; хост перезаписывает из server-side metadata.
+
+### Delivery channel resolution (новая модель)
+OTP/notify: `Authentication:LockChannelAsEmail` → preferred verified endpoint → email fallback. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup (#2, #6).
+
+### Публичные half-validate API (#13, #14)
+Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
+
+---
+
+## Закрыто (проверено в коде)
+
+| # | Суть |
+|---|------|
+| OAuth takeover по email | auto-link только при `EmailVerified` + local confirmed |
+| Account linking без auth | linking требует `RefreshToken` того же user |
+| IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
+| OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
+| Logout access revoke | `RevokeRefreshTokenForLogoutAsync` отзывает access той же `FamilyId` |
+| CSPRNG для OTP | `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper` |
+| GitHub email verified | только `verified: true` emails |
+| `IsActive` | `UserAccountGuard` + checks в auth pipeline |
+| Lockout пароля | `ValidatePasswordAsync` + `Authentication:Lockout` |
+| Старые OTP при resend | supersede active codes (`ExpiresAt = now`) |
+| Session binding на refresh | `Created*` на refresh + compare `ClientContext` |
+| Refresh idle timeout | `LastActivityAt` + `RefreshTokenIdleTimeout` |
+| UserName + Code | `ResolveOtpTargetAsync` + unified verify path |
+| Password max 32 | все stock Password fields |
+| `TokenStep` fail vs ok | `NotAuthorizedException` на bad credentials |
+| SendCode enumeration (unknown) | `Invalid credentials.` без отправки |
+| Messenger SendCode no-op | `NotSupportedException` |
+| `VerifyTokenStep` swallow | только token-format errors → `Valid=false` |
+| Мёртвые ключи `main.Token.json` | удалены |
+| `CreatedBy` | колонка удалена |
 
 ---
 
@@ -166,16 +176,20 @@ Obsolete, но всё ещё в коде — слабый алгоритм пр�
 - Refresh replay → family revoke (`REPLAY_DETECTED`).
 - OAuth state one-time use + expiry.
 - Refresh token hash в DB, не plain text.
+- External login link/unlink требует refresh token.
+- Unlink last method without password blocked.
+- Password change revokes all tokens + `SecurityStamp` rotation.
 - E.164 gate на `collectForm` PhoneNumber.
 - `TokenPairIssuer` централизует выдачу пары.
+- SendCode ↔ VerifyCode channel resolution (`ResolveOtpTargetAsync`) согласованы между собой.
+- Argon2id/PBKDF2 password hashing + pepper (не SHA256).
+- OTP hash storage, max 3 attempts, supersede on resend.
 
 ---
 
-## Приоритет фиксов (если чинить)
+## Приоритет фиксов
 
-1. **S1–S4:** OTP attempts + `RandomNumberGenerator` + OAuth email policy + logout access revoke *(account linking — ✅)*
-2. **S5–S7:** `IsActive`, единый OTP verify, инвалидация старых кодов
-3. **Контракты:** UserName в flows, password max, `TokenStep` fail vs ok
-4. **Архитектура:** concurrent refresh lock (опционально), 2FA *(refresh transaction — ✅ контракт хоста; lockout — ✅)*
-
-Могу начать с п.1 (OTP + OAuth) — это самый острый блок.
+1. **C1–C2:** убрать OTP из логов; выровнять `TokenStep` code-verify с `ResolveOtpTargetAsync`.
+2. **H3–H7:** bind `VerifyAsync` к userId; lookup prefer confirmed; Microsoft `EmailVerified`; email fallback только confirmed; lockout на code path.
+3. **H8–H12:** enumeration; messenger→SMS mapping; phone fallback; rate limits; Apple guard.
+4. **M13–M19:** API docs / SecurityStamp claim; SHA256 migration; ChangePassword session proof.
