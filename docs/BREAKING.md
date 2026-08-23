@@ -217,9 +217,9 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `
 
 | Area | Now |
 |------|-----|
-| `Authentication:Jwt:SessionBindingCheckIp` | When `true`, refresh compares family anchor IP with current request IP; mismatch → `IP_MISMATCH`. Default: `false` (device fingerprint and User-Agent are still checked when captured) |
+| `Authentication:Jwt:SessionBindingCheckIp` | When `true`, refresh compares family anchor IP with current request IP; mismatch → `IP_MISMATCH`. Default: `false` (device fingerprint and User-Agent are still checked when captured). When `true` and the family anchor has binding data, refresh must pass the same trusted `HostSuppliedClientContext` as on Token — not `Empty` — or `ValidationException` (no family revoke). |
 
-**Action:** set `SessionBindingCheckIp: true` in host configuration when strict IP binding is required (e.g. fixed-IP clients). Leave default for NAT/mobile-friendly refresh.
+**Action:** set `SessionBindingCheckIp: true` in host configuration when strict IP binding is required (e.g. fixed-IP clients). On refresh, populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the trusted pipeline (same as login). Leave default for NAT/mobile-friendly refresh.
 
 ### Refresh idle timeout: `LastActivityAt` + `RefreshTokenIdleTimeout`
 

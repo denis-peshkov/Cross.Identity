@@ -131,7 +131,7 @@ public string? CreatedUserAgent { get; set; }
 public string? CreatedDeviceFingerprint { get; set; }
 ```
 
-On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). See `FLOWS.md` — Client context (host).
+On refresh, `EnsureRefreshTokenActiveForRotationAsync` compares the current `HostSuppliedClientContext` with the **family anchor** (values from the first token in `FamilyId`). Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, refresh must not use `HostSuppliedClientContext.Empty` if the anchor captured metadata — pass the same trusted pipeline values as on login (`ValidationException` otherwise). See `FLOWS.md` — Client context (host).
 
 **Host vs library**
 

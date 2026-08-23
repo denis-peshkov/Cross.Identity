@@ -18,9 +18,6 @@
 ### 39. Idle revoke double-audit? (CR)
 `HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
 
-### 48. `HostSuppliedClientContext.Empty` на refresh → family revoke (CR 2026-08-23)
-`JwtTokenService.IsSessionBindingMismatch`: anchor заполнен, current пустой → mismatch. Refresh с `HostSuppliedClientContext.Empty` при семействе с Ip/UA/Fingerprint → `TOKEN_STOLEN` + revoke всей family. Документирован `Empty` как «when unknown», но поведение = logout. Решить контракт: skip сравнения для непереданных измерений **или** явно запретить `Empty` на rotation path.
-
 ### 49. Re-hash `SaveChanges` глотает cancellation (CR 2026-08-23)
 `UserService.ValidatePasswordAsync`: `catch (Exception)` при `needRehash` перехватывает `OperationCanceledException` → успешная auth при отмене. Ловить только `DbUpdateException`; cancellation пробрасывать.
 
@@ -91,6 +88,9 @@ Obsolete; pepper в `HashSha256`/`VerifySha256` игнорируется; нет
 
 ### OAuth `ReturnUrl` (#18) — принято (контракт хоста)
 Библиотека только хранит `ReturnUrl` в OAuth state и отдаёт обратно; HTTP-redirect не делает. Allowlist / relative-only / запрет open redirect — ответственность хоста.
+
+### Refresh + `Empty` при `SessionBindingCheckIp` (#48) — принято
+При **`Authentication:Jwt:SessionBindingCheckIp = true`** и anchor с `Created*` refresh **обязан** передавать trusted `IpAddress` / `UserAgent` / `DeviceFingerprint` (как на Token). `HostSuppliedClientContext.Empty` → **`ValidationException`** до сравнения binding (без family revoke). `Empty` по-прежнему OK на logout / password change / revoke. При **`SessionBindingCheckIp = false`** (default) — прежняя логика сравнения UA/FP; хосту всё равно рекомендуется прокидывать metadata на refresh.
 
 ### Password max 32 (#36) — принято
 Stock `collectForm` (`main.Register`, `main.Token`, `main.ResetPassword`, `main.ChangePassword`, …): `min: 8`, `max: 32`. Лимит — контракт stock JSON / UX, не ограничение hasher или колонки БД. CodeRabbit max 128 отклонён: 32 уже закрыто в коде; хост может поднять `max` в кастомном flow override или своей валидации до submit.
@@ -184,6 +184,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ CR: GetUserAccountId enumeration (2026-08-23) | см. «Принято» — existence oracle |
 | ✅ CR: PII в auth step logs (2026-08-23) | см. «Принято» #20 — forensics by design |
 | ✅ #50 ExternalLogin PK bigint→Guid (CR) | `1_11_auth_UsersExternalLogins_UserExternalLoginIdToGuid.sql`; `docs/BREAKING.md` |
+| ✅ #48 Refresh Empty при SessionBindingCheckIp (CR) | `ValidationException` если `Empty` + anchor; docs/API; `Empty` OK на logout/revoke |
 
 ---
 
@@ -206,7 +207,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-1. **#48–#49:** refresh + `Empty` session binding; re-hash cancellation.
+1. **#49:** re-hash cancellation.
 2. **M13–M14:** half-validate API docs / misuse guidance.
 3. **#51–#53:** Bag TryGet Guid; CreateUserAsync UserName; UpsertAsync trust boundary.
 4. **M39:** idle double-audit.

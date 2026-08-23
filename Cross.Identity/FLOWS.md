@@ -31,7 +31,7 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
 | `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
 
-**Session binding (refresh):** non-empty `HostSuppliedClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). A dimension is checked only if it was captured at family start.
+**Session binding (refresh):** non-empty `HostSuppliedClientContext` values are stored as `Created*` on the refresh-token family anchor. On rotation the library compares the current context with that anchor. Mismatch → family revoke (`DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` when two or more dimensions differ). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`** and the anchor captured metadata, refresh must pass the same trusted `IpAddress` / `UserAgent` / `DeviceFingerprint` as on Token — **`HostSuppliedClientContext.Empty` throws `ValidationException`** (no family revoke). `Empty` remains valid on logout, password change, and revoke APIs.
 
 **Recommended handler pattern** before `IFlowExecutor.ExecuteAsync`:
 
@@ -132,7 +132,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >
-> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). Default: IP check disabled. See [Client context (host)](#client-context-host).
+> **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, the host must populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the **trusted pipeline** (same as Token) — `Empty` → `ValidationException`, not family revoke. Default IP check: disabled. See [Client context (host)](#client-context-host).
 >
 > **Idle timeout:** when `Authentication:Jwt:RefreshTokenIdleTimeout` is greater than zero, refresh rejects tokens whose `LastActivityAt` is older than the configured window and revokes the family with `SESSION_EXPIRED`. Successful rotation sets `LastActivityAt` on the new refresh row. Default: disabled.
 >

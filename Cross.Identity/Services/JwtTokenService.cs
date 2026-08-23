@@ -431,6 +431,8 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         await EnsureRefreshTokenIdleForRotationAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
+        await EnsureHostSuppliedClientContextForRotationAsync(entity.FamilyId, hostSuppliedClientContext, cancellationToken)
+            .ConfigureAwait(false);
         await EnsureSessionBindingForRotationAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
     }
 
@@ -661,6 +663,33 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         return new HostSuppliedClientContext(anchor.CreatedIpAddress, anchor.CreatedUserAgent, anchor.CreatedDeviceFingerprint);
+    }
+
+    private async Task EnsureHostSuppliedClientContextForRotationAsync(
+        Guid familyId,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        if (!_options.Jwt.SessionBindingCheckIp)
+        {
+            return;
+        }
+
+        var anchor = await ResolveFamilySessionBindingAsync(familyId, hostSuppliedClientContext, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (string.IsNullOrWhiteSpace(anchor.IpAddress)
+            && string.IsNullOrWhiteSpace(anchor.UserAgent)
+            && string.IsNullOrWhiteSpace(anchor.DeviceFingerprint))
+        {
+            return;
+        }
+
+        if (hostSuppliedClientContext.IsEmpty)
+        {
+            throw new ValidationException(
+                "Host-supplied client context (IpAddress, UserAgent, DeviceFingerprint) is required for refresh when SessionBindingCheckIp is enabled and session binding was captured at login. Pass the same trusted server-side metadata as on Token flow; do not use HostSuppliedClientContext.Empty.");
+        }
     }
 
     private async Task EnsureSessionBindingForRotationAsync(

@@ -59,6 +59,9 @@ public sealed class AuthenticationOptions
         /// mismatch revokes with <see cref="RefreshTokenRevokedReason.IP_MISMATCH"/>.
         /// Default <c>false</c> (opt-in; avoids false positives on NAT/mobile).
         /// Device fingerprint and User-Agent are always checked when captured at family start.
+        /// When <c>true</c> and session binding was captured at login, the host must pass
+        /// <see cref="HostSuppliedClientContext"/> on refresh (same trusted pipeline as Token) — not
+        /// <see cref="HostSuppliedClientContext.Empty"/> — or refresh fails with <see cref="ValidationException"/>.
         /// </summary>
         public bool SessionBindingCheckIp { get; set; }
     }

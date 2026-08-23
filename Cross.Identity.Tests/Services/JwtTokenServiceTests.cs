@@ -1003,6 +1003,31 @@ public class JwtTokenServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSessionBindingCheckIp_WhenEmptyContextOnRefresh_ThenThrowsValidationWithoutFamilyRevokeAsync()
+    {
+        var jwtTokenService = CreateJwtTokenServiceWithSessionBindingCheckIp(checkIp: true);
+        var userAccountId = Guid.NewGuid();
+        SeedUser(userAccountId);
+        var familyId = Guid.NewGuid();
+        var issueContext = new HostSuppliedClientContext("10.0.0.1", "Agent/1.0", "fp-abc");
+
+        var refreshToken = await jwtTokenService.GenerateRefreshTokenAsync(
+            userAccountId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+        var siblingToken = await jwtTokenService.GenerateRefreshTokenAsync(
+            userAccountId, familyId, new List<Claim>(), issueContext, CancellationToken.None);
+
+        var act = () => jwtTokenService.EnsureRefreshTokenActiveForRotationAsync(
+            refreshToken, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*SessionBindingCheckIp*");
+
+        (await jwtTokenService.ValidateRefreshTokenAsync(refreshToken, CancellationToken.None)).Should().BeTrue();
+        (await jwtTokenService.ValidateRefreshTokenAsync(siblingToken, CancellationToken.None)).Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenIpBinding_WhenIpMismatchOnRefresh_ThenRevokesFamilyWithIpMismatchAsync()
     {
         var jwtTokenService = CreateJwtTokenServiceWithSessionBindingCheckIp(checkIp: true);

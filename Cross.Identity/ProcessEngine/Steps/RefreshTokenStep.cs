@@ -13,7 +13,7 @@
 /// <see cref="RefreshTokenRevokedReason.REPLAY_DETECTED"/> (theft race: attacker may hold the newer token).
 /// See <see cref="IJwtTokenService.EnsureRefreshTokenActiveForRotationAsync"/>.
 /// Session binding compares host-supplied <c>collectForm</c> metadata with the family anchor.
-/// IP binding is opt-in via <c>Authentication:Jwt:SessionBindingCheckIp</c>.
+/// IP binding is opt-in via <c>Authentication:Jwt:SessionBindingCheckIp</c>; when enabled, refresh requires trusted metadata (not <see cref="HostSuppliedClientContext.Empty"/>).
 /// Idle timeout is enforced when <c>Authentication:Jwt:RefreshTokenIdleTimeout</c> is set.
 /// </para>
 /// <para>

@@ -25,14 +25,30 @@
 /// login and every refresh.
 /// </para>
 /// <para>
+/// When <c>Authentication:Jwt:SessionBindingCheckIp</c> is <c>true</c> and the family anchor captured session
+/// metadata, refresh must <b>not</b> use <see cref="Empty"/> — pass <c>IpAddress</c>, <c>UserAgent</c>, and
+/// <c>DeviceFingerprint</c> from the trusted pipeline (same as Token). Otherwise the library throws
+/// <see cref="ValidationException"/> before comparing bindings (avoids accidental family revoke).
+/// </para>
+/// <para>
+/// <see cref="Empty"/> is allowed on logout, password change, token revoke, and other non-rotation APIs when
+/// the host has no metadata to pass.
+/// </para>
+/// <para>
 /// The same values are written to token audit rows on issue/revoke and to notification text
 /// (e.g. <c>ResetPasswordStep</c>). See <c>FLOWS.md</c> — Host-supplied client context.
 /// </para>
 /// </remarks>
 public sealed record HostSuppliedClientContext(string? IpAddress, string? UserAgent, string? DeviceFingerprint)
 {
-    /// <summary>All fields <c>null</c> — use when the host has no metadata to pass.</summary>
+    /// <summary>All fields <c>null</c> or whitespace — allowed on logout/revoke/password APIs; not on refresh when <c>SessionBindingCheckIp</c> is enabled and session binding was captured at login.</summary>
     public static HostSuppliedClientContext Empty { get; } = new(null, null, null);
+
+    /// <summary><c>true</c> when <see cref="IpAddress"/>, <see cref="UserAgent"/>, and <see cref="DeviceFingerprint"/> are all null or whitespace.</summary>
+    public bool IsEmpty =>
+        string.IsNullOrWhiteSpace(IpAddress)
+        && string.IsNullOrWhiteSpace(UserAgent)
+        && string.IsNullOrWhiteSpace(DeviceFingerprint);
 
     /// <summary>Bag prefix of collectForm (<c>CollectFormStepFactory.GetKind</c>).</summary>
     public const string CollectFormKind = "collectForm";

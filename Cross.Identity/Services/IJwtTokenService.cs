@@ -123,6 +123,9 @@ public interface IJwtTokenService
     /// (see that enum for the theft-race rationale), then a conflict is thrown.
     /// When session metadata was captured at family start, refresh compares the current
     /// <see cref="HostSuppliedClientContext"/> (host-supplied <c>collectForm</c> fields) with the family anchor.
+    /// When <c>Authentication:Jwt:SessionBindingCheckIp</c> is <c>true</c> and the anchor has binding data,
+    /// <paramref name="hostSuppliedClientContext"/> must not be <see cref="HostSuppliedClientContext.Empty"/> —
+    /// pass the same trusted server-side metadata as on Token (otherwise <see cref="ValidationException"/>).
     /// Mismatch revokes the family with <see cref="RefreshTokenRevokedReason.DEVICE_MISMATCH"/>,
     /// <see cref="RefreshTokenRevokedReason.USER_AGENT_MISMATCH"/>, or
     /// <see cref="RefreshTokenRevokedReason.TOKEN_STOLEN"/> when multiple dimensions differ.
@@ -132,10 +135,11 @@ public interface IJwtTokenService
     /// <see cref="RefreshTokenRevokedReason.SESSION_EXPIRED"/> if <c>LastActivityAt</c> is older than the idle window.
     /// </remarks>
     /// <param name="refreshToken">Refresh token string.</param>
-    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata. On refresh when <c>SessionBindingCheckIp</c> is enabled, pass the same trusted values as at login (not <see cref="HostSuppliedClientContext.Empty"/>). <see cref="HostSuppliedClientContext.Empty"/> is fine on logout/revoke/password APIs.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotAuthorizedException">Token is missing, expired, idle timeout exceeded, or session binding failed.</exception>
     /// <exception cref="ConflictException">Token was already used; family revoked with <c>REPLAY_DETECTED</c>.</exception>
+    /// <exception cref="ValidationException"><paramref name="hostSuppliedClientContext"/> is <see cref="HostSuppliedClientContext.Empty"/> while IP session binding is enabled and the family anchor captured metadata.</exception>
     Task EnsureRefreshTokenActiveForRotationAsync(
         string refreshToken,
         HostSuppliedClientContext hostSuppliedClientContext,
