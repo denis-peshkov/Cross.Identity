@@ -562,4 +562,6 @@ Query params carry **identity** for SPA deep links; OTP **channel** is still res
 | Host `AddInterceptors` | optional (auto-attached) | **not required** |
 | Pooled DbContext | `OnConfiguring` + `AddInterceptors` breaks `AddDbContextPool` / `AddPooledDbContextFactory` | supported |
 
-**Action:** remove any host `.AddInterceptors(…ConcurrencyStampInterceptor…)` if present; keep registering `IdentityContext` as before (`AddDbContext` or pooled). Bulk `ExecuteUpdateAsync` / `ExecuteDeleteAsync` still bypass stamp rotation — set `ConcurrencyStamp` explicitly there.
+**Action:** remove any host `.AddInterceptors(…ConcurrencyStampInterceptor…)` if present; keep registering `IdentityContext` as before (`AddDbContext` or pooled).
+
+**Bulk concurrency contract** (unchanged intent; wording clarified with SaveChanges-based rotation): `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic stamp handling. Filter by the **original** `ConcurrencyStamp`, check the **affected-row count** (0 = conflict), and assign a **new** stamp only via `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` cannot set a stamp — use it only in the WHERE. Prefer tracked `SaveChanges` when possible.

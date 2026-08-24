@@ -5,8 +5,12 @@
 /// Rotates <see cref="IHasConcurrencyStamp.ConcurrencyStamp"/> on tracked insert/update in
 /// <see cref="SaveChanges(bool)"/> / <see cref="SaveChangesAsync(bool, CancellationToken)"/>
 /// so hosts need not register an interceptor (works with pooled and non-pooled registration).
-/// Bulk updates (<c>ExecuteUpdateAsync</c> / <c>ExecuteDeleteAsync</c>) bypass this path and
-/// must set <c>ConcurrencyStamp</c> explicitly.
+/// <para>
+/// Bulk <c>ExecuteUpdateAsync</c> / <c>ExecuteDeleteAsync</c> bypass <c>SaveChanges</c> and automatic
+/// stamp rotation. For optimistic concurrency: filter by the original <c>ConcurrencyStamp</c>,
+/// check the affected-row count (0 = conflict), and only on <c>ExecuteUpdateAsync</c> assign a new
+/// stamp in <c>SetProperty</c>. <c>ExecuteDeleteAsync</c> has no SET — stamp belongs only in the WHERE.
+/// </para>
 /// </summary>
 public class IdentityContext : DbContext
 {

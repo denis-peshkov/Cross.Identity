@@ -126,7 +126,7 @@ services.AddDbContext<IdentityContext>(options =>
 
    Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.
 
-   Note: bulk updates (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) bypass `SaveChanges`; prefer tracked `SaveChanges` for rows that use `ConcurrencyStamp`, or set the stamp explicitly in bulk paths.
+   Note: bulk `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic `ConcurrencyStamp` rotation. Prefer tracked `SaveChanges`. If you must use bulk APIs: filter by the **original** stamp, treat **0 affected rows** as a concurrency conflict, and assign a **new** stamp only in `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` has no SET — put the stamp only in the WHERE.
 
 2. **Register Cross.Identity** services:
 
