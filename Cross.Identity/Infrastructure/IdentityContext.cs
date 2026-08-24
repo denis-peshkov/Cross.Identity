@@ -81,7 +81,7 @@ public class IdentityContext : DbContext
                 continue;
             }
 
-            if (entry.Entity is IHasConcurrencyStamp stamped && stamped.ConcurrencyStamp == Guid.Empty)
+            if (entry.Entity is IHasConcurrencyStamp stamped)
             {
                 stamped.ConcurrencyStamp = Guid.NewGuid();
             }
