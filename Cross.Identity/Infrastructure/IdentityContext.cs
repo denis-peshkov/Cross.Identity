@@ -2,6 +2,15 @@
 
 /// <summary>
 /// EF Core database context for Cross.Identity auth schema (<c>auth.*</c> tables).
+/// Rotates <see cref="IHasConcurrencyStamp.ConcurrencyStamp"/> on tracked insert/update in
+/// <see cref="SaveChanges(bool)"/> / <see cref="SaveChangesAsync(bool, CancellationToken)"/>
+/// so hosts need not register an interceptor (works with pooled and non-pooled registration).
+/// <para>
+/// Bulk <c>ExecuteUpdateAsync</c> / <c>ExecuteDeleteAsync</c> bypass <c>SaveChanges</c> and automatic
+/// stamp rotation. For optimistic concurrency: filter by the original <c>ConcurrencyStamp</c>,
+/// check the affected-row count (0 = conflict), and only on <c>ExecuteUpdateAsync</c> assign a new
+/// stamp in <c>SetProperty</c>. <c>ExecuteDeleteAsync</c> has no SET — stamp belongs only in the WHERE.
+/// </para>
 /// </summary>
 public class IdentityContext : DbContext
 {
@@ -46,14 +55,19 @@ public class IdentityContext : DbContext
     }
 
     /// <inheritdoc />
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        if (!HasConcurrencyStampInterceptor(optionsBuilder))
-        {
-            optionsBuilder.AddInterceptors(ConcurrencyStampInterceptor.Instance);
-        }
+        RotateConcurrencyStamps();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
 
-        base.OnConfiguring(optionsBuilder);
+    /// <inheritdoc />
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        RotateConcurrencyStamps();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -62,9 +76,19 @@ public class IdentityContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
     }
 
-    private static bool HasConcurrencyStampInterceptor(DbContextOptionsBuilder optionsBuilder)
+    private void RotateConcurrencyStamps()
     {
-        var core = optionsBuilder.Options.FindExtension<CoreOptionsExtension>();
-        return core?.Interceptors?.OfType<ConcurrencyStampInterceptor>().Any() == true;
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
+            {
+                continue;
+            }
+
+            if (entry.Entity is IHasConcurrencyStamp stamped)
+            {
+                stamped.ConcurrencyStamp = Guid.NewGuid();
+            }
+        }
     }
 }
