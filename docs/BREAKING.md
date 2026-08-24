@@ -552,3 +552,16 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 Query params carry **identity** for SPA deep links; OTP **channel** is still resolved server-side via `ResolveOtpTargetAsync` on verify (not from the URL).
 
 **Action:** host SPA routes `/verify` and `/reset-password` must read `code` + optional `email` / `phone` from the query string.
+
+### `ConcurrencyStamp` rotation: interceptor → `IdentityContext.SaveChanges`
+
+| Area | Was (2.0 early) | Now (2.0+) |
+|------|-----------------|------------|
+| Rotation | `ConcurrencyStampInterceptor` via `IdentityContext.OnConfiguring` | `IdentityContext.SaveChanges` / `SaveChangesAsync` |
+| Public type | `ConcurrencyStampInterceptor` | **removed** |
+| Host `AddInterceptors` | optional (auto-attached) | **not required** |
+| Pooled DbContext | `OnConfiguring` + `AddInterceptors` breaks `AddDbContextPool` / `AddPooledDbContextFactory` | supported |
+
+**Action:** remove any host `.AddInterceptors(…ConcurrencyStampInterceptor…)` if present; keep registering `IdentityContext` as before (`AddDbContext` or pooled).
+
+**Bulk concurrency contract** (unchanged intent; wording clarified with SaveChanges-based rotation): `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic stamp handling. Filter by the **original** `ConcurrencyStamp`, check the **affected-row count** (0 = conflict), and assign a **new** stamp only via `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` cannot set a stamp — use it only in the WHERE. Prefer tracked `SaveChanges` when possible.

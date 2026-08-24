@@ -136,7 +136,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 >
 > **Idle timeout:** when `Authentication:Jwt:RefreshTokenIdleTimeout` is greater than zero, refresh rejects tokens whose `LastActivityAt` is older than the configured window and revokes the family with `SESSION_EXPIRED`. Successful rotation sets `LastActivityAt` on the new refresh row. Default: disabled.
 >
-> **Concurrency interceptor:** `IdentityContext` registers `ConcurrencyStampInterceptor` in `OnConfiguring` (hosts need not call `AddInterceptors`). It rotates `ConcurrencyStamp` on `SaveChanges` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.).
+> **Concurrency stamp:** `IdentityContext` rotates `ConcurrencyStamp` in `SaveChanges` / `SaveChangesAsync` for all `IHasConcurrencyStamp` entities (users, tokens, verifications, OAuth state, etc.). Hosts need not call `AddInterceptors`; pooled DbContext registration is supported.
 
 ---
 
