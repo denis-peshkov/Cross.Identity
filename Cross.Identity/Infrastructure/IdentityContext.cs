@@ -2,6 +2,11 @@
 
 /// <summary>
 /// EF Core database context for Cross.Identity auth schema (<c>auth.*</c> tables).
+/// Rotates <see cref="IHasConcurrencyStamp.ConcurrencyStamp"/> on tracked insert/update in
+/// <see cref="SaveChanges(bool)"/> / <see cref="SaveChangesAsync(bool, CancellationToken)"/>
+/// so hosts need not register an interceptor (works with pooled and non-pooled registration).
+/// Bulk updates (<c>ExecuteUpdateAsync</c> / <c>ExecuteDeleteAsync</c>) bypass this path and
+/// must set <c>ConcurrencyStamp</c> explicitly.
 /// </summary>
 public class IdentityContext : DbContext
 {
@@ -46,14 +51,19 @@ public class IdentityContext : DbContext
     }
 
     /// <inheritdoc />
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
-        if (!HasConcurrencyStampInterceptor(optionsBuilder))
-        {
-            optionsBuilder.AddInterceptors(ConcurrencyStampInterceptor.Instance);
-        }
+        RotateConcurrencyStamps();
+        return base.SaveChanges(acceptAllChangesOnSuccess);
+    }
 
-        base.OnConfiguring(optionsBuilder);
+    /// <inheritdoc />
+    public override Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        RotateConcurrencyStamps();
+        return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
     }
 
     /// <inheritdoc />
@@ -62,9 +72,19 @@ public class IdentityContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityContext).Assembly);
     }
 
-    private static bool HasConcurrencyStampInterceptor(DbContextOptionsBuilder optionsBuilder)
+    private void RotateConcurrencyStamps()
     {
-        var core = optionsBuilder.Options.FindExtension<CoreOptionsExtension>();
-        return core?.Interceptors?.OfType<ConcurrencyStampInterceptor>().Any() == true;
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State is not (EntityState.Added or EntityState.Modified))
+            {
+                continue;
+            }
+
+            if (entry.Entity is IHasConcurrencyStamp stamped && stamped.ConcurrencyStamp == Guid.Empty)
+            {
+                stamped.ConcurrencyStamp = Guid.NewGuid();
+            }
+        }
     }
 }

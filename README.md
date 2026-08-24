@@ -111,7 +111,7 @@ Cross.Identity.slnx
 
 1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
 
-   `IdentityContext` attaches `ConcurrencyStampInterceptor` itself (via `OnConfiguring`). It rotates `ConcurrencyStamp` on insert/update through `SaveChanges` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors` for this.
+   `IdentityContext` rotates `ConcurrencyStamp` on tracked insert/update inside `SaveChanges` / `SaveChangesAsync` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors`. This works with both `AddDbContext` and pooled registration (`AddDbContextPool` / `AddPooledDbContextFactory`).
 
 ```csharp
 services.AddDbContext<IdentityContext>(options =>
@@ -126,7 +126,7 @@ services.AddDbContext<IdentityContext>(options =>
 
    Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.
 
-   Note: bulk updates (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) bypass interceptors; prefer tracked `SaveChanges` for rows that use `ConcurrencyStamp`.
+   Note: bulk updates (`ExecuteUpdateAsync` / `ExecuteDeleteAsync`) bypass `SaveChanges`; prefer tracked `SaveChanges` for rows that use `ConcurrencyStamp`, or set the stamp explicitly in bulk paths.
 
 2. **Register Cross.Identity** services:
 

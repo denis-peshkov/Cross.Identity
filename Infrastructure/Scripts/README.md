@@ -75,7 +75,7 @@ options.UseNpgsql(connectionString);
 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 ```
 
-`IdentityContext` attaches `ConcurrencyStampInterceptor` automatically. `AddCrossIdentity` does not register `DbContext` or database providers — the host owns that.
+`IdentityContext` rotates `ConcurrencyStamp` in `SaveChanges` (no interceptor registration required). `AddCrossIdentity` does not register `DbContext` or database providers — the host owns that.
 
 ## Type mapping notes
 

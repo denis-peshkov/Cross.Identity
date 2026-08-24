@@ -552,3 +552,14 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 Query params carry **identity** for SPA deep links; OTP **channel** is still resolved server-side via `ResolveOtpTargetAsync` on verify (not from the URL).
 
 **Action:** host SPA routes `/verify` and `/reset-password` must read `code` + optional `email` / `phone` from the query string.
+
+### `ConcurrencyStamp` rotation: interceptor → `IdentityContext.SaveChanges`
+
+| Area | Was (2.0 early) | Now (2.0+) |
+|------|-----------------|------------|
+| Rotation | `ConcurrencyStampInterceptor` via `IdentityContext.OnConfiguring` | `IdentityContext.SaveChanges` / `SaveChangesAsync` |
+| Public type | `ConcurrencyStampInterceptor` | **removed** |
+| Host `AddInterceptors` | optional (auto-attached) | **not required** |
+| Pooled DbContext | `OnConfiguring` + `AddInterceptors` breaks `AddDbContextPool` / `AddPooledDbContextFactory` | supported |
+
+**Action:** remove any host `.AddInterceptors(…ConcurrencyStampInterceptor…)` if present; keep registering `IdentityContext` as before (`AddDbContext` or pooled). Bulk `ExecuteUpdateAsync` / `ExecuteDeleteAsync` still bypass stamp rotation — set `ConcurrencyStamp` explicitly there.
