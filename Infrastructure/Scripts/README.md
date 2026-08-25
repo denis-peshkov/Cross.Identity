@@ -7,6 +7,16 @@ The EF model is **provider-agnostic** (no SQL Server-specific column types). The
 > **This is a reference copy for the Cross.Identity repository.**
 > In the `peshkov.biz` monorepo, the working scripts live in `compose/Identity/` and are linked into `Web.Api` via symlinks (`IdentitySymlinkToCompose.sh`). When changing the schema, update both locations or sync this copy manually.
 
+**EF Core** is used for the runtime model (`DbContext`, entities, configurations).
+**Schema and seed evolution** use **DbUp numbered SQL scripts**, not EF Code First Migrations (`Add-Migration` / `__EFMigrationsHistory` as the primary path).
+
+| Approach | Role here |
+|----------|-----------|
+| EF Core | Mapping, queries, `SaveChanges`, optional greenfield model alignment |
+| DbUp SQL folders | Apply DDL/DML to existing and new databases in a fixed layer order |
+
+Agent conventions (same rules for Cursor): `.cursor/rules/102-backend-efcore.mdc`. Repo workflow: `.cursor/skills/cross-identity-db-scripts/SKILL.md`.
+
 ## Providers
 
 ```text
@@ -18,49 +28,158 @@ Infrastructure/Scripts/
 
 PostgreSQL scripts require **PostgreSQL 13 or later**: `4_SeedData/4_01_auth_Providers.sql` calls `gen_random_uuid()` (available in core since 13; on older versions enable `pgcrypto` or replace UUID generation).
 
+## Layer layout
+
 Each provider folder uses the same DbUp layer layout:
 
 ```text
 <Provider>/
 ├── 1_PreDeployment/   # incremental migrations for already deployed databases
-├── 2_Initial/         # create auth schema/database and tables
-├── 3_SeedLookup/      # lookup tables (idempotent data seeding migrations)
-├── 4_SeedData/        # initial data (data seeding)
-└── 5_PostDeployment/  # data/structure updates (if needed after main migration)
+├── 2_Initial/         # create schema/database and tables (greenfield)
+├── 3_SeedLookup/      # lookup seed — preferred: table-var + MERGE upsert (edit VALUES area)
+├── 4_SeedData/        # initial data — applied once per script per database; never re-run after that
+└── 5_PostDeployment/  # follow-up data/structure updates (use this for later data changes)
 ```
 
-File naming:
-
-```text
-<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]
-```
-
-Examples:
-
-- `2_Initial/2_00_auth.sql` — create schema / database `auth`
-- `2_Initial/2_01_auth_UsersAccounts.sql` — user accounts table
-- `2_Initial/2_01_auth_ExternalLoginStates.sql` — OAuth state (multi-instance)
-- `4_SeedData/4_01_auth_Providers.sql` — OAuth provider seed
-
-`SqlServer/4_SeedData/4_01_AspNetUsers.sql` is SQL Server–only sample data (ASP.NET Identity); it is not ported.
-
-## Application order (DbUp)
-
-1. `1_PreDeployment`
-2. `2_Initial`
-3. `3_SeedLookup`
-4. `4_SeedData`
-5. `5_PostDeployment`
+Application order: `1` → `2` → `3` → `4` → `5`.
 
 Point DbUp at the folder for your provider, e.g. `Infrastructure/Scripts/SqlServer`.
 
-## PreDeployment immutability
+### `3_SeedLookup` — MERGE upsert (preferred)
 
-Scripts in `1_PreDeployment/` are **append-only**: never edit, rename, or delete an existing file once it is in the repo. DbUp records applied scripts by file name; changing an old file does not upgrade databases that already ran it.
+Prefer a **table variable + `MERGE`**: put the desired lookup rows in a `VALUES` block (edit only between the markers), then upsert into the real table. Matched rows update, missing rows insert, rows absent from the source delete (`WHEN NOT MATCHED BY SOURCE`). That keeps the script re-runnable as the desired set of the lookup.
 
-For schema changes on existing databases, add a **new** script with the **next** sequence number (`1_07`, `1_08`, …) in **SqlServer**, **PostgreSQL**, and **MySQL**. Put only the delta in that file. Update `2_Initial` for greenfield installs separately.
+SQL Server pattern (shortened):
 
-Agent workflow: `.cursor/skills/cross-identity-db-scripts/SKILL.md`.
+```sql
+BEGIN TRANSACTION
+
+    DECLARE @Permissions AS TABLE
+    (
+        [SystemId]    INT           NOT NULL,
+        [Code]        NVARCHAR(100) NOT NULL,
+        [Description] NVARCHAR(300) NULL
+    );
+
+    INSERT INTO @Permissions ([SystemId], [Code], [Description])
+    SELECT DISTINCT * FROM (VALUES
+-- BEGIN OF AREA FOR EDIT >>>
+
+           (1, 'Catalog.Products.Read', 'Ability to view Products')
+         , (1, 'Catalog.Products.Write', 'Ability to modify Products')
+         , (1, 'Access.Permissions.Read', 'Ability to view Permissions')
+
+-- <<< END OF AREA FOR EDIT
+
+    ) AS [src] ([SystemId], [Code], [Description]);
+
+    -- upsert data
+    MERGE [pol].[Permissions] [target]
+    USING (SELECT DISTINCT [SystemId], [Code], [Description] FROM @Permissions) [source]
+            ON   [target].[SystemId] = [source].[SystemId]
+             AND [target].[Code]     = [source].[Code]
+        WHEN MATCHED THEN
+            UPDATE SET [target].[Description] = [source].[Description]
+        WHEN NOT MATCHED BY TARGET THEN
+            INSERT ([SystemId], [Code], [Description])
+            VALUES ([source].[SystemId], [source].[Code], [source].[Description])
+        WHEN NOT MATCHED BY SOURCE THEN
+            DELETE;
+
+COMMIT TRANSACTION
+GO
+```
+
+On PostgreSQL / MySQL use the provider equivalent (`INSERT … ON CONFLICT` / `INSERT … ON DUPLICATE KEY` plus an explicit delete of rows not in the desired set), keeping the same “edit only the VALUES area” idea.
+
+### `4_SeedData` — one-shot initial data
+
+`4_SeedData` is **initial** seeding only. DbUp records each script by file name and **does not execute it again** after a successful apply on that database. Do not rely on re-running SeedData for updates. Ongoing data/structure fixes after the first install go in **`5_PostDeployment`** (new append-only scripts), not by re-invoking or rewriting SeedData.
+
+`SqlServer/4_SeedData/4_01_AspNetUsers.sql` is SQL Server–only sample data (ASP.NET Identity); it is not ported.
+
+## Naming conventions
+
+- **Script file naming** — `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
+
+Examples:
+
+```text
+1_PreDeployment/1_00_Predeployment.sql
+2_Initial/2_00_auth.sql
+2_Initial/2_01_auth_UsersAccounts.sql
+2_Initial/2_01_auth_ExternalLoginStates.sql
+4_SeedData/4_01_auth_Providers.sql
+```
+
+- **Versioning** — sequential numbers per layer; do not skip while a lower number is free.
+- **Comments** — optional `_comment` suffix when the purpose is unclear from the entity name alone.
+
+## Append-only layers (mandatory)
+
+Never edit, rename, or delete already-shipped scripts under:
+
+- `*/1_PreDeployment/`
+- `*/5_PostDeployment/`
+
+DbUp tracks applied scripts by **file name**; changing an old file does not re-run it on databases that already applied it. Append a **new** numbered script with the **delta only**.
+
+**Never:**
+
+- Patch an old script to “fix” a deploy or to make it idempotent after shipping
+- Skip sequence numbers while a lower number is free
+- Insert a script that must run before an already-shipped number — use the next free number
+
+For changes on existing databases, add a **new** script with the **next** sequence number in **SqlServer**, **PostgreSQL**, and **MySQL**. Prefer **idempotent** new scripts. Put only the delta in that file. Update `2_Initial` for greenfield installs separately.
+
+## Prefer idempotent new scripts
+
+New files in the append-only layers should be **idempotent where practical** (partial apply / re-run / restored DB):
+
+- Schema: create index/constraint only if missing; add column only if missing; backfill with `WHERE col IS NULL` (or equivalent).
+- Seeds: for **`3_SeedLookup`**, prefer table-var + `MERGE` (upsert + delete not in source); otherwise insert only when missing (`WHERE NOT EXISTS` / `ON CONFLICT DO NOTHING` / `INSERT IGNORE` — provider-appropriate).
+
+Destructive renames/drops may remain one-way — document for operators and keep the delta minimal.
+
+## Greenfield (`2_Initial`)
+
+`2_Initial` **may be edited in place** so new installs match the current EF model. Do **not** rewrite history in append-only layers to match greenfield — append PreDeployment/PostDeployment scripts for existing databases instead.
+
+## New table after the database is already initialized
+
+**Heuristic:** treat the database / product as already initialized when `1_PreDeployment/` contains scripts **other than** the bootstrap `1_00_Predeployment.sql` (or equivalent). Then a **new table** must be added in **both** places:
+
+1. **`2_Initial`** — greenfield create (so new installs get the table).
+2. **`1_PreDeployment`** — new numbered script that creates the same table on **existing** databases (idempotent: create only if missing).
+
+If you only update `2_Initial`, already-deployed DBs never get the table. If you only add PreDeployment, greenfield may create the table twice (PreDeployment then `2_Initial`) and fail with “object already exists”.
+
+### Mark the matching `2_Initial` script as applied
+
+After creating the table in the PreDeployment script on an existing DB, **journal the corresponding `2_Initial` file name** in `__MigrationsHistory` (or the host’s DbUp journal table) so layer `2_Initial` **skips** that script and does not try to create the table again.
+
+SQL Server example (adjust schema/journal/script name to match the host):
+
+```sql
+-- … create auth.ExternalLoginStates if not exists (idempotent) …
+
+IF OBJECT_ID(N'auth.ExternalLoginStates') IS NOT NULL
+AND NOT EXISTS (
+    SELECT 1 FROM [dbo].[__MigrationsHistory]
+    WHERE [ScriptName] = N'2_01_auth_ExternalLoginStates.sql'
+)
+BEGIN
+    INSERT INTO [dbo].[__MigrationsHistory] ([ScriptName], [Applied])
+    VALUES (N'2_01_auth_ExternalLoginStates.sql', SYSDATETIME());
+END
+GO
+```
+
+Notes:
+
+- `[ScriptName]` must match **exactly** what DbUp stores for that `2_Initial` script (often the file name; confirm against existing journal rows).
+- Use the provider’s equivalent checks/inserts on PostgreSQL / MySQL.
+- Prefer doing create + journal insert in the **same** PreDeployment script so a partial failure does not leave the table without a journal row (or the reverse).
 
 ## Host registration (EF Core)
 

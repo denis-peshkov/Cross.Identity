@@ -1,41 +1,57 @@
 ---
 name: cross-identity-db-scripts
 description: >-
-  Cross.Identity DbUp SQL under Infrastructure/Scripts. Use when changing auth
-  schema, adding PreDeployment migrations, syncing SqlServer/PostgreSQL/MySQL,
-  or updating docs/BREAKING for DDL.
+  Apply DbUp conventions (rule 102-backend-efcore) in Cross.Identity:
+  Infrastructure/Scripts SqlServer/PostgreSQL/MySQL, auth schema, EF configs,
+  docs/BREAKING. Use when changing Cross.Identity DDL or seed SQL.
 ---
 
-# Cross.Identity DbUp scripts
+# Cross.Identity — DbUp script locations
 
-Reference: `Infrastructure/Scripts/README.md`. EF model lives in `Cross.Identity/Entities/*EntityConfiguration.cs`.
+**DbUp rules** (layers, naming, append-only, idempotent new scripts, not EF Code First Migrations): `.cursor/rules/102-backend-efcore.mdc`.
+
+This skill is only **where and how** those rules apply in this repository.
 
 ## When to use
 
-- Any change to `auth` schema for **already deployed** databases (`1_PreDeployment`)
-- Greenfield table DDL (`2_Initial`) or seed scripts (`3_SeedLookup`, `4_SeedData`)
-- BREAKING notes that mention migration file names
+- Changing `auth` DDL/seed under `Infrastructure/Scripts/`
+- Syncing the same delta across **SqlServer**, **PostgreSQL**, and **MySQL**
+- Updating `docs/BREAKING.md` with new script names for operators
+- Aligning `Cross.Identity/Entities/*EntityConfiguration.cs` with scripts
 
-## PreDeployment immutability (mandatory)
+## Layout in this repo
 
-**`*/1_PreDeployment` scripts are never edited, renamed, or deleted** once they exist in the repo (including on a release branch). DbUp tracks applied scripts by **file name**; changing an old file does not re-run it on databases that already applied the original version.
+```text
+Infrastructure/Scripts/
+├── SqlServer/
+├── PostgreSQL/
+└── MySQL/
+    ├── 1_PreDeployment/
+    ├── 2_Initial/
+    ├── 3_SeedLookup/       # lookup — preferred: table-var + MERGE (see Scripts/README.md)
+    ├── 4_SeedData/         # initial data only — applied once; never re-run (later changes → 5_PostDeployment)
+    └── 5_PostDeployment/
+```
 
-When schema must change on existing databases:
+Reference copy notes: `Infrastructure/Scripts/README.md`. Runtime model: `IdentityContext` + entity configurations (provider-agnostic EF).
 
-1. Find the **highest** `<Layer>_<nn>_…` number in `1_PreDeployment/` for **each** provider folder (`SqlServer`, `PostgreSQL`, `MySQL`).
-2. Add a **new** script with the **next** number (`1_07`, then `1_08`, …) and the **delta only** (rename column, drop/recreate index, add column, etc.).
-3. Keep the same base name pattern: `<FolderNumber>_<Layer>_<EntityName>[_<comment>]`.
-4. Mirror the change in **all three** provider folders (syntax differs; intent must match).
-5. Update `2_Initial` (and seed if needed) for **greenfield** installs — that layer may reflect the final state; do **not** “fix history” by rewriting old PreDeployment files.
+## Workflow (existing databases)
 
-**Never:**
+1. Find the **highest** `<Layer>_<nn>_…` number in the target layer for **each** provider folder.
+2. Add a **new** idempotent script with the **next** number (delta only) — per `102-backend-efcore`.
+3. Mirror intent in **all three** providers (syntax differs).
+4. Update `2_Initial` for **greenfield** so new installs match the final model (do not rewrite shipped append-only scripts).
+5. If the change is breaking for NuGet/host DBs, append `docs/BREAKING.md` with script names and order.
 
-- Rename `1_02_*` → `1_02_*` with different SQL
-- Patch column names inside an already-shipped PreDeployment script
-- Skip sequence numbers to force sort order (`1_10`, `1_11` while `1_07` is free)
-- Add “run before 1_02” hacks — use the next number after the latest PreDeployment script
+### New table when PreDeployment already has more than `1_00_*`
 
-**Example (Confirmed → Verified):**
+If `1_PreDeployment/` already has scripts **besides** `1_00_Predeployment.sql`, assume databases may already be initialized:
+
+1. Add/update the table in **`2_Initial`** (greenfield).
+2. Add a **new** `1_PreDeployment` script that creates the table if missing (existing DBs).
+3. In that PreDeployment script, after a successful create, **insert the matching `2_Initial` script name** into `__MigrationsHistory` (see `102-backend-efcore` — Mark the matching `2_Initial` script as applied) so `2_Initial` does not fail with “table already exists”. Mirror the journal insert for PostgreSQL / MySQL journal tables/syntax.
+
+### Example (Confirmed → Verified)
 
 | Step | Script | Purpose |
 |------|--------|---------|
@@ -45,16 +61,11 @@ When schema must change on existing databases:
 | new | `1_08_*EmailVerifiedUnique` | recreate email index on `EmailVerified` |
 | new | `1_09_*PhoneNumberVerifiedUnique` | recreate phone index on `PhoneNumberVerified` |
 
-## Other layers
-
-| Layer | May edit in place? | Notes |
-|-------|-------------------|--------|
-| `2_Initial` | Yes (greenfield) | Must match EF; no history on new installs |
-| `3_SeedLookup`, `4_SeedData`, `5_PostDeployment` | Prefer idempotent new scripts | Follow team conventions for seeds |
-
 ## Checklist before finishing
 
-- [ ] No modified/deleted files under `*/1_PreDeployment/` except **new** numbered files
-- [ ] SqlServer + PostgreSQL + MySQL folders in sync
-- [ ] `docs/BREAKING.md` lists new script names and order for operators
+- [ ] Followed `102-backend-efcore` (append-only + idempotent new scripts)
+- [ ] No modified/deleted files under append-only layers except **new** numbered files
+- [ ] New tables after init: both `2_Initial` **and** `1_PreDeployment`, plus `__MigrationsHistory` row for the `2_Initial` script name when PreDeployment creates the table on existing DBs
+- [ ] SqlServer + PostgreSQL + MySQL in sync
+- [ ] `docs/BREAKING.md` updated when operators must run new scripts
 - [ ] EF `*EntityConfiguration.cs` matches final column/index names
