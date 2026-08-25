@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
-# Selective XML docs on public API; keep docstring check but lower threshold.
+# Shared defaults + shared folder path_instructions (globs, not product names).
 #
 # =============================================================================
 # How to trigger CodeRabbit on a GitHub PR (bot — not the local CLI)
@@ -30,24 +30,28 @@ language: en-US
 reviews:
   profile: chill
   path_instructions:
-    - path: "Cross.Identity/**/*.cs"
+    - path: "**/*.cs"
       instructions: |
-        Prefer security and auth/JWT findings. Stock user-scoped APIs (communication endpoints,
-        external-login link/unlink/getAll) take host-authorized UserAccountId and do not require
-        RefreshToken as library session proof — do not flag that as a regression.
-        Require XML docs only on public host-facing contracts (public interfaces, DTOs, options,
-        HostSuppliedClientContext). Do not require docstrings/XML on internal steps, factories,
-        or private helpers.
+        Prefer security and auth/JWT findings. Stock user-scoped APIs take
+        host-authorized UserAccountId and do not require RefreshToken as library
+        session proof — do not flag that as a regression.
+        Require XML docs only on public host-facing contracts (public interfaces,
+        DTOs, options, HostSuppliedClientContext). Do not require docstrings/XML
+        on internal steps, factories, or private helpers.
     - path: "**/*Tests*/**"
       instructions: |
-        Do not require docstrings or XML documentation on tests. Prefer asserting behavior and
-        contracts over style/doc nits.
+        Do not require docstrings or XML documentation on tests. Prefer asserting
+        behavior and contracts over style/doc nits.
     - path: "Infrastructure/Scripts/**"
       instructions: |
-        Follow DbUp conventions: 1_PreDeployment and 5_PostDeployment are append-only; prefer
-        idempotent deltas. New tables after init need both 2_Initial (greenfield) and a new
-        1_PreDeployment script, plus journaling the matching 2_* script name in __MigrationsHistory
-        so 2_Initial does not recreate an existing table. Prefer MERGE upsert for 3_SeedLookup.
+        Follow DbUp conventions: 1_PreDeployment and 5_PostDeployment are
+        append-only; prefer idempotent deltas. New tables after init need both
+        2_Initial (greenfield) and a new 1_PreDeployment script, plus journaling
+        the matching 2_* script name in __MigrationsHistory so 2_Initial does not
+        recreate an existing table. Prefer MERGE upsert for 3_SeedLookup.
+        WHEN NOT MATCHED BY SOURCE THEN DELETE is intentional (VALUES = full
+        managed lookup set / scoped slice); do not recommend removing DELETE or
+        treating orphan cleanup as a defect.
     - path: ".cursor/**"
       instructions: |
         Skills and Cursor rules may use Russian section names / bilingual docs by design.
