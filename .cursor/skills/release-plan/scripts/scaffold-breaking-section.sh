@@ -13,6 +13,8 @@ ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 cd "$ROOT"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/repository-link.sh
+source "$SCRIPT_DIR/lib/repository-link.sh"
 RESOLVE="$SCRIPT_DIR/resolve-target-version.sh"
 
 FROM=""
@@ -98,17 +100,17 @@ if [[ -z "$TO" ]]; then
 fi
 ANCHOR="$(read_json breaking_anchor "$JSON")"
 
-RELEASE_URL="https://github.com/denis-peshkov/Cross.Identity/releases/tag/v${TO}"
+REPOSITORY_LINK="$(repository_link "$(git remote get-url origin 2>/dev/null || true)")"
 PR_SUFFIX=""
 if [[ -n "$PR" ]]; then
-  PR_SUFFIX=" ([PR #${PR}](https://github.com/denis-peshkov/Cross.Identity/pull/${PR}))"
+  PR_SUFFIX=" ([PR #${PR}](${REPOSITORY_LINK}/pull/${PR}))"
 fi
 
 BODY="$(cat <<EOF
 ---
 ## From ${FROM} to ${TO}
 
-Release: [v${TO}](${RELEASE_URL})${PR_SUFFIX}.
+Release: [v${TO}](${REPOSITORY_LINK}/releases/tag/v${TO})${PR_SUFFIX}.
 
 {{BODY}}
 

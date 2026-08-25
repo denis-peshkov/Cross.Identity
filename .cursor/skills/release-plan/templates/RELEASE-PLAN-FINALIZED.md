@@ -1,8 +1,8 @@
-Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
 **Версия:** `{{VERSION}}` (published / closed)
 **Ветка:** `{{BRANCH}}` · **база:** `{{BASE}}` · **дата:** `{{DATE}}`
-**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v{{VERSION}}
+**Релиз (если есть):** {{REPOSITORY_LINK}}/releases/tag/v{{VERSION}}
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 

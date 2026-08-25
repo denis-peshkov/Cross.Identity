@@ -57,9 +57,11 @@ In the plan header: **Предыдущий план** — ссылка **тол�
 - Closed / finalized: [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md)
 - New `docs/BREAKING.md` **From X → Y**: workflow in **`docs/BREAKING.md`** below; snippet [`templates/BREAKING-SECTION.md`](templates/BREAKING-SECTION.md)
 
+Shared placeholder: **`{{REPOSITORY_LINK}}`** — GitHub repo base from `git remote` (`resolve-target-version.sh` → `repository_link`; fallback in `scripts/lib/repository-link.sh`).
+
 Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode specific version filenames in this skill.
 
-**Шапка — `Релиз (если есть):`** всегда из **`Версия`**: `https://github.com/denis-peshkov/Cross.Identity/releases/tag/vX.Y.Z` (не `—`, даже до publish).
+**Шапка — `Релиз (если есть):`** — `{{REPOSITORY_LINK}}/releases/tag/v{{VERSION}}` (не `—`; `{{REPOSITORY_LINK}}` from `git remote`, см. `resolve-target-version.sh` → `repository_link`).
 
 **When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md` / `docs/TO-DO.md`:**
 - **Required (targeted):** before any **state-changing** work on them — merge/open items, close/dismiss, finalize, harvest leftovers, renumber / dedupe checks. Always read the **current** plan + `TO-DO.md` (only sections you will edit).
@@ -298,7 +300,7 @@ Workflow for new sections: **`docs/BREAKING.md`** (this skill).
 
 | Script | Purpose |
 |--------|---------|
-| [`resolve-target-version.sh`](scripts/resolve-target-version.sh) | `target_version`, `plan_path`, `breaking_from`/`breaking_to` from branch + latest `v*` tag |
+| [`resolve-target-version.sh`](scripts/resolve-target-version.sh) | `target_version`, `plan_path`, `repository_link`, `breaking_from`/`breaking_to` from branch + latest `v*` tag |
 | [`scaffold-breaking-section.sh`](scripts/scaffold-breaking-section.sh) | TOC row + `From X to Y` block (cache only; agent edits `docs/BREAKING.md`) |
 | [`collect-release-delta.sh`](scripts/collect-release-delta.sh) | Branch delta cache for plan drafting |
 | [`release-plan-summary.mjs`](scripts/release-plan-summary.mjs) | `RELEASE-PLAN-dev-to-master.md` Checklist Summary line |
