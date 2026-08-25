@@ -10,6 +10,8 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 **Источники дельты:** `collect-release-delta.sh` · {{DELTA_CACHE_PATH}}
 
+**Предыдущий план:** {{PREVIOUS_PLAN_LINK_OR_DASH}}
+
 {{OPTIONAL_NOTES}}
 
 > При перепроверке / dismiss: **сначала** `## Закрыто` как `| ✅ #H2 Short title | … |` (или legacy `✅ #34 …`), **потом** убрать из open-секций этого плана и/или из `docs/TO-DO.md`. Нельзя только выкинуть.  

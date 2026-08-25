@@ -10,7 +10,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 **Источники дельты:** `collect-release-delta.sh` · `.cursor/skills/release-plan/.cache/delta-2.2.0-release-remove-refresh-session-proof-from-user-scoped-flows.md`
 
-**Предыдущие планы:** [`RELEASE-PLAN-2.0.0.md`](RELEASE-PLAN-2.0.0.md) · [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
+**Предыдущий план:** [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
 
 ---
 
@@ -19,9 +19,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ---
 
 ## Высокий (логика / auth model)
-
-### H7. Scripts README: ExternalLoginStates create + journal atomic
-⬜ CodeRabbit: SQL Server PreDeployment example — одна transaction: create table + `__MigrationsHistory` insert; rollback при ошибке; idempotent checks сохранить.
 
 ---
 
@@ -67,6 +64,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H4 journal only if this script created table | dismissed: `ExternalLoginStates` не появляется иначе, чем из этого PreDeployment-потока; `OBJECT_ID` в примере ок |
 | ✅ #H5 run-coderabbit-review.sh PIPESTATUS / tee | RC учитывает failure `coderabbit` и `tee` |
 | ✅ #H6 collect-release-delta.sh SIGPIPE / consume | `sed -n '1,800p'` вместо `head`; лимит 800 для FLOWS/BREAKING |
+| ✅ #H7 Scripts README create+journal atomic txn | dismissed: каждый DbUp-скрипт уже в собственной транзакции; лишний BEGIN TRAN в примере не нужен |
 
 ---
 
@@ -80,7 +78,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ## Приоритет фиксов
 
 1. **BREAKING.md § From 2.1.1 to 2.2.0** — consumer migration (CR major; код/FLOWS в дельте есть).
-2. **H7:** atomic PreDeployment example (create + journal).
-3. **M45–M46:** FLOWS anchors / triage `gh-wrapper`.
+2. **M45–M46:** FLOWS anchors / triage `gh-wrapper`.
 
 _(общий backlog → [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO — CR duplicate skipped)_

@@ -9,6 +9,8 @@
 
 **Источники дельты:** `collect-release-delta.sh` · {{DELTA_CACHE_PATH}}
 
+**Предыдущий план:** {{PREVIOUS_PLAN_LINK_OR_DASH}}
+
 {{OPTIONAL_NOTES}}
 
 ---

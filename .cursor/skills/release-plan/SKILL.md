@@ -30,6 +30,8 @@ description: >-
 | `docs/RELEASE-PLAN-X.Y.Z.md` | **Only** this release’s delta vs base (`master`) |
 | `docs/TO-DO.md` | Cross-version **open** backlog (C/H/M/L); incremental |
 
+In the plan header: **Предыдущий план** — ссылка **только на непосредственно предыдущий** `docs/RELEASE-PLAN-A.B.C.md` (последний по версии ниже текущего). **Не** перечислять всю цепочку. Если предыдущего нет — `—`.
+
 ## Canonical shape (version plan)
 
 **Source of truth for structure:**
