@@ -9,8 +9,10 @@ Breaking changes for **Cross.Identity**, grouped by **from → to** package vers
 | `1.6.x` → `1.7.0+`   | [From 1.6.x to 1.7.0](#from-16x-to-170)     |
 | `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
 | `1.10.x` → `2.0.0+`  | [From 1.10.x to 2.0.0](#from-110x-to-200)   |
+| `2.0.x` → `2.1.1+`   | [From 2.0.x to 2.1.1](#from-20x-to-211)     |
 
 `1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes.
+There was no `2.1.0` package — next published release after [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) is [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1).
 
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
@@ -67,7 +69,7 @@ JWT license validation runs on the first `IFlowExecutor.ExecuteAsync` call. Call
 Reference DDL: `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/`.
 
 - Prefer `Email` over removed `NormalizedEmail`.
-- `RowVersion` → `ConcurrencyStamp` (`IHasConcurrencyStamp` + interceptor); update host EF mappings and SQL scripts accordingly.
+- `RowVersion` → `ConcurrencyStamp` (`IHasConcurrencyStamp`; through 2.0 rotated via interceptor, from [2.1.1](#from-20x-to-211) via `IdentityContext.SaveChanges`); update host EF mappings and SQL scripts accordingly.
 - `RefreshToken.AbsoluteExpiresAt` — add column and backfill.
 
 ### Dependencies
@@ -150,7 +152,7 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 
 ## From 1.10.x to 2.0.0
 
-Stock flows: [`FLOWS.md`](../Cross.Identity/FLOWS.md).
+Release: [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) — auth hardening (OTP, tokens, OAuth, session binding). Stock flows: [`FLOWS.md`](../Cross.Identity/FLOWS.md).
 
 ### No `IHttpContextAccessor` / ambient `HttpContext` → `HostSuppliedClientContext`
 
@@ -327,7 +329,7 @@ Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is req
 | Register / RequestCode | often omitted | must set `template: verify`, `subject: Verification Code` |
 | ForgotPassword | separate step / `reset` templates | `template: reset`, `subject: Reset your password` |
 
-`template: reset` also appends `email` / `phone` query params (email / phone number) to the action URL; other templates keep code-only URLs.
+Action URL path and identity query params depend on `template` — see [`SendCodeStep` action URL by `template`](#sendcodestep-action-url-by-template).
 
 **Action:** add `template` / `subject` to every custom `sendCode` step.
 
@@ -347,10 +349,10 @@ Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is req
 
 New operations (stock `main` flows):
 
-- `CommunicationEndpointsGetAll` — list endpoints for `UserId`
-- `CommunicationEndpointSetPreferred` — set preferred endpoint (`UserAccountId` + `EndpointId`)
+- `CommunicationEndpointsGetAll` — list endpoints for `UserAccountId` (+ **`RefreshToken`**)
+- `CommunicationEndpointSetPreferred` — set preferred endpoint (`UserAccountId` + `EndpointId` + **`RefreshToken`**)
 
-Host must pass `UserId` in the bag (no ambient auth user).
+Host must pass `UserAccountId` + session proof in the bag (no ambient auth user).
 
 **Action:** wire routes / clients if you expose these operations; apply matching DDL for communication-endpoint tables (`Infrastructure/Scripts`).
 
@@ -553,10 +555,26 @@ Query params carry **identity** for SPA deep links; OTP **channel** is still res
 
 **Action:** host SPA routes `/verify` and `/reset-password` must read `code` + optional `email` / `phone` from the query string.
 
+### `ICodeService.SendAsync` requires `Guid userAccountId`
+
+| Area | Was (1.10) | Now (2.0+) |
+|------|------------|------------|
+| Signature | `SendAsync(…, string userId, …)` | **`SendAsync(…, Guid userAccountId, …)`** — same id type as `VerifyAsync` |
+
+`ICodeService` is internal; update only if you replace/mock the OTP service or call it from custom steps.
+
+**Action:** pass `Guid` (stock `SendCodeStep` already does).
+
+---
+
+## From 2.0.x to 2.1.1
+
+Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1) ([PR #18](https://github.com/denis-peshkov/Cross.Identity/pull/18)).
+
 ### `ConcurrencyStamp` rotation: interceptor → `IdentityContext.SaveChanges`
 
-| Area | Was (2.0 early) | Now (2.0+) |
-|------|-----------------|------------|
+| Area | Was (2.0.x) | Now (2.1.1+) |
+|------|-------------|--------------|
 | Rotation | `ConcurrencyStampInterceptor` via `IdentityContext.OnConfiguring` | `IdentityContext.SaveChanges` / `SaveChangesAsync` |
 | Public type | `ConcurrencyStampInterceptor` | **removed** |
 | Host `AddInterceptors` | optional (auto-attached) | **not required** |
