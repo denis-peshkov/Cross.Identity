@@ -1,6 +1,4 @@
-﻿﻿using Cross.Identity.Tests.Helpers;
-
-namespace Cross.Identity.Tests.Services;
+﻿namespace Cross.Identity.Tests.Services;
 
 [TestFixture]
 public class JwtTokenServiceTests : EFTestsBase

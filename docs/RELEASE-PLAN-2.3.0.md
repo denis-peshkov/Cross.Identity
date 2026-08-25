@@ -22,9 +22,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M55. `JwtTokenServiceTests`: `Helpers` → `GlobalUsings`
-⬜ CodeRabbit Minor: перенести `Cross.Identity.Tests.Helpers` в `GlobalUsings.cs`, убрать file-scoped using из `JwtTokenServiceTests.cs`.
-
 ### M56. `release-plan-summary.mjs`: bullets только в section 10
 ⬜ CodeRabbit Minor: парсинг markdown — учитывать active section heading; BULLET matches только внутри section 10.
 
@@ -55,6 +52,7 @@
 | ✅ #M52 README: Logout/RefreshToken — Jti | `README.md` § host authorize: `Logout` / `RefreshToken` → `Jti`; `Token` → credentials/code |
 | ✅ #M53 anchor `BREAKING.md` в строке #M51 | ссылка `(BREAKING.md#from-220-to-230)` вместо fragment-only |
 | ✅ #M54 `TokenTestHelpers`: `CancellationToken` в `IsRefreshTokenActiveAsync` | параметр + проброс в `FirstOrDefaultAsync`; callers → `CancellationToken.None` |
+| ✅ #M55 `JwtTokenServiceTests`: `Helpers` → `GlobalUsings` | убран file-scoped using; `global using Cross.Identity.Tests.Helpers` уже был |
 
 ---
 
@@ -67,4 +65,4 @@
 
 ## Приоритет фиксов
 
-1. **M55–M58** — tests / release-plan scripts (по желанию до или после merge).
+1. **M56–M58** — release-plan scripts (по желанию до или после merge).
