@@ -3,10 +3,11 @@ name: coderabbit
 description: >-
   Runs CodeRabbit CLI review of the current branch vs master (committed delta),
   saves agent findings, and always merges Critical/Major/Minor/Trivial/Info into
-  docs/TO-DO.md as C/H/M/L. Closing/dismissing a TO-DO item always writes
-  `✅ Id …` to the current RELEASE-PLAN «Закрыто» before removing it from TO-DO.
-  Use when the user asks to run CodeRabbit, CR review, or local coderabbit on
-  branch changes.
+  the current docs/RELEASE-PLAN-X.Y.Z.md as open C/H/M/L (not docs/TO-DO.md).
+  If no current version plan exists, runs the release-plan skill first to create
+  it, then merges findings. Closing/dismissing a plan item moves it to that
+  plan’s «Закрыто» as `✅ Id …`. Use when the user asks to run CodeRabbit, CR
+  review, or local coderabbit on branch changes.
 ---
 
 # CodeRabbit vs master
@@ -23,10 +24,22 @@ description: >-
 | Base | `origin/master` (fallback `master`) |
 | Scope | committed branch delta (`--committed`) |
 | Output | `--agent` (JSONL findings for agents) |
-| After review | **always** triage into [`docs/TO-DO.md`](../../../docs/TO-DO.md) |
+| After review | **always** triage into **current** [`docs/RELEASE-PLAN-X.Y.Z.md`](../../../docs/) (not `TO-DO.md`) |
+| Missing plan | **first** run [`release-plan`](../release-plan/SKILL.md), then triage into the new file |
 | CLI | `coderabbit` from `PATH` (also `~/.local/bin`) |
 
 ## Workflow
+
+0. **Ensure current RELEASE-PLAN (before or right after review, before triage)**  
+   Resolve **current** version plan — see `release-plan` → **Current version plan** (user version / branch target / planned `docs/RELEASE-PLAN-X.Y.Z.md`).
+
+   | Situation | Action |
+   |-----------|--------|
+   | Current `docs/RELEASE-PLAN-X.Y.Z.md` **exists** | Use it |
+   | **No** current plan for the target version (file missing) | **Must** run skill [`release-plan`](../release-plan/SKILL.md) **fully** (collect delta → write plan) in this same session, **then** continue |
+   | Version unknown | Ask user for `X.Y.Z`, or infer from branch/csproj/last plan +1; then create via `release-plan` if file still missing |
+
+   **Forbidden:** dump CR findings into `docs/TO-DO.md`, invent a stub plan without `release-plan`, or skip creating the plan when it is missing.
 
 1. **Auth / doctor** (if review fails):
 
@@ -59,37 +72,42 @@ bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
 
 Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 
+   Order note: step **0** may run before step 2 (plan first) or after step 3 (create plan after summary, before triage). Review and plan creation can be sequential; **triage (step 4) only after the plan file exists**.
+
 3. **Summarize** findings from the log / `coderabbit review findings`:
    - Count by severity
    - Table: severity · file · short gist
    - Do **not** invent issues not in the output
 
-4. **TO-DO sync (always — not optional)**  
-   Immediately merge findings into [`docs/TO-DO.md`](../../../docs/TO-DO.md) as **C/H/M/L only** (no separate CR section):
+4. **RELEASE-PLAN sync (always — not optional)**  
+   Target = current plan from step **0** (created via `release-plan` if it was missing).  
+   Immediately merge findings into that plan’s open severity sections as **C/H/M/L only** (no separate CR section).  
+   **Do not** write CR findings into [`docs/TO-DO.md`](../../../docs/TO-DO.md).
 
-| CodeRabbit | TO-DO |
-|------------|--------|
-| Critical | `C…` |
-| Major | `H…` |
-| Minor | `M…` |
-| Trivial / Info | `L…` |
+| CodeRabbit | Plan section |
+|------------|--------------|
+| Critical | `## Критично` → `C…` |
+| Major | `## Высокий` → `H…` |
+| Minor | `## Средний` → `M…` |
+| Trivial / Info | `## Низкий` → `L…` |
+
+   Format (match plan legend): `### M43. Title` + `⬜` description.
 
    Rules:
-   - Merge by meaning; next free id in that group (`M43`, `L10`, …)
-   - Skip duplicates already open in TO-DO
-   - Do not re-add items already in any `RELEASE-PLAN-*.md` «Закрыто»
-   - Keep empty C/H sections if still empty; UTF-8 BOM
-   - In the chat reply: list what was **added** / **skipped**
+   - Merge by meaning; next free id in that group across **current plan open + «Закрыто»** and `TO-DO.md` (`M43`, `L10`, …)
+   - Skip duplicates already open in the current plan or already in any plan «Закрыто»
+   - Skip duplicates already open in `TO-DO.md` (same meaning) — do not copy them into the plan unless the user asks
+   - Keep empty severity sections as heading + `---`; UTF-8 BOM
+   - Update **Приоритет фиксов** of the current plan if new open work appears
+   - In the chat reply: list what was **added** / **skipped** (and note if `release-plan` was run to create the file)
 
-5. **Close / dismiss TO-DO items (same turn as the user asks)**  
-   If the user closes, rejects, or dismisses a C/H/M/L item (won’t-fix, «только пример», duplicate, fixed elsewhere, …):
+5. **Close / dismiss plan items (same turn as the user asks)**  
+   If the user closes, rejects, or dismisses a C/H/M/L item from the current plan (won’t-fix, «только пример», duplicate, fixed, …):
 
-   1. Resolve **current** version plan (`docs/RELEASE-PLAN-X.Y.Z.md` for the branch target — see `release-plan` → Current version plan).
-   2. **First** append `| ✅ H2 Short title | reason |` under that plan’s `## Закрыто`.
-   3. **Then** remove the item from `docs/TO-DO.md`.
-   4. **Never** delete from TO-DO without the «Закрыто» row.
-
-   Same rule as release-plan skill **Close from TO-DO**.
+   1. **First** append `| ✅ H2 Short title | reason |` under that plan’s `## Закрыто`.
+   2. **Then** remove the item from the open severity section.
+   3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too (same **Close from TO-DO** / Re-check rules in `release-plan`).
+   4. **Never** drop an open item without the «Закрыто» row.
 
 ## Limits
 
@@ -101,5 +119,6 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 - [ ] Used `--committed --base` against master (or user-specified base)
 - [ ] Ran outside sandbox restrictions that break `~/.coderabbit`
 - [ ] Summary matches the saved log
-- [ ] `docs/TO-DO.md` updated in the same turn (C/H/M/L); additions reported to user
-- [ ] Any dismissed/closed TO-DO item → `✅ Id …` in **current** `RELEASE-PLAN-*.md` «Закрыто» before removal from TO-DO
+- [ ] If current plan was missing → `release-plan` skill ran and created `docs/RELEASE-PLAN-X.Y.Z.md` before triage
+- [ ] **Current** `docs/RELEASE-PLAN-X.Y.Z.md` updated in the same turn (open C/H/M/L); **not** `TO-DO.md` for CR findings
+- [ ] Any dismissed/closed item → `✅ Id …` in that plan’s «Закрыто» before removal from open sections

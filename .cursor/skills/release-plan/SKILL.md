@@ -5,8 +5,8 @@ description: >-
   master (delta only). Moves leftover open items from the previous plan into
   docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO item always adds
   `✅ Id …` to the current plan «Закрыто» first, then removes it from TO-DO.
-  Use when drafting release notes, release plans, or updating RELEASE-PLAN-*.md
-  / TO-DO.md.
+  Use when drafting release notes, release plans, or updating
+  RELEASE-PLAN-X.Y.Z.md / TO-DO.md.
 ---
 
 # Release plan from branch delta
@@ -16,6 +16,7 @@ description: >-
 - User asks for **release notes / RELEASE-PLAN** for the current branch vs `master`
 - Update `docs/RELEASE-PLAN-X.Y.Z.md` for a planned or shipping version
 - Sync open backlog into [`docs/TO-DO.md`](../../../docs/TO-DO.md)
+- Current version plan file is **missing** and must be created before other work can write into it
 
 **Do not** use for the historical merge checklist `docs/RELEASE-PLAN-dev-to-master.md` (different format; see `docs/scripts/release-plan-summary.mjs`).
 
@@ -28,19 +29,16 @@ description: >-
 
 ## Canonical shape (version plan)
 
-Match **section order and headings** of:
+**Source of truth for structure:** [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md).  
+Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode specific version filenames in this skill.
 
-- [`docs/RELEASE-PLAN-2.0.0.md`](../../../docs/RELEASE-PLAN-2.0.0.md)
-- [`docs/RELEASE-PLAN-2.1.1.md`](../../../docs/RELEASE-PLAN-2.1.1.md)
-- [`docs/RELEASE-PLAN-2.2.0.md`](../../../docs/RELEASE-PLAN-2.2.0.md) (delta-only example)
-
-Template: [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md).
+**When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md`:** only if the template is **ambiguous or unclear** for the task (section meaning, «Закрыто» row shape, etc.). Do **not** routinely scan / re-read generated plans on every run — they are outputs, not the skill canon. Never treat a generated plan as something to keep in sync inside this skill file.
 
 **Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
 **Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.  
 **Закрыто** — столбец `#`: **`✅ M13 Short title`** (или legacy `✅ #34 …`). Без id: **`✅ Short title`**.
 
-Empty severity sections stay as the heading + `---` (like 2.1.1 / 2.2.0).
+Empty severity sections stay as the heading + `---`.
 
 **Нумерация open items:** сквозная **внутри группы**:
 
@@ -51,12 +49,12 @@ Empty severity sections stay as the heading + `---` (like 2.1.1 / 2.2.0).
 | `M` | Средний |
 | `L` | Низкий |
 
-Источник finding’а (CodeRabbit, audit, …) **не хранить отдельной секцией** — сразу в C/H/M/L.  
-Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/Info→`L`.
+Источник finding’а **не хранить отдельной секцией** — сразу в C/H/M/L open **этого** плана (если относится к дельте) или в `TO-DO.md` (если вне дельты).
 
 ## `docs/TO-DO.md` (инкрементально)
 
-Файл = **только нерешённые** пункты. Процесс/легенда/статусы **не** писать в сам файл — только здесь (и в coderabbit skill для CR triage).
+Файл = **только нерешённые** пункты **вне** дельты текущего version plan.  
+Процесс/легенда/статусы **не** писать в сам файл — только здесь.
 
 | Правило | Деталь |
 |---------|--------|
@@ -64,11 +62,10 @@ Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/In
 | Секции | Всегда четыре: Критично / Высокий / Средний / Низкий; пустые = заголовок + `---` |
 | Формат | `### M13. Title` + описание **без** статус-маркеров (`⬜`/`✅`/…) |
 | Id | Сквозная нумерация **внутри** группы `C`/`H`/`M`/`L`; следующий свободный; исторические id не перенумеровывать |
-| Источник | CodeRabbit / audit / … — сразу в C/H/M/L (без отдельной секции CR) |
-| CR triage | Critical→`C`, Major→`H`, Minor→`M`, Trivial/Info→`L` |
+| Источник | leftover plan / audit вне дельты / … — сразу в C/H/M/L |
 | Harvest | Open с предыдущего плана, не вошедшее в дельту → добавить сюда (если ещё нет) |
 | Close | См. **Close from TO-DO** — сначала «Закрыто» текущего плана, потом удалить из TO-DO |
-| Не класть | «Принято» trade-off без open work; копипаст всего TO-DO в version plan (только ссылка) |
+| Не класть | Work **этой** дельты (оно в version plan); «Принято» trade-off без open work; копипаст всего TO-DO в version plan (только ссылка) |
 
 ```markdown
 ## Критично (безопасность)
@@ -82,18 +79,18 @@ Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/In
 ## Current version plan
 
 **Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии ветки (user / `**Версия:**` в файле / planned).  
-Не писать закрытия в уже shipped historical планы (`2.0.0`, `2.1.1`, …), если работа идёт под следующий релиз (напр. `2.2.0`).  
+Писать закрытия только в **текущий** (целевой) `docs/RELEASE-PLAN-X.Y.Z.md` — не в уже shipped historical version plans других `X.Y.Z`.  
 Не использовать `RELEASE-PLAN-dev-to-master.md`.
 
 ## Close from TO-DO (обязательно, любой dismiss)
 
-Когда пункт убирают из `docs/TO-DO.md` (fix, won’t-fix, CR dismiss, «это только пример», duplicate, …):
+Когда пункт убирают из `docs/TO-DO.md` (fix, won’t-fix, dismiss, «это только пример», duplicate, …):
 
 1. **Сначала** добавить строку в `## Закрыто` **текущего** `RELEASE-PLAN-X.Y.Z.md`:
 
 | # | Суть |
 |---|------|
-| ✅ H2 Scripts README MERGE SystemId scope | CR dismissed: README — пример lookup, не open work |
+| ✅ H2 Scripts README MERGE SystemId scope | dismissed: README — пример lookup, не open work |
 
 2. Id **сохранить** (`✅ H2 …` / `✅ M13 …`); title короткий; в «Суть» — почему закрыто.
 3. **Затем** удалить пункт из `docs/TO-DO.md` (пустые C/H/M/L-секции оставить).
@@ -120,7 +117,7 @@ Id’шный backlog, который отклонили → всё равно *
 ```bash
 bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
   --base origin/master \
-  --version 2.2.0
+  --version X.Y.Z
 ```
 
 3. **Sync `TO-DO.md`** — harvest leftovers into C/H/M/L; drop items closed in this delta / any version «Закрыто».
@@ -141,7 +138,7 @@ bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 ## Quality bar
 
 - [ ] Version plan has **no** foreign-release backlog (that lives in `TO-DO.md`)
-- [ ] `TO-DO.md` is C/H/M/L only (no separate CR section); closed items removed from it
+- [ ] `TO-DO.md` is C/H/M/L only (no separate review-tool section); closed items removed from it
 - [ ] Every removal from `TO-DO.md` has a matching `✅ Id …` row in **current** plan «Закрыто»
 - [ ] «Закрыто» `#` looks like `✅ M13 …` (or legacy `✅ #34 …`)
 - [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
