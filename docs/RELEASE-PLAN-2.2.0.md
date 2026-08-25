@@ -4,11 +4,7 @@
 **Ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`  
 **Релиз (если есть):** —
 
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-**Критично / Высокий / Средний / Низкий** — только ⬜ open **этой дельты**. **Закрыто** — все ✅; столбец `#` = `✅ #34 Session IP binding config` (номера сохраняются).  
-Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкрементально; удалять при закрытии в версии).
-
-**Источники дельты:** `collect-release-delta.sh` · `.cursor/skills/release-plan/.cache/delta-2.2.0-release-remove-refresh-session-proof-from-user-scoped-flows.md`
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 
 **Предыдущий план:** [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
 

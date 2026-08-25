@@ -48,8 +48,8 @@ Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode sp
 
 Downstream **coderabbit** triage still writes only into the **current** version plan (not `TO-DO.md` for delta findings) and skips duplicates already open in the current plan, any plan «Закрыто», or `TO-DO.md`.
 
-**Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-**Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.  
+**Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+**Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.
 **Закрыто** — столбец `#`: **`✅ #M13 Short title`** / **`✅ #H3 …`** (legacy `✅ #34 …` ok). Без id: **`✅ Short title`**.
 
 Empty severity sections stay as the heading + `---`.
@@ -67,7 +67,7 @@ Empty severity sections stay as the heading + `---`.
 
 ## `docs/TO-DO.md` (инкрементально)
 
-Файл = **только нерешённые** пункты **вне** дельты текущего version plan.  
+Файл = **только нерешённые** пункты **вне** дельты текущего version plan.
 Процесс/легенда/статусы **не** писать в сам файл — только здесь.
 
 | Правило | Деталь |
@@ -92,8 +92,8 @@ Empty severity sections stay as the heading + `---`.
 
 ## Current version plan
 
-**Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии ветки (user / `**Версия:**` в файле / planned).  
-Писать закрытия только в **текущий** (целевой) `docs/RELEASE-PLAN-X.Y.Z.md` — не в уже shipped historical version plans других `X.Y.Z`.  
+**Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии ветки (user / `**Версия:**` в файле / planned).
+Писать закрытия только в **текущий** (целевой) `docs/RELEASE-PLAN-X.Y.Z.md` — не в уже shipped historical version plans других `X.Y.Z`.
 Не использовать `RELEASE-PLAN-dev-to-master.md`.
 
 **Resolve without scanning history:**
@@ -117,7 +117,7 @@ Empty severity sections stay as the heading + `---`.
 4. Обновить **Приоритет** в TO-DO / плане при необходимости.
 5. **Запрещено:** удалить из TO-DO без строки в «Закрыто» текущего плана.
 
-Осознанный **контрактный** trade-off без id → секция **Принято** (не «Закрыто», не TO-DO).  
+Осознанный **контрактный** trade-off без id → секция **Принято** (не «Закрыто», не TO-DO).
 Id’шный backlog, который отклонили → всё равно **Закрыто** с `✅ #Id …` и причиной.
 
 ## Re-check (закрытие пунктов в version plan)
@@ -134,7 +134,7 @@ Id’шный backlog, который отклонили → всё равно *
 Когда пользователь просит **закрыть / финализировать / ship** `docs/RELEASE-PLAN-X.Y.Z.md` (релиз вышел или план этой версии больше не ведётся):
 
 1. **Собрать весь ⬜ open** из секций Критично / Высокий / Средний / Низкий этого плана.
-2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge по id; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).  
+2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge по id; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).
    Не класть их в «Закрыто» — это не done/dismiss, а leftover.
 3. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
    - header: версия **published / closed** (+ release URL если есть);
@@ -150,13 +150,15 @@ Id’шный backlog, который отклонили → всё равно *
 ## Workflow
 
 1. **Resolve version + base** — version from user/file; base default `origin/master`.
-2. **Collect delta** (required):
+2. **Collect delta** (required) — script only; do **not** put the cache path into the version plan file:
 
 ```bash
 bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
   --base origin/master \
   --version X.Y.Z
 ```
+
+Cache lands under `.cursor/skills/release-plan/.cache/` (script prints the path). Use it while drafting; omit from `docs/RELEASE-PLAN-X.Y.Z.md`.
 
 3. **Sync `TO-DO.md`** — harvest leftovers into C/H/M/L; drop items closed in this delta / any version «Закрыто».
 4. **Write** `docs/RELEASE-PLAN-X.Y.Z.md` from template — **delta only** (UTF-8 **with BOM**).

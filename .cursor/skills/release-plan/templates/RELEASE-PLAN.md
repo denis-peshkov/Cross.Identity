@@ -4,20 +4,11 @@
 **Ветка:** `{{BRANCH}}` · **база:** `{{BASE}}` · **дата:** `{{DATE}}`
 **Релиз (если есть):** {{RELEASE_URL_OR_DASH}}
 
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-**Критично / Высокий / Средний / Низкий** — только ⬜ open **этой дельты**. **Закрыто** — столбец `#` = `✅ #34 Session IP binding config`.  
-Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкрементально; удалять при закрытии в версии).
-
-**Источники дельты:** `collect-release-delta.sh` · {{DELTA_CACHE_PATH}}
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 
 **Предыдущий план:** {{PREVIOUS_PLAN_LINK_OR_DASH}}
 
 {{OPTIONAL_NOTES}}
-
-> При перепроверке / dismiss: **сначала** `## Закрыто` как `| ✅ #H2 Short title | … |` (или legacy `✅ #34 …`), **потом** убрать из open-секций этого плана и/или из `docs/TO-DO.md`. Нельзя только выкинуть.  
-> Open с предыдущего плана, не вошедшее в дельту → **добавить** в `docs/TO-DO.md` (не в этот файл).  
-> Findings по **этой** дельте ветки → open C/H/M/L **этого** плана, не `TO-DO.md`.  
-> **Закрытие плана** (finalize): весь оставшийся open → `TO-DO.md`, план → `templates/RELEASE-PLAN-FINALIZED.md`.
 
 ---
 

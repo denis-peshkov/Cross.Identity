@@ -1,13 +1,10 @@
 Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `{{VERSION}}` (published / closed)  
-**Ветка:** `{{BRANCH}}` · **база:** `{{BASE}}` · **дата:** `{{DATE}}`  
+**Версия:** `{{VERSION}}` (published / closed)
+**Ветка:** `{{BRANCH}}` · **база:** `{{BASE}}` · **дата:** `{{DATE}}`
 **Релиз (если есть):** {{RELEASE_URL_OR_DASH}}
 
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-**Критично / Высокий / Средний / Низкий** — пусто после закрытия плана (весь незакрытый open ушёл в [`TO-DO.md`](TO-DO.md)). **Закрыто** — столбец `#` = `✅ #M13 Short title` / `✅ #H3 …` (legacy `✅ #34 …` ok).
-
-**Источники дельты:** `collect-release-delta.sh` · {{DELTA_CACHE_PATH}}
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 
 **Предыдущий план:** {{PREVIOUS_PLAN_LINK_OR_DASH}}
 
