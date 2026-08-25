@@ -22,9 +22,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M52. README: Logout/RefreshToken — Jti, не refresh string в payload
-⬜ CodeRabbit Minor: `README.md` (~139) — убрать «`Token` / `RefreshToken` still use refresh tokens in the payload»; указать access/refresh `Jti` для `Logout`/`RefreshToken`, согласованно с `FLOWS.md` и 2.3.0.
-
 ### M53. RELEASE-PLAN-2.3.0: anchor `BREAKING.md` в строке #M51
 ⬜ CodeRabbit Minor: в «Закрыто» ссылка на секцию 2.3.0 — префикс `BREAKING.md#from-220-to-230`, не только `#from-220-to-230`.
 
@@ -61,6 +58,7 @@
 | ✅ #H12 triage-pr: не игнорировать failed fetch base | Phase 1b: fetch fail → stop; `offline` — явный fallback на local base + warning |
 | ✅ #H13 triage-pr: resolve remote-only branch | Phase 1b: `BRANCH_REF` (local → `origin/$BRANCH`); все log/diff через `$BRANCH_REF` |
 | ✅ #M51 `main.ChangePassword` collectForm `UserAccountId` | stock JSON / selector / tests; `FLOWS.md`; `BREAKING.md` § [From 2.2.0 to 2.3.0](#from-220-to-230) |
+| ✅ #M52 README: Logout/RefreshToken — Jti | `README.md` § host authorize: `Logout` / `RefreshToken` → `Jti`; `Token` → credentials/code |
 
 ---
 
@@ -73,6 +71,5 @@
 
 ## Приоритет фиксов
 
-1. **M52** — README host guidance (2.3.0 breaking, видно интеграторам).
-2. **M53** — anchor в закрытой строке плана (быстрый doc fix).
-3. **M54–M58** — tests / release-plan scripts (по желанию до или после merge).
+1. **M53** — anchor в закрытой строке плана (быстрый doc fix).
+2. **M54–M58** — tests / release-plan scripts (по желанию до или после merge).

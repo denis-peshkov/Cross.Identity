@@ -136,7 +136,7 @@ services.AddCrossIdentity(configuration);
 // LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
 ```
 
-3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` (host extracts from the client token). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` / `RefreshToken` still use refresh tokens in the payload.
+3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
 
 License key (optional) — `CrossIdentity` section in configuration or the `CrossIdentity__LicenseKey` environment variable:
 
