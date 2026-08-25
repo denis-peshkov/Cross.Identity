@@ -41,6 +41,8 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 
 From sibling skills use relative link: `[`release-plan`](../release-plan/SKILL.md)`.
 
+**Workflow numbering:** phases `### Phase N — …` (under `## Workflow`, or `## Phase N` for orchestrators). Numbered steps **only when a phase has 2+ peer steps**; single-step phase = prose directly under the heading (no lone `1.`). **No** `1.` wrapper with a nested sub-list — one flat list or prose.
+
 ## Two version-plan files
 
 | File | Contents |
@@ -156,6 +158,8 @@ Use `plan_path` / `target_version` from output. Exit **2** → ask user for `X.Y
 
 Consumer breaking changes. См. **Cross-skill references** — ссылка одной строкой + domain body (имена SQL, API tables, …).
 
+### Phase 1 — Scaffold
+
 1. **Ensure current RELEASE-PLAN** — `breaking_from` / `breaking_to` from script.
 2. Scaffold (cache only; **не** пишет в repo):
 
@@ -166,8 +170,10 @@ bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh \
 
 Optional: `--pr N`, `--from`, `--to`, `--version`.
 
-3. Paste TOC row + section **at the top** of versioned blocks in `docs/BREAKING.md` (newest-first); fill `{{BODY}}`; prefix PR title `BREAKING:`.
-4. **Не** дублировать layout rules in intro `docs/BREAKING.md` — только consumer text.
+### Phase 2 — Edit `docs/BREAKING.md`
+
+1. Paste TOC row + section **at the top** of versioned blocks (newest-first); fill `{{BODY}}`; prefix PR title `BREAKING:`.
+2. **Не** дублировать layout rules in intro `docs/BREAKING.md` — только consumer text.
 
 **Layout** ([`templates/BREAKING-SECTION.md`](templates/BREAKING-SECTION.md) — snippet only):
 
@@ -226,6 +232,8 @@ Id’шный backlog, который отклонили → всё равно *
 
 ## Workflow
 
+### Phase 1 — Resolve & collect
+
 1. **Ensure current RELEASE-PLAN** — см. выше; base default `origin/master`.
 2. **Collect delta** (required) — script only; do **not** put the cache path into the version plan file:
 
@@ -237,9 +245,11 @@ bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 
 Cache lands under `.cursor/skills/release-plan/.cache/` (script prints the path). Use it while drafting; omit from `docs/RELEASE-PLAN-X.Y.Z.md`.
 
-3. **Sync `TO-DO.md`** — harvest leftovers into C/H/M/L; drop items closed in this delta / any version «Закрыто».
-4. **Write** `docs/RELEASE-PLAN-X.Y.Z.md` from template — **delta only** (UTF-8 **with BOM**).
-5. Classify **delta** changes:
+### Phase 2 — Draft plan
+
+1. **Sync `TO-DO.md`** — harvest leftovers into C/H/M/L; drop items closed in this delta / any version «Закрыто».
+2. **Write** `docs/RELEASE-PLAN-X.Y.Z.md` from template — **delta only** (UTF-8 **with BOM**).
+3. Classify **delta** changes:
 
 | Bucket | Put here |
 |--------|----------|
@@ -249,8 +259,10 @@ Cache lands under `.cursor/skills/release-plan/.cache/` (script prints the path)
 | Что в библиотеке уже нормально | Short bullets **about this delta’s invariants** |
 | Приоритет фиксов | Remaining work **for this release only** (+ link to `TO-DO.md`) |
 
-6. **`docs/BREAKING.md`** — if consumer breaks in this delta: см. **`docs/BREAKING.md`** выше.
-7. **Language:** Russian body; table «Суть» may mix RU/EN names.
+### Phase 3 — Consumer docs
+
+1. **`docs/BREAKING.md`** — if consumer breaks in this delta: см. **`docs/BREAKING.md`** выше.
+2. **Language:** Russian body; table «Суть» may mix RU/EN names.
 
 ## Other release docs (not version plans)
 

@@ -47,9 +47,10 @@ Optional: `coderabbit pullrequest <n> --agent` reads an existing GitHub review i
 
 ## Workflow
 
-0. Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** · CR findings → plan, not TO-DO (before or after review, before triage).
+### Phase 1 — Prerequisites
 
-1. **Auth / doctor** (if review fails):
+1. Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** · CR findings → plan, not TO-DO (before or after review, before Phase 3).
+2. **Auth / doctor** (if review fails):
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
@@ -59,7 +60,9 @@ coderabbit doctor
 
 If not signed in: tell the user to run `coderabbit auth login` in their terminal (browser OAuth). Do not fake findings.
 
-2. **Run review** (required — use Shell with unrestricted permissions so `~/.coderabbit` storage works):
+### Phase 2 — Review
+
+1. **Run review** (required — use Shell with unrestricted permissions so `~/.coderabbit` storage works):
 
 ```bash
 bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
@@ -80,17 +83,18 @@ bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
 
 Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 
-   Order note: step **0** may run before step 2 (plan first) or after step 3 (create plan after summary, before triage). Review and plan creation can be sequential; **triage (step 4) only after the plan file exists**.
-
-3. **Summarize** findings from the log / `coderabbit review findings`:
+2. **Summarize** findings from the log / `coderabbit review findings`:
    - Count by severity
    - Table: severity · file · short gist
    - Do **not** invent issues not in the output
 
-4. **RELEASE-PLAN sync (always — not optional)**  
-   Target = current plan from step **0** (created via `release-plan` if it was missing).  
-   Immediately merge findings into that plan’s open severity sections as **C/H/M/L only** (no separate CR section).  
-   **Do not** write CR findings into [`docs/TO-DO.md`](../../../docs/TO-DO.md).
+Order note: Phase **1** step **1** may run before Phase **2** (plan first) or after Phase **2** step **2** (create plan after summary, before Phase 3). Review and plan creation can be sequential; **Phase 3 only after the plan file exists**.
+
+### Phase 3 — RELEASE-PLAN sync
+
+**Always — not optional.** Target = current plan from Phase **1** step **1** (created via `release-plan` if it was missing).  
+Immediately merge findings into that plan’s open severity sections as **C/H/M/L only** (no separate CR section).  
+**Do not** write CR findings into [`docs/TO-DO.md`](../../../docs/TO-DO.md).
 
 | CodeRabbit | Plan section |
 |------------|--------------|
@@ -99,25 +103,26 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 | Minor | `## Средний` → `M…` |
 | Trivial / Info | `## Низкий` → `L…` |
 
-   Format (match plan legend): `### M43. Title` + `⬜` description.
+Format (match plan legend): `### M43. Title` + `⬜` description.
 
-   Rules:
-   - Merge by meaning; next id = **max(`Id high-water` in TO-DO, current plan open+«Закрыто» ids) + 1** for that group (`C`/`H`/`M`/`L`). **Do not** bump high-water in `TO-DO.md` until **Finalize version plan** ([`release-plan`](../release-plan/SKILL.md))
-   - Skip duplicates already open in the current plan or already in any plan «Закрыто»
-   - Skip duplicates already open in `TO-DO.md` (same meaning) — do **not** copy them into the plan open C/H/M/L, do **not** list them under **Приоритет фиксов**, and do **not** treat them as release work unless the user asks
-   - In the chat reply: may briefly note «skipped (already in TO-DO: H1, M44)» — that is enough; no plan edits for those
-   - Keep empty severity sections as heading + `---`; UTF-8 BOM
-   - Update **Приоритет фиксов** of the current plan only for **new open** items added to that plan
-   - In the chat reply: list what was **added** / **skipped** (and note if `release-plan` was run to create the file)
+Rules:
+- Merge by meaning; next id = **max(`Id high-water` in TO-DO, current plan open+«Закрыто» ids) + 1** for that group (`C`/`H`/`M`/`L`). **Do not** bump high-water in `TO-DO.md` until **Finalize version plan** ([`release-plan`](../release-plan/SKILL.md))
+- Skip duplicates already open in the current plan or already in any plan «Закрыто»
+- Skip duplicates already open in `TO-DO.md` (same meaning) — do **not** copy them into the plan open C/H/M/L, do **not** list them under **Приоритет фиксов**, and do **not** treat them as release work unless the user asks
+- In the chat reply: may briefly note «skipped (already in TO-DO: H1, M44)» — that is enough; no plan edits for those
+- Keep empty severity sections as heading + `---`; UTF-8 BOM
+- Update **Приоритет фиксов** of the current plan only for **new open** items added to that plan
+- In the chat reply: list what was **added** / **skipped** (and note if `release-plan` was run to create the file)
 
-5. **Close / dismiss plan items (same turn as the user asks)**  
-   If the user closes, rejects, or dismisses a C/H/M/L item from the current plan (won’t-fix, «только пример», duplicate, fixed, …):
+### Phase 4 — Close / dismiss (same turn as the user asks)
 
-   1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто` (id prefix matches severity: Minor→`#M…`, not `#L…`).
-   2. **Then** remove the item from the open severity section (if it was open).
-   3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too — Skill [`release-plan`](../release-plan/SKILL.md) → **Close from TO-DO** / **Re-check**.
-   4. **Never** drop an open item without the «Закрыто» row.
-   5. **Fix-in-same-turn:** still allocate next `C/H/M/L` id via max(TO-DO HW, current plan ids)+1 (no mid-release HW write), write `✅ #M50 …` (etc.) into «Закрыто» — do **not** skip the plan row or downgrade Minor→`L`.
+When the user closes, rejects, or dismisses a C/H/M/L item from the current plan (won’t-fix, «только пример», duplicate, fixed, …):
+
+1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто` (id prefix matches severity: Minor→`#M…`, not `#L…`).
+2. **Then** remove the item from the open severity section (if it was open).
+3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too — Skill [`release-plan`](../release-plan/SKILL.md) → **Close from TO-DO** / **Re-check**.
+4. **Never** drop an open item without the «Закрыто» row.
+5. **Fix-in-same-turn:** still allocate next `C/H/M/L` id via max(TO-DO HW, current plan ids)+1 (no mid-release HW write), write `✅ #M50 …` (etc.) into «Закрыто» — do **not** skip the plan row or downgrade Minor→`L`.
 
 ## Limits
 

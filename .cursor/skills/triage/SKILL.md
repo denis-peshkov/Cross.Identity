@@ -16,7 +16,7 @@ Combines `triage-issue` + `triage-pr` + cross-analysis of issues × PRs.
 - Before sprint planning
 - After CI workflow `triage.yml` — to interpret artifacts
 
-## Phase 0 — Prerequisites
+## Phase 1 — Prerequisites
 
 ```bash
 git rev-parse --is-inside-work-tree
@@ -30,7 +30,7 @@ Or run data collection:
 .cursor/triage/collect-data.sh
 ```
 
-## Phase 1 — Data gathering (in parallel)
+## Phase 2 — Data gathering (in parallel)
 
 **Issues** (via `gh-wrapper.sh`):
 
@@ -51,36 +51,36 @@ Or run data collection:
 
 PR files — for overlap detection (see `triage-pr`).
 
-## Phase 2 — Individual triage
+## Phase 3 — Individual triage
 
 Run logic from `triage-issue` and `triage-pr` (Phase 1 of each) — issue and PR tables.
 
-## Phase 3 — Cross-analysis
+## Phase 4 — Cross-analysis
 
-### 3.1 Double coverage — 2 PRs for 1 issue
+### 4.1 Double coverage — 2 PRs for 1 issue
 
 | Issue | PR1 | PR2 | Verdict |
 |-------|-----|-----|---------|
 
 Rules: smaller scope, CI clean, internal PR, overlap >80% → conflict.
 
-### 3.2 Security gaps
+### 4.2 Security gaps
 
 For issues with "red" risk — findings without PR (especially JWT, refresh tokens, OAuth).
 
-### 3.3 P0/P1 without PR
+### 4.3 P0/P1 without PR
 
 Labels/keywords: crash, auth, token, jwt, security.
 
-### 3.4 Our PRs dirty
+### 4.4 Our PRs dirty
 
 CI dirty / CONFLICTING — reason (overlap, rebase needed).
 
-### 3.5 PR without `fixes #N`
+### 4.5 PR without `fixes #N`
 
 Internal PRs not linked to an issue.
 
-## Phase 4 — Output
+## Phase 5 — Output
 
 Summary:
 
