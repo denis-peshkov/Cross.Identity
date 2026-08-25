@@ -47,6 +47,8 @@ Reference copy notes: `Infrastructure/Scripts/README.md`. Runtime model: `Identi
 
 ### New table when PreDeployment already has more than `1_00_*`
 
+Bootstrap script name is exactly **`1_00_Predeployment.sql`** (same casing in SqlServer / PostgreSQL / MySQL).
+
 If `1_PreDeployment/` already has scripts **besides** `1_00_Predeployment.sql`, assume databases may already be initialized:
 
 1. Add/update the table in **`2_Initial`** (greenfield).

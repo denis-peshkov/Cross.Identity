@@ -108,6 +108,8 @@ On PostgreSQL / MySQL use the provider equivalent (`INSERT … ON CONFLICT` / `I
 | `Layer` | **Dependency stage** within that folder (`00`, `01`, `02`, …). **Not** a per-file sequence. Several scripts may share the same `Layer` when they are **independent**. Bump `Layer` only when a script **depends on** work that must already have run in a **previous** stage. |
 | `EntityName` / optional `_comment` | Short purpose / entity hint |
 
+**Canonical bootstrap file** (all providers): exactly `1_00_Predeployment.sql` (casing as written — not `predeployment` / `PreDeployment`). Folder name stays `1_PreDeployment/`.
+
 Examples:
 
 ```text

@@ -24,9 +24,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Средний (противоречия / баги контрактов)
 
-### M47. `102` / Scripts: bootstrap filename casing
-⬜ CodeRabbit: выровнять casing bootstrap-имени (`1_00_Predeployment.sql`) во всех примерах / эвристиках (`102`, README, skill) — один канон.
-
 ### M48. `run-coderabbit-review.sh`: indent embedded Python
 ⬜ CodeRabbit: переиндентить heredoc Python (2 spaces per level: `with` / `for` / `try` / `except` / conditionals); поведение и output не менять.
 
@@ -79,6 +76,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ BREAKING.md § From 2.1.1 to 2.2.0 | consumer migration: user-scoped APIs without RefreshToken session proof; host auth |
 | ✅ #H8 FLOWS library auth callback for `UserAccountId` | CR dismissed: host authorizes `UserAccountId` (см. **Принято**); library session proof / callback не возвращаем |
 | ✅ DbUp `Layer` = dependency stage | docs: format `<FolderNumber>_<Layer>_<Entity>` confirmed; shared `Layer` for independent scripts; bump only for deps; CR max-file+1 / gap-fill-as-sequence dismissed |
+| ✅ #M47 bootstrap `1_00_Predeployment.sql` casing | canon name + PG/MySQL bootstrap files; docs/skill aligned |
 
 ---
 
@@ -91,6 +89,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-1. **M47–M49:** bootstrap casing / CR script indent / CLI flag values.
+1. **M48–M49:** CR script indent / CLI flag values.
 2. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
 3. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.
