@@ -3,20 +3,13 @@
 [TestFixture]
 public class CommunicationEndpointServiceTests : EFTestsBase
 {
-    private const string SessionRefresh = "session-refresh-token-for-tests";
-
     private CommunicationEndpointService _service = null!;
-    private Mock<IJwtTokenService> _jwt = null!;
 
     [SetUp]
     public override void Setup()
     {
         base.Setup();
-        _jwt = new Mock<IJwtTokenService>();
-        _jwt
-            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-        _service = new CommunicationEndpointService(Context, new AuditService(Context), _jwt.Object, TestAuthOptions.Snapshot());
+        _service = new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot());
     }
 
     [Test]
@@ -48,9 +41,9 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         email.IsPreferred.Should().BeTrue();
 
-        await _service.SetPreferredAsync(userAccountId, telegram.Id, SessionRefresh, new HostSuppliedClientContext("10.0.0.1", "ua", "fp"));
+        await _service.SetPreferredAsync(userAccountId, telegram.Id, new HostSuppliedClientContext("10.0.0.1", "ua", "fp"));
 
-        var all = await _service.GetAllAsync(userAccountId, SessionRefresh);
+        var all = await _service.GetAllAsync(userAccountId);
         all.Single(x => x.Id == telegram.Id).IsPreferred.Should().BeTrue();
         all.Where(x => x.Id != telegram.Id).Should().OnlyContain(x => !x.IsPreferred);
 
@@ -70,7 +63,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var ep = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Email, "x@example.com", CommunicationEndpointSource.Manual, isVerified: false);
 
-        var act = () => _service.SetPreferredAsync(userAccountId, ep.Id, SessionRefresh, HostSuppliedClientContext.Empty);
+        var act = () => _service.SetPreferredAsync(userAccountId, ep.Id, HostSuppliedClientContext.Empty);
 
         await act.Should().ThrowAsync<ValidationException>()
             .WithMessage("*verified*");
@@ -86,7 +79,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         await _service.UpsertAsync(userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
         var tg = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, HostSuppliedClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, tg.Id, HostSuppliedClientContext.Empty);
 
         var target = await _service.ResolveDeliveryTargetAsync(userAccountId);
 
@@ -103,7 +96,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         var tg = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
-        await _service.SetPreferredAsync(userAccountId, tg.Id, SessionRefresh, HostSuppliedClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, tg.Id, HostSuppliedClientContext.Empty);
 
         var otp = await _service.ResolveOtpTargetAsync(userAccountId);
 
@@ -127,7 +120,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, "fallback@example.com", CommunicationEndpointSource.Account, true);
         var phone = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Sms, "+79161234567", CommunicationEndpointSource.Account, true);
-        await _service.SetPreferredAsync(userAccountId, phone.Id, SessionRefresh, HostSuppliedClientContext.Empty);
+        await _service.SetPreferredAsync(userAccountId, phone.Id, HostSuppliedClientContext.Empty);
 
         // Clear preferred flags to simulate missing preferred
         foreach (var row in Context.UsersCommunicationEndpoints.Where(x => x.UserAccountId == userAccountId))
@@ -160,12 +153,11 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var locked = new CommunicationEndpointService(
             Context,
             new AuditService(Context),
-            _jwt.Object,
             Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions { LockChannelAsEmail = true }));
 
         await locked.UpsertAsync(userAccountId, ChannelEnum.Email, "locked@example.com", CommunicationEndpointSource.Account, true);
         var sms = await locked.UpsertAsync(userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
-        await locked.SetPreferredAsync(userAccountId, sms.Id, SessionRefresh, HostSuppliedClientContext.Empty);
+        await locked.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
 
         var target = await locked.ResolveDeliveryTargetAsync(userAccountId);
 
@@ -274,7 +266,6 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var locked = new CommunicationEndpointService(
             Context,
             new AuditService(Context),
-            _jwt.Object,
             Microsoft.Extensions.Options.Options.Create(new AuthenticationOptions { LockChannelAsEmail = true }));
 
         var act = () => locked.ResolveDeliveryTargetAsync(userAccountId);
@@ -298,7 +289,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
 
         await _service.SyncAccountContactsAsync(userAccountId);
 
-        var all = await _service.GetAllAsync(userAccountId, SessionRefresh);
+        var all = await _service.GetAllAsync(userAccountId);
         all.Should().HaveCount(2);
         all.Should().Contain(x => x.Channel == ChannelEnum.Email && x.IsVerified);
         all.Should().Contain(x => x.Channel == ChannelEnum.Sms && x.IsVerified);

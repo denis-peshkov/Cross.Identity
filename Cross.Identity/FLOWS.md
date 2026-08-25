@@ -25,6 +25,17 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
 | **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
 
+**User-scoped authorization (host responsibility)**
+
+Flows that take `UserAccountId` but are **not** token lifecycle operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
+
+| Party | Responsibility |
+|-------|----------------|
+| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
+| **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
+
+Token lifecycle flows (`Token`, `RefreshToken`, `Logout`, `LogoutAll`) still take/issue refresh tokens as part of their contract.
+
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
 | `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
@@ -211,11 +222,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserAccountId` (opt. Guid string), `RefreshToken` (required when `UserAccountId` is set); optional client context. → `externalLoginInitiate` |
-| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserAccountId` (opt. Guid string); optional client context. → `externalLoginInitiate` |
+| `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `UserAccountId` enables account linking when present; the host must supply the authenticated user’s id **and** a valid `RefreshToken` for that user (the library validates the token before starting OAuth). Omit both for normal sign-in / sign-up.
+> `UserAccountId` enables account linking when present; the **host** must authorize that id (see [User-scoped authorization](#client-context-host)). Omit for normal sign-in / sign-up.
 
 ---
 
@@ -229,7 +240,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` + `RefreshToken`.
+> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
@@ -241,11 +252,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
-| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
+| `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Host supplies `UserAccountId` and a valid `RefreshToken` for that user (session proof). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#client-context-host)). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 
 ---
 
@@ -255,11 +266,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `externalLoginGetAll` |
-| `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `externalLoginGetAll` |
+| `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
-> Host supplies `UserAccountId` and a valid `RefreshToken` for that user. A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#client-context-host)). A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -311,9 +322,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserAccountId` (required Guid string), `RefreshToken` (required); optional client context. → `communicationEndpointsGetAll` |
-| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `communicationEndpointsGetAll` |
+| `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `endpoints`. `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#client-context-host)).
 
 ---
 
@@ -323,9 +336,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `UserAccountId`, `RefreshToken`, `EndpointId` (required); optional client context. → `communicationEndpointSetPreferred` |
-| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey`, `refreshTokenKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId`, `EndpointId` (required Guid strings); optional client context. → `communicationEndpointSetPreferred` |
+| `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `preferred`. `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#client-context-host)).
 
 ---
 

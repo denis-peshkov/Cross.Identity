@@ -100,8 +100,9 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Ensures the refresh token is present, valid, and issued to <paramref name="userAccountId"/>
-    /// (session proof for user-scoped flow operations).
+    /// Ensures the refresh token is present, valid, and issued to <paramref name="userAccountId"/>.
+    /// Optional host helper for session proof; stock user-scoped flows do not call this
+    /// (authorization of <c>UserAccountId</c> is the host's responsibility — see <c>FLOWS.md</c>).
     /// </summary>
     /// <param name="refreshToken">Refresh token string from the authenticated session.</param>
     /// <param name="userAccountId">User account id the caller claims to act on.</param>

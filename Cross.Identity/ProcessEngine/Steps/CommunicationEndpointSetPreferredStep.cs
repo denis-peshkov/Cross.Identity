@@ -3,6 +3,7 @@
 /// <summary>
 /// Sets the preferred communication endpoint for the user identified by <see cref="UserAccountIdKey"/>.
 /// Only verified endpoints are allowed; exactly one preferred endpoint per user.
+/// The host must authorize the caller for that account; this step does not require a refresh token.
 /// </summary>
 internal sealed class CommunicationEndpointSetPreferredStep : IStep
 {
@@ -16,22 +17,19 @@ internal sealed class CommunicationEndpointSetPreferredStep : IStep
 
     public required string EndpointIdKey { get; init; }
 
-    public required string RefreshTokenKey { get; init; }
-
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
     {
         var userAccountId = ctx.Get<Guid>(BagKey.Qualify(Kind, UserAccountIdKey));
-        var refreshToken = ctx.Get<string>(BagKey.Qualify(Kind, RefreshTokenKey));
         var raw = ctx.Get<object?>(BagKey.Qualify(Kind, EndpointIdKey));
         if (raw is null || !Guid.TryParse(raw.ToString(), out var endpointId) || endpointId == Guid.Empty)
             throw new ValidationException("EndpointId is required.");
 
         var hostSuppliedClientContext = HostSuppliedClientContext.Read(ctx);
         await CommunicationEndpoints
-            .SetPreferredAsync(userAccountId, endpointId, refreshToken, hostSuppliedClientContext, cancellationToken)
+            .SetPreferredAsync(userAccountId, endpointId, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Preferred"), true);
         return StepResult.Ok(Next);

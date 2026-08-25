@@ -9,6 +9,14 @@
 
 ---
 
+## Критично (безопасность)
+
+---
+
+## Высокий (логика / auth model)
+
+---
+
 ## Средний (противоречия / баги контрактов)
 
 ### 13. `GetClaimValue` для JWS без подписи
@@ -119,7 +127,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #29 OAuth unverified squat (CR отклонён) | verified OAuth + local unverified → новый verified account; см. «Принято» |
 | ✅ OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
 | ✅ Account linking без auth | linking требует `RefreshToken` того же user |
-| ✅ IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
+| ✅ IDOR на flows с `UserId` | host must authorize `UserAccountId` (library no longer requires RefreshToken session proof on endpoints/OAuth user-scoped flows) |
 | ✅ OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
 | ✅ Logout access revoke | `RevokeRefreshTokenForLogoutAsync` отзывает access той же `FamilyId` |
 | ✅ CSPRNG для OTP | `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper` |
