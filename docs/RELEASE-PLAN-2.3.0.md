@@ -22,9 +22,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M58. `scaffold-breaking-section.sh`: ANCHOR при `--from` override
-⬜ CodeRabbit Minor: после `--from` пересобрать ANCHOR из effective FROM, чтобы TOC совпадал с heading «From … to …».
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -49,6 +46,7 @@
 | ✅ #M55 `JwtTokenServiceTests`: `Helpers` → `GlobalUsings` | убран file-scoped using; `global using Cross.Identity.Tests.Helpers` уже был |
 | ✅ #M56 `release-plan-summary.mjs`: bullets только в §10 | active `##` heading; BULLET только при `/^10\b/`; summary на плане без изменений (98) |
 | ✅ #M57 `repository-link.sh`: `ssh://git@github.com/` | SSH SCP + `ssh://` → `https://github.com/org/repo`; HTTPS/fallback без изменений |
+| ✅ #M58 `scaffold-breaking-section.sh`: ANCHOR при `--from` | ANCHOR всегда из effective FROM/TO (`from-{from}-to-{to}`) |
 
 ---
 
@@ -61,4 +59,4 @@
 
 ## Приоритет фиксов
 
-1. **M58** — `scaffold-breaking-section.sh` ANCHOR при `--from` (по желанию до или после merge).
+_(пусто — открытых пунктов дельты по CodeRabbit нет.)_

@@ -98,7 +98,8 @@ fi
 if [[ -z "$TO" ]]; then
   TO="$(read_json breaking_to "$JSON")"
 fi
-ANCHOR="$(read_json breaking_anchor "$JSON")"
+# Always rebuild from effective FROM/TO (CLI --from/--to may override JSON)
+ANCHOR="$(printf 'from-%s-to-%s' "${FROM//./}" "${TO//./}" | tr '[:upper:]' '[:lower:]')"
 
 REPOSITORY_LINK="$(repository_link "$(git remote get-url origin 2>/dev/null || true)")"
 PR_SUFFIX=""
