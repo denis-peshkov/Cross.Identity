@@ -525,6 +525,48 @@ public class JwtTokenServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenExistingRefreshToken_WhenGetRefreshTokenByIdAsync_ThenReturnsEntityAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var token = await _jwtTokenService.GenerateRefreshTokenAsync(userAccountId, familyId, new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
+        var jti = Guid.Parse(_jwtTokenService.GetClaimValue(token, JwtRegisteredClaimNames.Jti)!);
+
+        var entity = await _jwtTokenService.GetRefreshTokenByIdAsync(jti, CancellationToken.None);
+
+        entity.Should().NotBeNull();
+        entity!.Id.Should().Be(jti);
+        entity.UserAccountId.Should().Be(userAccountId);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnknownRefreshTokenJti_WhenGetRefreshTokenByIdAsync_ThenReturnsNullAsync()
+    {
+        var entity = await _jwtTokenService.GetRefreshTokenByIdAsync(Guid.NewGuid(), CancellationToken.None);
+
+        entity.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenActiveRefreshTokenJti_WhenInvalidateRefreshTokenAsyncById_ThenSetsReplacedByAndRevokedAtAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var familyId = Guid.NewGuid();
+        var oldToken = await _jwtTokenService.GenerateRefreshTokenAsync(userAccountId, familyId, new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
+        var oldJti = Guid.Parse(_jwtTokenService.GetClaimValue(oldToken, JwtRegisteredClaimNames.Jti)!);
+        var newJti = Guid.NewGuid();
+
+        await _jwtTokenService.InvalidateRefreshTokenAsync(oldJti, newJti, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        var entity = await Context.RefreshTokens.FirstAsync(x => x.Id == oldJti);
+        entity.RevokedAt.Should().NotBeNull();
+        entity.ReplacedByTokenId.Should().Be(newJti);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingRefreshToken_WhenGetRefreshTokenAsync_ThenReturnsEntityAsync()
     {
         var userAccountId = Guid.NewGuid();

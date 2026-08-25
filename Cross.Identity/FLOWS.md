@@ -34,7 +34,7 @@ Flows that take `UserAccountId` but are **not** token credential operations (`Co
 | **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
-Token lifecycle flows (`Token`, `RefreshToken`) still take/issue refresh tokens. `Logout` takes access-token `Jti` (host resolves from the client access token). `LogoutAll` takes `UserAccountId` (host resolves from access token).
+Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refresh-token `Jti` (host resolves from the client refresh token). `Logout` takes access-token `Jti`. `LogoutAll` takes `UserAccountId`.
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
@@ -133,13 +133,15 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.RefreshToken.json`
 
-**Purpose:** refresh token pair using `refresh_token`.
+**Purpose:** refresh token pair using refresh-token `jti` (`RefreshTokens.Id`).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `refreshToken` |
-| `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `Jti` (refresh-token JTI Guid string); optional client context. → `refreshToken` |
+| `refreshToken` | refreshToken | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. `next: null` |
+
+> **Host:** validate the client refresh token, extract `jti` from the JWT (same value as `RefreshTokens.Id`), then pass `{ Jti, … }` into `ExecuteAsync`. The library does not parse the refresh token string on this path.
 
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >

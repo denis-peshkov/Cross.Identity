@@ -33,7 +33,7 @@ public class RefreshToken_StepFactoryTests
             """
             {
               "kind": "refreshToken",
-              "refreshTokenKey": "RefreshToken",
+              "jtiKey": "Jti",
               "next": "done"
             }
             """);
@@ -42,7 +42,7 @@ public class RefreshToken_StepFactoryTests
         var step = (RefreshTokenStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("refreshToken");
-        step.RefreshTokenKey.Should().Be("RefreshToken");
+        step.JtiKey.Should().Be("Jti");
         step.Next.Should().Be("done");
         step.JwtTokenService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();

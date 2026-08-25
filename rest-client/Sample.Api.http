@@ -57,6 +57,7 @@ Content-Type: application/json
 
 ###
 # @name main-refresh-token
+# Client → host: RefreshToken (cookie/body). Host validates, resolves refresh Jti (RefreshTokens.Id), then ExecuteAsync({ Jti, … }).
 POST {{HOST}}/api/identity/main/RefreshToken
 Content-Type: application/json
 

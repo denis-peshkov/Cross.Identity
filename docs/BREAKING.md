@@ -62,6 +62,16 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 
 **Action:** host resolves `UserAccountId` before `FlowOperationEnum.LogoutAll`; replace direct `RevokeAllTokensForLogoutAsync` calls with `RevokeAllTokensForUserAsync`.
 
+### `main.RefreshToken`: `RefreshToken` → `Jti`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` (compact JWT string) | `{ Jti, … }` (refresh-token JTI Guid string — `RefreshTokens.Id`) |
+| Stock `refreshToken` step | `refreshTokenKey` → hash lookup + stamp claim | `jtiKey` → row lookup by `RefreshTokens.Id` |
+| `EnsureRefreshTokenActiveForRotationAsync(string)` / `GetRefreshTokenAsync` / `InvalidateRefreshTokenAsync(string, …)` | stock refresh | **optional** host helpers |
+
+**Action:** host validates the client refresh token (cookie/body), extracts `jti` from the JWT (equals `RefreshTokens.Id`), then `ExecuteAsync({ Jti, … })`.
+
 ---
 ## From 2.1.1 to 2.2.0
 

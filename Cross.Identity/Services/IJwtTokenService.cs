@@ -147,6 +147,18 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Validate a refresh token row by <c>RefreshTokens.Id</c> (<c>jti</c>) before rotation.
+    /// Stock <c>refreshToken</c> steps use this overload; the host resolves <c>jti</c> from the client refresh token.
+    /// </summary>
+    /// <param name="refreshTokenJti"><see cref="RefreshTokenEntity.Id"/> of the refresh token to rotate.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (session binding).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task EnsureRefreshTokenActiveForRotationAsync(
+        Guid refreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Revoke an access token by <c>jti</c> (mark as revoked in the DB).
     /// </summary>
     /// <param name="jti">JTI (identifier) of the access token.</param>
@@ -195,8 +207,16 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Invalidate (mark as replaced/revoked) a refresh token
-    /// during session rotation.
+    /// Get a refresh token row by <c>RefreshTokens.Id</c> (<c>jti</c>).
+    /// </summary>
+    /// <param name="refreshTokenJti">Refresh token JTI.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task<RefreshTokenEntity?> GetRefreshTokenByIdAsync(
+        Guid refreshTokenJti,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Invalidate (mark as replaced/revoked) a refresh token during session rotation (lookup by compact token string).
     /// </summary>
     /// <remarks>
     /// If the token is already revoked (concurrent refresh or replay), the entire family is revoked
@@ -213,6 +233,19 @@ public interface IJwtTokenService
     Task InvalidateRefreshTokenAsync(
         string refreshToken,
         string newJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Invalidate a refresh token row during rotation (lookup by <c>RefreshTokens.Id</c>).
+    /// </summary>
+    /// <param name="refreshTokenJti">JTI of the refresh token row being rotated out.</param>
+    /// <param name="newRefreshTokenJti">JTI of the new refresh token row.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task InvalidateRefreshTokenAsync(
+        Guid refreshTokenJti,
+        Guid newRefreshTokenJti,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 

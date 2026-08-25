@@ -1,11 +1,10 @@
 ﻿namespace Cross.Identity.ProcessEngine.Factories;
 
 /// <summary>
-/// Factory for <see cref="TokenStep"/> that invokes <c>TokenCommand(email, password)</c>.
+/// Factory for <see cref="RefreshTokenStep"/>.
 /// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>name</c> — step name;</description></item>
-/// <item><description><c>refreshToken</c> — refresh token key <c>"RefreshToken"</c>;</description></item>
+/// <item><description><c>jtiKey</c> — bag key for the refresh-token JTI (<c>RefreshTokens.Id</c>);</description></item>
 /// <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
 /// </list>
 /// </summary>
@@ -27,7 +26,7 @@ internal sealed class RefreshTokenStepFactory : IStepFactory
             JwtTokenService       = jwtTokenService,
             UserService           = userService,
             AuthenticationOptions = authenticationOptions,
-            RefreshTokenKey       = cfg.Str("refreshTokenKey"),
+            JtiKey                = cfg.Str("jtiKey"),
             Next                  = cfg.StrOpt("next")
         };
     }

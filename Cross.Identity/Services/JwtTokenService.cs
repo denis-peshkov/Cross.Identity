@@ -405,6 +405,52 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Invalid or expired refresh token.");
         }
 
+        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
+        await EnsureRefreshTokenEntityActiveForRotationAsync(
+                entity,
+                validateTokenSecurityStamp: true,
+                tokenSecurityStamp: tokenStamp,
+                hostSuppliedClientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task EnsureRefreshTokenActiveForRotationAsync(
+        Guid refreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        if (refreshTokenJti == Guid.Empty)
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        var entity = await _context.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Id == refreshTokenJti, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (entity is null)
+        {
+            throw new NotAuthorizedException("Invalid or expired refresh token.");
+        }
+
+        await EnsureRefreshTokenEntityActiveForRotationAsync(
+                entity,
+                validateTokenSecurityStamp: false,
+                tokenSecurityStamp: null,
+                hostSuppliedClientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task EnsureRefreshTokenEntityActiveForRotationAsync(
+        RefreshTokenEntity entity,
+        bool validateTokenSecurityStamp,
+        Guid? tokenSecurityStamp,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
         if (entity.RevokedAt is not null)
         {
             await HandleRefreshTokenReplayAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
@@ -423,11 +469,13 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Account is disabled.");
         }
 
-        var accountStamp = await GetUserSecurityStampAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
-        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
-        if (!SecurityStampMatches(accountStamp, tokenStamp))
+        if (validateTokenSecurityStamp)
         {
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
+            var accountStamp = await GetUserSecurityStampAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
+            if (!SecurityStampMatches(accountStamp, tokenSecurityStamp))
+            {
+                throw new NotAuthorizedException("Invalid or expired refresh token.");
+            }
         }
 
         await EnsureRefreshTokenIdleForRotationAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
@@ -575,6 +623,20 @@ internal class JwtTokenService : IJwtTokenService
             .ConfigureAwait(false);
 
         return entity;
+    }
+
+    /// <inheritdoc/>
+    public async Task<RefreshTokenEntity?> GetRefreshTokenByIdAsync(Guid refreshTokenJti, CancellationToken cancellationToken)
+    {
+        if (refreshTokenJti == Guid.Empty)
+        {
+            return null;
+        }
+
+        return await _context.RefreshTokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == refreshTokenJti, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task<DateTime> ResolveRefreshTokenAbsoluteExpiresAtAsync(Guid familyId, DateTime createdAt, CancellationToken cancellationToken)
@@ -788,21 +850,68 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task InvalidateRefreshTokenAsync(
+    public Task InvalidateRefreshTokenAsync(
         string refreshToken,
         string newJti,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
-        var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-        var jti = Guid.Parse(newJti);
+        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
+        return InvalidateRefreshTokenByHashAsync(tokenHash, Guid.Parse(newJti), hostSuppliedClientContext, cancellationToken);
+    }
 
+    /// <inheritdoc/>
+    public Task InvalidateRefreshTokenAsync(
+        Guid refreshTokenJti,
+        Guid newRefreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        if (refreshTokenJti == Guid.Empty)
+        {
+            throw new InvalidOperationException("Refresh token not found.");
+        }
+
+        return InvalidateRefreshTokenByIdAsync(refreshTokenJti, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken);
+    }
+
+    private async Task InvalidateRefreshTokenByHashAsync(
+        string tokenHash,
+        Guid newRefreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
         var entity = await _context.RefreshTokens
             .Where(x => x.TokenHash == tokenHash)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false)
                      ?? throw new InvalidOperationException("Refresh token not found.");
 
+        await InvalidateRefreshTokenEntityAsync(entity, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task InvalidateRefreshTokenByIdAsync(
+        Guid refreshTokenJti,
+        Guid newRefreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        var entity = await _context.RefreshTokens
+            .FirstOrDefaultAsync(x => x.Id == refreshTokenJti, cancellationToken)
+            .ConfigureAwait(false)
+                     ?? throw new InvalidOperationException("Refresh token not found.");
+
+        await InvalidateRefreshTokenEntityAsync(entity, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task InvalidateRefreshTokenEntityAsync(
+        RefreshTokenEntity entity,
+        Guid newRefreshTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
         if (entity.RevokedAt is not null)
         {
             // Concurrent refresh or replay of an already rotated token — see REPLAY_DETECTED.
@@ -810,7 +919,7 @@ internal class JwtTokenService : IJwtTokenService
             throw new ConflictException("Refresh token has already been used.");
         }
 
-        entity.ReplacedByTokenId = jti;
+        entity.ReplacedByTokenId = newRefreshTokenJti;
         entity.RevokedAt = DateTime.UtcNow;
         _audit.RecordTokenRevoked(
             entity.UserAccountId,
