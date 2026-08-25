@@ -1,11 +1,11 @@
-Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
+﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 **Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**CodeRabbit (local CLI):**
-- **2026-08-23 23:24** — `release/add-new-flows` vs `origin/dev`, `--dir Cross.Identity` — **4 findings** (4 minor), 143 files. Лог: `/tmp/cr-identity-20260823-2324.log`.
-- **2026-08-23 22:49** — **13 findings** (11 major / 2 minor), 142 files. Лог: `/tmp/cr-identity-20260823-2249.log`. Major (#48–#53 и др.) → «Закрыто» / «Принято» (см. ниже).
+**CodeRabbit (local CLI, в период hardening):**
+- **2026-08-23 23:24** — `release/add-new-flows` vs `origin/dev`, `--dir Cross.Identity` — **4 findings** (4 minor). Лог: `/tmp/cr-identity-20260823-2324.log`.
+- **2026-08-23 22:49** — **13 findings** (11 major / 2 minor). Major (#48–#53 и др.) → «Закрыто» / «Принято».
 
 ---
 
@@ -19,38 +19,9 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### 13. `GetClaimValue` для JWS без подписи
-Публичный API: 3-part JWT — parse payload без crypto. В `VerifyTokenStep` перед этим есть `ValidateAccessTokenAsync` — ок. Риск — **misuse** API напрямую.
-
-### 14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
-Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается.
-
-### 39. Idle revoke double-audit? (CR)
-`HandleRefreshTokenIdleExpiredAsync` — presented token может аудититься/ревокаться дважды при family revoke.
-
 ---
 
 ## Низкий (техдолг / несогласованности)
-
-- `TwoFactorEnabled` — мёртвое поле в entity, в auth pipeline не используется.
-- `DeveloperMode` → `LastCode` в bag + skip send (`Authentication:DeveloperMode`). Утечка OTP через API response, если включить в prod.
-- `AuditService.Record` без собственного `SaveChanges` — audit теряется, если caller не закоммитит.
-- Закомментированный `IJwtIssuer` в `IJwtTokenService.cs`.
-- Закомментированные legacy-поля в `UserAccountEntity` (`PasswordSalt`, `PasswordHash`, …).
-
-### CodeRabbit minor (XML / style / hygiene)
-
-**Open (CR 2026-08-23, run 2324):**
-- `HostSuppliedClientContext` — XML для record properties `IpAddress` / `UserAgent` / `DeviceFingerprint` (#46 закрыл param/type docs; properties — ⬜).
-- `AuditEntity` — XML для public properties (`Id`, `UserAccountId`, `UserAccount`, `IpAddress`, `UserAgent`, `DeviceFingerprint`, `CreatedAt`, …).
-- `FLOWS.md` `main.Register` — в таблице `userAccountIdKey: UserId`, в JSON и `collectResult` — `UserAccountId`; хост может читать неверный bag key.
-- `main.CommunicationEndpointSetPreferred.json` — `EndpointId`: только `min/max: 36`, без GUID regex (как у `UserAccountId` в других flows).
-
-**Open (CR 2026-08-23, run 2249 / backlog):**
-- `JsonHelpers`: после `Enum.TryParse` требовать `Enum.IsDefined`.
-- `PhoneE164`: `_pattern`/`_util`; braces; catch только `NumberParseException`.
-- `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
-- `JwtTokenService` idle path: не дублировать audit/revoke presented token (#39 related).
 
 ---
 
@@ -71,7 +42,7 @@
 OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unverified allowed for OTP confirm). Notify: тот же порядок, email/phone только verified. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
 
 ### Публичные half-validate API (#13, #14)
-Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth.
+Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth. Misuse guidance / docs — post-2.0 ([`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)).
 
 ### OTP plaintext в логах (#1) — принято
 `CodeService.SendAsync` логирует `TextBody` с подставленным кодом. Хост обязан не утекать логи / SIEM; в prod не включать verbose notifier logs.
@@ -127,7 +98,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #29 OAuth unverified squat (CR отклонён) | verified OAuth + local unverified → новый verified account; см. «Принято» |
 | ✅ OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
 | ✅ Account linking без auth | linking требует `RefreshToken` того же user |
-| ✅ IDOR на flows с `UserId` | host must authorize `UserAccountId` (library no longer requires RefreshToken session proof on endpoints/OAuth user-scoped flows) |
+| ✅ IDOR на flows с `UserId` | `EnsureRefreshTokenBelongsToUserAsync` на endpoints/OAuth unlink/getAll |
 | ✅ OTP attempts в `CodeService` | поиск по identity; `Attempts++` при неверном коде |
 | ✅ Logout access revoke | `RevokeRefreshTokenForLogoutAsync` отзывает access той же `FamilyId` |
 | ✅ CSPRNG для OTP | `RandomNumberGenerator.GetInt32` в `CodeGeneratorHelper` |
@@ -168,7 +139,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #24 SMS normalize (CR) | `CodeService` send/verify — `ChannelEnum.NormalizeAddress` (SMS trim-only) |
 | ✅ #25 Lockout after expiry (CR) | `RecordFailedAccess` сбрасывает счётчик при истёкшем `LockoutEnd` |
 | ✅ #27 Preferred unique index (CR) | `UX_*_User_Preferred` — один `IsPreferred` на user; `1_10_*` |
-| ✅ #30 SendAsync userId Guid (CR) | `ICodeService.SendAsync` — `Guid userId`, как `VerifyAsync` |
+| ✅ #30 SendAsync userId Guid (CR) | `ICodeService.SendAsync` — `Guid userAccountId`, как `VerifyAsync` |
 | ✅ #31 GetUserAccountIdByAsync nullability (CR) | `Task<Guid?>`; missing user → `null` |
 | ✅ Preferred email/phone | `CommunicationEndpointsGetAll` / `SetPreferred` + resolve delivery/OTP |
 | ✅ #40 Выбор канала (2.0 scope, принято) | канал = preferred endpoint; selector — identity only; см. «Принято» |
@@ -181,7 +152,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #43 Bag keys `UserId` → `UserAccountId` | `userAccountIdKey`, step output, collectForm; `collectResult` → `user_account_id` |
 | ✅ #44 `ClientContext` → `HostSuppliedClientContext` | type/file/API param `hostSuppliedClientContext`; `Empty` / `Read(bag)`; `docs/BREAKING.md` |
 | ✅ #45 License JWT claim `user_id` | `License.UserId` / claim `"user_id"` — отдельно от identity `user_account_id` |
-| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param/type docs; record **properties** — см. CR 2324 open |
+| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param/type docs; record **properties** — см. 2.2.0 open |
 | ✅ #47 `Sample.Api.http` | `UserAccountId` / `USER_ACCOUNT_ID` на identity flows (не license) |
 | ✅ EmailVerified rename (CR отклонён как open) | PreDeployment `1_07`–`1_09`; `docs/BREAKING.md` § `EmailConfirmed` → `EmailVerified` |
 | ✅ RefreshToken / VerifyToken `user_account_id` (CR stale) | intentional 2.0 output; см. #43 / `BREAKING.md` (не `user_id`) |
@@ -203,7 +174,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 - Refresh replay → family revoke (`REPLAY_DETECTED`).
 - OAuth state one-time use + expiry.
 - Refresh token hash в DB, не plain text.
-- External login link/unlink требует refresh token.
+- External login link/unlink / user-scoped endpoints требуют `RefreshToken` + `EnsureRefreshTokenBelongsToUserAsync`.
 - Unlink last method without password blocked.
 - Password change revokes all tokens + `SecurityStamp` rotation (stamp also in JWT; mismatch fails validate).
 - E.164 gate на `collectForm` PhoneNumber.
@@ -216,7 +187,4 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **M39:** idle double-audit.
-3. **CR minor (2324):** `FLOWS.md` Register bag key; `EndpointId` GUID regex; `HostSuppliedClientContext` / `AuditEntity` XML.
-4. **CR minor (backlog):** PhoneE164 / JsonHelpers / PhoneChannels visibility.
+_(пусто — релиз 2.0.0 опубликован; открытый backlog → [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md); ConcurrencyStamp → [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md).)_
