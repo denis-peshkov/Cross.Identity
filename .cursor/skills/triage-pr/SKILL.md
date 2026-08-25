@@ -14,8 +14,9 @@ description: >-
 | Scenario | Action |
 |----------|--------|
 | "Triage PRs" / "pr triage" | Phase 1 audit (GitHub open PRs) |
-| "Triage this branch" / "local triage" | Phase 1b (git diff, no PR) |
+| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\|dev, no PR) |
 | "Review branch X vs master" | Phase 1b + Phase 2 |
+| Orchestrator `triage local` / `triage branch …` | Same as Phase 1b (see `triage` skill) |
 | >5 open PRs without review | Suggest Phase 1 audit |
 | PR stale >14 days | Flag in table |
 

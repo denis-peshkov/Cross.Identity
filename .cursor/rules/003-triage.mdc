@@ -11,7 +11,7 @@ alwaysApply: false
 Run skills from `.cursor/skills/` when the user asks for:
 
 - triage, triage issues/PRs
-- triage local branch / named branch vs master or dev (no PR)
+- triage **local** / current branch / named branch vs master or dev (**no PR**)
 - backlog review, sprint planning for issues
 - "what to merge", quick wins for PRs
 
@@ -21,29 +21,41 @@ Run skills from `.cursor/skills/` when the user asks for:
 |-------|------|---------|
 | `triage-issue` | `.cursor/skills/triage-issue/SKILL.md` | Issues |
 | `triage-pr` | `.cursor/skills/triage-pr/SKILL.md` | PRs + review; local/branch vs master\|dev |
-| `triage` | `.cursor/skills/triage/SKILL.md` | Full cross-analysis |
+| `triage` | `.cursor/skills/triage/SKILL.md` | Orchestrator: GitHub cross-analysis **or** local/branch vs master\|dev |
+
+## Chat triggers (orchestrator)
+
+| User says | Mode |
+|-----------|------|
+| `запусти triage` / `Run triage` | GitHub (issues + open PRs). On `release/*`/`hotfix/*` with no PR for head → also include local vs master section |
+| `triage local` / `локальный triage` / `текущая ветка vs master` | **Local** — `HEAD` vs `origin/master` (no PR list) |
+| `triage branch <name>` | Named branch vs base |
+| `triage local deep` | Local + deep review (`triage-pr` Phase 2) |
+| `base dev` / `offline` / `ru` | Same as skill args |
 
 ## Commands
 
 ```bash
-bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.data/
+bash .cursor/triage/collect-data.sh   # GitHub JSON → .cursor/triage/docs/.data/ (GitHub mode)
 .cursor/triage/gh-wrapper.sh issue list   # GitHub CLI wrapper
+# Local mode uses git only — see triage-pr Phase 1b / triage skill Mode Local
 ```
 
 ## Execution rules
 
-1. **gh**: use `.cursor/triage/gh-wrapper.sh` for all `gh` commands
+1. **gh**: use `.cursor/triage/gh-wrapper.sh` for all `gh` commands (GitHub mode / optional PR URL lookup)
 2. **Safety**: do not post/close issues and PRs without `AskQuestion`
 3. **Context**: identity library — prioritize security (JWT, OAuth, tokens)
 4. **Checklists**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `triage-pr/references/dotnet-checklist.md`
-5. **Reports**: save to `.cursor/triage/docs/`
-6. **Language**: tables — English; GitHub comments — English
+5. **Reports**: save to `.cursor/triage/docs/` (`triage-YYYY-MM-DD.md` or `branch-<name>-YYYY-MM-DD.md`)
+6. **Language**: tables — English (default); `ru` for Russian; GitHub comments — English
 
 ## Proactive (in chat)
 
 - >10 open issues → suggest `triage-issue`
 - >5 open PRs without review → suggest `triage-pr`
-- Before NuGet release → suggest `triage`
+- Before NuGet release → suggest `triage` (GitHub)
+- Feature/release branch ahead of master, no PR → suggest `triage local` (or run it when user asked «triage» on that branch)
 
 ## CI
 
