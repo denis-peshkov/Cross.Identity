@@ -1,8 +1,8 @@
 ﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.2.0`
+**Версия:** `2.2.0` (published / closed)
 **Ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`
-**Релиз (если есть):** —
+**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.2.0
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 
@@ -23,9 +23,6 @@
 ---
 
 ## Низкий (техдолг / несогласованности)
-
-### L10. triage skill: убрать опцию `ru`
-⬜ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
 
 ---
 
@@ -82,4 +79,4 @@
 
 ## Приоритет фиксов
 
-1. **L10:** triage skill — убрать documented `ru` (или won’t-fix, если bilingual нужен).
+_(пусто — релиз `2.2.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

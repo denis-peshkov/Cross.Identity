@@ -78,6 +78,9 @@ XML для public properties.
 ### L9. `PhoneChannels` visibility
 `ChannelEnumExtensions.PhoneChannels` — сделать `private` (mutation).
 
+### L10. triage skill: убрать опцию `ru`
+CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
+
 ---
 
 ## Приоритет (подсказка)
@@ -86,4 +89,4 @@ XML для public properties.
 2. **M13–M14:** half-validate API docs / misuse guidance.
 3. **M39:** idle double-audit.
 4. **M40–M44:** FLOWS / EndpointId / JsonHelpers / template / language.
-5. **L1–L9:** техдолг / XML / style.
+5. **L1–L10:** техдолг / XML / style / triage `ru`.
