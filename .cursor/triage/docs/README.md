@@ -9,11 +9,11 @@ Triage reports for the Cross.Identity repository.
 # In Cursor chat: "Run triage"
 
 # Or in parts:
-# "Run issue-triage"
-# "Run pr-triage"
+# "Run triage-issue"
+# "Run triage-pr"
 ```
 
-Skills: `.cursor/skills/{issue-triage,pr-triage,triage}/`
+Skills: `.cursor/skills/{triage-issue,triage-pr,triage}/`
 
 ## Scripts
 

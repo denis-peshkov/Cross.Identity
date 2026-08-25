@@ -16,7 +16,7 @@ import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
 const GH = join(ROOT, '.cursor/triage/gh-wrapper.sh');
-const CHECKLIST = join(ROOT, '.cursor/skills/pr-triage/references/dotnet-checklist.md');
+const CHECKLIST = join(ROOT, '.cursor/skills/triage-pr/references/dotnet-checklist.md');
 
 const prNumber = process.env.PR_NUMBER || process.argv[2];
 const apiKey = process.env.CURSOR_API_KEY;

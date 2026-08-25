@@ -19,8 +19,8 @@ Run skills from `.cursor/skills/` when the user asks for:
 
 | Skill | Path | Purpose |
 |-------|------|---------|
-| `issue-triage` | `.cursor/skills/issue-triage/SKILL.md` | Issues |
-| `pr-triage` | `.cursor/skills/pr-triage/SKILL.md` | PRs + review; local/branch vs master\|dev |
+| `triage-issue` | `.cursor/skills/triage-issue/SKILL.md` | Issues |
+| `triage-pr` | `.cursor/skills/triage-pr/SKILL.md` | PRs + review; local/branch vs master\|dev |
 | `triage` | `.cursor/skills/triage/SKILL.md` | Full cross-analysis |
 
 ## Commands
@@ -35,14 +35,14 @@ bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.d
 1. **gh**: use `.cursor/triage/gh-wrapper.sh` for all `gh` commands
 2. **Safety**: do not post/close issues and PRs without `AskQuestion`
 3. **Context**: identity library — prioritize security (JWT, OAuth, tokens)
-4. **Checklists**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `pr-triage/references/dotnet-checklist.md`
+4. **Checklists**: `104-backend-auth.mdc`, `105-backend-security.mdc`, `triage-pr/references/dotnet-checklist.md`
 5. **Reports**: save to `.cursor/triage/docs/`
 6. **Language**: tables — English; GitHub comments — English
 
 ## Proactive (in chat)
 
-- >10 open issues → suggest `issue-triage`
-- >5 open PRs without review → suggest `pr-triage`
+- >10 open issues → suggest `triage-issue`
+- >5 open PRs without review → suggest `triage-pr`
 - Before NuGet release → suggest `triage`
 
 ## CI

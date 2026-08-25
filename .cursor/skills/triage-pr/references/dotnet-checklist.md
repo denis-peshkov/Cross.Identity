@@ -1,6 +1,6 @@
 # Cross.Identity PR Review Checklist
 
-Use for deep review of PRs in `pr-triage` and `bugbot`.
+Use for deep review of PRs in `triage-pr` and `bugbot`.
 
 ## Security & Auth (critical)
 

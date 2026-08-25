@@ -1,5 +1,5 @@
 ---
-name: pr-triage
+name: triage-pr
 description: >-
   PR triage for Cross.Identity: audit open PRs, deep review, draft review
   comments; local/branch review vs master|dev without a PR. Args: "all",

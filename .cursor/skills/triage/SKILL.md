@@ -1,14 +1,14 @@
 ---
 name: triage
 description: >-
-  Full triage orchestrator: issue-triage + pr-triage in parallel, cross-analysis
+  Full triage orchestrator: triage-issue + triage-pr in parallel, cross-analysis
   (double coverage, security gaps, P0 without PR, dirty CI). Saves report to
   .cursor/triage/docs/. Args: "ru"/"en" (default en), "no save" — skip file.
 ---
 
 # Triage (orchestrator)
 
-Combines `issue-triage` + `pr-triage` + cross-analysis of issues × PRs.
+Combines `triage-issue` + `triage-pr` + cross-analysis of issues × PRs.
 
 ## When to use
 
@@ -49,11 +49,11 @@ Or run data collection:
   --json number,title,author,createdAt,updatedAt,additions,deletions,changedFiles,isDraft,mergeable,reviewDecision,statusCheckRollup,body
 ```
 
-PR files — for overlap detection (see `pr-triage`).
+PR files — for overlap detection (see `triage-pr`).
 
 ## Phase 2 — Individual triage
 
-Run logic from `issue-triage` and `pr-triage` (Phase 1 of each) — issue and PR tables.
+Run logic from `triage-issue` and `triage-pr` (Phase 1 of each) — issue and PR tables.
 
 ## Phase 3 — Cross-analysis
 

@@ -31,7 +31,7 @@ To move forward, we need:
 {What happens after the info is provided.}
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/issue-triage`*
+*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
 ```
 
 ---
@@ -50,7 +50,7 @@ This issue covers the same problem as #{original_number}: **{original_title}**.
 If your scenario differs materially, please reopen with that context. Otherwise, follow the original issue.
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/issue-triage`*
+*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
 ```
 
 ---
@@ -65,7 +65,7 @@ This issue has been open for {N} days without activity. We're closing it to keep
 If still relevant, reopen with your current NuGet version, target framework, and reproduction steps.
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/issue-triage`*
+*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
 ```
 
 ---
@@ -86,5 +86,5 @@ After review, this request falls outside Cross.Identity's current scope as an id
 {If applicable: extension points, Sample.Api, or separate package.}
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/issue-triage`*
+*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
 ```

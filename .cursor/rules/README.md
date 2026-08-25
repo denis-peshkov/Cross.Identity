@@ -18,8 +18,8 @@
 - `.cursor/skills/coderabbit/` - CodeRabbit CLI review → current version plan
 - `.cursor/skills/db-scripts/` - This repo’s DbUp paths (`Infrastructure/Scripts/` multi-provider, `auth`, BREAKING); conventions in `102-backend-efcore`
 - `.cursor/skills/triage/` - issue + PR triage orchestrator
-- `.cursor/skills/issue-triage/` - GitHub issues
-- `.cursor/skills/pr-triage/` - GitHub PRs
+- `.cursor/skills/triage-issue/` - GitHub issues
+- `.cursor/skills/triage-pr/` - GitHub PRs
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules
