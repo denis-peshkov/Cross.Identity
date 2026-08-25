@@ -52,11 +52,14 @@ Optional: `coderabbit pullrequest <n> --agent` reads an existing GitHub review i
 
    | Situation | Action |
    |-----------|--------|
-   | Current `docs/RELEASE-PLAN-X.Y.Z.md` **exists** | Use it |
+   | Current `docs/RELEASE-PLAN-X.Y.Z.md` **exists** | Use it (`test -f` / read **only that file** + `docs/TO-DO.md` when needed) |
    | **No** current plan for the target version (file missing) | **Must** run skill [`release-plan`](../release-plan/SKILL.md) **fully** (collect delta → write plan) in this same session, **then** continue |
-   | Version unknown | Ask user for `X.Y.Z`, or infer from branch/csproj/last plan +1; then create via `release-plan` if file still missing |
+   | Version unknown | Ask user for `X.Y.Z`, or infer from branch/csproj/`**Версия:**` in the one candidate file — **not** by listing every plan |
 
-   **Forbidden:** dump CR findings into `docs/TO-DO.md`, invent a stub plan without `release-plan`, or skip creating the plan when it is missing.
+   **Forbidden:**
+   - `ls` / glob / read-all of `docs/RELEASE-PLAN-*.md` (incl. `dev-to-master`) to “find current”
+   - dump CR findings into `docs/TO-DO.md`, invent a stub plan without `release-plan`, or skip creating the plan when it is missing
+   - routinely open historical version plans (only current + TO-DO for triage; previous plan link only if resolving “previous” for a new plan header)
 
 1. **Auth / doctor** (if review fails):
 
@@ -137,6 +140,7 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 - [ ] Used `--committed --base` against master (or user-specified base)
 - [ ] Ran outside sandbox restrictions that break `~/.coderabbit`
 - [ ] Summary matches the saved log
+- [ ] Did **not** glob/`ls` all `docs/RELEASE-PLAN-*.md`; only current plan (+ TO-DO when needed)
 - [ ] If current plan was missing → `release-plan` skill ran and created `docs/RELEASE-PLAN-X.Y.Z.md` before triage
 - [ ] **Current** `docs/RELEASE-PLAN-X.Y.Z.md` updated in the same turn (open C/H/M/L); **not** `TO-DO.md` for CR findings
 - [ ] Any dismissed/closed item → `✅ #Id …` in that plan’s «Закрыто» before removal from open sections

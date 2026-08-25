@@ -136,12 +136,6 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
     'Cross.Identity/Services/' \
     'Cross.Identity.Tests/'
   echo '```'
-  echo
-  echo "## Prior RELEASE-PLAN files (present in tree)"
-  echo
-  echo '```'
-  ls -1 docs/RELEASE-PLAN*.md 2>/dev/null || true
-  echo '```'
 } > "$OUT"
 
 echo "$OUT"

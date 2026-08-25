@@ -93,6 +93,12 @@ Empty severity sections stay as the heading + `---`.
 Писать закрытия только в **текущий** (целевой) `docs/RELEASE-PLAN-X.Y.Z.md` — не в уже shipped historical version plans других `X.Y.Z`.  
 Не использовать `RELEASE-PLAN-dev-to-master.md`.
 
+**Resolve without scanning history:**
+- Prefer an explicit version from the user / branch / package.
+- Confirm with `test -f docs/RELEASE-PLAN-X.Y.Z.md` (or read that one path).
+- For triage/close: open **only** the current plan and `docs/TO-DO.md` (targeted, before state change — see above).
+- **Forbidden:** `ls docs/RELEASE-PLAN-*.md`, reading every version plan, or using `dev-to-master` to discover “current”.
+
 ## Close from TO-DO (обязательно, любой dismiss)
 
 Когда пункт убирают из `docs/TO-DO.md` (fix, won’t-fix, dismiss, «это только пример», duplicate, …):
