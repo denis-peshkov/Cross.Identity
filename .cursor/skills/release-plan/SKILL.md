@@ -5,8 +5,10 @@ description: >-
   master (delta only). Moves leftover open items from the previous plan into
   docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO item always adds
   `✅ Id …` to the current plan «Закрыто» first, then removes it from TO-DO.
-  Use when drafting release notes, release plans, or updating
-  RELEASE-PLAN-X.Y.Z.md / TO-DO.md.
+  Finalizing a version plan moves all remaining open items into TO-DO and
+  rewrites the plan to the finalized template. Use when drafting release notes,
+  release plans, closing a version plan, or updating RELEASE-PLAN-X.Y.Z.md /
+  TO-DO.md.
 ---
 
 # Release plan from branch delta
@@ -17,6 +19,7 @@ description: >-
 - Update `docs/RELEASE-PLAN-X.Y.Z.md` for a planned or shipping version
 - Sync open backlog into [`docs/TO-DO.md`](../../../docs/TO-DO.md)
 - Current version plan file is **missing** and must be created before other work can write into it
+- User asks to **close / finalize / ship** a version plan (open leftovers → TO-DO, plan → finalized shape)
 
 **Do not** use for the historical merge checklist `docs/RELEASE-PLAN-dev-to-master.md` (different format; see `docs/scripts/release-plan-summary.mjs`).
 
@@ -29,7 +32,10 @@ description: >-
 
 ## Canonical shape (version plan)
 
-**Source of truth for structure:** [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md).  
+**Source of truth for structure:**
+- Active (open work): [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md)
+- Closed / finalized: [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md)
+
 Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode specific version filenames in this skill.
 
 **When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md`:** only if the template is **ambiguous or unclear** for the task (section meaning, «Закрыто» row shape, etc.). Do **not** routinely scan / re-read generated plans on every run — they are outputs, not the skill canon. Never treat a generated plan as something to keep in sync inside this skill file.
@@ -109,6 +115,24 @@ Id’шный backlog, который отклонили → всё равно *
 5. **Удалить** тот же пункт из `docs/TO-DO.md`, если он там был (после шага 2).
 6. То же правило, что **Close from TO-DO**: нельзя только выкинуть из TO-DO.
 
+## Finalize version plan (закрытие релиза)
+
+Когда пользователь просит **закрыть / финализировать / ship** `docs/RELEASE-PLAN-X.Y.Z.md` (релиз вышел или план этой версии больше не ведётся):
+
+1. **Собрать весь ⬜ open** из секций Критично / Высокий / Средний / Низкий этого плана.
+2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge по id; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).  
+   Не класть их в «Закрыто» — это не done/dismiss, а leftover.
+3. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
+   - header: версия **published / closed** (+ release URL если есть);
+   - C/H/M/L — **пустые** (только заголовок + `---`);
+   - **Принято** / **Закрыто** / **Что в библиотеке уже нормально** — сохранить содержимое этого релиза;
+   - **Приоритет фиксов** — пустая отсылка к `TO-DO.md` (как в finalized template).
+4. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
+5. UTF-8 BOM на изменённых docs.
+6. В ответе пользователю: список **перенесённых в TO-DO** id и подтверждение, что план = finalized shape.
+
+**Запрещено:** оставить ⬜ open в «закрытом» плане; удалить open без переноса в TO-DO; заново сканировать все historical plans без нужды.
+
 ## Workflow
 
 1. **Resolve version + base** — version from user/file; base default `origin/master`.
@@ -142,4 +166,5 @@ bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 - [ ] Every removal from `TO-DO.md` has a matching `✅ Id …` row in **current** plan «Закрыто»
 - [ ] «Закрыто» `#` looks like `✅ M13 …` (or legacy `✅ #34 …`)
 - [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
+- [ ] Finalize: all former open items are in `TO-DO.md`; plan matches `RELEASE-PLAN-FINALIZED` (empty C/H/M/L + priority → TO-DO)
 - [ ] UTF-8 BOM on written plan / TO-DO if new
