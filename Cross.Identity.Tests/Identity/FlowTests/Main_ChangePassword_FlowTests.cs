@@ -24,13 +24,13 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         var userAccountIdText = UserId.ToString();
         _userServiceMock = new Mock<IUserService>();
         _userServiceMock
-            .Setup(s => s.ValidatePasswordAsync("Id", userAccountIdText, CurrentPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.ValidatePasswordAsync("UserAccountId", userAccountIdText, CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
         _userServiceMock
-            .Setup(s => s.SetPasswordAsync("Id", userAccountIdText, NewPassword, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Setup(s => s.SetPasswordAsync("UserAccountId", userAccountIdText, NewPassword, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
         _userServiceMock
-            .Setup(s => s.GetUserAccountIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
+            .Setup(s => s.GetUserAccountIdByAsync("UserAccountId", userAccountIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(UserId);
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<IUserService, IUserService>(_userServiceMock.Object);
@@ -50,7 +50,7 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
     {
         var input = new Dictionary<string, object?>
         {
-            ["Id"] = UserId.ToString(),
+            ["UserAccountId"] = UserId.ToString(),
             ["CurrentPassword"] = CurrentPassword,
             ["NewPassword"] = NewPassword,
         };
@@ -58,10 +58,10 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
         await _flowExecutor.ExecuteAsync(input, Flow, FlowOperationEnum.ChangePassword, CancellationToken.None);
 
         _userServiceMock.Verify(
-            s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
+            s => s.ValidatePasswordAsync("UserAccountId", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()),
             Times.Once);
         _userServiceMock.Verify(
-            s => s.SetPasswordAsync("Id", UserId.ToString(), NewPassword, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
+            s => s.SetPasswordAsync("UserAccountId", UserId.ToString(), NewPassword, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -70,12 +70,12 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
     public async Task GivenInvalidCurrentPassword_WhenChangePasswordFlowRuns_ThenRejectsBeforePasswordChangeAsync()
     {
         _userServiceMock
-            .Setup(s => s.ValidatePasswordAsync("Id", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()))
+            .Setup(s => s.ValidatePasswordAsync("UserAccountId", UserId.ToString(), CurrentPassword, It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
         var input = new Dictionary<string, object?>
         {
-            ["Id"] = UserId.ToString(),
+            ["UserAccountId"] = UserId.ToString(),
             ["CurrentPassword"] = CurrentPassword,
             ["NewPassword"] = NewPassword,
         };
@@ -131,14 +131,14 @@ internal class Main_ChangePassword_FlowTests : RunFlowCommandHandlerTestsBase
             }
         }
 
-        formFieldKeys.Should().Contain("Id");
+        formFieldKeys.Should().Contain("UserAccountId");
         formFieldKeys.Should().Contain("CurrentPassword");
         formFieldKeys.Should().Contain("NewPassword");
         formFieldKeys.Should().NotContain("Email");
         formFieldKeys.Should().NotContain("Code");
         collectNext.Should().Be("passwordAuth");
         authNext.Should().Be("resetPassword");
-        collectSelectorField.Should().Be("Id");
+        collectSelectorField.Should().Be("UserAccountId");
         authPasswordKey.Should().Be("collectForm.CurrentPassword");
         resetPasswordKey.Should().Be("collectForm.NewPassword");
     }

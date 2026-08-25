@@ -2,7 +2,7 @@
 
 **Версия:** `{{VERSION}}` (published / closed)
 **Ветка:** `{{BRANCH}}` · **база:** `{{BASE}}` · **дата:** `{{DATE}}`
-**Релиз (если есть):** {{RELEASE_URL_OR_DASH}}
+**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v{{VERSION}}
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 

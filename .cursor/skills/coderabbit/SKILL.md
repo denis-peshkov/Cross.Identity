@@ -25,7 +25,7 @@ description: >-
 | Scope | committed branch delta (`--committed`) |
 | Output | `--agent` (JSONL findings for agents) |
 | After review | **always** triage into **current** [`docs/RELEASE-PLAN-X.Y.Z.md`](../../../docs/) (not `TO-DO.md`) |
-| Missing plan | **first** run [`release-plan`](../release-plan/SKILL.md), then triage into the new file |
+| Missing plan | Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** · run full workflow if plan missing |
 | CLI | `coderabbit` from `PATH` (also `~/.local/bin`) |
 
 ## GitHub PR bot (not the local CLI)
@@ -47,19 +47,7 @@ Optional: `coderabbit pullrequest <n> --agent` reads an existing GitHub review i
 
 ## Workflow
 
-0. **Ensure current RELEASE-PLAN (before or right after review, before triage)**  
-   Resolve **current** version plan — see `release-plan` → **Current version plan** (user version / branch target / planned `docs/RELEASE-PLAN-X.Y.Z.md`).
-
-   | Situation | Action |
-   |-----------|--------|
-   | Current `docs/RELEASE-PLAN-X.Y.Z.md` **exists** | Use it (`test -f` / read **only that file** + `docs/TO-DO.md` when needed) |
-   | **No** current plan for the target version (file missing) | **Must** run skill [`release-plan`](../release-plan/SKILL.md) **fully** (collect delta → write plan) in this same session, **then** continue |
-   | Version unknown | Ask user for `X.Y.Z`, or infer from branch/csproj/`**Версия:**` in the one candidate file — **not** by listing every plan |
-
-   **Forbidden:**
-   - `ls` / glob / read-all of `docs/RELEASE-PLAN-*.md` (incl. `dev-to-master`) to “find current”
-   - dump CR findings into `docs/TO-DO.md`, invent a stub plan without `release-plan`, or skip creating the plan when it is missing
-   - routinely open historical version plans (only current + TO-DO for triage; previous plan link only if resolving “previous” for a new plan header)
+0. Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** · CR findings → plan, not TO-DO (before or after review, before triage).
 
 1. **Auth / doctor** (if review fails):
 
@@ -114,7 +102,7 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
    Format (match plan legend): `### M43. Title` + `⬜` description.
 
    Rules:
-   - Merge by meaning; next id = **max(`Id high-water` in TO-DO, current plan open+«Закрыто» ids) + 1** for that group (`C`/`H`/`M`/`L`). **Do not** bump high-water in `TO-DO.md` until plan **finalize** (see `release-plan` skill)
+   - Merge by meaning; next id = **max(`Id high-water` in TO-DO, current plan open+«Закрыто» ids) + 1** for that group (`C`/`H`/`M`/`L`). **Do not** bump high-water in `TO-DO.md` until **Finalize version plan** ([`release-plan`](../release-plan/SKILL.md))
    - Skip duplicates already open in the current plan or already in any plan «Закрыто»
    - Skip duplicates already open in `TO-DO.md` (same meaning) — do **not** copy them into the plan open C/H/M/L, do **not** list them under **Приоритет фиксов**, and do **not** treat them as release work unless the user asks
    - In the chat reply: may briefly note «skipped (already in TO-DO: H1, M44)» — that is enough; no plan edits for those
@@ -127,7 +115,7 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 
    1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто` (id prefix matches severity: Minor→`#M…`, not `#L…`).
    2. **Then** remove the item from the open severity section (if it was open).
-   3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too (same **Close from TO-DO** / Re-check rules in `release-plan`).
+   3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too — Skill [`release-plan`](../release-plan/SKILL.md) → **Close from TO-DO** / **Re-check**.
    4. **Never** drop an open item without the «Закрыто» row.
    5. **Fix-in-same-turn:** still allocate next `C/H/M/L` id via max(TO-DO HW, current plan ids)+1 (no mid-release HW write), write `✅ #M50 …` (etc.) into «Закрыто» — do **not** skip the plan row or downgrade Minor→`L`.
 

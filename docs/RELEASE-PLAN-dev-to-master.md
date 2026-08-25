@@ -6,7 +6,7 @@
 > **Goal:** exhaustive list of new functionality and verification checklist before merge into `master`  
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
 > **Sources:** `dotnet test`, `git diff master...dev`, `gh run list` (verified 2026-07-15)
-> **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node docs/scripts/release-plan-summary.mjs --write`
+> **Maintenance:** when changing any checklist or migration items, recalculate the summary: `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
 **Checklist summary:** **98** items — ✅ **58** (59%) · 🟨 **28** (29%) · ⬜ **12** (12%) · ❌ **0** (0%)
 

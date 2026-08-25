@@ -231,7 +231,7 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 - [ ] For flows — integration test in `Cross.Identity.Tests/Identity/FlowTests/`
 - [ ] For OAuth/JWT/licensing — not only happy path
 - [ ] No secrets in code or test data
-- [ ] If editing `RELEASE-PLAN` — `node docs/scripts/release-plan-summary.mjs --write`
+- [ ] If editing `RELEASE-PLAN` — `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
 ---
 
@@ -243,7 +243,7 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 | Breaking change for consumers | `docs/BREAKING.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
 | New configuration option | `README.md`, XML on options class |
 | OAuth / multi-instance | `FLOWS.md` (briefly), release plan §B |
-| Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + summary script |
+| Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + `.cursor/skills/release-plan/scripts/release-plan-summary.mjs` |
 | Package public API | `README.md` |
 
 Flow documentation covers **JSON and steps only**, not full appsettings (config is in README / release plan).

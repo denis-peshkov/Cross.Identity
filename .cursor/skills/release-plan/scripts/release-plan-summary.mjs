@@ -7,14 +7,14 @@
  * - §10 markers (release gate + go/no-go).
  *
  * Usage:
- *   node docs/scripts/release-plan-summary.mjs           # print the line
- *   node docs/scripts/release-plan-summary.mjs --write   # update the plan file
+ *   node .cursor/skills/release-plan/scripts/release-plan-summary.mjs           # print the line
+ *   node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write   # update the plan file
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../..');
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const PLAN = join(ROOT, 'docs/RELEASE-PLAN-dev-to-master.md');
 
 const ID_ROW = /^\| ([A-Z]+[0-9]+) \|/;
