@@ -6,7 +6,7 @@ description: >-
   the current docs/RELEASE-PLAN-X.Y.Z.md as open C/H/M/L (not docs/TO-DO.md).
   If no current version plan exists, runs the release-plan skill first to create
   it, then merges findings. Closing/dismissing a plan item moves it to that
-  plan’s «Закрыто» as `✅ Id …`. Use when the user asks to run CodeRabbit, CR
+  plan’s «Закрыто» as `✅ #Id …`. Use when the user asks to run CodeRabbit, CR
   review, or local coderabbit on branch changes.
 ---
 
@@ -104,7 +104,7 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 5. **Close / dismiss plan items (same turn as the user asks)**  
    If the user closes, rejects, or dismisses a C/H/M/L item from the current plan (won’t-fix, «только пример», duplicate, fixed, …):
 
-   1. **First** append `| ✅ H2 Short title | reason |` under that plan’s `## Закрыто`.
+   1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто`.
    2. **Then** remove the item from the open severity section.
    3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too (same **Close from TO-DO** / Re-check rules in `release-plan`).
    4. **Never** drop an open item without the «Закрыто» row.
@@ -121,4 +121,4 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 - [ ] Summary matches the saved log
 - [ ] If current plan was missing → `release-plan` skill ran and created `docs/RELEASE-PLAN-X.Y.Z.md` before triage
 - [ ] **Current** `docs/RELEASE-PLAN-X.Y.Z.md` updated in the same turn (open C/H/M/L); **not** `TO-DO.md` for CR findings
-- [ ] Any dismissed/closed item → `✅ Id …` in that plan’s «Закрыто» before removal from open sections
+- [ ] Any dismissed/closed item → `✅ #Id …` in that plan’s «Закрыто» before removal from open sections

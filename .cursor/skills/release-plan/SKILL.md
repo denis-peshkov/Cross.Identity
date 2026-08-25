@@ -4,7 +4,7 @@ description: >-
   Builds or refreshes docs/RELEASE-PLAN-X.Y.Z.md from the current branch vs
   master (delta only). Moves leftover open items from the previous plan into
   docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO item always adds
-  `✅ Id …` to the current plan «Закрыто» first, then removes it from TO-DO.
+  `✅ #Id …` to the current plan «Закрыто» first, then removes it from TO-DO.
   Finalizing a version plan moves all remaining open items into TO-DO and
   rewrites the plan to the finalized template. Use when drafting release notes,
   release plans, closing a version plan, or updating RELEASE-PLAN-X.Y.Z.md /
@@ -38,11 +38,14 @@ description: >-
 
 Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode specific version filenames in this skill.
 
-**When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md`:** only if the template is **ambiguous or unclear** for the task (section meaning, «Закрыто» row shape, etc.). Do **not** routinely scan / re-read generated plans on every run — they are outputs, not the skill canon. Never treat a generated plan as something to keep in sync inside this skill file.
+**When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md` / `docs/TO-DO.md`:**
+- **Required (targeted):** before any **state-changing** work on them — merge/open items, close/dismiss, finalize, harvest leftovers, renumber checks. Read only the **current** plan + `TO-DO.md` (and only the sections you will edit).
+- **Optional:** if the **template** is ambiguous/unclear (section meaning, «Закрыто» row shape, …) — one targeted glance at a version plan for shape only.
+- **Forbidden:** routinely scanning / re-reading generated plans when no state change is involved; treating a generated plan as skill canon or keeping this skill file in sync with every plan output.
 
 **Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
 **Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.  
-**Закрыто** — столбец `#`: **`✅ M13 Short title`** (или legacy `✅ #34 …`). Без id: **`✅ Short title`**.
+**Закрыто** — столбец `#`: **`✅ #M13 Short title`** / **`✅ #H3 …`** (legacy `✅ #34 …` ok). Без id: **`✅ Short title`**.
 
 Empty severity sections stay as the heading + `---`.
 
@@ -96,20 +99,20 @@ Empty severity sections stay as the heading + `---`.
 
 | # | Суть |
 |---|------|
-| ✅ H2 Scripts README MERGE SystemId scope | dismissed: README — пример lookup, не open work |
+| ✅ #H2 Scripts README MERGE SystemId scope | dismissed: README — пример lookup, не open work |
 
-2. Id **сохранить** (`✅ H2 …` / `✅ M13 …`); title короткий; в «Суть» — почему закрыто.
+2. Id **сохранить** (`✅ #H2 …` / `✅ #M13 …`); title короткий; в «Суть» — почему закрыто.
 3. **Затем** удалить пункт из `docs/TO-DO.md` (пустые C/H/M/L-секции оставить).
 4. Обновить **Приоритет** в TO-DO / плане при необходимости.
 5. **Запрещено:** удалить из TO-DO без строки в «Закрыто» текущего плана.
 
 Осознанный **контрактный** trade-off без id → секция **Принято** (не «Закрыто», не TO-DO).  
-Id’шный backlog, который отклонили → всё равно **Закрыто** с `✅ Id …` и причиной.
+Id’шный backlog, который отклонили → всё равно **Закрыто** с `✅ #Id …` и причиной.
 
 ## Re-check (закрытие пунктов в version plan)
 
 1. Закрываемый пункт **убрать** из severity-секций этого `RELEASE-PLAN-X.Y.Z.md` (если был open в дельте).
-2. Добавить в `## Закрыто` (тот же формат `✅ M13 …`).
+2. Добавить в `## Закрыто` (тот же формат `✅ #M13 …` / `✅ #H3 …`).
 3. Id **сохранить**; title короткий.
 4. Обновить **Приоритет фиксов** плана (только work этой дельты).
 5. **Удалить** тот же пункт из `docs/TO-DO.md`, если он там был (после шага 2).
@@ -163,8 +166,8 @@ bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 
 - [ ] Version plan has **no** foreign-release backlog (that lives in `TO-DO.md`)
 - [ ] `TO-DO.md` is C/H/M/L only (no separate review-tool section); closed items removed from it
-- [ ] Every removal from `TO-DO.md` has a matching `✅ Id …` row in **current** plan «Закрыто»
-- [ ] «Закрыто» `#` looks like `✅ M13 …` (or legacy `✅ #34 …`)
+- [ ] Every removal from `TO-DO.md` has a matching `✅ #Id …` row in **current** plan «Закрыто»
+- [ ] «Закрыто» `#` looks like `✅ #M13 …` / `✅ #H3 …` (or legacy `✅ #34 …`)
 - [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
 - [ ] Finalize: all former open items are in `TO-DO.md`; plan matches `RELEASE-PLAN-FINALIZED` (empty C/H/M/L + priority → TO-DO)
 - [ ] UTF-8 BOM on written plan / TO-DO if new
