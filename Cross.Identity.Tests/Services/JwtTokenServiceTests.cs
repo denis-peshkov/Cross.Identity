@@ -755,6 +755,51 @@ public class JwtTokenServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenActiveAccessTokenJti_WhenRevokeSessionForLogoutAsync_ThenRevokesSessionInSameFamilyAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        SeedUser(userAccountId);
+        var familyId = Guid.NewGuid();
+        var otherFamilyId = Guid.NewGuid();
+
+        await _jwtTokenService.GenerateRefreshTokenAsync(userAccountId, familyId, new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
+        var accessToken = await _jwtTokenService.GenerateAccessTokenAsync(userAccountId, familyId, new List<string>(), new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
+        var otherAccessToken = await _jwtTokenService.GenerateAccessTokenAsync(userAccountId, otherFamilyId, new List<string>(), new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
+        var jti = Guid.Parse(_jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti)!);
+
+        await _jwtTokenService.RevokeSessionForLogoutAsync(jti, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        (await _jwtTokenService.ValidateAccessTokenAsync(accessToken, CancellationToken.None)).Should().BeFalse();
+        (await _jwtTokenService.ValidateAccessTokenAsync(otherAccessToken, CancellationToken.None)).Should().BeTrue();
+
+        var refreshEntity = await Context.RefreshTokens.SingleAsync(x => x.FamilyId == familyId);
+        refreshEntity.RevokedAt.Should().NotBeNull();
+        Context.Audits.Should().Contain(a =>
+            a.EntityId == refreshEntity.Id.ToString()
+            && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenEmptyJti_WhenRevokeSessionForLogoutAsync_ThenDoesNotThrowAsync()
+    {
+        var act = async () =>
+            await _jwtTokenService.RevokeSessionForLogoutAsync(Guid.Empty, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnknownJti_WhenRevokeSessionForLogoutAsync_ThenDoesNotThrowAsync()
+    {
+        var act = () => _jwtTokenService.RevokeSessionForLogoutAsync(Guid.NewGuid(), HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        await act.Should().NotThrowAsync();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMultipleUserTokens_WhenRevokeAllTokensForUserAsyncWithUserLogoutAll_ThenRevokesAllUserTokensAsync()
     {
         var userAccountId = Guid.NewGuid();

@@ -41,6 +41,16 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 
 **Action:** pass `{ UserAccountId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
 
+### `main.Logout`: `RefreshToken` → `Jti`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` | `{ Jti, … }` (access-token JTI Guid string) |
+| Stock `logout` step | `refreshTokenKey` → `RevokeRefreshTokenForLogoutAsync` | `jtiKey` → `RevokeSessionForLogoutAsync` |
+| `IJwtTokenService.RevokeRefreshTokenForLogoutAsync` | stock logout | **optional** host helper |
+
+**Action:** host extracts `jti` from the client access token, then `ExecuteAsync({ Jti, … })`.
+
 ### `main.LogoutAll`: `RefreshToken` → `UserAccountId`
 
 | Area | Was (2.2.0) | Now (2.3.0+) |

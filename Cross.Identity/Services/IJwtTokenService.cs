@@ -217,13 +217,27 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Revoke a refresh token on user logout and invalidate access tokens in the same session (family).
+    /// Optional host helper: revoke a session by refresh token string (lookup by hash).
+    /// Stock <c>logout</c> steps use <see cref="RevokeSessionForLogoutAsync"/> with access-token <c>jti</c> instead.
     /// </summary>
-    /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie).</param>
+    /// <param name="refreshToken">Refresh token string (e.g. from an httpOnly cookie). Empty/whitespace is a no-op.</param>
     /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenForLogoutAsync(
         string? refreshToken,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Logout current session: resolve the token family from access-token <c>jti</c> and revoke the whole family
+    /// (all active refresh + access tokens) with <see cref="RefreshTokenRevokedReason.USER_LOGOUT"/>.
+    /// Missing or already-revoked <paramref name="accessTokenJti"/> is a no-op (idempotent).
+    /// </summary>
+    /// <param name="accessTokenJti">Access token JTI identifying the session to revoke.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RevokeSessionForLogoutAsync(
+        Guid accessTokenJti,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 

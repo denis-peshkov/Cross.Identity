@@ -34,7 +34,7 @@ Flows that take `UserAccountId` but are **not** token credential operations (`Co
 | **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
-Token lifecycle flows (`Token`, `RefreshToken`, `Logout`) still take/issue refresh tokens as part of their contract.
+Token lifecycle flows (`Token`, `RefreshToken`) still take/issue refresh tokens. `Logout` takes access-token `Jti` (host resolves from the client access token). `LogoutAll` takes `UserAccountId` (host resolves from access token).
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
@@ -276,15 +276,15 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.Logout.json`
 
-**Purpose:** revoke the current session (presented refresh token).
+**Purpose:** revoke the current session identified by access-token `jti` (`USER_LOGOUT`). Host resolves `Jti` from the client access token before `ExecuteAsync`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logout` |
-| `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `Jti` (required Guid string); optional client context. → `logout` |
+| `logout` | logout | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
-> Revokes the refresh token and access tokens in the same session (family) with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
+> Resolves `FamilyId` from the access-token row and revokes the whole family (all active refresh + access). Missing or already-revoked JTI is a no-op (idempotent).
 
 ---
 

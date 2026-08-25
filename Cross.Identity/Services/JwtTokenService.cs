@@ -986,6 +986,34 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
+    public async Task RevokeSessionForLogoutAsync(
+        Guid accessTokenJti,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        if (accessTokenJti == Guid.Empty)
+        {
+            return;
+        }
+
+        var accessEntity = await _context.AccessTokens
+            .FirstOrDefaultAsync(x => x.Id == accessTokenJti, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (accessEntity is null || accessEntity.RevokedAt is not null)
+        {
+            return;
+        }
+
+        await RevokeRefreshTokenFamilyAsync(
+                accessEntity.FamilyId,
+                RefreshTokenRevokedReason.USER_LOGOUT,
+                hostSuppliedClientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
     public async Task RevokeAllTokensForUserAsync(
         Guid userAccountId,
         RefreshTokenRevokedReason reason,
