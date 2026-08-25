@@ -13,7 +13,7 @@ Reference: `Infrastructure/Scripts/README.md`. EF model lives in `Cross.Identity
 ## When to use
 
 - Any change to `auth` schema for **already deployed** databases (`1_PreDeployment`)
-- Greenfield table DDL (`2_Initial`) or seed scripts
+- Greenfield table DDL (`2_Initial`) or seed scripts (`3_SeedLookup`, `4_SeedData`)
 - BREAKING notes that mention migration file names
 
 ## PreDeployment immutability (mandatory)
@@ -32,7 +32,7 @@ When schema must change on existing databases:
 
 - Rename `1_02_*` → `1_02_*` with different SQL
 - Patch column names inside an already-shipped PreDeployment script
-- Skip sequence numbers to force sort order (`1_011`, `1_11` while `1_07` is free)
+- Skip sequence numbers to force sort order (`1_10`, `1_11` while `1_07` is free)
 - Add “run before 1_02” hacks — use the next number after the latest PreDeployment script
 
 **Example (Confirmed → Verified):**
