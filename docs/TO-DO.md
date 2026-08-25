@@ -38,8 +38,12 @@ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) �
 ### M43. Release-plan template: duplicate `{{OPTIONAL_CR_OR_NOTES}}`
 CodeRabbit: в `.cursor/skills/release-plan/templates/RELEASE-PLAN.md` убрать дубль placeholder, чтобы notes рендерились один раз.
 
-### M44. Release-plan language (EN vs RU)
-CodeRabbit: skill / template / `docs/RELEASE-PLAN-2.0.0.md` / `2.1.1.md` — перевести body на English. Сейчас в репо принят RU для планов/`TO-DO`; нужен осознанный выбор (оставить RU или EN).
+### M44. Release-plan language (EN vs RU) — CR Major
+CodeRabbit **Major** (deferred): English throughout release-plan workflow docs.
+- `.cursor/skills/release-plan/SKILL.md` — translate skill body as needed; replace **Language: Russian body…** with English-body rule.
+- Templates: translate intro/header in `templates/RELEASE-PLAN.md` and `templates/RELEASE-PLAN-FINALIZED.md` (structure/meaning unchanged).
+- Follow-on: generated `docs/RELEASE-PLAN-*.md` / this file if policy becomes EN.
+Сейчас в репо принят RU для планов/`TO-DO`; осознанный выбор (оставить RU или EN) — потом, не в текущем цикле.
 
 ---
 

@@ -46,7 +46,7 @@
 
 | # | Суть |
 |---|------|
-{{CLOSED_TABLE_ROWS}}
+| ✅ #{{CLOSED_ID}} {{CLOSED_TITLE}} | {{CLOSED_SUMMARY}} |
 
 ---
 
