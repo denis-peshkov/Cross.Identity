@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Collect branch delta vs a base ref for Cross.Identity RELEASE-PLAN drafting.
+# Collect branch delta vs a base ref for RELEASE-PLAN drafting.
 # Usage:
-#   bash .cursor/skills/cross-identity-release-plan/scripts/collect-release-delta.sh \
+#   bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 #     [--base origin/master] [--version 2.2.0] [--out PATH]
 set -euo pipefail
 
@@ -40,7 +40,7 @@ fi
 
 BRANCH="$(git branch --show-current 2>/dev/null || echo DETACHED)"
 DATE="$(date +%Y-%m-%d)"
-CACHE_DIR="$ROOT/.cursor/skills/cross-identity-release-plan/.cache"
+CACHE_DIR="$ROOT/.cursor/skills/release-plan/.cache"
 mkdir -p "$CACHE_DIR"
 SAFE_BRANCH="${BRANCH//\//-}"
 if [[ -z "$OUT" ]]; then

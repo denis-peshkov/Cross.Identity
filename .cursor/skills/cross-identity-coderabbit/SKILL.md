@@ -84,7 +84,7 @@ Script prints the log path under `.cursor/skills/cross-identity-coderabbit/.cach
 5. **Close / dismiss TO-DO items (same turn as the user asks)**  
    If the user closes, rejects, or dismisses a C/H/M/L item (won’t-fix, «только пример», duplicate, fixed elsewhere, …):
 
-   1. Resolve **current** version plan (`docs/RELEASE-PLAN-X.Y.Z.md` for the branch target — see `cross-identity-release-plan` → Current version plan).
+   1. Resolve **current** version plan (`docs/RELEASE-PLAN-X.Y.Z.md` for the branch target — see `release-plan` → Current version plan).
    2. **First** append `| ✅ H2 Short title | reason |` under that plan’s `## Закрыто`.
    3. **Then** remove the item from `docs/TO-DO.md`.
    4. **Never** delete from TO-DO without the «Закрыто» row.

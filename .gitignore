@@ -254,7 +254,7 @@ pub/
 /rest-client/http-client.private.env.json
 
 # Release-plan skill delta cache
-.cursor/skills/cross-identity-release-plan/.cache/
+.cursor/skills/release-plan/.cache/
 
 # CodeRabbit skill review logs
 .cursor/skills/cross-identity-coderabbit/.cache/

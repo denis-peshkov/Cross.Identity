@@ -1,15 +1,15 @@
 ---
-name: cross-identity-release-plan
+name: release-plan
 description: >-
-  Builds or refreshes docs/RELEASE-PLAN-X.Y.Z.md for Cross.Identity from the
-  current branch vs master (delta only). Moves leftover open items from the
-  previous plan into docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO
-  item always adds `✅ Id …` to the current plan «Закрыто» first, then removes
-  it from TO-DO. Use when drafting release notes, release plans, or updating
-  RELEASE-PLAN-*.md / TO-DO.md.
+  Builds or refreshes docs/RELEASE-PLAN-X.Y.Z.md from the current branch vs
+  master (delta only). Moves leftover open items from the previous plan into
+  docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO item always adds
+  `✅ Id …` to the current plan «Закрыто» first, then removes it from TO-DO.
+  Use when drafting release notes, release plans, or updating RELEASE-PLAN-*.md
+  / TO-DO.md.
 ---
 
-# Cross.Identity — release plan from branch delta
+# Release plan from branch delta
 
 ## When to use
 
@@ -56,7 +56,19 @@ Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/In
 
 ## `docs/TO-DO.md` (инкрементально)
 
-Только четыре уровня (пустые оставлять):
+Файл = **только нерешённые** пункты. Процесс/легенда/статусы **не** писать в сам файл — только здесь (и в coderabbit skill для CR triage).
+
+| Правило | Деталь |
+|---------|--------|
+| Содержимое | Open backlog вне дельты version plan; планы = только дельта релиза |
+| Секции | Всегда четыре: Критично / Высокий / Средний / Низкий; пустые = заголовок + `---` |
+| Формат | `### M13. Title` + описание **без** статус-маркеров (`⬜`/`✅`/…) |
+| Id | Сквозная нумерация **внутри** группы `C`/`H`/`M`/`L`; следующий свободный; исторические id не перенумеровывать |
+| Источник | CodeRabbit / audit / … — сразу в C/H/M/L (без отдельной секции CR) |
+| CR triage | Critical→`C`, Major→`H`, Minor→`M`, Trivial/Info→`L` |
+| Harvest | Open с предыдущего плана, не вошедшее в дельту → добавить сюда (если ещё нет) |
+| Close | См. **Close from TO-DO** — сначала «Закрыто» текущего плана, потом удалить из TO-DO |
+| Не класть | «Принято» trade-off без open work; копипаст всего TO-DO в version plan (только ссылка) |
 
 ```markdown
 ## Критично (безопасность)
@@ -66,12 +78,6 @@ Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/In
 ## Средний …
 ## Низкий …
 ```
-
-1. **Перед/при** сборке `RELEASE-PLAN-X.Y.Z.md` прочитай предыдущий план и `TO-DO.md`.
-2. Открытое с предыдущего плана, **не** вошедшее в дельту → **добавь** как `C…`/`H…`/`M…`/`L…` (merge по id).
-3. Пункт **закрыт** / отклонён → см. **Close from TO-DO** ниже (сначала «Закрыто» в текущем плане, потом удаление из TO-DO).
-4. В version plan `TO-DO` не копировать — только ссылка.
-5. «Принято» trade-off без open work сюда не класть.
 
 ## Current version plan
 
@@ -112,7 +118,7 @@ Id’шный backlog, который отклонили → всё равно *
 2. **Collect delta** (required):
 
 ```bash
-bash .cursor/skills/cross-identity-release-plan/scripts/collect-release-delta.sh \
+bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
   --base origin/master \
   --version 2.2.0
 ```
