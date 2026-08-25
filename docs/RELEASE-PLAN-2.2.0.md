@@ -1,7 +1,7 @@
 ﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.2.0` (planned)  
-**Ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`  
+**Версия:** `2.2.0`
+**Ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`
 **Релиз (если есть):** —
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker

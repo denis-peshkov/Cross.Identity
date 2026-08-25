@@ -1,11 +1,12 @@
-﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
+﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+
+**Версия:** `2.0.0` (published / closed)
+**Ветка:** `release/add-new-flows` · **база:** `origin/master` · **дата:** `2026-08-23`
+**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-**Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**CodeRabbit (local CLI, в период hardening):**
-- **2026-08-23 23:24** — `release/add-new-flows` vs `origin/dev`, `--dir Cross.Identity` — **4 findings** (4 minor). Лог: `/tmp/cr-identity-20260823-2324.log`.
-- **2026-08-23 22:49** — **13 findings** (11 major / 2 minor). Major (#48–#53 и др.) → «Закрыто» / «Принято».
+**Предыдущий план:** —
 
 ---
 
@@ -187,4 +188,4 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-_(пусто — релиз 2.0.0 опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md); ConcurrencyStamp → [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md).)_
+_(пусто — релиз `2.0.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

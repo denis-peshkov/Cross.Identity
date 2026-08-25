@@ -1,9 +1,12 @@
-﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
+﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+
+**Версия:** `2.1.1` (published / closed)
+**Ветка:** `release/replace-ConcurrencyStampInterceptor-with-owerride-SaveChanges` · **база:** `origin/master` · **дата:** `2026-08-24`
+**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1
 
 **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-**Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**CodeRabbit (local CLI, в период hardening):**
+**Предыдущий план:** [`RELEASE-PLAN-2.0.0.md`](RELEASE-PLAN-2.0.0.md)
 
 ---
 
@@ -47,4 +50,4 @@
 
 ## Приоритет фиксов
 
-_(пусто — релиз 2.1.1 опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — релиз `2.1.1` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
