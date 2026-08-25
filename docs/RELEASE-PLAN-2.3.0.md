@@ -22,9 +22,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M56. `release-plan-summary.mjs`: bullets только в section 10
-⬜ CodeRabbit Minor: парсинг markdown — учитывать active section heading; BULLET matches только внутри section 10.
-
 ### M57. `repository-link.sh`: `ssh://git@github.com/` URL
 ⬜ CodeRabbit Minor: распознавать `ssh://git@github.com/org/repo.git` → `https://github.com/org/repo`.
 
@@ -53,6 +50,7 @@
 | ✅ #M53 anchor `BREAKING.md` в строке #M51 | ссылка `(BREAKING.md#from-220-to-230)` вместо fragment-only |
 | ✅ #M54 `TokenTestHelpers`: `CancellationToken` в `IsRefreshTokenActiveAsync` | параметр + проброс в `FirstOrDefaultAsync`; callers → `CancellationToken.None` |
 | ✅ #M55 `JwtTokenServiceTests`: `Helpers` → `GlobalUsings` | убран file-scoped using; `global using Cross.Identity.Tests.Helpers` уже был |
+| ✅ #M56 `release-plan-summary.mjs`: bullets только в §10 | active `##` heading; BULLET только при `/^10\b/`; summary на плане без изменений (98) |
 
 ---
 
@@ -65,4 +63,4 @@
 
 ## Приоритет фиксов
 
-1. **M56–M58** — release-plan scripts (по желанию до или после merge).
+1. **M57–M58** — release-plan scripts (по желанию до или после merge).

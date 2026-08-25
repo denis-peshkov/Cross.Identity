@@ -38,8 +38,16 @@ function statusFromTableRow(line) {
 
 export function collectChecklistStatuses(markdown) {
   const statuses = [];
+  /** @type {string | null} */
+  let sectionHeading = null;
 
   for (const line of markdown.split('\n')) {
+    const heading = line.match(/^##\s+(.+)/);
+    if (heading) {
+      sectionHeading = heading[1].trim();
+      continue;
+    }
+
     if (ID_ROW.test(line)) {
       const status = statusFromTableRow(line);
       if (!status) {
@@ -49,7 +57,9 @@ export function collectChecklistStatuses(markdown) {
       continue;
     }
 
-    const bullet = line.match(BULLET);
+    // §10 markers only (release gate + go/no-go) — ignore status bullets elsewhere
+    const inSection10 = sectionHeading != null && /^10\b/.test(sectionHeading);
+    const bullet = inSection10 ? line.match(BULLET) : null;
     if (bullet) {
       statuses.push(bullet[1]);
     }
