@@ -138,17 +138,33 @@ else
   fi
 fi
 
-# Named branch not checked out:
-git rev-parse --verify "$BRANCH" >/dev/null 2>&1 || git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1
+# Resolve branch tip (local mode: HEAD; named: foo or origin/foo)
+if [[ "$BRANCH" == "HEAD" ]]; then
+  BRANCH_REF="HEAD"
+elif git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+  BRANCH_REF="$BRANCH"
+else
+  if [[ "$OFFLINE" -eq 0 ]]; then
+    git fetch origin "$BRANCH" 2>/dev/null || true
+  fi
+  if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+    BRANCH_REF="origin/$BRANCH"
+  else
+    echo "error: branch '$BRANCH' not found (local or origin/)" >&2
+    exit 1
+  fi
+fi
 ```
+
+Use **`$BRANCH_REF`** (not `$BRANCH`) in all log/diff commands below.
 
 ### Collect diff
 
 ```bash
-git log --oneline "$BASE_REF..$BRANCH" | head -30
-git diff --stat "$BASE_REF...$BRANCH"
-git diff --name-status "$BASE_REF...$BRANCH"
-git diff "$BASE_REF...$BRANCH"
+git log --oneline "$BASE_REF..$BRANCH_REF" | head -30
+git diff --stat "$BASE_REF...$BRANCH_REF"
+git diff --name-status "$BASE_REF...$BRANCH_REF"
+git diff "$BASE_REF...$BRANCH_REF"
 ```
 
 Triple-dot (`...`) = changes on the branch since fork from base (merge-base). Prefer this over two-dot for triage.
@@ -184,7 +200,7 @@ Short summary + file list + offer Phase 2 deep review. Save under Saving below.
 **Branch / local mode:**
 
 ```bash
-git diff "$BASE_REF...$BRANCH"
+git diff "$BASE_REF...$BRANCH_REF"
 # or uncommitted: git diff && git diff --cached
 ```
 
