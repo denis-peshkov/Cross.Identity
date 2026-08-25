@@ -252,3 +252,6 @@ pub/
 /cross-identity-deploy-key
 /cross-identity-deploy-key.pub
 /rest-client/http-client.private.env.json
+
+# Release-plan skill delta cache
+.cursor/skills/cross-identity-release-plan/.cache/
