@@ -161,7 +161,7 @@ bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
 | Что в библиотеке уже нормально | Short bullets **about this delta’s invariants** |
 | Приоритет фиксов | Remaining work **for this release only** (+ link to `TO-DO.md`) |
 
-6. If `docs/BREAKING.md` needs **From A.B → X.Y.Z** for consumer breaks — say so / offer to append.
+6. If `docs/BREAKING.md` needs **From A.B → X.Y.Z** for consumer breaks — say so / offer to insert **at the top** (newest-first).
 7. **Language:** Russian body; table «Суть» may mix RU/EN names.
 
 ## Quality bar

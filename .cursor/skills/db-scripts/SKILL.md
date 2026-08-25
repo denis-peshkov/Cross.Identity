@@ -41,7 +41,7 @@ Reference copy notes: `Infrastructure/Scripts/README.md`. Runtime model: `Identi
 2. Add a **new** idempotent script with the **next** number (delta only) — per `102-backend-efcore`.
 3. Mirror intent in **all three** providers (syntax differs).
 4. Update `2_Initial` for **greenfield** so new installs match the final model (do not rewrite shipped append-only scripts).
-5. If the change is breaking for NuGet/host DBs, append `docs/BREAKING.md` with script names and order.
+5. If the change is breaking for NuGet/host DBs, update `docs/BREAKING.md` (new **From …** section **at the top**, newest-first) with script names and order.
 
 ### New table when PreDeployment already has more than `1_00_*`
 
