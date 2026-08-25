@@ -8,7 +8,7 @@ default = "https://github.com/denis-peshkov/Cross.Identity"
 if not u:
     print(default)
     raise SystemExit
-m = re.match(r"git@github\.com:(.+?)(?:\.git)?$", u)
+m = re.match(r"(?:git@github\.com:|ssh://git@github\.com/)(.+?)(?:\.git)?/?$", u)
 if m:
     print(f"https://github.com/{m.group(1)}")
     raise SystemExit
