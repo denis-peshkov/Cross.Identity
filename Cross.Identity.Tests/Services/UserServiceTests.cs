@@ -30,9 +30,6 @@ public class UserServiceTests : EFTestsBase
             .Setup(j => j.RevokeAllTokensForUserAsync(
                 It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _jwtTokenService
-            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
 
         _options = CreateOptionsSnapshot();
         _communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot());

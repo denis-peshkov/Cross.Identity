@@ -237,6 +237,26 @@ internal class JwtTokenService : IJwtTokenService
             .ConfigureAwait(false);
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> ValidateAccessTokenJtiAsync(
+        Guid jti,
+        Guid? securityStamp,
+        CancellationToken cancellationToken)
+    {
+        var entity = await _context.AccessTokens
+            .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken).ConfigureAwait(false);
+
+        if (entity is not { RevokedAt: null }
+            || entity.ExpiresAt < DateTime.UtcNow
+            || entity.CreatedAt > DateTime.UtcNow)
+        {
+            return false;
+        }
+
+        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, securityStamp, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
     private async Task<Guid?> GetUserSecurityStampAsync(Guid userAccountId, CancellationToken cancellationToken)
     {
         return await _context.UsersAccounts
@@ -321,101 +341,6 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task<bool> ValidateAccessTokenJtiAsync(
-        Guid jti,
-        Guid? securityStamp,
-        CancellationToken cancellationToken)
-    {
-        var entity = await _context.AccessTokens
-            .FirstOrDefaultAsync(x => x.Id == jti, cancellationToken).ConfigureAwait(false);
-
-        if (entity is not { RevokedAt: null }
-            || entity.ExpiresAt < DateTime.UtcNow
-            || entity.CreatedAt > DateTime.UtcNow)
-        {
-            return false;
-        }
-
-        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, securityStamp, cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
-    {
-        var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-
-        var entity = await _context.RefreshTokens
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (entity is not { RevokedAt: null }
-            || entity.ExpiresAt < DateTime.UtcNow
-            || entity.AbsoluteExpiresAt < DateTime.UtcNow
-            || entity.CreatedAt > DateTime.UtcNow
-            || IsRefreshTokenIdleExpired(entity))
-        {
-            return false;
-        }
-
-        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
-        return await IsUserAccountValidForTokenAsync(entity.UserAccountId, tokenStamp, cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async Task EnsureRefreshTokenBelongsToUserAsync(
-        string? refreshToken,
-        Guid userAccountId,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            throw new NotAuthorizedException("A valid refresh token is required.");
-        }
-
-        if (!await ValidateRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false))
-        {
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
-        }
-
-        var entity = await GetRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
-        if (entity is null || entity.UserAccountId != userAccountId)
-        {
-            throw new NotAuthorizedException("Refresh token does not match the specified user.");
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task EnsureRefreshTokenActiveForRotationAsync(
-        string refreshToken,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-
-        var entity = await _context.RefreshTokens
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (entity is null)
-        {
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
-        }
-
-        var tokenStamp = TryParseSecurityStampClaim(GetClaimValue(refreshToken, ClaimConstants.SecurityStamp));
-        await EnsureRefreshTokenEntityActiveForRotationAsync(
-                entity,
-                validateTokenSecurityStamp: true,
-                tokenSecurityStamp: tokenStamp,
-                hostSuppliedClientContext,
-                cancellationToken)
-            .ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
     public async Task EnsureRefreshTokenActiveForRotationAsync(
         Guid refreshTokenJti,
         HostSuppliedClientContext hostSuppliedClientContext,
@@ -435,19 +360,12 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Invalid or expired refresh token.");
         }
 
-        await EnsureRefreshTokenEntityActiveForRotationAsync(
-                entity,
-                validateTokenSecurityStamp: false,
-                tokenSecurityStamp: null,
-                hostSuppliedClientContext,
-                cancellationToken)
+        await EnsureRefreshTokenEntityActiveForRotationAsync(entity, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
     }
 
     private async Task EnsureRefreshTokenEntityActiveForRotationAsync(
         RefreshTokenEntity entity,
-        bool validateTokenSecurityStamp,
-        Guid? tokenSecurityStamp,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
@@ -469,15 +387,6 @@ internal class JwtTokenService : IJwtTokenService
             throw new NotAuthorizedException("Account is disabled.");
         }
 
-        if (validateTokenSecurityStamp)
-        {
-            var accountStamp = await GetUserSecurityStampAsync(entity.UserAccountId, cancellationToken).ConfigureAwait(false);
-            if (!SecurityStampMatches(accountStamp, tokenSecurityStamp))
-            {
-                throw new NotAuthorizedException("Invalid or expired refresh token.");
-            }
-        }
-
         await EnsureRefreshTokenIdleForRotationAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
         await EnsureHostSuppliedClientContextForRotationAsync(entity.FamilyId, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);
@@ -492,37 +401,6 @@ internal class JwtTokenService : IJwtTokenService
             .Select(x => x.IsActive)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
-    public async Task RevokeAccessTokenAsync(Guid jti, CancellationToken cancellationToken)
-    {
-        var entry = await _context.AccessTokens.FindAsync(new object[] { jti }, cancellationToken).ConfigureAwait(false);
-        if (entry != null)
-        {
-            entry.RevokedAt = DateTime.UtcNow;
-            _audit.RecordTokenRevoked(
-                entry.UserAccountId,
-                AuditEntityType.AccessToken,
-                entry.Id,
-                reason: null);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    /// <inheritdoc/>
-    public async Task CleanupExpiredAccessTokensAsync(CancellationToken cancellationToken)
-    {
-        var expired = await _context.AccessTokens
-            .Where(x => x.ExpiresAt < DateTime.UtcNow)
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (expired.Any())
-        {
-            _context.AccessTokens.RemoveRange(expired);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        }
     }
 
     /// <inheritdoc/>
@@ -609,20 +487,6 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         return result;
-    }
-
-    /// <inheritdoc/>
-    public async Task<RefreshTokenEntity?> GetRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
-    {
-        var tokenHash =  Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-
-        var entity = await _context.RefreshTokens
-            .AsNoTracking()
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        return entity;
     }
 
     /// <inheritdoc/>
@@ -851,17 +715,6 @@ internal class JwtTokenService : IJwtTokenService
 
     /// <inheritdoc/>
     public Task InvalidateRefreshTokenAsync(
-        string refreshToken,
-        string newJti,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-        return InvalidateRefreshTokenByHashAsync(tokenHash, Guid.Parse(newJti), hostSuppliedClientContext, cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public Task InvalidateRefreshTokenAsync(
         Guid refreshTokenJti,
         Guid newRefreshTokenJti,
         HostSuppliedClientContext hostSuppliedClientContext,
@@ -873,22 +726,6 @@ internal class JwtTokenService : IJwtTokenService
         }
 
         return InvalidateRefreshTokenByIdAsync(refreshTokenJti, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken);
-    }
-
-    private async Task InvalidateRefreshTokenByHashAsync(
-        string tokenHash,
-        Guid newRefreshTokenJti,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        var entity = await _context.RefreshTokens
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false)
-                     ?? throw new InvalidOperationException("Refresh token not found.");
-
-        await InvalidateRefreshTokenEntityAsync(entity, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken)
-            .ConfigureAwait(false);
     }
 
     private async Task InvalidateRefreshTokenByIdAsync(
@@ -942,17 +779,6 @@ internal class JwtTokenService : IJwtTokenService
             await HandleRefreshTokenReplayAsync(entity, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
             throw new ConflictException("Refresh token has already been used.");
         }
-    }
-
-    /// <inheritdoc/>
-    public async Task RevokeRefreshTokenFamilyAsync(
-        Guid familyId,
-        RefreshTokenRevokedReason reason,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        await RevokeRefreshTokenFamilyCoreAsync(familyId, reason, hostSuppliedClientContext, cancellationToken).ConfigureAwait(false);
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -1050,51 +876,6 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeRefreshTokenForLogoutAsync(
-        string? refreshToken,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            return;
-        }
-
-        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-
-        var entity = await _context.RefreshTokens
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (entity is null || entity.RevokedAt is not null)
-        {
-            return;
-        }
-
-        var now = DateTime.UtcNow;
-        entity.RevokedAt = now;
-        _audit.RecordTokenRevoked(
-            entity.UserAccountId,
-            AuditEntityType.RefreshToken,
-            entity.Id,
-            RefreshTokenRevokedReason.USER_LOGOUT,
-            hostSuppliedClientContext.IpAddress,
-            hostSuppliedClientContext.UserAgent,
-            hostSuppliedClientContext.DeviceFingerprint);
-
-        await RevokeAccessTokensForFamilyCoreAsync(
-                entity.FamilyId,
-                now,
-                RefreshTokenRevokedReason.USER_LOGOUT,
-                hostSuppliedClientContext,
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
     public async Task RevokeSessionForLogoutAsync(
         Guid accessTokenJti,
         HostSuppliedClientContext hostSuppliedClientContext,
@@ -1114,12 +895,14 @@ internal class JwtTokenService : IJwtTokenService
             return;
         }
 
-        await RevokeRefreshTokenFamilyAsync(
+        await RevokeRefreshTokenFamilyCoreAsync(
                 accessEntity.FamilyId,
                 RefreshTokenRevokedReason.USER_LOGOUT,
                 hostSuppliedClientContext,
                 cancellationToken)
             .ConfigureAwait(false);
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc/>

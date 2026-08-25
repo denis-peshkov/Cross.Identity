@@ -140,7 +140,7 @@ internal class Main_VerifyToken_FlowTests : RunFlowCommandHandlerTestsBase
 
         var jti = _jwtTokenService.GetClaimValue(accessToken, JwtRegisteredClaimNames.Jti);
         Guid.TryParse(jti, out var jtiGuid).Should().BeTrue();
-        await _jwtTokenService.RevokeAccessTokenAsync(jtiGuid, CancellationToken.None);
+        await TokenTestHelpers.RevokeAccessTokenByJtiAsync(Context, jtiGuid, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
             new Dictionary<string, object?> { ["AccessToken"] = accessToken },

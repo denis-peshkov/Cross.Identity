@@ -94,10 +94,10 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["revoked"].Should().Be(true);
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshA)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshB)).Should().BeFalse();
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, otherRefresh)).Should().BeTrue();
 
         var userRefresh = await Context.RefreshTokens.Where(x => x.UserAccountId == userAccountId).ToListAsync();
         userRefresh.Should().OnlyContain(t => t.RevokedAt != null);

@@ -47,7 +47,6 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 |------|-------------|--------------|
 | Flow input bag | `{ RefreshToken, … }` | `{ Jti, … }` (access-token JTI Guid string) |
 | Stock `logout` step | `refreshTokenKey` → `RevokeRefreshTokenForLogoutAsync` | `jtiKey` → `RevokeSessionForLogoutAsync` |
-| `IJwtTokenService.RevokeRefreshTokenForLogoutAsync` | stock logout | **optional** host helper |
 
 **Action:** host extracts `jti` from the client access token, then `ExecuteAsync({ Jti, … })`.
 
@@ -68,9 +67,26 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 |------|-------------|--------------|
 | Flow input bag | `{ RefreshToken, … }` (compact JWT string) | `{ Jti, … }` (refresh-token JTI Guid string — `RefreshTokens.Id`) |
 | Stock `refreshToken` step | `refreshTokenKey` → hash lookup + stamp claim | `jtiKey` → row lookup by `RefreshTokens.Id` |
-| `EnsureRefreshTokenActiveForRotationAsync(string)` / `GetRefreshTokenAsync` / `InvalidateRefreshTokenAsync(string, …)` | stock refresh | **optional** host helpers |
 
 **Action:** host validates the client refresh token (cookie/body), extracts `jti` from the JWT (equals `RefreshTokens.Id`), then `ExecuteAsync({ Jti, … })`.
+
+### `IJwtTokenService`: removed unused APIs
+
+The following members are **removed** (not used by stock flows/steps). Host token validation/revoke by compact string must be implemented in the host or a custom wrapper.
+
+| Removed |
+|---------|
+| `ValidateRefreshTokenAsync` |
+| `EnsureRefreshTokenBelongsToUserAsync` |
+| `EnsureRefreshTokenActiveForRotationAsync(string, …)` |
+| `GetRefreshTokenAsync(string, …)` |
+| `InvalidateRefreshTokenAsync(string, string, …)` |
+| `RevokeRefreshTokenForLogoutAsync` |
+| `RevokeAccessTokenAsync` |
+| `RevokeRefreshTokenFamilyAsync` |
+| `CleanupExpiredAccessTokensAsync` |
+
+**Kept:** `GenerateIdToken`, `GenerateAccessTokenAsync`, `GenerateRefreshTokenAsync`, `ValidateAccessTokenAsync`, `ValidateAccessTokenJtiAsync` (`JwtBearer` / host), `EnsureRefreshTokenActiveForRotationAsync(Guid, …)`, `GetRefreshTokenByIdAsync`, `InvalidateRefreshTokenAsync(Guid, Guid, …)`, `GetClaimValue`, `RevokeSessionForLogoutAsync`, `RevokeAllTokensForUserAsync`, `CleanupExpiredRefreshTokensAsync`.
 
 ---
 ## From 2.1.1 to 2.2.0

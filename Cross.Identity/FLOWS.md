@@ -27,11 +27,11 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
+| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag).
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
 Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refresh-token `Jti` (host resolves from the client refresh token). `Logout` takes access-token `Jti`. `LogoutAll` takes `UserAccountId`.

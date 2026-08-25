@@ -151,7 +151,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(r2, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, r2)).Should().BeFalse();
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);
