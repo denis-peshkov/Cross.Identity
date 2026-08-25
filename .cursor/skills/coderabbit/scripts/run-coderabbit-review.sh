@@ -117,23 +117,23 @@ path = sys.argv[1]
 findings = []
 complete = None
 with open(path, encoding="utf-8", errors="replace") as f:
-    for line in f:
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            o = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-        if o.get("type") == "finding":
-            findings.append(o)
-        elif o.get("type") == "complete":
-            complete = o
+  for line in f:
+    line = line.strip()
+    if not line.startswith("{"):
+      continue
+    try:
+      o = json.loads(line)
+    except json.JSONDecodeError:
+      continue
+    if o.get("type") == "finding":
+      findings.append(o)
+    elif o.get("type") == "complete":
+      complete = o
 print(f"findings: {len(findings)}")
 if findings:
-    print("severity:", dict(Counter(x.get("severity") for x in findings)))
+  print("severity:", dict(Counter(x.get("severity") for x in findings)))
 if complete:
-    print("complete:", complete.get("status"), "findings=", complete.get("findings"))
+  print("complete:", complete.get("status"), "findings=", complete.get("findings"))
 PY
 
 echo "$OUT"

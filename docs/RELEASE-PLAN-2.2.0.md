@@ -24,9 +24,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Средний (противоречия / баги контрактов)
 
-### M48. `run-coderabbit-review.sh`: indent embedded Python
-⬜ CodeRabbit: переиндентить heredoc Python (2 spaces per level: `with` / `for` / `try` / `except` / conditionals); поведение и output не менять.
-
 ### M49. CLI scripts: обязательные значения `--base` / `--dir` / `--out`
 ⬜ CodeRabbit: в `run-coderabbit-review.sh` и `collect-release-delta.sh` требовать non-option value после флага; иначе явная ошибка (не `set -u` / не съедать следующий `--flag`).
 
@@ -77,6 +74,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H8 FLOWS library auth callback for `UserAccountId` | CR dismissed: host authorizes `UserAccountId` (см. **Принято**); library session proof / callback не возвращаем |
 | ✅ DbUp `Layer` = dependency stage | docs: format `<FolderNumber>_<Layer>_<Entity>` confirmed; shared `Layer` for independent scripts; bump only for deps; CR max-file+1 / gap-fill-as-sequence dismissed |
 | ✅ #M47 bootstrap `1_00_Predeployment.sql` casing | canon name + PG/MySQL bootstrap files; docs/skill aligned |
+| ✅ #M48 run-coderabbit-review.sh Python indent | heredoc: 2 spaces per level |
 
 ---
 
@@ -89,6 +87,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-1. **M48–M49:** CR script indent / CLI flag values.
+1. **M49:** CLI flag values (`--base` / `--dir` / `--out`).
 2. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
 3. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.
