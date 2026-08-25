@@ -20,9 +20,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Высокий (логика / auth model)
 
-### H4. `102` / journal: insert only if this script created the table
-⬜ CodeRabbit: в примере `ExternalLoginStates` — journal `2_01_…` только если **этот** скрипт создал таблицу; не по одному `OBJECT_ID` (таблица могла появиться иначе). Create + journal атомарно.
-
 ### H5. `run-coderabbit-review.sh`: PIPESTATUS / `tee`
 ⬜ CodeRabbit: RC должен учитывать failure и `coderabbit`, и `tee` (лог не записан → fail).
 
@@ -73,6 +70,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ DbUp / Scripts docs (repo) | skill + `Infrastructure/Scripts/README` + rule `102`; `1_00_Predeployment.sql` |
 | ✅ #H2 Scripts README MERGE SystemId scope | CR dismissed: README upsert — **пример** lookup/MERGE, не open work |
 | ✅ #H3 release-plan targeted reads before state change | skill: required read current plan/TO-DO before merge/close/finalize; no routine scan without state change |
+| ✅ #H4 journal only if this script created table | dismissed: `ExternalLoginStates` не появляется иначе, чем из этого PreDeployment-потока; `OBJECT_ID` в примере ок |
 
 ---
 
@@ -86,7 +84,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ## Приоритет фиксов
 
 1. **BREAKING.md § From 2.1.1 to 2.2.0** — consumer migration (CR major; код/FLOWS в дельте есть).
-2. **H4 / H7:** journal only on create + atomic PreDeployment example.
+2. **H7:** atomic PreDeployment example (create + journal).
 3. **H5 / H6:** CR script PIPESTATUS / collect-delta SIGPIPE.
 4. **M45–M46:** FLOWS anchors / triage `gh-wrapper`.
 
