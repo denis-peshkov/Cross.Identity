@@ -24,9 +24,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Средний (противоречия / баги контрактов)
 
-### M49. CLI scripts: обязательные значения `--base` / `--dir` / `--out`
-⬜ CodeRabbit: в `run-coderabbit-review.sh` и `collect-release-delta.sh` требовать non-option value после флага; иначе явная ошибка (не `set -u` / не съедать следующий `--flag`).
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -75,6 +72,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ DbUp `Layer` = dependency stage | docs: format `<FolderNumber>_<Layer>_<Entity>` confirmed; shared `Layer` for independent scripts; bump only for deps; CR max-file+1 / gap-fill-as-sequence dismissed |
 | ✅ #M47 bootstrap `1_00_Predeployment.sql` casing | canon name + PG/MySQL bootstrap files; docs/skill aligned |
 | ✅ #M48 run-coderabbit-review.sh Python indent | heredoc: 2 spaces per level |
+| ✅ #M49 CLI scripts require flag values | `--base`/`--dir`/`--out`/`--version`: non-option value or explicit error |
 
 ---
 
@@ -87,6 +85,5 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-1. **M49:** CLI flag values (`--base` / `--dir` / `--out`).
-2. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
-3. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.
+1. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
+2. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.

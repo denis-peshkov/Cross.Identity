@@ -17,13 +17,34 @@ LIGHT=0
 UNCOMMITTED=0
 OUT=""
 
+require_value() {
+  local flag="$1"
+  local value="${2-}"
+  if [[ -z "$value" || "$value" == -* ]]; then
+    echo "error: $flag requires a non-option value" >&2
+    exit 1
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --base) BASE="$2"; shift 2 ;;
-    --dir) DIR="$2"; shift 2 ;;
+    --base)
+      require_value "$1" "${2-}"
+      BASE="$2"
+      shift 2
+      ;;
+    --dir)
+      require_value "$1" "${2-}"
+      DIR="$2"
+      shift 2
+      ;;
     --light) LIGHT=1; shift ;;
     --uncommitted) UNCOMMITTED=1; shift ;;
-    --out) OUT="$2"; shift 2 ;;
+    --out)
+      require_value "$1" "${2-}"
+      OUT="$2"
+      shift 2
+      ;;
     -h|--help)
       sed -n '2,7p' "$0"
       exit 0

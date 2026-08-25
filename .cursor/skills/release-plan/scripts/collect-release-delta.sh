@@ -12,11 +12,32 @@ BASE="origin/master"
 VERSION=""
 OUT=""
 
+require_value() {
+  local flag="$1"
+  local value="${2-}"
+  if [[ -z "$value" || "$value" == -* ]]; then
+    echo "error: $flag requires a non-option value" >&2
+    exit 1
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --base) BASE="$2"; shift 2 ;;
-    --version) VERSION="$2"; shift 2 ;;
-    --out) OUT="$2"; shift 2 ;;
+    --base)
+      require_value "$1" "${2-}"
+      BASE="$2"
+      shift 2
+      ;;
+    --version)
+      require_value "$1" "${2-}"
+      VERSION="$2"
+      shift 2
+      ;;
+    --out)
+      require_value "$1" "${2-}"
+      OUT="$2"
+      shift 2
+      ;;
     -h|--help)
       sed -n '2,6p' "$0"
       exit 0
