@@ -180,7 +180,7 @@ On `pull_request` opened/synchronize CI posts a **wshm-style** comment:
 
 - Script: `.cursor/triage/post-pr-triage.mjs`
 - Template: `.cursor/triage/templates/pr-automated-triage-comment.md`
-- Marker: `<!-- cross-identity-triage -->` (update on push, no duplication)
+- Marker: `<!-- triage -->` (update on push, no duplication; legacy `<!-- cross-identity-triage -->` still matched)
 - Draft PR — skip
 
 For a **single-PR automated comment** (same as CI), prefer:

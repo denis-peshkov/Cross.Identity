@@ -3,6 +3,13 @@
 /// <summary>
 /// Request metadata supplied by the host (Web API), carried through flows and service APIs.
 /// </summary>
+/// <param name="IpAddress">
+/// Client IP from the host trusted pipeline (for example after <c>ForwardedHeaders</c>), not from the request body.
+/// </param>
+/// <param name="UserAgent">Request <c>User-Agent</c> as observed by the host.</param>
+/// <param name="DeviceFingerprint">
+/// Host-computed device fingerprint (cookie, validated SDK id, server session) — not a client-forged body field.
+/// </param>
 /// <remarks>
 /// <para>
 /// Cross.Identity is a library: it does not read <c>HttpContext</c>. The <b>host</b> builds

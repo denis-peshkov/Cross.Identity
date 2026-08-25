@@ -15,7 +15,6 @@ internal sealed class ExternalLoginGetAllStepFactory : IStepFactory
             Kind                 = Kind,
             ExternalLoginService = externalLoginService,
             UserAccountIdKey            = cfg.Str("userAccountIdKey"),
-            RefreshTokenKey      = cfg.Str("refreshTokenKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }

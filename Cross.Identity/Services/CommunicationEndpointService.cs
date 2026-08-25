@@ -4,31 +4,23 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
 {
     private readonly IdentityContext _context;
     private readonly IAuditService _audit;
-    private readonly IJwtTokenService _jwtTokenService;
     private readonly AuthenticationOptions _options;
 
     public CommunicationEndpointService(
         IdentityContext context,
         IAuditService audit,
-        IJwtTokenService jwtTokenService,
         IOptions<AuthenticationOptions> options)
     {
         _context = context;
         _audit = audit;
-        _jwtTokenService = jwtTokenService;
         _options = options.Value;
     }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(
         Guid userAccountId,
-        string refreshToken,
         CancellationToken cancellationToken = default)
     {
-        await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
-            .ConfigureAwait(false);
-
         var rows = await _context.UsersCommunicationEndpoints
             .AsNoTracking()
             .Where(x => x.UserAccountId == userAccountId)
@@ -109,14 +101,9 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     public async Task SetPreferredAsync(
         Guid userAccountId,
         Guid endpointId,
-        string refreshToken,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default)
     {
-        await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
-            .ConfigureAwait(false);
-
         var entity = await _context.UsersCommunicationEndpoints
             .FirstOrDefaultAsync(x => x.Id == endpointId && x.UserAccountId == userAccountId, cancellationToken)
             .ConfigureAwait(false)

@@ -17,8 +17,6 @@ internal sealed class ExternalLoginInitiateStep : IStep
 
     public string? UserAccountIdKey { get; init; }
 
-    public string? RefreshTokenKey { get; init; }
-
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     /// <inheritdoc/>
@@ -34,15 +32,10 @@ internal sealed class ExternalLoginInitiateStep : IStep
             ? null
             : ctx.Get<Guid?>(BagKey.Qualify(Kind, UserAccountIdKey));
 
-        var refreshToken = string.IsNullOrWhiteSpace(RefreshTokenKey)
-            ? null
-            : ctx.Get<string?>(BagKey.Qualify(Kind, RefreshTokenKey));
-
         var url = await ExternalLoginService.InitiateAsync(
             provider,
             returnUrl,
             linkUserAccountId,
-            refreshToken,
             cancellationToken).ConfigureAwait(false);
         ctx.Set(BagKey.Qualify(Kind, "Url"), url);
 

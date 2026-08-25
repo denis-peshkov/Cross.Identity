@@ -19,7 +19,7 @@ GitHub issue triage for the **Cross.Identity** repository (NuGet identity/auth l
 | >10 open issues without triage | Suggest audit |
 | Issue stale >30 days | Include in Stale table |
 
-Related skills: `pr-triage`, `cross-identity-triage`, `repo-recap` (if added).
+Related skills: `pr-triage`, `triage`, `repo-recap` (if added).
 
 ## Prerequisites
 

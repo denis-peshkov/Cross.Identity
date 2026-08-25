@@ -252,3 +252,9 @@ pub/
 /cross-identity-deploy-key
 /cross-identity-deploy-key.pub
 /rest-client/http-client.private.env.json
+
+# Release-plan skill delta cache
+.cursor/skills/release-plan/.cache/
+
+# CodeRabbit skill review logs
+.cursor/skills/coderabbit/.cache/

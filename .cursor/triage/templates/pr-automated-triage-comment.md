@@ -30,7 +30,7 @@ Agent fills JSON fields; `format-pr-comment.mjs` renders this layout.
 
 ---
 *Triaged automatically by [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
-<!-- cross-identity-triage -->
+<!-- triage -->
 ```
 
 ## JSON schema (agent output)

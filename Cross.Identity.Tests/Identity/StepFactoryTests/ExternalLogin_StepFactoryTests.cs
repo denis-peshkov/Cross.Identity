@@ -30,7 +30,6 @@ public class ExternalLogin_StepFactoryTests
               "providerKey": "Provider",
               "returnUrlKey": "ReturnUrl",
               "userAccountIdKey": "UserAccountId",
-              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -42,7 +41,6 @@ public class ExternalLogin_StepFactoryTests
         step.ProviderKey.Should().Be("Provider");
         step.ReturnUrlKey.Should().Be("ReturnUrl");
         step.UserAccountIdKey.Should().Be("UserAccountId");
-        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
@@ -87,7 +85,6 @@ public class ExternalLogin_StepFactoryTests
               "kind": "externalLoginUnlink",
               "providerKey": "Provider",
               "userAccountIdKey": "UserAccountId",
-              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -98,7 +95,6 @@ public class ExternalLogin_StepFactoryTests
         step.Kind.Should().Be("externalLoginUnlink");
         step.ProviderKey.Should().Be("Provider");
         step.UserAccountIdKey.Should().Be("UserAccountId");
-        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
@@ -112,7 +108,6 @@ public class ExternalLogin_StepFactoryTests
             {
               "kind": "externalLoginGetAll",
               "userAccountIdKey": "UserAccountId",
-              "refreshTokenKey": "RefreshToken",
               "next": "done"
             }
             """);
@@ -122,7 +117,6 @@ public class ExternalLogin_StepFactoryTests
 
         step.Kind.Should().Be("externalLoginGetAll");
         step.UserAccountIdKey.Should().Be("UserAccountId");
-        step.RefreshTokenKey.Should().Be("RefreshToken");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }

@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Shared defaults + shared folder path_instructions (globs, not product names).
+#
+# =============================================================================
+# How to trigger CodeRabbit on a GitHub PR (bot — not the local CLI)
+# =============================================================================
+# Comment on the PR:
+#
+#   @coderabbitai full review
+#
+# Full pass over the entire PR from scratch (not incremental).
+#
+# | Command                      | What it does              |
+# |------------------------------|---------------------------|
+# | @coderabbitai full review    | full review               |
+# | @coderabbitai review         | only new changes since last review |
+#
+# Ack status: "Full review triggered" → "Full review finished".
+# Docs: https://docs.coderabbit.ai/reference/review-commands
+#
+# Local CLI (`coderabbit` / .cursor/skills/coderabbit) is a separate run and does
+# not talk to the GitHub bot.
+#
+# auto_pause_after_reviewed_commits: 1 — after one auto review on this PR,
+# further pushes do not auto-review until you comment @coderabbitai review
+# or @coderabbitai full review (saves rate-limit quota).
+# =============================================================================
+language: en-US
+reviews:
+  profile: chill
+  path_instructions:
+    - path: "**/*"
+      instructions: |
+        Before posting a finding, check docs/TO-DO.md (open backlog). If the same
+        theme is already listed there (by meaning, not exact wording), do not raise
+        it again — treat it as tracked outside this PR. Prefer new issues only.
+    - path: "**/*.cs"
+      instructions: |
+        Prefer security and auth/JWT findings. Stock user-scoped APIs take
+        host-authorized UserAccountId and do not require RefreshToken as library
+        session proof — do not flag that as a regression.
+        Require XML docs only on public host-facing contracts (public interfaces,
+        DTOs, options, HostSuppliedClientContext). Do not require docstrings/XML
+        on internal steps, factories, or private helpers.
+    - path: "**/*Tests*/**"
+      instructions: |
+        Do not require docstrings or XML documentation on tests. Prefer asserting
+        behavior and contracts over style/doc nits.
+    - path: "Infrastructure/Scripts/**"
+      instructions: |
+        Follow DbUp conventions: 1_PreDeployment and 5_PostDeployment are
+        append-only; prefer idempotent deltas. New tables after init need both
+        2_Initial (greenfield) and a new 1_PreDeployment script, plus journaling
+        the matching 2_* script name in __MigrationsHistory so 2_Initial does not
+        recreate an existing table. Prefer MERGE upsert for 3_SeedLookup.
+        WHEN NOT MATCHED BY SOURCE THEN DELETE is intentional (VALUES = full
+        managed lookup set / scoped slice); do not recommend removing DELETE or
+        treating orphan cleanup as a defect.
+    - path: ".cursor/**"
+      instructions: |
+        Skills and Cursor rules may use Russian section names / bilingual docs by design.
+        Do not escalate RU vs EN, trailing whitespace, or formatting nits to Major.
+        Prefer actionable correctness of agent workflows over prose translation.
+    - path: "docs/RELEASE-PLAN*.md"
+      instructions: |
+        Version plans and TO-DO may be Russian by repo convention. Do not treat RU body or
+        formatting as Major. Focus on correctness of open/closed items vs the release delta.
+    - path: "docs/TO-DO.md"
+      instructions: |
+        This file is the open cross-release backlog. Do not propose re-adding items
+        that are already listed. Do not treat RU prose or EN-translation requests as
+        blocking; language choice is tracked separately if at all. Prefer clarity of
+        existing open C/H/M/L items over new duplicate findings.
+  auto_review:
+    auto_pause_after_reviewed_commits: 1
+  pre_merge_checks:
+    docstrings:
+      mode: "warning"
+      threshold: 80
+    title:
+      mode: "warning"
+      requirements: >
+        Prefer a concise descriptive title. Prefix with BREAKING: when the PR ships a breaking
+        consumer change that belongs in docs/BREAKING.md (newest-first section).

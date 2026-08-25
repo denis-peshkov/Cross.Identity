@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Agent, CursorAgentError } from '@cursor/sdk';
-import { formatPrTriageComment, parseAgentJson } from './format-pr-comment.mjs';
+import { formatPrTriageComment, parseAgentJson, TRIAGE_MARKER, TRIAGE_MARKER_LEGACY } from './format-pr-comment.mjs';
 import { applyPrTriageLabels } from './apply-pr-labels.mjs';
 import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 
@@ -225,7 +225,7 @@ function findExistingCommentId(repo, issueNumber) {
         'api',
         `repos/${repo}/issues/${issueNumber}/comments`,
         '--jq',
-        '.[] | select(.body | contains("cross-identity-triage")) | .id',
+        `.[] | select(.body | (contains(${JSON.stringify(TRIAGE_MARKER)}) or contains(${JSON.stringify(TRIAGE_MARKER_LEGACY)}))) | .id`,
       ],
       { cwd: ROOT, encoding: 'utf8' }
     ).trim();

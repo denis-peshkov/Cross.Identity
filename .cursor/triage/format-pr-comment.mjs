@@ -2,7 +2,9 @@
  * Renders wshm-style automated PR triage comment from agent JSON.
  */
 
-export const TRIAGE_MARKER = '<!-- cross-identity-triage -->';
+export const TRIAGE_MARKER = '<!-- triage -->';
+/** Legacy marker still matched when updating existing PR comments. */
+export const TRIAGE_MARKER_LEGACY = '<!-- cross-identity-triage -->';
 
 const DEFAULT_REPO = 'denis-peshkov/Cross.Identity';
 
