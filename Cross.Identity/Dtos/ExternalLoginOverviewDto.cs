@@ -34,6 +34,11 @@ public sealed class ExternalLoginProviderItemDto
     /// <summary>Email reported by the provider for the linked account, if known.</summary>
     public string? ProviderEmail { get; init; }
 
-    /// <summary>Avatar URL from the provider profile, if known.</summary>
+    /// <summary>
+    /// Avatar URL from the provider profile, if known.
+    /// When no avatar URL is stored, may contain the provider profile URL
+    /// (same fallback as <c>ExternalLoginService</c> overview mapping:
+    /// <c>AvatarUrl ?? ProfileUrl</c>).
+    /// </summary>
     public string? AvatarUrl { get; init; }
 }

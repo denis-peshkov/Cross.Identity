@@ -54,7 +54,7 @@ Downstream **coderabbit** triage still writes only into the **current** version 
 
 Empty severity sections stay as the heading + `---`.
 
-**Нумерация open items:** сквозная **внутри группы**:
+**Нумерация open items** — **общий** namespace с [`docs/TO-DO.md`](../../../docs/TO-DO.md) (не локальный счётчик релиза):
 
 | Префикс | Секция |
 |---------|--------|
@@ -62,6 +62,10 @@ Empty severity sections stay as the heading + `---`.
 | `H` | Высокий |
 | `M` | Средний |
 | `L` | Низкий |
+
+**Источник max:** строка **`Id high-water`** в шапке `TO-DO.md` (числа в файле — актуальные).
+Новый пункт (план или TO-DO): id = **high-water группы + 1** → сразу обновить high-water в `TO-DO.md`.  
+Не брать max только по открытым пунктам (закрытые id исчезают из секций — иначе коллизии через релизы). Исторические id не перенумеровывать / не переиспользовать.
 
 Источник finding’а **не хранить отдельной секцией** — сразу в C/H/M/L open **этого** плана (если относится к дельте) или в `TO-DO.md` (если вне дельты).
 
@@ -75,7 +79,8 @@ Empty severity sections stay as the heading + `---`.
 | Содержимое | Open backlog вне дельты version plan; планы = только дельта релиза |
 | Секции | Всегда четыре: Критично / Высокий / Средний / Низкий; пустые = заголовок + `---` |
 | Формат | `### M13. Title` + описание **без** статус-маркеров (`⬜`/`✅`/…) |
-| Id | Сквозная нумерация **внутри** группы `C`/`H`/`M`/`L`; следующий свободный; исторические id не перенумеровывать |
+| Id | Общий namespace с version plan. **`Id high-water`** в шапке файла = max **выданный** номер по `C`/`H`/`M`/`L`. Новый id = high-water+1, затем поднять строку. Не gap-fill / не переиспользовать закрытые |
+| High-water | Обновлять при каждом allocate; при **finalize** — `max(high-water, все id этого релиза: open leftovers + «Закрыто» вида ✅ #H9 …)` |
 | Источник | leftover plan / audit вне дельты / … — сразу в C/H/M/L |
 | Harvest | Open с предыдущего плана, не вошедшее в дельту → добавить сюда (если ещё нет) |
 | Close | См. **Close from TO-DO** — сначала «Закрыто» текущего плана, потом удалить из TO-DO |
@@ -134,16 +139,17 @@ Id’шный backlog, который отклонили → всё равно *
 Когда пользователь просит **закрыть / финализировать / ship** `docs/RELEASE-PLAN-X.Y.Z.md` (релиз вышел или план этой версии больше не ведётся):
 
 1. **Собрать весь ⬜ open** из секций Критично / Высокий / Средний / Низкий этого плана.
-2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge по id; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).
+2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge **по id** — один id = одна задача; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).
    Не класть их в «Закрыто» — это не done/dismiss, а leftover.
-3. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
+3. **Обновить `Id high-water`** в шапке `TO-DO.md`: для каждой группы `max(текущий high-water, все id релиза)` — leftovers + строки «Закрыто» вида `✅ #H9 …` / `✅ #M49 …` / … (даже если leftover уже учтён при allocate).
+4. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
    - header: версия **published / closed** (+ release URL если есть);
    - C/H/M/L — **пустые** (только заголовок + `---`);
    - **Принято** / **Закрыто** / **Что в библиотеке уже нормально** — сохранить содержимое этого релиза;
    - **Приоритет фиксов** — пустая отсылка к `TO-DO.md` (как в finalized template).
-4. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
-5. UTF-8 BOM на изменённых docs.
-6. В ответе пользователю: список **перенесённых в TO-DO** id и подтверждение, что план = finalized shape.
+5. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
+6. UTF-8 BOM на изменённых docs.
+7. В ответе пользователю: список **перенесённых в TO-DO** id, новый high-water, подтверждение что план = finalized shape.
 
 **Запрещено:** оставить ⬜ open в «закрытом» плане; удалить open без переноса в TO-DO; заново сканировать все historical plans без нужды.
 
@@ -182,5 +188,6 @@ Cache lands under `.cursor/skills/release-plan/.cache/` (script prints the path)
 - [ ] Every removal from `TO-DO.md` has a matching `✅ #Id …` row in **current** plan «Закрыто»
 - [ ] «Закрыто» `#` looks like `✅ #M13 …` / `✅ #H3 …` (or legacy `✅ #34 …`)
 - [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
-- [ ] Finalize: all former open items are in `TO-DO.md`; plan matches `RELEASE-PLAN-FINALIZED` (empty C/H/M/L + priority → TO-DO)
+- [ ] Finalize: leftovers in `TO-DO.md`; **`Id high-water`** ≥ все id релиза; plan = `RELEASE-PLAN-FINALIZED`
+- [ ] New C/H/M/L ids used **high-water + 1** (not max of open-only); high-water bumped in `TO-DO.md`
 - [ ] UTF-8 BOM on written plan / TO-DO if new

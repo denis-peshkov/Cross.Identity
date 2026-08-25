@@ -114,7 +114,7 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
    Format (match plan legend): `### M43. Title` + `⬜` description.
 
    Rules:
-   - Merge by meaning; next free id in that group across **current plan open + «Закрыто»** and `TO-DO.md` (`M43`, `L10`, …)
+   - Merge by meaning; next id = **`Id high-water` in `docs/TO-DO.md` + 1** for that group (`C`/`H`/`M`/`L`), then bump high-water in `TO-DO.md` (shared namespace with plan — see `release-plan` skill). Do **not** allocate from max(open-only)
    - Skip duplicates already open in the current plan or already in any plan «Закрыто»
    - Skip duplicates already open in `TO-DO.md` (same meaning) — do **not** copy them into the plan open C/H/M/L, do **not** list them under **Приоритет фиксов**, and do **not** treat them as release work unless the user asks
    - In the chat reply: may briefly note «skipped (already in TO-DO: H1, M44)» — that is enough; no plan edits for those
@@ -125,10 +125,11 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 5. **Close / dismiss plan items (same turn as the user asks)**  
    If the user closes, rejects, or dismisses a C/H/M/L item from the current plan (won’t-fix, «только пример», duplicate, fixed, …):
 
-   1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто`.
-   2. **Then** remove the item from the open severity section.
+   1. **First** append `| ✅ #H2 Short title | reason |` under that plan’s `## Закрыто` (id prefix matches severity: Minor→`#M…`, not `#L…`).
+   2. **Then** remove the item from the open severity section (if it was open).
    3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too (same **Close from TO-DO** / Re-check rules in `release-plan`).
    4. **Never** drop an open item without the «Закрыто» row.
+   5. **Fix-in-same-turn:** still allocate the correct next `C/H/M/L` id from TO-DO high-water, write `✅ #M50 …` (etc.) into «Закрыто» — do **not** skip the plan row or downgrade Minor→`L`.
 
 ## Limits
 

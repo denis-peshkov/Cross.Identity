@@ -68,6 +68,8 @@
 | ✅ #M49 CLI scripts require flag values | `--base`/`--dir`/`--out`/`--version`: non-option value or explicit error |
 | ✅ #L11 `RELEASE-PLAN-2.0.0` BREAKING.md workflow row | закрыто: newest-first (**сверху** + TOC), не append в конец |
 | ✅ #H9 SeedLookup MERGE DELETE absent-from-source | CR dismissed: lookup seed **намеренно** sync-to-VALUES (DELETE лишнее); мусор в lookup не храним |
+| ✅ #M50 `AvatarUrl` XML ProfileUrl fallback | Minor: `ExternalLoginProviderItemDto` docs = `AvatarUrl ?? ProfileUrl` as in `ExternalLoginService` |
+| ✅ #H10 TO-DO Id high-water (finalize merge) | CR Major: shared C/H/M/L namespace via `Id high-water` in `TO-DO.md`; allocate = HW+1; finalize bumps max(release ids); merge по id (не reallocate) |
 
 ---
 
