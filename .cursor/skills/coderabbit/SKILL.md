@@ -96,9 +96,10 @@ Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
    Rules:
    - Merge by meaning; next free id in that group across **current plan open + «Закрыто»** and `TO-DO.md` (`M43`, `L10`, …)
    - Skip duplicates already open in the current plan or already in any plan «Закрыто»
-   - Skip duplicates already open in `TO-DO.md` (same meaning) — do not copy them into the plan unless the user asks
+   - Skip duplicates already open in `TO-DO.md` (same meaning) — do **not** copy them into the plan open C/H/M/L, do **not** list them under **Приоритет фиксов**, and do **not** treat them as release work unless the user asks
+   - In the chat reply: may briefly note «skipped (already in TO-DO: H1, M44)» — that is enough; no plan edits for those
    - Keep empty severity sections as heading + `---`; UTF-8 BOM
-   - Update **Приоритет фиксов** of the current plan if new open work appears
+   - Update **Приоритет фиксов** of the current plan only for **new open** items added to that plan
    - In the chat reply: list what was **added** / **skipped** (and note if `release-plan` was run to create the file)
 
 5. **Close / dismiss plan items (same turn as the user asks)**  

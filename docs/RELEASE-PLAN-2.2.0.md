@@ -84,4 +84,3 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ## Приоритет фиксов
 
 1. **L10:** triage skill — убрать documented `ru` (или won’t-fix, если bilingual нужен).
-2. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.
