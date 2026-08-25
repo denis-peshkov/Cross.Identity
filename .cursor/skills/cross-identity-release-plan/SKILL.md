@@ -2,11 +2,10 @@
 name: cross-identity-release-plan
 description: >-
   Builds or refreshes docs/RELEASE-PLAN-X.Y.Z.md for Cross.Identity from the
-  current branch vs master (or another base), using the same severity sections
-  as RELEASE-PLAN-2.0.0 / 2.1.1. On re-check, moves closed items out of severity
-  lists into «Закрыто» as `✅ #34 Session IP binding config` (numbers kept). Use when
-  drafting release notes, release plans, or updating RELEASE-PLAN-*.md for an
-  upcoming NuGet version.
+  current branch vs master (delta only). Moves leftover open items from the
+  previous plan into docs/TO-DO.md (incremental) and removes TO-DO entries when
+  fixed in a version as `✅ M13 Short title` (group prefix C/H/M/L/CR). Use when
+  drafting release notes, release plans, or updating RELEASE-PLAN-*.md / TO-DO.md.
 ---
 
 # Cross.Identity — release plan from branch delta
@@ -15,50 +14,111 @@ description: >-
 
 - User asks for **release notes / RELEASE-PLAN** for the current branch vs `master`
 - Update `docs/RELEASE-PLAN-X.Y.Z.md` for a planned or shipping version
-- Split or refresh versioned plans after hardening / CR / feature work
+- Sync open backlog into [`docs/TO-DO.md`](../../../docs/TO-DO.md)
 
 **Do not** use for the historical merge checklist `docs/RELEASE-PLAN-dev-to-master.md` (different format; see `docs/scripts/release-plan-summary.mjs`).
 
-## Canonical shape
+## Two files
+
+| File | Contents |
+|------|----------|
+| `docs/RELEASE-PLAN-X.Y.Z.md` | **Only** this release’s delta vs base (`master`) |
+| `docs/TO-DO.md` | Cross-version **open** backlog; incremental |
+
+## Canonical shape (version plan)
 
 Match **section order and headings** of:
 
-- [`docs/RELEASE-PLAN-2.0.0.md`](../../../docs/RELEASE-PLAN-2.0.0.md) (filled «Принято» / «Закрыто»)
-- [`docs/RELEASE-PLAN-2.1.1.md`](../../../docs/RELEASE-PLAN-2.1.1.md) (slim closed release)
+- [`docs/RELEASE-PLAN-2.0.0.md`](../../../docs/RELEASE-PLAN-2.0.0.md)
+- [`docs/RELEASE-PLAN-2.1.1.md`](../../../docs/RELEASE-PLAN-2.1.1.md)
+- [`docs/RELEASE-PLAN-2.2.0.md`](../../../docs/RELEASE-PLAN-2.2.0.md) (delta-only example)
 
 Template: [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md).
 
 **Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-**Критично / Высокий / Средний / Низкий** — только открытые (⬜).  
-**Закрыто** — только ✅; в столбце `#` формат как в 2.0.0: **`✅ #34 Session IP binding config`** (`✅` + `#N` + краткий title). Без номера: **`✅ краткий title`**. Номера сохраняются.
+**Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.  
+**Закрыто** — столбец `#`:  
+- из `TO-DO` / severity: **`✅ M13 …`**, **`✅ CRM1 …`**, **`✅ CRL2 …`**
+- legacy (как 2.0): **`✅ #34 Session IP binding config`**
+Без id: **`✅ Short title`**.
 
-Empty severity sections stay as the heading + `---` (like 2.1.1).
+Empty severity sections stay as the heading + `---` (like 2.1.1 / 2.2.0).
 
-## Re-check (закрытие пунктов)
+**Нумерация в `TO-DO.md` / severity open items:** сквозная **внутри группы** с префиксом:
 
-При **перепроверке** плана (повторный прогон скилла, audit, CR, ручной review):
+| Префикс | Секция |
+|---------|--------|
+| `C` | Критично |
+| `H` | Высокий |
+| `M` | Средний |
+| `L` | Низкий (техдолг, не CR) |
 
-1. Если пункт **закрывается** (исправлен в коде / verified) — **убрать** его из секции критичности (`## Критично` / `## Высокий` / `## Средний` / `## Низкий`, включая вложенные списки вроде CodeRabbit minor).
-2. **Добавить** строку в `## Закрыто (проверено в коде)`:
+**CodeRabbit → Out** (подгруппы в `## CodeRabbit`; id = **`CR` + наш уровень**, не имя CR-severity):
+
+| CR | Out | Id prefix |
+|----|-----|-----------|
+| Critical | **C** | `CRC` |
+| Major | **H** | `CRH` |
+| Minor | **M** | `CRM` |
+| Trivial | **L** | `CRL` |
+| Info | **L** | `CRL` (общий ряд с Trivial) |
+
+Заголовок: `### CRM1. Title` / `### CRL1. Title`. Закрытие: **`✅ CRM1 …`** / **`✅ CRL2 …`**. Исторические `M13` / `L1` не перенумеровывать.
+
+Подгруппы CodeRabbit (**Critical → C** / **Major → H** / **Minor → M** / **Trivial → L** / **Info → L**) **всегда** присутствуют; пустые — `---`.
+
+## `docs/TO-DO.md` (инкрементально)
+
+Структура:
+
+```markdown
+## Критично (безопасность)
+---
+## Высокий (логика / auth model)
+---
+## Средний …
+## Низкий …
+## CodeRabbit
+### Critical → C
+---
+### Major → H
+---
+### Minor → M
+…
+### Trivial → L
+…
+### Info → L
+---
+```
+
+Пустые уровни / подгруппы **не удалять**.
+
+1. **Перед/при** сборке `RELEASE-PLAN-X.Y.Z.md` прочитай предыдущий план и текущий `TO-DO.md`.
+2. Открытое с предыдущего плана, **не** вошедшее в дельту → **добавь** с нужным префиксом (`M…` / `L…` / `CRM…` / `CRL…`); CR finding — в подгруппу по severity CR, id = `CR`+Out; merge по id.
+3. Пункт **закрыт** (`✅ M13 …` / `✅ CRM1 …`) → **удали** из `TO-DO.md` (секцию/подгруппу оставь пустой).
+4. В version plan содержимое `TO-DO` не копировать — только ссылка.
+5. «Принято» trade-off без open work сюда не класть.
+
+## Re-check (закрытие пунктов в version plan)
+
+1. Закрываемый пункт **убрать** из severity-секций этого `RELEASE-PLAN-X.Y.Z.md`.
+2. Добавить в `## Закрыто`:
 
 | # | Суть |
 |---|------|
-| ✅ #34 Session IP binding config | `Authentication:Jwt:SessionBindingCheckIp`; default `false` … |
+| ✅ M13 GetClaimValue half-validate docs | …детали… |
+| ✅ CRM1 FLOWS Register bag key | … |
+| ✅ CRL1 HostSuppliedClientContext XML | … |
 
-3. Столбец `#`: **`✅ #N Short title`** — номер **тот же**, что был у open-пункта; title — короткое имя (как `#34 Session IP binding config`). Без стабильного номера: `✅ Short title` (не выдумывать `#`).
-4. Столбец `Суть` — детали фикса / где проверено (не дублировать весь title).
-5. Пункт **не** дублировать: после переноса его нет в severity-секциях и нет повторной строки в «Закрыто».
-6. Обновить **Приоритет фиксов** — убрать закрытые номера из списка.
-7. **Принято** (trade-off без кода-фикса) — не в «Закрыто»; при отклонении CR как «не делаем» → «Принято», не severity.
+3. Id **сохранить** (`M13`, `CRM1`, `CRL1`, …); title короткий. CR-пункт → severity **Out** (CRM→Средний, CRL→Низкий).
+4. Обновить **Приоритет фиксов** плана (только work этой дельты).
+5. **Удалить** тот же пункт из `docs/TO-DO.md`, если он там был.
+6. **Принято** (trade-off) — не в «Закрыто».
 
 ## Workflow
 
-1. **Resolve version + base**
-   - Version: from user (`2.2.0`) or infer from branch / target file `docs/RELEASE-PLAN-X.Y.Z.md`
-   - Base: default `origin/master` (fallback `master`)
-   - Scope: **only** changes on this line vs base — do **not** copy closed items from older `RELEASE-PLAN-*.md` unless they are still open backlog for this version
-
-2. **Collect delta** (required)
+1. **Resolve version + base** — version from user/file; base default `origin/master`.
+2. **Collect delta** (required):
 
 ```bash
 bash .cursor/skills/cross-identity-release-plan/scripts/collect-release-delta.sh \
@@ -66,36 +126,26 @@ bash .cursor/skills/cross-identity-release-plan/scripts/collect-release-delta.sh
   --version 2.2.0
 ```
 
-Read the printed path (under `.cursor/skills/cross-identity-release-plan/.cache/`). Use it as the evidence pack; do not invent commits.
-
-3. **Classify each change** into exactly one bucket:
+3. **Sync `TO-DO.md`** — harvest open leftovers from previous plan; drop items closed in this delta / any version «Закрыто».
+4. **Write** `docs/RELEASE-PLAN-X.Y.Z.md` from template — **delta only** (UTF-8 **with BOM**).
+5. Classify **delta** changes:
 
 | Bucket | Put here |
 |--------|----------|
-| Критично | Auth/token/OAuth security holes still open |
-| Высокий | Auth-model / correctness bugs still open |
-| Средний | Contract contradictions / medium bugs still open |
-| Низкий | Tech debt, XML, style, docs hygiene still open |
-| Принято | Conscious trade-offs / host contracts decided for **this** release |
-| Закрыто | Shipped or ready-to-ship fixes/features **in this delta** |
-| Что в библиотеке уже нормально | Short bullets: invariants that remain true after the delta |
-| Приоритет фиксов | Ordered open work left for this version (or «пусто» if release is done) |
+| Критично / Высокий / Средний / Низкий | Open issues **introduced or still open in this delta** only |
+| Принято | Trade-offs decided **in this release** |
+| Закрыто | Fixes/features **in this delta** |
+| Что в библиотеке уже нормально | Short bullets **about this delta’s invariants** (not full library résumé) |
+| Приоритет фиксов | Remaining work **for this release only** (+ link to `TO-DO.md`) |
 
-4. **Write** `docs/RELEASE-PLAN-X.Y.Z.md` from the template (UTF-8 **with BOM**).
-
-5. **Scope hygiene**
-   - One version file = one release line. Cross-link other versions (`→ RELEASE-PLAN-2.2.0.md`) instead of duplicating their «Закрыто».
-   - Carry-over open items from a prior plan **only if** still open and in scope for this version.
-   - If `docs/BREAKING.md` must gain a **From A.B.C to X.Y.Z** section for consumer-facing breaks in the delta, say so in chat and offer to append (do not silently skip a needed BREAKING update when the user asked for release notes).
-
-6. **Language:** Russian body (same as 2.0.0 / 2.1.1); table «Суть» may mix RU/EN technical names.
+6. If `docs/BREAKING.md` needs **From A.B → X.Y.Z** for consumer breaks in the delta — say so / offer to append.
+7. **Language:** Russian body; table «Суть» may mix RU/EN names.
 
 ## Quality bar
 
-- [ ] Sections match template order
-- [ ] No foreign-release closed tables copied wholesale
-- [ ] Every «Закрыто» row maps to evidence in the delta cache (commit, file, or API)
-- [ ] Closed items removed from severity sections; `#` column looks like `✅ #34 Session IP binding config`
-- [ ] «Приоритет фиксов» does not list closed numbers
-- [ ] «Принято» states host vs library responsibility clearly when relevant
-- [ ] File has UTF-8 BOM
+- [ ] Version plan has **no** foreign-release backlog (that lives in `TO-DO.md`)
+- [ ] `TO-DO.md` updated incrementally; closed-in-version items **removed** from it
+- [ ] «Закрыто» `#` looks like `✅ M13 …` / `✅ CRM1 …` / `✅ CRL1 …` (or legacy `✅ #34 …`)
+- [ ] `TO-DO.md` keeps C/H/M/L + CodeRabbit subgroups; CR ids are `CR`+Out (`CRC`/`CRH`/`CRM`/`CRL`)
+- [ ] Every «Закрыто» row maps to delta evidence
+- [ ] UTF-8 BOM on written plan / TO-DO if new

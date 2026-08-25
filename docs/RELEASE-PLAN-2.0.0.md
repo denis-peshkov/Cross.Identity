@@ -42,7 +42,7 @@
 OTP: `Authentication:LockChannelAsEmail` → preferred verified → account email → account phone (unverified allowed for OTP confirm). Notify: тот же порядок, email/phone только verified. Stock JSON больше не задаёт `channel` на send/verify/reset steps. Selector field (Email vs Phone) **не** определяет канал доставки — только identity lookup.
 
 ### Публичные half-validate API (#13, #14)
-Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth. Misuse guidance / docs — post-2.0 ([`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)).
+Контракт для второго шага после crypto (JwtBearer / `ValidateAccessTokenAsync`), не для standalone auth. Misuse guidance / docs — post-2.0 ([`TO-DO.md`](TO-DO.md) M13 / M14).
 
 ### OTP plaintext в логах (#1) — принято
 `CodeService.SendAsync` логирует `TextBody` с подставленным кодом. Хост обязан не утекать логи / SIEM; в prod не включать verbose notifier logs.
@@ -152,7 +152,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #43 Bag keys `UserId` → `UserAccountId` | `userAccountIdKey`, step output, collectForm; `collectResult` → `user_account_id` |
 | ✅ #44 `ClientContext` → `HostSuppliedClientContext` | type/file/API param `hostSuppliedClientContext`; `Empty` / `Read(bag)`; `docs/BREAKING.md` |
 | ✅ #45 License JWT claim `user_id` | `License.UserId` / claim `"user_id"` — отдельно от identity `user_account_id` |
-| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param/type docs; record **properties** — см. 2.2.0 open |
+| ✅ #46 CR minor XML docs | `NotificationMessage`, entities, `Configure`, `HostSuppliedClientContext` param/type docs; record **properties** — см. [`TO-DO.md`](TO-DO.md) |
 | ✅ #47 `Sample.Api.http` | `UserAccountId` / `USER_ACCOUNT_ID` на identity flows (не license) |
 | ✅ EmailVerified rename (CR отклонён как open) | PreDeployment `1_07`–`1_09`; `docs/BREAKING.md` § `EmailConfirmed` → `EmailVerified` |
 | ✅ RefreshToken / VerifyToken `user_account_id` (CR stale) | intentional 2.0 output; см. #43 / `BREAKING.md` (не `user_id`) |
@@ -187,4 +187,4 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 
 ## Приоритет фиксов
 
-_(пусто — релиз 2.0.0 опубликован; открытый backlog → [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md); ConcurrencyStamp → [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md).)_
+_(пусто — релиз 2.0.0 опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md); ConcurrencyStamp → [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md).)_
