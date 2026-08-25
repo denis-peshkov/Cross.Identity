@@ -97,13 +97,13 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
   echo "## Focus: FLOWS.md (trimmed to ± context lines with auth keywords)"
   echo
   echo '```diff'
-  git diff "${BASE}...HEAD" -- 'Cross.Identity/FLOWS.md' | head -n 400
+  git diff "${BASE}...HEAD" -- 'Cross.Identity/FLOWS.md' | sed -n '1,800p'
   echo '```'
   echo
   echo "## Focus: BREAKING.md (head of diff)"
   echo
   echo '```diff'
-  git diff "${BASE}...HEAD" -- 'docs/BREAKING.md' | head -n 400
+  git diff "${BASE}...HEAD" -- 'docs/BREAKING.md' | sed -n '1,800p'
   echo '```'
   echo
   echo "## Focus: steps / factories / services (paths only)"
