@@ -71,6 +71,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #M48 run-coderabbit-review.sh Python indent | heredoc: 2 spaces per level |
 | ✅ #M49 CLI scripts require flag values | `--base`/`--dir`/`--out`/`--version`: non-option value or explicit error |
 | ✅ #L11 `RELEASE-PLAN-2.0.0` BREAKING.md workflow row | закрыто: newest-first (**сверху** + TOC), не append в конец |
+| ✅ #H9 SeedLookup MERGE DELETE absent-from-source | CR dismissed: lookup seed **намеренно** sync-to-VALUES (DELETE лишнее); мусор в lookup не храним |
 
 ---
 
