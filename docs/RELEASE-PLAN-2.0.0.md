@@ -145,7 +145,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 | ✅ #40 Выбор канала (2.0 scope, принято) | канал = preferred endpoint; selector — identity only; см. «Принято» |
 | ✅ #41 Messenger bot verify (2.0 scope, принято) | модель/endpoints задел; sender+bot post-2.0; см. «Принято» / #9 |
 | ✅ #35 `ChannelEnum.WhatsApp` (CR отклонён) | `WatsApp` typo removed; no obsolete alias; flow JSON без `channel`; см. «Принято» |
-| ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **append** (хронология), не «новые сверху» |
+| ✅ BREAKING.md ведётся | `docs/BREAKING.md`; новые секции **From X.Y.Z…** вставлять **сверху** (newest-first) + TOC; не append в конец |
 | ✅ #37 HostSuppliedClientContext в ExternalLogin form (CR отклонён) | collectForm Ip/UA/Fingerprint — host trusted pipeline; см. «Принято» |
 | ✅ #38 Audit PII в `auth.Audits` (CR отклонён) | Ip/UA/Fingerprint на issue/revoke — forensics by design; retention/access — хост; см. «Принято» |
 | ✅ #42 GetUserId → GetUserAccountId | operation `GetUserAccountId`, step `getUserAccountId`, `GetUserAccountIdByAsync`, `main.GetUserAccountId.json` |

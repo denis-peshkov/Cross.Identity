@@ -31,9 +31,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ### L10. triage skill: убрать опцию `ru`
 ⬜ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
 
-### L11. `RELEASE-PLAN-2.0.0`: BREAKING.md workflow row
-⬜ CodeRabbit: строку про append-chronologically в `docs/RELEASE-PLAN-2.0.0.md` привести к newest-first или явно пометить как historical.
-
 ---
 
 ## Принято (осознанный trade-off / контракт хоста)
@@ -73,6 +70,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #M47 bootstrap `1_00_Predeployment.sql` casing | canon name + PG/MySQL bootstrap files; docs/skill aligned |
 | ✅ #M48 run-coderabbit-review.sh Python indent | heredoc: 2 spaces per level |
 | ✅ #M49 CLI scripts require flag values | `--base`/`--dir`/`--out`/`--version`: non-option value or explicit error |
+| ✅ #L11 `RELEASE-PLAN-2.0.0` BREAKING.md workflow row | закрыто: newest-first (**сверху** + TOC), не append в конец |
 
 ---
 
@@ -85,5 +83,5 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-1. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
+1. **L10:** triage skill — убрать documented `ru` (или won’t-fix, если bilingual нужен).
 2. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.
