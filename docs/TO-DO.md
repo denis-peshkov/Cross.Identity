@@ -37,10 +37,8 @@
 ### H1. EF Core / DbUp: deployment state vs `1_PreDeployment`
 ⬜ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) эвристику «новый деплой» брать из **DbUp journal** / migration state, не из содержимого `1_PreDeployment`. Новые таблицы после релиза — paired `2_Initial` + idempotent `1_PreDeployment`, journal после predeployment.
 
-### H2. Scripts README: MERGE delete scope by `SystemId`
-⬜ CodeRabbit: в `Infrastructure/Scripts/README.md` — для SQL Server / PostgreSQL / MySQL upsert guidance: delete not-matched-by-source только для строк, чей `SystemId` есть в текущем `@Permissions` source set (не сносить permissions других систем).
-
 ---
+
 
 ## Средний (противоречия / баги контрактов)
 
@@ -103,7 +101,7 @@
 
 ## Приоритет (подсказка)
 
-1. **H1–H2:** DbUp journal heuristic / MERGE `SystemId` scope в Scripts README.
+1. **H1:** DbUp journal heuristic в EF Core guidance.
 2. **M13–M14:** half-validate API docs / misuse guidance.
 3. **M39:** idle double-audit.
 4. **M40–M44:** FLOWS / EndpointId / JsonHelpers / template / language.
