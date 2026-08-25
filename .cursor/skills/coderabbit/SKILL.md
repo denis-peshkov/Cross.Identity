@@ -28,6 +28,23 @@ description: >-
 | Missing plan | **first** run [`release-plan`](../release-plan/SKILL.md), then triage into the new file |
 | CLI | `coderabbit` from `PATH` (also `~/.local/bin`) |
 
+## GitHub PR bot (not the local CLI)
+
+Local `coderabbit review` ≠ GitHub bot. To re-run on a PR after auto-pause (see `.coderabbit.yaml` → `auto_pause_after_reviewed_commits`), comment on the PR:
+
+```text
+@coderabbitai full review
+```
+
+| Command | Effect |
+|---------|--------|
+| `@coderabbitai full review` | full review of the whole PR from scratch |
+| `@coderabbitai review` | only new changes since the last review |
+
+Ack: `Full review triggered` → `Full review finished`. Docs: [Review commands](https://docs.coderabbit.ai/reference/review-commands).
+
+Optional: `coderabbit pullrequest <n> --agent` reads an existing GitHub review into the agent (does not trigger a new bot run).
+
 ## Workflow
 
 0. **Ensure current RELEASE-PLAN (before or right after review, before triage)**  

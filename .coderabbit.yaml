@@ -1,6 +1,31 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
 # Selective XML docs on public API; keep docstring check but lower threshold.
+#
+# =============================================================================
+# How to trigger CodeRabbit on a GitHub PR (bot — not the local CLI)
+# =============================================================================
+# Comment on the PR:
+#
+#   @coderabbitai full review
+#
+# Full pass over the entire PR from scratch (not incremental).
+#
+# | Command                      | What it does              |
+# |------------------------------|---------------------------|
+# | @coderabbitai full review    | full review               |
+# | @coderabbitai review         | only new changes since last review |
+#
+# Ack status: "Full review triggered" → "Full review finished".
+# Docs: https://docs.coderabbit.ai/reference/review-commands
+#
+# Local CLI (`coderabbit` / .cursor/skills/coderabbit) is a separate run and does
+# not talk to the GitHub bot.
+#
+# auto_pause_after_reviewed_commits: 1 — after one auto review on this PR,
+# further pushes do not auto-review until you comment @coderabbitai review
+# or @coderabbitai full review (saves rate-limit quota).
+# =============================================================================
 language: en-US
 reviews:
   profile: chill
@@ -37,7 +62,7 @@ reviews:
         Backlog outside the current release delta. Do not treat RU prose or EN-translation
         requests as blocking; language choice is tracked separately if at all.
   auto_review:
-    auto_pause_after_reviewed_commits: 2
+    auto_pause_after_reviewed_commits: 1
   pre_merge_checks:
     docstrings:
       mode: "warning"
