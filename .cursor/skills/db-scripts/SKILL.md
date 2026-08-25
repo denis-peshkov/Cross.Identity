@@ -37,8 +37,10 @@ Reference copy notes: `Infrastructure/Scripts/README.md`. Runtime model: `Identi
 
 ## Workflow (existing databases)
 
-1. Find the **highest** `<Layer>_<nn>_…` number in the target layer for **each** provider folder.
-2. Add a **new** idempotent script with the **next** number (delta only) — per `102-backend-efcore`.
+1. Decide `Layer` (see `102-backend-efcore` naming):
+   - **`1_PreDeployment` / `5_PostDeployment`:** always **`max(existing Layer) + 1`** — **never** gap-fill.
+   - **`2_Initial` (etc.):** reuse highest stage if independent; otherwise **highest `Layer` + 1**.
+2. Add a **new** idempotent script `<FolderNumber>_<Layer>_<Entity…>.sql` (delta only) in **each** provider folder.
 3. Mirror intent in **all three** providers (syntax differs).
 4. Update `2_Initial` for **greenfield** so new installs match the final model (do not rewrite shipped append-only scripts).
 5. If the change is breaking for NuGet/host DBs, update `docs/BREAKING.md` (new **From …** section **at the top**, newest-first) with script names and order.

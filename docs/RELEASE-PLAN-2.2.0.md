@@ -24,9 +24,24 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Средний (противоречия / баги контрактов)
 
+### M47. `102` / Scripts: bootstrap filename casing
+⬜ CodeRabbit: выровнять casing bootstrap-имени (`1_00_Predeployment.sql`) во всех примерах / эвристиках (`102`, README, skill) — один канон.
+
+### M48. `run-coderabbit-review.sh`: indent embedded Python
+⬜ CodeRabbit: переиндентить heredoc Python (2 spaces per level: `with` / `for` / `try` / `except` / conditionals); поведение и output не менять.
+
+### M49. CLI scripts: обязательные значения `--base` / `--dir` / `--out`
+⬜ CodeRabbit: в `run-coderabbit-review.sh` и `collect-release-delta.sh` требовать non-option value после флага; иначе явная ошибка (не `set -u` / не съедать следующий `--flag`).
+
 ---
 
 ## Низкий (техдолг / несогласованности)
+
+### L10. triage skill: убрать опцию `ru`
+⬜ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
+
+### L11. `RELEASE-PLAN-2.0.0`: BREAKING.md workflow row
+⬜ CodeRabbit: строку про append-chronologically в `docs/RELEASE-PLAN-2.0.0.md` привести к newest-first или явно пометить как historical.
 
 ---
 
@@ -62,6 +77,8 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #M45 FLOWS.md User-scoped auth anchors | `### User-scoped authorization…` + links → `#user-scoped-authorization-host-responsibility` |
 | ✅ #M46 triage skill gh auth via wrapper | Phase 0: `.cursor/triage/gh-wrapper.sh auth status` |
 | ✅ BREAKING.md § From 2.1.1 to 2.2.0 | consumer migration: user-scoped APIs without RefreshToken session proof; host auth |
+| ✅ #H8 FLOWS library auth callback for `UserAccountId` | CR dismissed: host authorizes `UserAccountId` (см. **Принято**); library session proof / callback не возвращаем |
+| ✅ DbUp `Layer` = dependency stage | docs: format `<FolderNumber>_<Layer>_<Entity>` confirmed; shared `Layer` for independent scripts; bump only for deps; CR max-file+1 / gap-fill-as-sequence dismissed |
 
 ---
 
@@ -74,4 +91,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-_(пусто для CR/delta open — см. [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO)_
+1. **M47–M49:** bootstrap casing / CR script indent / CLI flag values.
+2. **L10–L11:** triage `ru` / historical BREAKING row в `2.0.0`.
+3. Вне дельты (уже в [`TO-DO.md`](TO-DO.md)): **H1** DbUp journal, **M44** EN plans/TO-DO.

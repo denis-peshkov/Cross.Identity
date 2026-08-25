@@ -102,17 +102,26 @@ On PostgreSQL / MySQL use the provider equivalent (`INSERT … ON CONFLICT` / `I
 
 - **Script file naming** — `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
 
+| Part | Meaning |
+|------|---------|
+| `FolderNumber` | DbUp folder id (`1` … `5` → `1_PreDeployment` … `5_PostDeployment`) |
+| `Layer` | **Dependency stage** within that folder (`00`, `01`, `02`, …). **Not** a per-file sequence. Several scripts may share the same `Layer` when they are **independent**. Bump `Layer` only when a script **depends on** work that must already have run in a **previous** stage. |
+| `EntityName` / optional `_comment` | Short purpose / entity hint |
+
 Examples:
 
 ```text
 1_PreDeployment/1_00_Predeployment.sql
 2_Initial/2_00_auth.sql
 2_Initial/2_01_auth_UsersAccounts.sql
-2_Initial/2_01_auth_ExternalLoginStates.sql
+2_Initial/2_01_auth_ExternalLoginStates.sql   # same Layer 01 — independent
+2_Initial/2_02_auth_ExternalLoginStates.sql   # Layer 02 — FK depends on prior stage
 4_SeedData/4_01_auth_Providers.sql
 ```
 
-- **Versioning** — sequential numbers per layer; do not skip while a lower number is free.
+- **Choosing `Layer`:**
+  - **`2_Initial`** (and seed folders `3_*` / `4_*` when adding peer scripts): `Layer` is a **dependency stage** — several independent scripts may share the same `nn`; bump only when the new script depends on a prior stage.
+  - **`1_PreDeployment`** and **`5_PostDeployment`** (append-only evolution): every **new** script file must use **`max(existing Layer in that folder) + 1`**. **Never gap-fill** a missing lower number after a higher one exists (e.g. if `1_07` is present, do **not** add `1_05` even if unused). Same after ship.
 - **Comments** — optional `_comment` suffix when the purpose is unclear from the entity name alone.
 
 ## Append-only layers (mandatory)
@@ -122,15 +131,17 @@ Never edit, rename, or delete already-shipped scripts under:
 - `*/1_PreDeployment/`
 - `*/5_PostDeployment/`
 
-DbUp tracks applied scripts by **file name**; changing an old file does not re-run it on databases that already applied it. Append a **new** numbered script with the **delta only**.
+DbUp tracks applied scripts by **file name**; changing an old file does not re-run it on databases that already applied it. Append a **new** script with the **delta only**.
+
+**Numbering in `1_PreDeployment` / `5_PostDeployment`:** always **highest `Layer` + 1**. **No gap-filling.**
 
 **Never:**
 
 - Patch an old script to “fix” a deploy or to make it idempotent after shipping
-- Skip sequence numbers while a lower number is free
-- Insert a script that must run before an already-shipped number — use the next free number
+- Gap-fill a lower `Layer` in `1_PreDeployment` / `5_PostDeployment` when a higher `Layer` already exists (shipped or not)
+- Insert a `2_Initial` script that must run before an already-shipped dependency stage — bump `Layer` instead
 
-For changes on existing databases, add a **new** script with the **next** sequence number in **SqlServer**, **PostgreSQL**, and **MySQL**. Prefer **idempotent** new scripts. Put only the delta in that file. Update `2_Initial` for greenfield installs separately.
+For changes on existing databases, add a **new** script in **SqlServer**, **PostgreSQL**, and **MySQL** (same `FolderNumber` / `Layer` / intent). Prefer **idempotent** new scripts. Put only the delta in that file. Update `2_Initial` for greenfield installs separately.
 
 ## Prefer idempotent new scripts
 
