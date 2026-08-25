@@ -30,6 +30,11 @@ language: en-US
 reviews:
   profile: chill
   path_instructions:
+    - path: "**/*"
+      instructions: |
+        Before posting a finding, check docs/TO-DO.md (open backlog). If the same
+        theme is already listed there (by meaning, not exact wording), do not raise
+        it again — treat it as tracked outside this PR. Prefer new issues only.
     - path: "**/*.cs"
       instructions: |
         Prefer security and auth/JWT findings. Stock user-scoped APIs take
@@ -63,8 +68,10 @@ reviews:
         formatting as Major. Focus on correctness of open/closed items vs the release delta.
     - path: "docs/TO-DO.md"
       instructions: |
-        Backlog outside the current release delta. Do not treat RU prose or EN-translation
-        requests as blocking; language choice is tracked separately if at all.
+        This file is the open cross-release backlog. Do not propose re-adding items
+        that are already listed. Do not treat RU prose or EN-translation requests as
+        blocking; language choice is tracked separately if at all. Prefer clarity of
+        existing open C/H/M/L items over new duplicate findings.
   auto_review:
     auto_pause_after_reviewed_commits: 1
   pre_merge_checks:
