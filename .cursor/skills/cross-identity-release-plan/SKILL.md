@@ -3,9 +3,10 @@ name: cross-identity-release-plan
 description: >-
   Builds or refreshes docs/RELEASE-PLAN-X.Y.Z.md for Cross.Identity from the
   current branch vs master (delta only). Moves leftover open items from the
-  previous plan into docs/TO-DO.md (C/H/M/L only) and removes TO-DO entries when
-  fixed in a version as `✅ M13 Short title`. Use when drafting release notes,
-  release plans, or updating RELEASE-PLAN-*.md / TO-DO.md.
+  previous plan into docs/TO-DO.md (C/H/M/L only). Closing/dismissing a TO-DO
+  item always adds `✅ Id …` to the current plan «Закрыто» first, then removes
+  it from TO-DO. Use when drafting release notes, release plans, or updating
+  RELEASE-PLAN-*.md / TO-DO.md.
 ---
 
 # Cross.Identity — release plan from branch delta
@@ -68,23 +69,42 @@ Triage CR severity → Out: Critical→`C`, Major→`H`, Minor→`M`, Trivial/In
 
 1. **Перед/при** сборке `RELEASE-PLAN-X.Y.Z.md` прочитай предыдущий план и `TO-DO.md`.
 2. Открытое с предыдущего плана, **не** вошедшее в дельту → **добавь** как `C…`/`H…`/`M…`/`L…` (merge по id).
-3. Пункт **закрыт** (`✅ M13 …`) → **удали** из `TO-DO.md` (секцию оставь пустой при отсутствии айтемов).
+3. Пункт **закрыт** / отклонён → см. **Close from TO-DO** ниже (сначала «Закрыто» в текущем плане, потом удаление из TO-DO).
 4. В version plan `TO-DO` не копировать — только ссылка.
 5. «Принято» trade-off без open work сюда не класть.
 
-## Re-check (закрытие пунктов в version plan)
+## Current version plan
 
-1. Закрываемый пункт **убрать** из severity-секций этого `RELEASE-PLAN-X.Y.Z.md`.
-2. Добавить в `## Закрыто`:
+**Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии ветки (user / `**Версия:**` в файле / planned).  
+Не писать закрытия в уже shipped historical планы (`2.0.0`, `2.1.1`, …), если работа идёт под следующий релиз (напр. `2.2.0`).  
+Не использовать `RELEASE-PLAN-dev-to-master.md`.
+
+## Close from TO-DO (обязательно, любой dismiss)
+
+Когда пункт убирают из `docs/TO-DO.md` (fix, won’t-fix, CR dismiss, «это только пример», duplicate, …):
+
+1. **Сначала** добавить строку в `## Закрыто` **текущего** `RELEASE-PLAN-X.Y.Z.md`:
 
 | # | Суть |
 |---|------|
-| ✅ M13 GetClaimValue half-validate docs | …детали… |
+| ✅ H2 Scripts README MERGE SystemId scope | CR dismissed: README — пример lookup, не open work |
 
+2. Id **сохранить** (`✅ H2 …` / `✅ M13 …`); title короткий; в «Суть» — почему закрыто.
+3. **Затем** удалить пункт из `docs/TO-DO.md` (пустые C/H/M/L-секции оставить).
+4. Обновить **Приоритет** в TO-DO / плане при необходимости.
+5. **Запрещено:** удалить из TO-DO без строки в «Закрыто» текущего плана.
+
+Осознанный **контрактный** trade-off без id → секция **Принято** (не «Закрыто», не TO-DO).  
+Id’шный backlog, который отклонили → всё равно **Закрыто** с `✅ Id …` и причиной.
+
+## Re-check (закрытие пунктов в version plan)
+
+1. Закрываемый пункт **убрать** из severity-секций этого `RELEASE-PLAN-X.Y.Z.md` (если был open в дельте).
+2. Добавить в `## Закрыто` (тот же формат `✅ M13 …`).
 3. Id **сохранить**; title короткий.
 4. Обновить **Приоритет фиксов** плана (только work этой дельты).
-5. **Удалить** тот же пункт из `docs/TO-DO.md`, если он там был.
-6. **Принято** (trade-off) — не в «Закрыто».
+5. **Удалить** тот же пункт из `docs/TO-DO.md`, если он там был (после шага 2).
+6. То же правило, что **Close from TO-DO**: нельзя только выкинуть из TO-DO.
 
 ## Workflow
 
@@ -116,6 +136,7 @@ bash .cursor/skills/cross-identity-release-plan/scripts/collect-release-delta.sh
 
 - [ ] Version plan has **no** foreign-release backlog (that lives in `TO-DO.md`)
 - [ ] `TO-DO.md` is C/H/M/L only (no separate CR section); closed items removed from it
+- [ ] Every removal from `TO-DO.md` has a matching `✅ Id …` row in **current** plan «Закрыто»
 - [ ] «Закрыто» `#` looks like `✅ M13 …` (or legacy `✅ #34 …`)
-- [ ] Every «Закрыто» row maps to delta evidence
+- [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
 - [ ] UTF-8 BOM on written plan / TO-DO if new

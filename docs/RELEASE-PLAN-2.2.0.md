@@ -53,6 +53,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ Tests user-scoped RefreshToken removal | ExternalLogin / CommunicationEndpoints / service tests под новый контракт |
 | ✅ Versioned RELEASE-PLAN docs | `RELEASE-PLAN-2.0.0` / `2.1.1` / `2.2.0` (вместо единого `RELEASE-PLAN.md`) |
 | ✅ DbUp / Scripts docs (repo) | skill + `Infrastructure/Scripts/README` + rule `102`; `1_00_Predeployment.sql` |
+| ✅ H2 Scripts README MERGE SystemId scope | CR dismissed: README upsert — **пример** lookup/MERGE, не open work |
 
 ---
 
