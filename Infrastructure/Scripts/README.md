@@ -110,6 +110,8 @@ On PostgreSQL / MySQL use the provider equivalent (`INSERT … ON CONFLICT` / `I
 
 **Canonical bootstrap file** (all providers): exactly `1_00_Predeployment.sql` (casing as written — not `predeployment` / `PreDeployment`). Folder name stays `1_PreDeployment/`.
 
+**Purpose of `1_00`:** intentional **no-op** (`SELECT` only) so DbUp always has a first successful PreDeployment script to journal as `1_00`. It does **not** create `__MigrationsHistory` or any schema objects — the journal table is **DbUp-managed**. Do not remove this file or “fix” it into real DDL because the `SELECT` looks unused.
+
 Examples:
 
 ```text

@@ -47,7 +47,7 @@ Reference copy notes: `Infrastructure/Scripts/README.md`. Runtime model: `Identi
 
 ### New table when PreDeployment already has more than `1_00_*`
 
-Bootstrap script name is exactly **`1_00_Predeployment.sql`** (same casing in SqlServer / PostgreSQL / MySQL).
+Bootstrap script name is exactly **`1_00_Predeployment.sql`** (same casing in SqlServer / PostgreSQL / MySQL). It is an intentional **no-op** (first journaled PreDeployment script); it does **not** create the DbUp journal table — see `102-backend-efcore`.
 
 If `1_PreDeployment/` already has scripts **besides** `1_00_Predeployment.sql`, assume databases may already be initialized:
 
