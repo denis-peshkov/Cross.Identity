@@ -986,39 +986,6 @@ internal class JwtTokenService : IJwtTokenService
     }
 
     /// <inheritdoc/>
-    public async Task RevokeAllTokensForLogoutAsync(
-        string? refreshToken,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            return;
-        }
-
-        var tokenHash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken)));
-
-        var entity = await _context.RefreshTokens
-            .AsNoTracking()
-            .Where(x => x.TokenHash == tokenHash)
-            .FirstOrDefaultAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        if (entity is null
-            || entity.RevokedAt is not null
-            || entity.ExpiresAt < DateTime.UtcNow
-            || entity.AbsoluteExpiresAt < DateTime.UtcNow
-            || entity.CreatedAt > DateTime.UtcNow)
-        {
-            throw new NotAuthorizedException("Invalid or expired refresh token.");
-        }
-
-        await RevokeAllTokensForUserAsync(entity.UserAccountId, RefreshTokenRevokedReason.USER_LOGOUT_ALL, hostSuppliedClientContext, cancellationToken)
-            .ConfigureAwait(false);
-        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc/>
     public async Task RevokeAllTokensForUserAsync(
         Guid userAccountId,
         RefreshTokenRevokedReason reason,
@@ -1062,5 +1029,7 @@ internal class JwtTokenService : IJwtTokenService
                 hostSuppliedClientContext.UserAgent,
                 hostSuppliedClientContext.DeviceFingerprint);
         }
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

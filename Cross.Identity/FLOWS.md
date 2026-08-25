@@ -27,14 +27,14 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token lifecycle operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
 
 | Party | Responsibility |
 |-------|----------------|
 | **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
-Token lifecycle flows (`Token`, `RefreshToken`, `Logout`, `LogoutAll`) still take/issue refresh tokens as part of their contract.
+Token lifecycle flows (`Token`, `RefreshToken`, `Logout`) still take/issue refresh tokens as part of their contract.
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
@@ -290,15 +290,15 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.LogoutAll.json`
 
-**Purpose:** revoke all sessions for the user (prove ownership via refresh token).
+**Purpose:** revoke all sessions for the user (`USER_LOGOUT_ALL`). Host must authorize the caller and pass `UserAccountId` (e.g. resolve `sub` from the client’s access token before `ExecuteAsync`).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logoutAll` |
-| `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `logoutAll` |
+| `logoutAll` | logoutAll | `userAccountIdKey: collectForm.UserAccountId`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 
-> Proves session ownership via the refresh token, then revokes every active access/refresh token for that user with `USER_LOGOUT_ALL`.
+> Revokes every active access/refresh token for that user with `USER_LOGOUT_ALL`. The library does not read `AccessToken` — the host maps client credentials to `UserAccountId`.
 
 ---
 

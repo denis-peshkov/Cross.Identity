@@ -140,12 +140,12 @@ Content-Type: application/json
 
 ###
 # @name main-logout-all
-# Logout from all devices: presents a live refresh token, revokes all sessions (USER_LOGOUT_ALL).
+# Client → host: AccessToken. Host validates, resolves UserAccountId (sub), then ExecuteAsync({ UserAccountId, … }).
 POST {{HOST}}/api/identity/main/LogoutAll
 Content-Type: application/json
 
 {
-  "RefreshToken": "{{REFRESH_TOKEN}}"
+  "AccessToken": "{{ACCESS_TOKEN}}"
 }
 
 ###

@@ -41,6 +41,17 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 
 **Action:** pass `{ UserAccountId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
 
+### `main.LogoutAll`: `RefreshToken` → `UserAccountId`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` | `{ UserAccountId, … }` |
+| Session proof | library validated refresh token | **host** authorizes caller and passes `UserAccountId` (e.g. from access-token `sub`) |
+| Stock `logoutAll` step | `refreshTokenKey` → `RevokeAllTokensForLogoutAsync` | `userAccountIdKey` → `RevokeAllTokensForUserAsync` (`USER_LOGOUT_ALL`) |
+| `IJwtTokenService.RevokeAllTokensForLogoutAsync` | refresh → revoke all | **removed** — use `RevokeAllTokensForUserAsync(userAccountId, USER_LOGOUT_ALL, …)` |
+
+**Action:** host resolves `UserAccountId` before `FlowOperationEnum.LogoutAll`; replace direct `RevokeAllTokensForLogoutAsync` calls with `RevokeAllTokensForUserAsync`.
+
 ---
 ## From 2.1.1 to 2.2.0
 

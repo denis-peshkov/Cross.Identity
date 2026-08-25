@@ -52,7 +52,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenValidRefreshToken_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
+    public async Task GivenUserAccountId_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
     {
         var userAccountId = Guid.NewGuid();
         var otherUserAccountId = Guid.NewGuid();
@@ -86,7 +86,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
             otherUserAccountId, Guid.NewGuid(), new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
+            new Dictionary<string, object?> { ["UserAccountId"] = userAccountId.ToString() },
             Flow,
             FlowOperationEnum.LogoutAll,
             CancellationToken.None);
@@ -103,19 +103,5 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         userRefresh.Should().OnlyContain(t => t.RevokedAt != null);
         Context.Audits.Should().Contain(a =>
             a.UserAccountId == userAccountId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
-    }
-
-    [Test]
-    [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidRefreshToken_WhenLogoutAllFlow_ThenThrowsNotAuthorizedAsync()
-    {
-        var act = () => _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = new string('x', 32) },
-            Flow,
-            FlowOperationEnum.LogoutAll,
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired refresh token*");
     }
 }

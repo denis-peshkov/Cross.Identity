@@ -228,28 +228,11 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Logout from all devices: resolve the user from a live refresh token and revoke every
-    /// active access/refresh token for that user with <see cref="RefreshTokenRevokedReason.USER_LOGOUT_ALL"/>.
-    /// </summary>
-    /// <param name="refreshToken">
-    /// Current refresh token proving session ownership. Empty/whitespace is a no-op.
-    /// </param>
-    /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
-    /// <param name="cancellationToken">Cancellation token.</param>
-    /// <exception cref="NotAuthorizedException">
-    /// Refresh token is missing in storage, revoked, or expired.
-    /// </exception>
-    Task RevokeAllTokensForLogoutAsync(
-        string? refreshToken,
-        HostSuppliedClientContext hostSuppliedClientContext,
-        CancellationToken cancellationToken);
-
-    /// <summary>
     /// Revoke all active access and refresh tokens that share <paramref name="familyId"/>.
     /// Persists changes via <c>SaveChanges</c>.
     /// </summary>
     /// <param name="familyId">Refresh/access token family (rotation chain).</param>
-    /// <param name="reason">Revocation reason stored on each active token.</param>
+    /// <param name="reason">Revocation reason stored on each token.</param>
     /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task RevokeRefreshTokenFamilyAsync(
@@ -259,8 +242,8 @@ public interface IJwtTokenService
         CancellationToken cancellationToken);
 
     /// <summary>
-    /// Revoke all active access and refresh tokens for a user (e.g. after password change / security stamp rotation).
-    /// Does not call <c>SaveChanges</c> — the caller persists changes on the shared <c>IdentityContext</c>.
+    /// Revoke all active access and refresh tokens for a user (e.g. password change, logout-all, admin revoke).
+    /// Persists via <c>SaveChanges</c>.
     /// </summary>
     /// <param name="userAccountId">User whose sessions must be invalidated.</param>
     /// <param name="reason">Revocation reason stored on each token.</param>
