@@ -22,9 +22,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M54. `TokenTestHelpers`: `CancellationToken` в `IsRefreshTokenActiveAsync`
-⬜ CodeRabbit Minor: `Cross.Identity.Tests/Helpers/TokenTestHelpers.cs` — параметр `CancellationToken` + проброс в `FirstOrDefaultAsync`; обновить callers.
-
 ### M55. `JwtTokenServiceTests`: `Helpers` → `GlobalUsings`
 ⬜ CodeRabbit Minor: перенести `Cross.Identity.Tests.Helpers` в `GlobalUsings.cs`, убрать file-scoped using из `JwtTokenServiceTests.cs`.
 
@@ -57,6 +54,7 @@
 | ✅ #M51 `main.ChangePassword` collectForm `UserAccountId` | stock JSON / selector / tests; `FLOWS.md`; [BREAKING.md § From 2.2.0 to 2.3.0](BREAKING.md#from-220-to-230) |
 | ✅ #M52 README: Logout/RefreshToken — Jti | `README.md` § host authorize: `Logout` / `RefreshToken` → `Jti`; `Token` → credentials/code |
 | ✅ #M53 anchor `BREAKING.md` в строке #M51 | ссылка `(BREAKING.md#from-220-to-230)` вместо fragment-only |
+| ✅ #M54 `TokenTestHelpers`: `CancellationToken` в `IsRefreshTokenActiveAsync` | параметр + проброс в `FirstOrDefaultAsync`; callers → `CancellationToken.None` |
 
 ---
 
@@ -69,4 +67,4 @@
 
 ## Приоритет фиксов
 
-1. **M54–M58** — tests / release-plan scripts (по желанию до или после merge).
+1. **M55–M58** — tests / release-plan scripts (по желанию до или после merge).

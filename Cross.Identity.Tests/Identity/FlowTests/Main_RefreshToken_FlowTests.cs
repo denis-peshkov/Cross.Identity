@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
@@ -151,7 +151,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
 
-        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, r2)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, r2, CancellationToken.None)).Should().BeFalse();
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);
