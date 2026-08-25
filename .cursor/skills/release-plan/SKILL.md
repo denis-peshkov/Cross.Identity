@@ -63,9 +63,9 @@ Empty severity sections stay as the heading + `---`.
 | `M` | Средний |
 | `L` | Низкий |
 
-**Источник max:** строка **`Id high-water`** в шапке `TO-DO.md` (числа в файле — актуальные).
-Новый пункт (план или TO-DO): id = **high-water группы + 1** → сразу обновить high-water в `TO-DO.md`.  
-Не брать max только по открытым пунктам (закрытые id исчезают из секций — иначе коллизии через релизы). Исторические id не перенумеровывать / не переиспользовать.
+**Источник max (allocate, без правки `TO-DO.md`):**  
+`max(Id high-water в шапке TO-DO, id в open + «Закрыто» текущего плана)` по группе → **+ 1**.  
+**`Id high-water` в `TO-DO.md` не трогать** до **finalize** этого релиза. Исторические id не перенумеровывать / не переиспользовать.
 
 Источник finding’а **не хранить отдельной секцией** — сразу в C/H/M/L open **этого** плана (если относится к дельте) или в `TO-DO.md` (если вне дельты).
 
@@ -79,8 +79,8 @@ Empty severity sections stay as the heading + `---`.
 | Содержимое | Open backlog вне дельты version plan; планы = только дельта релиза |
 | Секции | Всегда четыре: Критично / Высокий / Средний / Низкий; пустые = заголовок + `---` |
 | Формат | `### M13. Title` + описание **без** статус-маркеров (`⬜`/`✅`/…) |
-| Id | Общий namespace с version plan. **`Id high-water`** в шапке файла = max **выданный** номер по `C`/`H`/`M`/`L`. Новый id = high-water+1, затем поднять строку. Не gap-fill / не переиспользовать закрытые |
-| High-water | Обновлять при каждом allocate; при **finalize** — `max(high-water, все id этого релиза: open leftovers + «Закрыто» вида ✅ #H9 …)` |
+| Id | Общий namespace с version plan. Новый id = **max(TO-DO high-water, current plan open+«Закрыто» ids) + 1**. Не gap-fill / не переиспользовать |
+| High-water | Строка **`Id high-water`** в шапке TO-DO = якорь **после последнего finalize**. **Писать только при finalize** (`max(старый HW, все id закрываемого релиза)`). Во время релиза high-water **не** обновлять |
 | Источник | leftover plan / audit вне дельты / … — сразу в C/H/M/L |
 | Harvest | Open с предыдущего плана, не вошедшее в дельту → добавить сюда (если ещё нет) |
 | Close | См. **Close from TO-DO** — сначала «Закрыто» текущего плана, потом удалить из TO-DO |
@@ -141,7 +141,7 @@ Id’шный backlog, который отклонили → всё равно *
 1. **Собрать весь ⬜ open** из секций Критично / Высокий / Средний / Низкий этого плана.
 2. **Перенести** каждый пункт в [`docs/TO-DO.md`](../../../docs/TO-DO.md) (merge **по id** — один id = одна задача; формат TO-DO **без** `⬜`; секции C/H/M/L сохранить).
    Не класть их в «Закрыто» — это не done/dismiss, а leftover.
-3. **Обновить `Id high-water`** в шапке `TO-DO.md`: для каждой группы `max(текущий high-water, все id релиза)` — leftovers + строки «Закрыто» вида `✅ #H9 …` / `✅ #M49 …` / … (даже если leftover уже учтён при allocate).
+3. **Обновить `Id high-water`** в шапке `TO-DO.md` (**единственный** момент записи HW в этом релизе): для каждой группы `max(текущий high-water, все id релиза)` — leftovers + строки «Закрыто» вида `✅ #H9 …` / `✅ #M49 …` / ….
 4. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
    - header: версия **published / closed** (+ release URL если есть);
    - C/H/M/L — **пустые** (только заголовок + `---`);
@@ -188,6 +188,6 @@ Cache lands under `.cursor/skills/release-plan/.cache/` (script prints the path)
 - [ ] Every removal from `TO-DO.md` has a matching `✅ #Id …` row in **current** plan «Закрыто»
 - [ ] «Закрыто» `#` looks like `✅ #M13 …` / `✅ #H3 …` (or legacy `✅ #34 …`)
 - [ ] Every «Закрыто» row maps to delta evidence **or** explicit dismiss reason
-- [ ] Finalize: leftovers in `TO-DO.md`; **`Id high-water`** ≥ все id релиза; plan = `RELEASE-PLAN-FINALIZED`
-- [ ] New C/H/M/L ids used **high-water + 1** (not max of open-only); high-water bumped in `TO-DO.md`
+- [ ] Finalize: leftovers in `TO-DO.md`; **`Id high-water`** обновлён один раз (`≥` все id релиза); plan = `RELEASE-PLAN-FINALIZED`
+- [ ] New C/H/M/L ids = max(TO-DO HW, current plan ids) + 1; **no** mid-release HW edits in `TO-DO.md`
 - [ ] UTF-8 BOM on written plan / TO-DO if new
