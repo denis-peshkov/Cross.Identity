@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+#
+# Selective XML docs on public API; keep docstring check but lower threshold.
+reviews:
+  pre_merge_checks:
+    docstrings:
+      mode: "warning"
+      threshold: 40
