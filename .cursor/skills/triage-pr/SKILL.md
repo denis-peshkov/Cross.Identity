@@ -3,7 +3,7 @@ name: triage-pr
 description: >-
   PR triage for Cross.Identity: audit open PRs, deep review, draft review
   comments; local/branch review vs master|dev without a PR. Args: "all",
-  PR numbers, "branch <name>", "local", "base master|dev",
+  PR numbers, "branch <name>", "local", "base master|dev", "offline",
   "ru"/"en" for table language (default en).
 ---
 
@@ -25,12 +25,12 @@ description: >-
 |------|----------------|-------------|----------------|
 | **PR audit** | `all` or default | `gh pr list` | No (draft only) |
 | **PR deep** | PR number(s) | `gh pr diff {n}` | AskQuestion + template |
-| **Branch** | `branch <name>` `[base master\|dev]` | `git diff base...branch` | No |
-| **Local** | `local` `[base master\|dev]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
+| **Branch** | `branch <name>` `[base master\|dev]` `[offline]` | `git diff base...branch` | No |
+| **Local** | `local` `[base master\|dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
 
 Default **base**: `master` if ambiguous; use `dev` when the user says so or the branch targets `dev`.
 
-Prefer `origin/<base>` after `git fetch` when remote exists.
+Prefer `origin/<base>` after a **successful** `git fetch`. Do **not** swallow fetch failures unless the user passed **`offline`** (see Phase 1b).
 
 ## Prerequisites
 
@@ -109,12 +109,34 @@ Use when the user asks for local branch, named branch, or review without a PR. *
 
 ### Resolve refs
 
+Default: refresh remote base; **fail** if fetch cannot run. **`offline`** (user arg): skip fetch; allow local base with an explicit warning in the report.
+
 ```bash
 BASE="${BASE:-master}"          # or: dev
 BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo or origin/hotfix/foo
+OFFLINE=0                       # 1 when user passed "offline"
 
-git fetch origin "$BASE" 2>/dev/null || true
-git rev-parse --verify "origin/$BASE" >/dev/null 2>&1 && BASE_REF="origin/$BASE" || BASE_REF="$BASE"
+if [[ "$OFFLINE" -eq 0 ]]; then
+  if ! git fetch origin "$BASE"; then
+    echo "error: git fetch origin $BASE failed — fix network/auth or retry with offline" >&2
+    exit 1
+  fi
+  if ! git rev-parse --verify "origin/$BASE" >/dev/null 2>&1; then
+    echo "error: origin/$BASE missing after fetch" >&2
+    exit 1
+  fi
+  BASE_REF="origin/$BASE"
+else
+  if git rev-parse --verify "origin/$BASE" >/dev/null 2>&1; then
+    BASE_REF="origin/$BASE"
+  elif git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+    BASE_REF="$BASE"
+    # Report must note: offline mode — base may be stale
+  else
+    echo "error: neither origin/$BASE nor local $BASE exists" >&2
+    exit 1
+  fi
+fi
 
 # Named branch not checked out:
 git rev-parse --verify "$BRANCH" >/dev/null 2>&1 || git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1

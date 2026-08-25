@@ -18,9 +18,6 @@
 
 ## Высокий (логика / auth model)
 
-### H12. triage-pr: не игнорировать failed fetch base
-⬜ CodeRabbit Major: `.cursor/skills/triage-pr/SKILL.md` (~110–115) — при failed `git fetch origin "$BASE"` не fallback молча; fail или explicit offline mode.
-
 ### H13. triage-pr: resolve remote-only branch
 ⬜ CodeRabbit Major: `.cursor/skills/triage-pr/SKILL.md` (~117–127) — перед diff задать BRANCH на validated ref (в т.ч. `origin/$BRANCH`, если локальной ветки нет).
 
@@ -64,6 +61,7 @@
 | # | Суть |
 |---|------|
 | ✅ #H11 triage-pr: «External — ready» только при clean CI | `triage-pr/SKILL.md`: ready — только `SUCCESS`; unstable/dirty/unknown → problematic |
+| ✅ #H12 triage-pr: не игнорировать failed fetch base | Phase 1b: fetch fail → stop; `offline` — явный fallback на local base + warning |
 | ✅ #M51 `main.ChangePassword` collectForm `UserAccountId` | stock JSON / selector / tests; `FLOWS.md`; `BREAKING.md` § [From 2.2.0 to 2.3.0](#from-220-to-230) |
 
 ---
@@ -79,5 +77,5 @@
 
 1. **M52** — README host guidance (2.3.0 breaking, видно интеграторам).
 2. **M53** — anchor в закрытой строке плана (быстрый doc fix).
-3. **H12–H13** — triage-pr skill (tooling; не блокирует NuGet 2.3.0).
+3. **H13** — triage-pr skill (tooling; не блокирует NuGet 2.3.0).
 4. **M54–M58** — tests / release-plan scripts (по желанию до или после merge).
