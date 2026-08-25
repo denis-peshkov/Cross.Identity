@@ -78,13 +78,15 @@ For each PR (priority — overlap candidates):
 
 **Size**: XS <50, S 50–200, M 200–500, L 500–1000, XL >1000 additions.
 
-**Detections**: overlaps >50% files, clusters (3+ PRs from same author), stale >14d, CI clean/dirty.
+**Detections**: overlaps >50% files, clusters (3+ PRs from same author), stale >14d, CI clean/unstable/dirty.
 
 **Our PRs**: author in collaborators.
 
-**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, CI clean/unstable.
+**CI rollup** (`statusCheckRollup.state` from `gh pr list`): `SUCCESS` → clean; `FAILURE` → dirty; `PENDING` / missing / anything else → unstable or unknown.
 
-**External — problematic**: XL, conflict, CI dirty, overlap.
+**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, **CI clean only** (`SUCCESS` — all required checks passed).
+
+**External — problematic**: XL, conflict, **CI unstable/dirty/unknown**, overlap.
 
 ### Output tables
 
