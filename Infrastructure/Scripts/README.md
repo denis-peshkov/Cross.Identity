@@ -47,7 +47,7 @@ Point DbUp at the folder for your provider, e.g. `Infrastructure/Scripts/SqlServ
 
 ### `3_SeedLookup` — MERGE upsert (preferred)
 
-Prefer a **table variable + `MERGE`**: put the desired lookup rows in a `VALUES` block (edit only between the markers), then upsert into the real table. Matched rows update, missing rows insert, rows absent from the source delete (`WHEN NOT MATCHED BY SOURCE`). That keeps the script re-runnable as the desired set of the lookup.
+Prefer a **table variable + `MERGE`**: put the desired lookup rows in a `VALUES` block (edit only between the markers), then upsert into the real table. Matched rows update, missing rows insert, rows absent from the source delete (`WHEN NOT MATCHED BY SOURCE`). **Intentional:** VALUES is the full managed set for that lookup (or the slice keyed in `ON` / target scope such as `SystemId`); do not leave orphan lookup rows. Do not flag delete-not-in-source as a bug.
 
 SQL Server pattern (shortened):
 
