@@ -61,6 +61,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H7 Scripts README create+journal atomic txn | dismissed: каждый DbUp-скрипт уже в собственной транзакции; лишний BEGIN TRAN в примере не нужен |
 | ✅ #M45 FLOWS.md User-scoped auth anchors | `### User-scoped authorization…` + links → `#user-scoped-authorization-host-responsibility` |
 | ✅ #M46 triage skill gh auth via wrapper | Phase 0: `.cursor/triage/gh-wrapper.sh auth status` |
+| ✅ BREAKING.md § From 2.1.1 to 2.2.0 | consumer migration: user-scoped APIs without RefreshToken session proof; host auth |
 
 ---
 
@@ -73,6 +74,4 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Приоритет фиксов
 
-1. **BREAKING.md § From 2.1.1 to 2.2.0** — consumer migration (CR major; код/FLOWS в дельте есть).
-
-_(общий backlog → [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO — CR duplicate skipped)_
+_(пусто для CR/delta open — см. [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO)_

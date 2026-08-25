@@ -10,6 +10,7 @@ Breaking changes for **Cross.Identity**, grouped by **from → to** package vers
 | `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
 | `1.10.x` → `2.0.0+`  | [From 1.10.x to 2.0.0](#from-110x-to-200)   |
 | `2.0.x` → `2.1.1+`   | [From 2.0.x to 2.1.1](#from-20x-to-211)     |
+| `2.1.1` → `2.2.0+`   | [From 2.1.1 to 2.2.0](#from-211-to-220)     |
 
 `1.7.x` → `1.8.0` / `1.8.x` → `1.9.0` have no breaking API or flow-contract changes.
 There was no `2.1.0` package — next published release after [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) is [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1).
@@ -583,3 +584,34 @@ Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 **Action:** remove any host `.AddInterceptors(…ConcurrencyStampInterceptor…)` if present; keep registering `IdentityContext` as before (`AddDbContext` or pooled).
 
 **Bulk concurrency contract** (unchanged intent; wording clarified with SaveChanges-based rotation): `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic stamp handling. Filter by the **original** `ConcurrencyStamp`, check the **affected-row count** (0 = conflict), and assign a **new** stamp only via `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` cannot set a stamp — use it only in the WHERE. Prefer tracked `SaveChanges` when possible.
+
+---
+
+## From 2.1.1 to 2.2.0
+
+Release: `2.2.0` (planned). See [`FLOWS.md`](../Cross.Identity/FLOWS.md) — [User-scoped authorization (host responsibility)](../Cross.Identity/FLOWS.md#user-scoped-authorization-host-responsibility).
+
+### User-scoped APIs: no library RefreshToken session proof
+
+User-scoped operations no longer take a refresh token as library session proof. The host must authorize the caller for `UserAccountId` **before** `ExecuteAsync` / direct service calls (e.g. `[Authorize]` + claim/`sub` match, or overwrite bag id from the access-token principal).
+
+| Area | Was (2.1.1) | Now (2.2.0+) |
+|------|-------------|--------------|
+| `ICommunicationEndpointService.GetAllAsync` | `(userAccountId, refreshToken, …)` | `(userAccountId, …)` — **no** `refreshToken` |
+| `ICommunicationEndpointService.SetPreferredAsync` | `(userAccountId, endpointId, refreshToken, hostCtx, …)` | `(userAccountId, endpointId, hostCtx, …)` |
+| `IExternalLoginService.InitiateAsync` (link) | `userAccountId` + `refreshToken` session proof | `userAccountId` only; host authorizes |
+| `IExternalLoginService.UnlinkAsync` | `(provider, userAccountId, refreshToken, hostCtx, …)` | `(provider, userAccountId, hostCtx, …)` |
+| `IExternalLoginService.GetAllAsync` | `(userAccountId, refreshToken, …)` | `(userAccountId, …)` |
+| Stock flows `collectForm` | required `RefreshToken` on user-scoped flows | **`UserAccountId` only** (optional client context still allowed) |
+| Stock steps | called `EnsureRefreshTokenBelongsToUserAsync` | **do not** call it on these paths |
+| `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` | used by stock user-scoped steps | **optional** host helper (API unchanged) |
+
+**Affected stock flows:** `main.CommunicationEndpointsGetAll`, `main.CommunicationEndpointSetPreferred`, `main.ExternalLogin` (when linking), `main.ExternalLoginUnlink`, `main.ExternalLoginGetAll`.
+
+**Unchanged:** `Token` / `RefreshToken` / `Logout` / `LogoutAll` still use refresh tokens as operation payload / session lifecycle.
+
+**Action:**
+1. Stop sending `RefreshToken` on the flows / direct APIs above; keep sending an authorized `UserAccountId`.
+2. Ensure the host Web API authorizes that id before calling Cross.Identity (access token / principal).
+3. Optionally call `EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof outside stock steps.
+4. Update any custom flow overrides / step factories that still pass `refreshTokenKey` into the removed parameters.
