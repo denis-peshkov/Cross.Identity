@@ -20,9 +20,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Высокий (логика / auth model)
 
-### H5. `run-coderabbit-review.sh`: PIPESTATUS / `tee`
-⬜ CodeRabbit: RC должен учитывать failure и `coderabbit`, и `tee` (лог не записан → fail).
-
 ### H6. `collect-release-delta.sh`: SIGPIPE / full consume
 ⬜ CodeRabbit: при лимите ~400 строк diff полностью consume stream `git diff` (не рвать reader → SIGPIPE under `pipefail`) для FLOWS/BREAKING секций.
 
@@ -71,6 +68,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H2 Scripts README MERGE SystemId scope | CR dismissed: README upsert — **пример** lookup/MERGE, не open work |
 | ✅ #H3 release-plan targeted reads before state change | skill: required read current plan/TO-DO before merge/close/finalize; no routine scan without state change |
 | ✅ #H4 journal only if this script created table | dismissed: `ExternalLoginStates` не появляется иначе, чем из этого PreDeployment-потока; `OBJECT_ID` в примере ок |
+| ✅ #H5 run-coderabbit-review.sh PIPESTATUS / tee | RC учитывает failure `coderabbit` и `tee` |
 
 ---
 
@@ -85,7 +83,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 1. **BREAKING.md § From 2.1.1 to 2.2.0** — consumer migration (CR major; код/FLOWS в дельте есть).
 2. **H7:** atomic PreDeployment example (create + journal).
-3. **H5 / H6:** CR script PIPESTATUS / collect-delta SIGPIPE.
+3. **H6:** collect-delta SIGPIPE / full consume.
 4. **M45–M46:** FLOWS anchors / triage `gh-wrapper`.
 
 _(общий backlog → [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO — CR duplicate skipped)_

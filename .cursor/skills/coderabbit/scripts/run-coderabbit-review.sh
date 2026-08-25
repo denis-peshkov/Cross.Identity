@@ -97,7 +97,12 @@ echo
 
 set +e
 coderabbit "${ARGS[@]}" 2>&1 | tee "$OUT"
-RC=${PIPESTATUS[0]}
+PIPE_STATUSES=("${PIPESTATUS[@]}")
+RC=${PIPE_STATUSES[0]}
+if [[ ${PIPE_STATUSES[1]} -ne 0 ]]; then
+  echo "error: failed to write review log: $OUT" >&2
+  RC=${PIPE_STATUSES[1]}
+fi
 set -e
 
 echo
