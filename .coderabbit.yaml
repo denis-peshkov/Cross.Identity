@@ -1,8 +1,49 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 #
 # Selective XML docs on public API; keep docstring check but lower threshold.
+language: en-US
 reviews:
+  profile: chill
+  path_instructions:
+    - path: "Cross.Identity/**/*.cs"
+      instructions: |
+        Prefer security and auth/JWT findings. Stock user-scoped APIs (communication endpoints,
+        external-login link/unlink/getAll) take host-authorized UserAccountId and do not require
+        RefreshToken as library session proof — do not flag that as a regression.
+        Require XML docs only on public host-facing contracts (public interfaces, DTOs, options,
+        HostSuppliedClientContext). Do not require docstrings/XML on internal steps, factories,
+        or private helpers.
+    - path: "**/*Tests*/**"
+      instructions: |
+        Do not require docstrings or XML documentation on tests. Prefer asserting behavior and
+        contracts over style/doc nits.
+    - path: "Infrastructure/Scripts/**"
+      instructions: |
+        Follow DbUp conventions: 1_PreDeployment and 5_PostDeployment are append-only; prefer
+        idempotent deltas. New tables after init need both 2_Initial (greenfield) and a new
+        1_PreDeployment script, plus journaling the matching 2_* script name in __MigrationsHistory
+        so 2_Initial does not recreate an existing table. Prefer MERGE upsert for 3_SeedLookup.
+    - path: ".cursor/**"
+      instructions: |
+        Skills and Cursor rules may use Russian section names / bilingual docs by design.
+        Do not escalate RU vs EN, trailing whitespace, or formatting nits to Major.
+        Prefer actionable correctness of agent workflows over prose translation.
+    - path: "docs/RELEASE-PLAN*.md"
+      instructions: |
+        Version plans and TO-DO may be Russian by repo convention. Do not treat RU body or
+        formatting as Major. Focus on correctness of open/closed items vs the release delta.
+    - path: "docs/TO-DO.md"
+      instructions: |
+        Backlog outside the current release delta. Do not treat RU prose or EN-translation
+        requests as blocking; language choice is tracked separately if at all.
+  auto_review:
+    auto_pause_after_reviewed_commits: 2
   pre_merge_checks:
     docstrings:
       mode: "warning"
       threshold: 40
+    title:
+      mode: "warning"
+      requirements: >
+        Prefer a concise descriptive title. Prefix with BREAKING: when the PR ships a breaking
+        consumer change that belongs in docs/BREAKING.md (newest-first section).
