@@ -15,15 +15,15 @@
 
 ### Cursor skills (project)
 
-- `.cursor/skills/cross-identity-db-scripts/` - DbUp `1_PreDeployment` append-only migrations (SqlServer/PostgreSQL/MySQL)
-- `.cursor/skills/cross-identity-triage/` - issue + PR triage orchestrator
+- `.cursor/skills/db-scripts/` - This repo’s DbUp paths (`Infrastructure/Scripts/` multi-provider, `auth`, BREAKING); conventions in `102-backend-efcore`
+- `.cursor/skills/triage/` - issue + PR triage orchestrator
 - `.cursor/skills/issue-triage/` - GitHub issues
 - `.cursor/skills/pr-triage/` - GitHub PRs
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules
 - `101-backend-architecture.mdc` - Backend architecture
-- `102-backend-efcore.mdc` - Entity Framework Core
+- `102-backend-efcore.mdc` - EF Core + DbUp SQL migrations (not Code First Migrations): layers, naming, append-only, idempotent scripts
 - `103-backend-api-style.mdc` - API style
 - `104-backend-auth.mdc` - Authentication and authorization
 - `105-backend-security.mdc` - Backend security (validation, sanitization, CORS, HTTPS)

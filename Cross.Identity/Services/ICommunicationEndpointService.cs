@@ -11,35 +11,34 @@
 /// <item><description><c>CommunicationEndpointsGetAllStep</c> — <see cref="GetAllAsync"/></description></item>
 /// <item><description><c>CommunicationEndpointSetPreferredStep</c> — <see cref="SetPreferredAsync"/></description></item>
 /// </list>
+/// <para>
+/// <see cref="GetAllAsync"/> / <see cref="SetPreferredAsync"/> trust <c>userAccountId</c> from the host.
+/// The host must authorize the caller for that account (for example via access-token middleware);
+/// the library does not require a refresh token as session proof on these APIs.
+/// </para>
 /// </summary>
 public interface ICommunicationEndpointService
 {
     /// <summary>
     /// List all communication endpoints for a user.
-    /// Requires an active refresh token belonging to <paramref name="userAccountId"/> (session proof).
     /// </summary>
-    /// <param name="userAccountId">Local user account id.</param>
-    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/>.</param>
+    /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Endpoints for the user (may be empty).</returns>
     Task<IReadOnlyList<CommunicationEndpointDto>> GetAllAsync(
         Guid userAccountId,
-        string refreshToken,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Mark a verified endpoint as the only preferred communication target for the user.
-    /// Requires an active refresh token belonging to <paramref name="userAccountId"/> (session proof).
     /// </summary>
-    /// <param name="userAccountId">Local user account id.</param>
+    /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
     /// <param name="endpointId">Endpoint id that must belong to <paramref name="userAccountId"/> and be verified.</param>
-    /// <param name="refreshToken">Active refresh token for <paramref name="userAccountId"/>.</param>
     /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task SetPreferredAsync(
         Guid userAccountId,
         Guid endpointId,
-        string refreshToken,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default);
 

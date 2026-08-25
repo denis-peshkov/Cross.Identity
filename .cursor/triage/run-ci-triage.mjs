@@ -12,7 +12,7 @@ import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
 const DATA = join(ROOT, '.cursor/triage/docs/.data');
-const SKILLS = join(ROOT, '.cursor/skills/cross-identity-triage/SKILL.md');
+const SKILLS = join(ROOT, '.cursor/skills/triage/SKILL.md');
 const DATE = new Date().toISOString().slice(0, 10);
 const OUT = join(ROOT, `.cursor/triage/docs/ci-report-${DATE}.md`);
 const POST_COMMENT = process.env.TRIAGE_POST_COMMENT === 'true';
@@ -41,7 +41,7 @@ function buildPrompt() {
 
   return `You are running automated triage for the Cross.Identity GitHub repository (${repo}).
 
-Follow the workflow in the cross-identity-triage skill below.
+Follow the workflow in the triage skill below.
 Mode: ${MODE} (audit = tables + cross-analysis only, no GitHub comments).
 
 ## Skill instructions

@@ -1,12 +1,12 @@
 ---
-name: cross-identity-triage
+name: triage
 description: >-
-  Full Cross.Identity triage: issue-triage + pr-triage in parallel, cross-analysis
+  Full triage orchestrator: issue-triage + pr-triage in parallel, cross-analysis
   (double coverage, security gaps, P0 without PR, dirty CI). Saves report to
   .cursor/triage/docs/. Args: "ru"/"en" (default en), "no save" — skip file.
 ---
 
-# Cross-Identity Triage (orchestrator)
+# Triage (orchestrator)
 
 Combines `issue-triage` + `pr-triage` + cross-analysis of issues × PRs.
 
@@ -20,7 +20,7 @@ Combines `issue-triage` + `pr-triage` + cross-analysis of issues × PRs.
 
 ```bash
 git rev-parse --is-inside-work-tree
-gh auth status
+.cursor/triage/gh-wrapper.sh auth status
 date +%Y-%m-%d
 ```
 
@@ -95,12 +95,12 @@ Summary:
 
 ### Saving
 
-`.cursor/triage/docs/Cross.Identity-YYYY-MM-DD.md` (unless `no save`).
+`.cursor/triage/docs/triage-YYYY-MM-DD.md` (unless `no save`).
 
 File structure:
 
 ```markdown
-# Cross.Identity Triage — YYYY-MM-DD
+# Triage — YYYY-MM-DD
 
 ## Issues (tables)
 ## PRs (tables)

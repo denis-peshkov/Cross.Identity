@@ -38,7 +38,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
         string provider,
         string? returnUrl,
         Guid? userAccountId,
-        string? refreshToken,
         CancellationToken cancellationToken)
     {
         if (!ExternalOAuthProviders.TryGet(provider, out var definition))
@@ -84,10 +83,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
             {
                 throw new NotFoundException("Current user account was not found.");
             }
-
-            await _jwtTokenService
-                .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId.Value, cancellationToken)
-                .ConfigureAwait(false);
 
             var alreadyLinked = await _identityContext.UsersExternalLogins
                 .AsNoTracking()
@@ -193,17 +188,12 @@ internal sealed class ExternalLoginService : IExternalLoginService
     public async Task UnlinkAsync(
         string provider,
         Guid userAccountId,
-        string refreshToken,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(provider);
         if (userAccountId == Guid.Empty)
             throw new ValidationException("UserAccountId is required to unlink an external login.");
-
-        await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
-            .ConfigureAwait(false);
 
         var providerEntity = await _identityContext.Providers
             .AsNoTracking()
@@ -254,15 +244,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
     /// <inheritdoc/>
     public async Task<ExternalLoginOverviewDto> GetAllAsync(
         Guid userAccountId,
-        string refreshToken,
         CancellationToken cancellationToken)
     {
         if (userAccountId == Guid.Empty)
             throw new ValidationException("UserAccountId is required to list external logins.");
-
-        await _jwtTokenService
-            .EnsureRefreshTokenBelongsToUserAsync(refreshToken, userAccountId, cancellationToken)
-            .ConfigureAwait(false);
 
         var account = await _identityContext.UsersAccounts
             .AsNoTracking()

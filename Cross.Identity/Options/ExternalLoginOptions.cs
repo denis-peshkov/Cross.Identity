@@ -10,6 +10,7 @@
 /// </summary>
 public sealed class ExternalLoginOptions
 {
+    /// <summary>Configuration section path: <c>Authentication:ExternalLogin</c>.</summary>
     public const string SectionName = "Authentication:ExternalLogin";
 
     /// <summary>
@@ -30,14 +31,26 @@ public sealed class ExternalLoginOptions
     public Dictionary<string, ExternalLoginProviderOptions> Providers { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 }
 
+/// <summary>
+/// Per-provider OAuth client credentials under <see cref="ExternalLoginOptions.Providers"/>.
+/// </summary>
 public sealed class ExternalLoginProviderOptions
 {
+    /// <summary>OAuth client id.</summary>
     public string ClientId { get; set; } = string.Empty;
 
+    /// <summary>OAuth client secret.</summary>
     public string ClientSecret { get; set; } = string.Empty;
 
+    /// <summary>
+    /// When <c>false</c>, the provider is ignored even if credentials are present.
+    /// </summary>
     public bool IsEnabled { get; set; } = true;
 
+    /// <summary>
+    /// <c>true</c> when the provider is enabled and both client id and secret are non-empty.
+    /// Used when listing providers for <c>ExternalLoginGetAll</c>.
+    /// </summary>
     public bool IsConfigured =>
         IsEnabled
         && !string.IsNullOrWhiteSpace(ClientId)

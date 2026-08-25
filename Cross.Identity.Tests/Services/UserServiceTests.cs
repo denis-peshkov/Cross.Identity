@@ -35,11 +35,7 @@ public class UserServiceTests : EFTestsBase
             .Returns(Task.CompletedTask);
 
         _options = CreateOptionsSnapshot();
-        _communicationEndpoints = new CommunicationEndpointService(
-            Context,
-            new AuditService(Context),
-            _jwtTokenService.Object,
-            TestAuthOptions.Snapshot());
+        _communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot());
 
         _userService = new UserService(
             Context,
@@ -711,7 +707,7 @@ public class UserServiceTests : EFTestsBase
         AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -749,7 +745,7 @@ public class UserServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: false);
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -791,7 +787,7 @@ public class UserServiceTests : EFTestsBase
             userAccountId, ChannelEnum.Email, email, CommunicationEndpointSource.Account, isVerified: true);
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
-        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, "session-refresh", HostSuppliedClientContext.Empty);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -960,7 +956,7 @@ public class UserServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         var userName = "alice";
         var email = "alice@example.com";
-        var communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), _jwtTokenService.Object, TestAuthOptions.Snapshot());
+        var communicationEndpoints = new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot());
         var userService = new UserService(
             Context,
             _logger.Object,
