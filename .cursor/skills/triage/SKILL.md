@@ -20,7 +20,7 @@ Combines `issue-triage` + `pr-triage` + cross-analysis of issues × PRs.
 
 ```bash
 git rev-parse --is-inside-work-tree
-gh auth status
+.cursor/triage/gh-wrapper.sh auth status
 date +%Y-%m-%d
 ```
 
