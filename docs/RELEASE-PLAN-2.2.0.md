@@ -57,7 +57,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ Versioned RELEASE-PLAN docs | `RELEASE-PLAN-2.0.0` / `2.1.1` / `2.2.0` (вместо единого `RELEASE-PLAN.md`) |
 | ✅ DbUp / Scripts docs (repo) | skill + `Infrastructure/Scripts/README` + rule `102`; `1_00_Predeployment.sql` |
 | ✅ #H2 Scripts README MERGE SystemId scope | CR dismissed: README upsert — **пример** lookup/MERGE, не open work |
-| ✅ #H3 release-plan targeted reads before state change | skill: required read current plan/TO-DO before merge/close/finalize; no routine scan without state change |
+| ✅ #H3 release-plan targeted reads before state change | current plan + TO-DO; also previous open + relevant «Закрыто» for harvest/dedupe; no routine full-history scan |
 | ✅ #H4 journal only if this script created table | dismissed: `ExternalLoginStates` не появляется иначе, чем из этого PreDeployment-потока; `OBJECT_ID` в примере ок |
 | ✅ #H5 run-coderabbit-review.sh PIPESTATUS / tee | RC учитывает failure `coderabbit` и `tee` |
 | ✅ #H6 collect-release-delta.sh SIGPIPE / consume | `sed -n` / pipe consume; later: FLOWS/BREAKING diffs **без** лимита 800 (полный `git diff`) |

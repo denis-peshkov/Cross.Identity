@@ -41,9 +41,12 @@ In the plan header: **Предыдущий план** — ссылка **тол�
 Fill placeholders → write `docs/RELEASE-PLAN-X.Y.Z.md`. Do **not** hardcode specific version filenames in this skill.
 
 **When to open an existing `docs/RELEASE-PLAN-X.Y.Z.md` / `docs/TO-DO.md`:**
-- **Required (targeted):** before any **state-changing** work on them — merge/open items, close/dismiss, finalize, harvest leftovers, renumber checks. Read only the **current** plan + `TO-DO.md` (and only the sections you will edit).
+- **Required (targeted):** before any **state-changing** work on them — merge/open items, close/dismiss, finalize, harvest leftovers, renumber / dedupe checks. Always read the **current** plan + `TO-DO.md` (only sections you will edit).
+- **Also allowed (targeted, same turn):** when harvesting leftovers, deduplicating, or checking whether an item was already closed — read the **previous** plan’s open severity sections and only the relevant «Закрыто» rows (by id / meaning). Do **not** load the full history of every version plan.
 - **Optional:** if the **template** is ambiguous/unclear (section meaning, «Закрыто» row shape, …) — one targeted glance at a version plan for shape only.
 - **Forbidden:** routinely scanning / re-reading generated plans when no state change is involved; treating a generated plan as skill canon or keeping this skill file in sync with every plan output.
+
+Downstream **coderabbit** triage still writes only into the **current** version plan (not `TO-DO.md` for delta findings) and skips duplicates already open in the current plan, any plan «Закрыто», or `TO-DO.md`.
 
 **Legend:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
 **Критично / Высокий / Средний / Низкий** — только ⬜ **этой дельты**.  
