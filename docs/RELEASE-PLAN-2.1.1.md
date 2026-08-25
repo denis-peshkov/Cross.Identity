@@ -1,10 +1,9 @@
-﻿# Release plan — Cross.Identity **2.1.1**
+﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по коду, без опоры на предыдущие версии плана.
 
-Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1) ([PR #18](https://github.com/denis-peshkov/Cross.Identity/pull/18)).
-Scope: `ConcurrencyStamp` rotation in `IdentityContext.SaveChanges` (drop interceptor). Consumer notes: [`BREAKING.md`](BREAKING.md) § From 2.0.x to 2.1.1.
+**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+**Средний** — только ⬜ open. **Закрыто** — все ✅ (номера сохраняются).
 
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker  
-There was no `2.1.0` package.
+**CodeRabbit (local CLI, в период hardening):**
 
 ---
 
