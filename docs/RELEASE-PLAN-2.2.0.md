@@ -24,9 +24,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 
 ## Средний (противоречия / баги контрактов)
 
-### M45. `FLOWS.md` anchors → User-scoped authorization
-⬜ CodeRabbit: ссылки у `UserAccountId` / affected ops — на `#user-scoped-authorization-host-responsibility`, не `#client-context-host`.
-
 ### M46. triage skill: `gh auth` via wrapper
 ⬜ CodeRabbit: в `.cursor/skills/triage/SKILL.md` — `gh auth status` через `.cursor/triage/gh-wrapper.sh`, не прямой `gh`.
 
@@ -65,6 +62,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H5 run-coderabbit-review.sh PIPESTATUS / tee | RC учитывает failure `coderabbit` и `tee` |
 | ✅ #H6 collect-release-delta.sh SIGPIPE / consume | `sed -n '1,800p'` вместо `head`; лимит 800 для FLOWS/BREAKING |
 | ✅ #H7 Scripts README create+journal atomic txn | dismissed: каждый DbUp-скрипт уже в собственной транзакции; лишний BEGIN TRAN в примере не нужен |
+| ✅ #M45 FLOWS.md User-scoped auth anchors | `### User-scoped authorization…` + links → `#user-scoped-authorization-host-responsibility` |
 
 ---
 
@@ -78,6 +76,6 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 ## Приоритет фиксов
 
 1. **BREAKING.md § From 2.1.1 to 2.2.0** — consumer migration (CR major; код/FLOWS в дельте есть).
-2. **M45–M46:** FLOWS anchors / triage `gh-wrapper`.
+2. **M46:** triage `gh-wrapper`.
 
 _(общий backlog → [`TO-DO.md`](TO-DO.md); H1 DbUp heuristic уже в TO-DO — CR duplicate skipped)_

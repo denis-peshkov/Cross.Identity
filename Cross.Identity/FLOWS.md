@@ -25,7 +25,7 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
 | **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
 
-**User-scoped authorization (host responsibility)**
+### User-scoped authorization (host responsibility)
 
 Flows that take `UserAccountId` but are **not** token lifecycle operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
 
@@ -226,7 +226,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
 
-> `UserAccountId` enables account linking when present; the **host** must authorize that id (see [User-scoped authorization](#client-context-host)). Omit for normal sign-in / sign-up.
+> `UserAccountId` enables account linking when present; the **host** must authorize that id (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). Omit for normal sign-in / sign-up.
 
 ---
 
@@ -256,7 +256,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
-> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#client-context-host)). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 
 ---
 
@@ -270,7 +270,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
 
-> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#client-context-host)). A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
+> Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 
 ---
 
@@ -326,7 +326,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `endpoints`. `next: null` |
 
-> Host must authorize `UserAccountId` (see [User-scoped authorization](#client-context-host)).
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
 
 ---
 
@@ -340,7 +340,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `preferred`. `next: null` |
 
-> Host must authorize `UserAccountId` (see [User-scoped authorization](#client-context-host)).
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
 
 ---
 
