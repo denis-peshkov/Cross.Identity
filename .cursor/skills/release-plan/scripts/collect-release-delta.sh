@@ -115,16 +115,16 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
   git diff "${BASE}...HEAD" -- 'Cross.Identity/ProcessEngine/Definitions/Flows/*.json'
   echo '```'
   echo
-  echo "## Focus: FLOWS.md (trimmed to ± context lines with auth keywords)"
+  echo "## Focus: FLOWS.md"
   echo
   echo '```diff'
-  git diff "${BASE}...HEAD" -- 'Cross.Identity/FLOWS.md' | sed -n '1,800p'
+  git diff "${BASE}...HEAD" -- 'Cross.Identity/FLOWS.md'
   echo '```'
   echo
-  echo "## Focus: BREAKING.md (head of diff)"
+  echo "## Focus: BREAKING.md"
   echo
   echo '```diff'
-  git diff "${BASE}...HEAD" -- 'docs/BREAKING.md' | sed -n '1,800p'
+  git diff "${BASE}...HEAD" -- 'docs/BREAKING.md'
   echo '```'
   echo
   echo "## Focus: steps / factories / services (paths only)"

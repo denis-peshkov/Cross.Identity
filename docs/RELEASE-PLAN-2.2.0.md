@@ -60,7 +60,7 @@ Backlog вне дельты → [`TO-DO.md`](TO-DO.md) (инкременталь
 | ✅ #H3 release-plan targeted reads before state change | skill: required read current plan/TO-DO before merge/close/finalize; no routine scan without state change |
 | ✅ #H4 journal only if this script created table | dismissed: `ExternalLoginStates` не появляется иначе, чем из этого PreDeployment-потока; `OBJECT_ID` в примере ок |
 | ✅ #H5 run-coderabbit-review.sh PIPESTATUS / tee | RC учитывает failure `coderabbit` и `tee` |
-| ✅ #H6 collect-release-delta.sh SIGPIPE / consume | `sed -n '1,800p'` вместо `head`; лимит 800 для FLOWS/BREAKING |
+| ✅ #H6 collect-release-delta.sh SIGPIPE / consume | `sed -n` / pipe consume; later: FLOWS/BREAKING diffs **без** лимита 800 (полный `git diff`) |
 | ✅ #H7 Scripts README create+journal atomic txn | dismissed: каждый DbUp-скрипт уже в собственной транзакции; лишний BEGIN TRAN в примере не нужен |
 | ✅ #M45 FLOWS.md User-scoped auth anchors | `### User-scoped authorization…` + links → `#user-scoped-authorization-host-responsibility` |
 | ✅ #M46 triage skill gh auth via wrapper | Phase 0: `.cursor/triage/gh-wrapper.sh auth status` |
