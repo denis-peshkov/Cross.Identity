@@ -120,4 +120,4 @@ Notes:
 ## This repository
 
 Human-facing copy of these DbUp conventions (plus provider/EF notes): `Infrastructure/Scripts/README.md`.
-Paths, multi-provider folders (`SqlServer` / `PostgreSQL` / `MySQL`), `auth` schema, and `docs/BREAKING.md`: skill **`cross-identity-db-scripts`**.
+Paths, multi-provider folders (`SqlServer` / `PostgreSQL` / `MySQL`), `auth` schema, and `docs/BREAKING.md`: skill **`db-scripts`**.

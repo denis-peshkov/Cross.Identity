@@ -257,4 +257,4 @@ pub/
 .cursor/skills/release-plan/.cache/
 
 # CodeRabbit skill review logs
-.cursor/skills/cross-identity-coderabbit/.cache/
+.cursor/skills/coderabbit/.cache/

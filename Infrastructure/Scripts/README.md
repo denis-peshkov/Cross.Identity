@@ -15,7 +15,7 @@ The EF model is **provider-agnostic** (no SQL Server-specific column types). The
 | EF Core | Mapping, queries, `SaveChanges`, optional greenfield model alignment |
 | DbUp SQL folders | Apply DDL/DML to existing and new databases in a fixed layer order |
 
-Agent conventions (same rules for Cursor): `.cursor/rules/102-backend-efcore.mdc`. Repo workflow: `.cursor/skills/cross-identity-db-scripts/SKILL.md`.
+Agent conventions (same rules for Cursor): `.cursor/rules/102-backend-efcore.mdc`. Repo workflow: `.cursor/skills/db-scripts/SKILL.md`.
 
 ## Providers
 

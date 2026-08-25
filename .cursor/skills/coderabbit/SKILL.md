@@ -1,5 +1,5 @@
 ---
-name: cross-identity-coderabbit
+name: coderabbit
 description: >-
   Runs CodeRabbit CLI review of the current branch vs master (committed delta),
   saves agent findings, and always merges Critical/Major/Minor/Trivial/Info into
@@ -9,7 +9,7 @@ description: >-
   branch changes.
 ---
 
-# Cross.Identity — CodeRabbit vs master
+# CodeRabbit vs master
 
 ## When to use
 
@@ -41,7 +41,7 @@ If not signed in: tell the user to run `coderabbit auth login` in their terminal
 2. **Run review** (required — use Shell with unrestricted permissions so `~/.coderabbit` storage works):
 
 ```bash
-bash .cursor/skills/cross-identity-coderabbit/scripts/run-coderabbit-review.sh \
+bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
   --base origin/master
 ```
 
@@ -49,15 +49,15 @@ Optional:
 
 ```bash
 # Library-only (helps Free plan 150-file limit)
-bash .cursor/skills/cross-identity-coderabbit/scripts/run-coderabbit-review.sh \
+bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
   --base origin/master --dir Cross.Identity
 
 # Lighter / include uncommitted
-bash .cursor/skills/cross-identity-coderabbit/scripts/run-coderabbit-review.sh \
+bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
   --base origin/master --light --uncommitted
 ```
 
-Script prints the log path under `.cursor/skills/cross-identity-coderabbit/.cache/`.
+Script prints the log path under `.cursor/skills/coderabbit/.cache/`.
 
 3. **Summarize** findings from the log / `coderabbit review findings`:
    - Count by severity

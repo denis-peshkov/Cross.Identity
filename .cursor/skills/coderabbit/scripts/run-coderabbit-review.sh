@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run CodeRabbit CLI on the current branch vs a base (default origin/master).
 # Usage:
-#   bash .cursor/skills/cross-identity-coderabbit/scripts/run-coderabbit-review.sh \
+#   bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
 #     [--base origin/master] [--dir Cross.Identity] [--light] [--uncommitted]
 #     [--out PATH]
 set -euo pipefail
@@ -53,7 +53,7 @@ fi
 BRANCH="$(git branch --show-current 2>/dev/null || echo DETACHED)"
 SAFE_BRANCH="${BRANCH//\//-}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-CACHE_DIR="$ROOT/.cursor/skills/cross-identity-coderabbit/.cache"
+CACHE_DIR="$ROOT/.cursor/skills/coderabbit/.cache"
 mkdir -p "$CACHE_DIR"
 
 SCOPE="all"

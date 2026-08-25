@@ -6,14 +6,14 @@ Triage reports for the Cross.Identity repository.
 
 ```bash
 # Full triage
-# In Cursor chat: "Run cross-identity-triage"
+# In Cursor chat: "Run triage"
 
 # Or in parts:
 # "Run issue-triage"
 # "Run pr-triage"
 ```
 
-Skills: `.cursor/skills/{issue-triage,pr-triage,cross-identity-triage}/`
+Skills: `.cursor/skills/{issue-triage,pr-triage,triage}/`
 
 ## Scripts
 
@@ -52,7 +52,7 @@ Workflow `triage.yml` → job **PR automated comment**:
 - Cursor Agent analyzes the diff
 - Posts a wshm-style comment (category, priority, confidence, summary, files)
 - Applies GitHub labels: `{category}` and `priority:{priority}` (e.g. `enhancement`, `priority:medium`); on re-run replaces previous triage labels only
-- On a new push **updates** the same comment (marker `<!-- cross-identity-triage -->`)
+- On a new push **updates** the same comment (marker `<!-- triage -->`; legacy `<!-- cross-identity-triage -->` still matched)
 
 Manual test: **Actions → Triage → Run workflow** → `pr_number` field.
 

@@ -21,7 +21,7 @@ Run skills from `.cursor/skills/` when the user asks for:
 |-------|------|---------|
 | `issue-triage` | `.cursor/skills/issue-triage/SKILL.md` | Issues |
 | `pr-triage` | `.cursor/skills/pr-triage/SKILL.md` | PRs + review; local/branch vs master\|dev |
-| `cross-identity-triage` | `.cursor/skills/cross-identity-triage/SKILL.md` | Full cross-analysis |
+| `triage` | `.cursor/skills/triage/SKILL.md` | Full cross-analysis |
 
 ## Commands
 
@@ -43,7 +43,7 @@ bash .cursor/triage/collect-data.sh   # collect JSON into .cursor/triage/docs/.d
 
 - >10 open issues → suggest `issue-triage`
 - >5 open PRs without review → suggest `pr-triage`
-- Before NuGet release → suggest `cross-identity-triage`
+- Before NuGet release → suggest `triage`
 
 ## CI
 

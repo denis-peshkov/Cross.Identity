@@ -1,12 +1,12 @@
 ---
-name: cross-identity-db-scripts
+name: db-scripts
 description: >-
-  Apply DbUp conventions (rule 102-backend-efcore) in Cross.Identity:
+  Apply DbUp conventions (rule 102-backend-efcore) in this repo:
   Infrastructure/Scripts SqlServer/PostgreSQL/MySQL, auth schema, EF configs,
-  docs/BREAKING. Use when changing Cross.Identity DDL or seed SQL.
+  docs/BREAKING. Use when changing DDL or seed SQL under Infrastructure/Scripts.
 ---
 
-# Cross.Identity — DbUp script locations
+# DbUp script locations
 
 **DbUp rules** (layers, naming, append-only, idempotent new scripts, not EF Code First Migrations): `.cursor/rules/102-backend-efcore.mdc`.
 

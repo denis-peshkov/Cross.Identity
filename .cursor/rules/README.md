@@ -15,8 +15,8 @@
 
 ### Cursor skills (project)
 
-- `.cursor/skills/cross-identity-db-scripts/` - This repo’s DbUp paths (`Infrastructure/Scripts/` multi-provider, `auth`, BREAKING); conventions in `102-backend-efcore`
-- `.cursor/skills/cross-identity-triage/` - issue + PR triage orchestrator
+- `.cursor/skills/db-scripts/` - This repo’s DbUp paths (`Infrastructure/Scripts/` multi-provider, `auth`, BREAKING); conventions in `102-backend-efcore`
+- `.cursor/skills/triage/` - issue + PR triage orchestrator
 - `.cursor/skills/issue-triage/` - GitHub issues
 - `.cursor/skills/pr-triage/` - GitHub PRs
 
