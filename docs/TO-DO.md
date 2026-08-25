@@ -34,6 +34,12 @@
 
 ## Высокий (логика / auth model)
 
+### H1. EF Core / DbUp: deployment state vs `1_PreDeployment`
+⬜ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) эвристику «новый деплой» брать из **DbUp journal** / migration state, не из содержимого `1_PreDeployment`. Новые таблицы после релиза — paired `2_Initial` + idempotent `1_PreDeployment`, journal после predeployment.
+
+### H2. Scripts README: MERGE delete scope by `SystemId`
+⬜ CodeRabbit: в `Infrastructure/Scripts/README.md` — для SQL Server / PostgreSQL / MySQL upsert guidance: delete not-matched-by-source только для строк, чей `SystemId` есть в текущем `@Permissions` source set (не сносить permissions других систем).
+
 ---
 
 ## Средний (противоречия / баги контрактов)
@@ -55,6 +61,12 @@
 
 ### M42. `JsonHelpers` `Enum.IsDefined`
 ⬜ После `Enum.TryParse` требовать `Enum.IsDefined`.
+
+### M43. Release-plan template: duplicate `{{OPTIONAL_CR_OR_NOTES}}`
+⬜ CodeRabbit: в `.cursor/skills/cross-identity-release-plan/templates/RELEASE-PLAN.md` убрать дубль placeholder, чтобы notes рендерились один раз.
+
+### M44. Release-plan language (EN vs RU)
+⬜ CodeRabbit: skill / template / `docs/RELEASE-PLAN-2.0.0.md` / `2.1.1.md` — перевести body на English. Сейчас в репо принят RU для планов/`TO-DO`; нужен осознанный выбор (оставить RU или EN).
 
 ---
 
@@ -91,7 +103,8 @@
 
 ## Приоритет (подсказка)
 
-1. **M13–M14:** half-validate API docs / misuse guidance.
-2. **M39:** idle double-audit.
-3. **M40–M42:** FLOWS bag key / EndpointId regex / JsonHelpers.
-4. **L1–L9:** техдолг / XML / style.
+1. **H1–H2:** DbUp journal heuristic / MERGE `SystemId` scope в Scripts README.
+2. **M13–M14:** half-validate API docs / misuse guidance.
+3. **M39:** idle double-audit.
+4. **M40–M44:** FLOWS / EndpointId / JsonHelpers / template / language.
+5. **L1–L9:** техдолг / XML / style.
