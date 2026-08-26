@@ -50,7 +50,7 @@
 
 Пароль можно не трогать.
 
-**Сейчас:** reason в enum есть; user logout-all реализован (`main.LogoutAll.json`, `LogoutAllStep` + factory, flow-тесты) — revoke всех токенов пользователя с `USER_LOGOUT_ALL` по живому refresh. Stamp rotation в этом flow ещё нет. Отдельного admin-endpoint с `ADMIN_REVOKE` нет.
+**Сейчас:** reason в enum есть; user logout-all реализован (`main.LogoutAll.json`, `LogoutAllStep` + factory, flow-тесты) — revoke всех токенов пользователя с `USER_LOGOUT_ALL` по host-authorized `UserAccountId`. Stamp rotation в этом flow ещё нет. Отдельного admin-endpoint с `ADMIN_REVOKE` нет.
 
 ---
 

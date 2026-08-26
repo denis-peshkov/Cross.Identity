@@ -1,12 +1,12 @@
-﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.0.0` (published / closed)
-**Ветка:** `release/add-new-flows` · **база:** `origin/master` · **дата:** `2026-08-23`
-**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0
-
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-
-**Предыдущий план:** —
+> **Версия:** `2.0.0` (published / closed) · **ветка:** `release/add-new-flows` · **база:** `origin/master` · **дата:** `2026-08-23`
+>
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0
+>
+> **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+>
+> **Предыдущий план:** —
 
 ---
 

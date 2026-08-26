@@ -57,6 +57,7 @@ Content-Type: application/json
 
 ###
 # @name main-refresh-token
+# Client → host: RefreshToken (cookie/body). Host validates, resolves refresh Jti (RefreshTokens.Id), then ExecuteAsync({ Jti, … }).
 POST {{HOST}}/api/identity/main/RefreshToken
 Content-Type: application/json
 
@@ -130,22 +131,22 @@ Content-Type: application/json
 
 ###
 # @name main-logout
-# Logout current session: revokes the presented refresh token and access tokens in the same family (USER_LOGOUT). Idempotent.
+# Client → host: AccessToken. Host validates, resolves Jti, then ExecuteAsync({ Jti, … }). Idempotent.
 POST {{HOST}}/api/identity/main/Logout
 Content-Type: application/json
 
 {
-  "RefreshToken": "{{REFRESH_TOKEN}}"
+  "AccessToken": "{{ACCESS_TOKEN}}"
 }
 
 ###
 # @name main-logout-all
-# Logout from all devices: presents a live refresh token, revokes all sessions (USER_LOGOUT_ALL).
+# Client → host: AccessToken. Host validates, resolves UserAccountId (sub), then ExecuteAsync({ UserAccountId, … }).
 POST {{HOST}}/api/identity/main/LogoutAll
 Content-Type: application/json
 
 {
-  "RefreshToken": "{{REFRESH_TOKEN}}"
+  "AccessToken": "{{ACCESS_TOKEN}}"
 }
 
 ###

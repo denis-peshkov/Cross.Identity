@@ -1,19 +1,4 @@
 ﻿<Solution>
-  <Folder Name="/.github/">
-    <File Path=".github\ISSUE_TEMPLATE.md" />
-    <File Path=".github\PULL_REQUEST_TEMPLATE.md" />
-  </Folder>
-  <Folder Name="/.github/ISSUE_TEMPLATE/">
-    <File Path=".github\ISSUE_TEMPLATE\bug.yml" />
-    <File Path=".github\ISSUE_TEMPLATE\config.yml" />
-    <File Path=".github\ISSUE_TEMPLATE\feature.yml" />
-    <File Path=".github\ISSUE_TEMPLATE\question.yml" />
-  </Folder>
-  <Folder Name="/.github/workflows/">
-    <File Path=".github\workflows\branch-policy.yml" />
-    <File Path=".github\workflows\dotnet.yml" />
-    <File Path=".github\workflows\triage.yml" />
-  </Folder>
   <Folder Name="/assets/">
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />

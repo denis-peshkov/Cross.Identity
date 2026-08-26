@@ -1,5 +1,5 @@
 ---
-name: issue-triage
+name: triage-issue
 description: >-
   Issue triage for Cross.Identity: audit open issues, categorization,
   duplicates, cross-ref with PRs, risk assessment (auth/JWT/security), draft comments.
@@ -19,7 +19,7 @@ GitHub issue triage for the **Cross.Identity** repository (NuGet identity/auth l
 | >10 open issues without triage | Suggest audit |
 | Issue stale >30 days | Include in Stale table |
 
-Related skills: `pr-triage`, `triage`, `repo-recap` (if added).
+Related skills: `triage-pr`, `triage`, `repo-recap` (if added).
 
 ## Prerequisites
 

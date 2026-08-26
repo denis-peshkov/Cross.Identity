@@ -52,7 +52,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenValidRefreshToken_WhenLogoutFlow_ThenRevokesOnlyThatTokenAsync()
+    public async Task GivenValidJti_WhenLogoutFlow_ThenRevokesOnlyThatSessionAsync()
     {
         var userAccountId = Guid.NewGuid();
         var familyA = Guid.NewGuid();
@@ -75,8 +75,10 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         var accessB = await _jwtTokenService.GenerateAccessTokenAsync(
             userAccountId, familyB, new List<string>(), new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
 
+        var jtiA = Guid.Parse(_jwtTokenService.GetClaimValue(accessA, JwtRegisteredClaimNames.Jti)!);
+
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
+            new Dictionary<string, object?> { ["Jti"] = jtiA.ToString() },
             Flow,
             FlowOperationEnum.Logout,
             CancellationToken.None);
@@ -84,8 +86,8 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["revoked"].Should().Be(true);
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeTrue();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshA, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshB, CancellationToken.None)).Should().BeTrue();
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateAccessTokenAsync(accessB, CancellationToken.None)).Should().BeTrue();
 
@@ -99,10 +101,10 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnknownRefreshToken_WhenLogoutFlow_ThenSucceedsIdempotentlyAsync()
+    public async Task GivenUnknownJti_WhenLogoutFlow_ThenSucceedsIdempotentlyAsync()
     {
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = new string('x', 32) },
+            new Dictionary<string, object?> { ["Jti"] = Guid.NewGuid().ToString() },
             Flow,
             FlowOperationEnum.Logout,
             CancellationToken.None);
