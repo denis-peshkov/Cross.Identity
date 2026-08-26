@@ -122,7 +122,10 @@ When the user closes, rejects, or dismisses a C/H/M/L item from the current plan
 2. **Then** remove the item from the open severity section (if it was open).
 3. If the same id somehow still exists in `docs/TO-DO.md`, remove it there too — Skill [`release-plan`](../release-plan/SKILL.md) → **Close from TO-DO** / **Re-check**.
 4. **Never** drop an open item without the «Закрыто» row.
-5. **Fix-in-same-turn:** still allocate next `C/H/M/L` id via max(TO-DO HW, current plan ids)+1 (no mid-release HW write), write `✅ #M50 …` (etc.) into «Закрыто» — do **not** skip the plan row or downgrade Minor→`L`.
+5. **Fix-in-same-turn:**
+   - Finding **already open** in the current plan (`### M52. …` ⬜ / same meaning) → move to «Закрыто» as `✅ #M52 …` with **that same `#Id`**; do **not** allocate a replacement id.
+   - Finding **not yet** in the current plan (new this turn) → allocate next `C/H/M/L` id via max(TO-DO HW, current plan open+«Закрыто» ids)+1 (no mid-release HW write), then write `✅ #M59 …` (etc.) into «Закрыто» (open ⬜ row optional if fixed immediately).
+   - Always keep severity prefix (Minor→`#M…`, not `#L…`); do **not** skip the «Закрыто» row.
 
 ## Limits
 
