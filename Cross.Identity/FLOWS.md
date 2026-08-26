@@ -31,7 +31,7 @@ Flows that take `UserAccountId` but are **not** token credential operations (`Co
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag).
+| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
 Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refresh-token `Jti` (host resolves from the client refresh token). `Logout` takes access-token `Jti`. `LogoutAll` takes `UserAccountId`.
@@ -142,7 +142,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. `next: null` |
 
 > **Host:** validate the client refresh token, extract `jti` from the JWT (same value as `RefreshTokens.Id`), then pass `{ Jti, … }` into `ExecuteAsync`. The library does not parse the refresh token string on this path.
-
+>
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >
 > **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, the host must populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the **trusted pipeline** (same as Token) — `Empty` → `ValidationException`, not family revoke. Default IP check: disabled. See [Client context (host)](#client-context-host).

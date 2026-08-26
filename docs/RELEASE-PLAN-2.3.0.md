@@ -34,6 +34,9 @@
 ### Lifecycle bags: host resolves identity before `ExecuteAsync`
 `Logout` / `RefreshToken` принимают **`Jti`** (access / refresh JWT `jti` = DB id); `LogoutAll` / `ChangePassword` — **`UserAccountId`**. Библиотека **не** парсит compact refresh string на этих путях и не доказывает session через refresh payload. Хост валидирует client token / авторизует caller **до** `ExecuteAsync` (продолжение модели 2.2.0 для user-scoped; lifecycle выровнен в 2.3.0). См. [`FLOWS.md`](../Cross.Identity/FLOWS.md), [BREAKING § From 2.2.0 to 2.3.0](BREAKING.md#from-220-to-230).
 
+### Scaffold `Release:` — PR optional
+`scaffold-breaking-section.sh`: суффикс `([PR #N](…))` только при `--pr`; без флага — только `Release: [vX.Y.Z](…)`. CR «всегда PR» / auto-`gh` — **не принимаем** (осознанно). Template: omit PR placeholder until known.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -60,8 +63,10 @@
 | ✅ #M61 coderabbit: Fix-in-same-turn keep existing `#Id` | already-open → same id in «Закрыто»; new → allocate next; no Minor→`L` |
 | ✅ #M62 release-plan bump: `dev→master` example cell | третья колонка `n/a (ask first)`; ask minor/patch/major |
 | ✅ #M63 release-plan Phase 3 numbering | dismissed: 2 peer steps (`BREAKING` + Language) — нумерация OK по Workflow numbering |
+| ✅ #M64 scaffold-breaking: PR on Release optional | принято: суффикс PR только при `--pr`; без auto-`gh` / fail |
 | ✅ #H17 triage-pr: strip leading `origin/` on BRANCH | `BRANCH#origin/` before fetch/`origin/$BRANCH`; no `origin/origin/…` |
 | ✅ #C1 double UTF-8 BOM in Logout flow tests | CR Critical: `Main_Logout*_FlowTests.cs` — ровно один BOM (был двойной) |
+| ✅ #M65 FLOWS.md MD055 / MD028 | Host table row closing `\|`; убрана blank line между Host/Transaction blockquotes |
 
 ---
 
@@ -69,7 +74,7 @@
 
 - User-scoped flows (2.2.0): host-authorized `UserAccountId` без library refresh session proof.
 - Token lifecycle (2.3.0): rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
-- CodeRabbit по дельте: **нет** открытых findings в `JwtTokenService` / stock logout-refresh steps после закрытия H11–H17, M51–M63, L12, C1.
+- CodeRabbit / follow-ups: открытых C/H/M/L нет (закрыто через #C1, H11–H17, M51–M65, L12).
 
 ---
 
