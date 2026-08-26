@@ -88,8 +88,8 @@ Empty severity sections stay as the heading + `---`.
 | `M` | Средний |
 | `L` | Низкий |
 
-**Источник max (allocate, без правки `TO-DO.md`):**  
-`max(Id high-water в шапке TO-DO, id в open + «Закрыто» текущего плана)` по группе → **+ 1**.  
+**Источник max (allocate, без правки `TO-DO.md`):**
+`max(Id high-water в шапке TO-DO, id в open + «Закрыто» текущего плана)` по группе → **+ 1**.
 **`Id high-water` в `TO-DO.md` не трогать** до **finalize** этого релиза. Исторические id не перенумеровывать / не переиспользовать.
 
 Источник finding’а **не хранить отдельной секцией** — сразу в C/H/M/L open **этого** плана (если относится к дельте) или в `TO-DO.md` (если вне дельты).
@@ -148,7 +148,7 @@ Use `plan_path` / `target_version` from output. Exit **2** → ask user for `X.Y
 |-------|------|-------------------------|
 | `release/*` | **minor** (+0.1.0) | `2.3.0` |
 | `hotfix/*` | **patch** (+0.0.1) | `2.2.1` |
-| merge **`dev` → `master`** (или ветка без `release/` / `hotfix/`) | **спросить пользователя** — minor vs patch vs major; не угадывать |
+| merge **`dev` → `master`** | **спросить пользователя** — minor vs patch vs major; не угадывать | n/a (ask first) |
 
 База bump — последний `v*` tag. Порядок: user / `--version` → script → `test -f` на `plan_path`. Script fields for BREAKING: `breaking_from`, `breaking_to`.
 
