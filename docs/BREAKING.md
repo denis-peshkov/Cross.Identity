@@ -1,10 +1,11 @@
 ﻿# Breaking changes (NuGet consumers)
 
-Breaking changes for **Cross.Identity**, grouped by **from → to** package version.  
+Breaking changes for **Cross.Identity**, grouped by **from → to** package version.
 Sections are **newest first** (top) → **oldest last** (bottom). When skipping releases, apply every intervening section **from oldest to newest** (bottom-up through the relevant range), e.g. `1.4 → 1.10` = `≤1.4→1.5`, then `1.5→1.6`, … through `1.9→1.10`.
 
 | Upgrade path         | Section                                     |
 |----------------------|---------------------------------------------|
+| `2.2.0` → `2.3.0+`   | [From 2.2.0 to 2.3.0](#from-220-to-230)     |
 | `2.1.1` → `2.2.0+`   | [From 2.1.1 to 2.2.0](#from-211-to-220)     |
 | `2.0.x` → `2.1.1+`   | [From 2.0.x to 2.1.1](#from-20x-to-211)     |
 | `1.10.x` → `2.0.0+`  | [From 1.10.x to 2.0.0](#from-110x-to-200)   |
@@ -25,9 +26,72 @@ When shipping a new breaking change: insert a **From X.Y.Z to A.B.C** section **
 
 ---
 
+## From 2.2.0 to 2.3.0
+
+Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.3.0).
+
+### `main.ChangePassword` input: `Id` → `UserAccountId`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Form field / selector | `Id` (Guid string) | `UserAccountId` (Guid string) |
+| Flow input bag | `{ Id, CurrentPassword, NewPassword, … }` | `{ UserAccountId, CurrentPassword, NewPassword, … }` |
+
+`ValidatePasswordAsync` / `SetPasswordAsync` / `GetUserAccountIdByAsync` accept selector `"UserAccountId"` (aliases `"Id"` / `"UserId"`).
+
+**Action:** pass `{ UserAccountId, CurrentPassword, NewPassword }` into `FlowOperationEnum.ChangePassword`; update custom flow overrides.
+
+### `main.Logout`: `RefreshToken` → `Jti`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` | `{ Jti, … }` (access-token JTI Guid string) |
+| Stock `logout` step | `refreshTokenKey` → `RevokeRefreshTokenForLogoutAsync` | `jtiKey` → `RevokeSessionForLogoutAsync` |
+
+**Action:** host extracts `jti` from the client access token, then `ExecuteAsync({ Jti, … })`.
+
+### `main.LogoutAll`: `RefreshToken` → `UserAccountId`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` | `{ UserAccountId, … }` |
+| Session proof | library validated refresh token | **host** authorizes caller and passes `UserAccountId` (e.g. from access-token `sub`) |
+| Stock `logoutAll` step | `refreshTokenKey` → `RevokeAllTokensForLogoutAsync` | `userAccountIdKey` → `RevokeAllTokensForUserAsync` (`USER_LOGOUT_ALL`) |
+| `IJwtTokenService.RevokeAllTokensForLogoutAsync` | refresh → revoke all | **removed** — use `RevokeAllTokensForUserAsync(userAccountId, USER_LOGOUT_ALL, …)` |
+
+**Action:** host resolves `UserAccountId` before `FlowOperationEnum.LogoutAll`; replace direct `RevokeAllTokensForLogoutAsync` calls with `RevokeAllTokensForUserAsync`.
+
+### `main.RefreshToken`: `RefreshToken` → `Jti`
+
+| Area | Was (2.2.0) | Now (2.3.0+) |
+|------|-------------|--------------|
+| Flow input bag | `{ RefreshToken, … }` (compact JWT string) | `{ Jti, … }` (refresh-token JTI Guid string — `RefreshTokens.Id`) |
+| Stock `refreshToken` step | `refreshTokenKey` → hash lookup + stamp claim | `jtiKey` → row lookup by `RefreshTokens.Id` |
+
+**Action:** host validates the client refresh token (cookie/body), extracts `jti` from the JWT (equals `RefreshTokens.Id`), then `ExecuteAsync({ Jti, … })`.
+
+### `IJwtTokenService`: removed unused APIs
+
+The following members are **removed** (not used by stock flows/steps). Host token validation/revoke by compact string must be implemented in the host or a custom wrapper.
+
+| Removed |
+|---------|
+| `ValidateRefreshTokenAsync` |
+| `EnsureRefreshTokenBelongsToUserAsync` |
+| `EnsureRefreshTokenActiveForRotationAsync(string, …)` |
+| `GetRefreshTokenAsync(string, …)` |
+| `InvalidateRefreshTokenAsync(string, string, …)` |
+| `RevokeRefreshTokenForLogoutAsync` |
+| `RevokeAccessTokenAsync` |
+| `RevokeRefreshTokenFamilyAsync` |
+| `CleanupExpiredAccessTokensAsync` |
+
+**Kept:** `GenerateIdToken`, `GenerateAccessTokenAsync`, `GenerateRefreshTokenAsync`, `ValidateAccessTokenAsync`, `ValidateAccessTokenJtiAsync` (`JwtBearer` / host), `EnsureRefreshTokenActiveForRotationAsync(Guid, …)`, `GetRefreshTokenByIdAsync`, `InvalidateRefreshTokenAsync(Guid, Guid, …)`, `GetClaimValue`, `RevokeSessionForLogoutAsync`, `RevokeAllTokensForUserAsync`, `CleanupExpiredRefreshTokensAsync`.
+
+---
 ## From 2.1.1 to 2.2.0
 
-Release: `2.2.0` (planned). See [`FLOWS.md`](../Cross.Identity/FLOWS.md) — [User-scoped authorization (host responsibility)](../Cross.Identity/FLOWS.md#user-scoped-authorization-host-responsibility).
+Release: [v2.2.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.2.0) ([PR #19](https://github.com/denis-peshkov/Cross.Identity/pull/19)).
 
 ### User-scoped APIs: no library RefreshToken session proof
 
@@ -53,6 +117,8 @@ User-scoped operations no longer take a refresh token as library session proof. 
 2. Ensure the host Web API authorizes that id before calling Cross.Identity (access token / principal).
 3. Optionally call `EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof outside stock steps.
 4. Update any custom flow overrides / step factories that still pass `refreshTokenKey` into the removed parameters.
+
+---
 ## From 2.0.x to 2.1.1
 
 Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1) ([PR #18](https://github.com/denis-peshkov/Cross.Identity/pull/18)).
@@ -73,7 +139,7 @@ Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ---
 ## From 1.10.x to 2.0.0
 
-Release: [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) — auth hardening (OTP, tokens, OAuth, session binding). Stock flows: [`FLOWS.md`](../Cross.Identity/FLOWS.md).
+Release: [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) ([PR #16](https://github.com/denis-peshkov/Cross.Identity/pull/16)).
 
 ### No `IHttpContextAccessor` / ambient `HttpContext` → `HostSuppliedClientContext`
 

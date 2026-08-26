@@ -50,6 +50,7 @@ global using Cross.Identity.Services.ExternalOAuth;
 global using System.Net.Http.Headers;
 global using Cross.Identity.Tests.Common;
 global using Cross.Identity.Tests.Core;
+global using Cross.Identity.Tests.Helpers;
 global using Cross.Messaging.Email.Options;
 global using Cross.Messaging.Email.Services;
 global using Cross.Messaging.Sms.Services;

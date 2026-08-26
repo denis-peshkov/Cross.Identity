@@ -4,16 +4,33 @@ Triage reports for the Cross.Identity repository.
 
 ## Locally (Cursor Agent + skills)
 
-```bash
-# Full triage
-# In Cursor chat: "Run triage"
+```text
+# GitHub: open issues + PRs + cross-analysis
+Run triage
+запусти triage
 
-# Or in parts:
-# "Run issue-triage"
-# "Run pr-triage"
+# Local: current branch vs origin/master (no PR required)
+triage local
+запусти triage local
+triage local ru
+triage local deep
+
+# Named branch
+triage branch release/fix-missed-issues base master
+
+# Parts
+Run triage-issue
+Run triage-pr
+triage-pr local
 ```
 
-Skills: `.cursor/skills/{issue-triage,pr-triage,triage}/`
+Skills: `.cursor/skills/{triage-issue,triage-pr,triage}/`
+
+Reports:
+
+- GitHub → `.cursor/triage/docs/triage-YYYY-MM-DD.md`
+- Local/branch → `.cursor/triage/docs/branch-<safe-name>-YYYY-MM-DD.md`
+
 
 ## Scripts
 

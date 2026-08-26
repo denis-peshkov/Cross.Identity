@@ -1,4 +1,4 @@
-﻿namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
@@ -52,7 +52,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenValidRefreshToken_WhenRefreshTokenFlow_ThenReturnsNewTokenPairAsync()
+    public async Task GivenValidRefreshTokenJti_WhenRefreshTokenFlow_ThenReturnsNewTokenPairAsync()
     {
         var userAccountId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
@@ -68,9 +68,10 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
             userAccountId,
             familyId,
             new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
+        var refreshTokenJti = Guid.Parse(_jwtTokenService.GetClaimValue(oldRefreshToken, JwtRegisteredClaimNames.Jti)!);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = oldRefreshToken },
+            new Dictionary<string, object?> { ["Jti"] = refreshTokenJti.ToString() },
             Flow,
             FlowOperationEnum.RefreshToken,
             CancellationToken.None);
@@ -86,12 +87,10 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidRefreshToken_WhenRefreshTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
+    public async Task GivenUnknownRefreshTokenJti_WhenRefreshTokenFlow_ThenThrowsNotAuthorizedExceptionAsync()
     {
-        var invalidToken = new string('x', 32);
-
         var act = () => _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = invalidToken },
+            new Dictionary<string, object?> { ["Jti"] = Guid.NewGuid().ToString() },
             Flow,
             FlowOperationEnum.RefreshToken,
             CancellationToken.None);
@@ -102,10 +101,10 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenTooShortRefreshToken_WhenRefreshTokenFlow_ThenThrowsValidationExceptionAsync()
+    public async Task GivenInvalidRefreshTokenJtiFormat_WhenRefreshTokenFlow_ThenThrowsValidationExceptionAsync()
     {
         var act = () => _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = "short" },
+            new Dictionary<string, object?> { ["Jti"] = "not-a-guid" },
             Flow,
             FlowOperationEnum.RefreshToken,
             CancellationToken.None);
@@ -115,9 +114,9 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenReusedRefreshTokenAfterRotation_WhenRefreshTokenFlow_ThenRevokesFamilyAndThrowsConflictAsync()
+    public async Task GivenReusedRefreshTokenJtiAfterRotation_WhenRefreshTokenFlow_ThenRevokesFamilyAndThrowsConflictAsync()
     {
-        // Attacker rotated first (R1 → R2); victim reuses R1 → REPLAY_DETECTED kills R2.
+        // Attacker rotated first (R1 → R2); victim reuses R1 jti → REPLAY_DETECTED kills R2.
         var userAccountId = Guid.NewGuid();
         var familyId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -132,9 +131,10 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
             userAccountId,
             familyId,
             new List<Claim> { new(JwtRegisteredClaimNames.Sub, userAccountId.ToString()) }, HostSuppliedClientContext.Empty, CancellationToken.None);
+        var r1Jti = Guid.Parse(_jwtTokenService.GetClaimValue(r1, JwtRegisteredClaimNames.Jti)!);
 
         var first = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = r1 },
+            new Dictionary<string, object?> { ["Jti"] = r1Jti.ToString() },
             Flow,
             FlowOperationEnum.RefreshToken,
             CancellationToken.None);
@@ -143,7 +143,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var r2 = payload["refresh_token"]!.ToString()!;
 
         var act = () => _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = r1 },
+            new Dictionary<string, object?> { ["Jti"] = r1Jti.ToString() },
             Flow,
             FlowOperationEnum.RefreshToken,
             CancellationToken.None);
@@ -151,7 +151,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already been used*");
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(r2, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, r2, CancellationToken.None)).Should().BeFalse();
 
         var familyTokens = await Context.RefreshTokens.Where(x => x.FamilyId == familyId).ToListAsync();
         familyTokens.Should().OnlyContain(t => t.RevokedAt != null);

@@ -116,9 +116,6 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns(env);
 
         var jwtMock = new Mock<IJwtTokenService>();
-        jwtMock
-            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
 
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(
@@ -152,9 +149,6 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Returns("$pbkdf2-test-hash");
 
         var jwtMock = new Mock<IJwtTokenService>();
-        jwtMock
-            .Setup(j => j.EnsureRefreshTokenBelongsToUserAsync(It.IsAny<string>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
         jwtMock
             .Setup(j => j.RevokeAllTokensForUserAsync(
                 It.IsAny<Guid>(), It.IsAny<RefreshTokenRevokedReason>(), It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))

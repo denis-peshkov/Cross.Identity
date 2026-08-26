@@ -32,7 +32,7 @@ Comments in **English**.
 {At least one specific positive point.}
 
 ---
-*Automated review via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/pr-triage`*
+*Automated review via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-pr`*
 ```
 
 ## Severity

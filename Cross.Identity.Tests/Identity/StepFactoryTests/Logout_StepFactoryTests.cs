@@ -25,7 +25,7 @@ public class Logout_StepFactoryTests
             """
             {
               "kind": "logout",
-              "refreshTokenKey": "RefreshToken",
+              "jtiKey": "Jti",
               "next": "done"
             }
             """);
@@ -34,7 +34,7 @@ public class Logout_StepFactoryTests
         var step = (LogoutStep)factory.Create(json.RootElement, _sp);
 
         step.Kind.Should().Be("logout");
-        step.RefreshTokenKey.Should().Be("RefreshToken");
+        step.JtiKey.Should().Be("Jti");
         step.Next.Should().Be("done");
         step.JwtTokenService.Should().NotBeNull();
     }

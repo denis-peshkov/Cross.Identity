@@ -27,14 +27,14 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token lifecycle operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof and does **not** call `EnsureRefreshTokenBelongsToUserAsync` on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). Optional: call `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` yourself if you still want refresh-based proof. |
+| **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
-Token lifecycle flows (`Token`, `RefreshToken`, `Logout`, `LogoutAll`) still take/issue refresh tokens as part of their contract.
+Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refresh-token `Jti` (host resolves from the client refresh token). `Logout` takes access-token `Jti`. `LogoutAll` takes `UserAccountId`.
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
@@ -133,14 +133,16 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.RefreshToken.json`
 
-**Purpose:** refresh token pair using `refresh_token`.
+**Purpose:** refresh token pair using refresh-token `jti` (`RefreshTokens.Id`).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `refreshToken` |
-| `refreshToken` | refreshToken | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `Jti` (refresh-token JTI Guid string); optional client context. → `refreshToken` |
+| `refreshToken` | refreshToken | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. `next: null` |
 
+> **Host:** validate the client refresh token, extract `jti` from the JWT (same value as `RefreshTokens.Id`), then pass `{ Jti, … }` into `ExecuteAsync`. The library does not parse the refresh token string on this path.
+>
 > **Transaction:** `refreshToken` does not open a DB transaction. The host should wrap the refresh call (same scoped `IdentityContext`) in an external transaction so validation, new-token persistence, and old-token invalidation commit together.
 >
 > **Session binding:** on refresh, `EnsureRefreshTokenActiveForRotationAsync` compares host-supplied `collectForm` metadata with `Created*` on the refresh-token family anchor. Mismatch revokes the family with `DEVICE_MISMATCH`, `USER_AGENT_MISMATCH`, or `TOKEN_STOLEN` (two or more dimensions). IP is checked only when `Authentication:Jwt:SessionBindingCheckIp` is `true` (`IP_MISMATCH`). When **`SessionBindingCheckIp` is `true`**, the host must populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the **trusted pipeline** (same as Token) — `Empty` → `ValidationException`, not family revoke. Default IP check: disabled. See [Client context (host)](#client-context-host).
@@ -182,7 +184,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Id` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: Id. → `passwordAuth` |
+| `collectForm` | collectForm | `UserAccountId` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: UserAccountId. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
 | `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
 
@@ -276,29 +278,29 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.Logout.json`
 
-**Purpose:** revoke the current session (presented refresh token).
+**Purpose:** revoke the current session identified by access-token `jti` (`USER_LOGOUT`). Host resolves `Jti` from the client access token before `ExecuteAsync`.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logout` |
-| `logout` | logout | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `Jti` (required Guid string); optional client context. → `logout` |
+| `logout` | logout | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
 
-> Revokes the refresh token and access tokens in the same session (family) with `USER_LOGOUT`. Missing or already-revoked tokens are a no-op (idempotent).
+> Resolves `FamilyId` from the access-token row and revokes the whole family (all active refresh + access). Missing or already-revoked JTI is a no-op (idempotent).
 
 ---
 
 ## `main.LogoutAll.json`
 
-**Purpose:** revoke all sessions for the user (prove ownership via refresh token).
+**Purpose:** revoke all sessions for the user (`USER_LOGOUT_ALL`). Host must authorize the caller and pass `UserAccountId` (e.g. resolve `sub` from the client’s access token before `ExecuteAsync`).
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `RefreshToken` (32–2048); optional client context. → `logoutAll` |
-| `logoutAll` | logoutAll | `refreshTokenKey: collectForm.RefreshToken`. → `collectResult` |
+| `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `logoutAll` |
+| `logoutAll` | logoutAll | `userAccountIdKey: collectForm.UserAccountId`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
 
-> Proves session ownership via the refresh token, then revokes every active access/refresh token for that user with `USER_LOGOUT_ALL`.
+> Revokes every active access/refresh token for that user with `USER_LOGOUT_ALL`. The library does not read `AccessToken` — the host maps client credentials to `UserAccountId`.
 
 ---
 

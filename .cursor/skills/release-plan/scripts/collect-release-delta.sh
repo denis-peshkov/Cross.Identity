@@ -8,6 +8,10 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
 cd "$ROOT"
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/repository-link.sh
+source "$SCRIPT_DIR/lib/repository-link.sh"
+
 BASE="origin/master"
 VERSION=""
 OUT=""
@@ -61,6 +65,7 @@ fi
 
 BRANCH="$(git branch --show-current 2>/dev/null || echo DETACHED)"
 DATE="$(date +%Y-%m-%d)"
+REPOSITORY_LINK="$(repository_link "$(git remote get-url origin 2>/dev/null || true)")"
 CACHE_DIR="$ROOT/.cursor/skills/release-plan/.cache"
 mkdir -p "$CACHE_DIR"
 SAFE_BRANCH="${BRANCH//\//-}"
@@ -76,6 +81,7 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
   echo "# Release delta cache"
   echo
   echo "- **version:** ${VERSION:-_(unset)_}"
+  echo "- **repository_link:** $REPOSITORY_LINK"
   echo "- **branch:** \`$BRANCH\`"
   echo "- **base:** \`$BASE\`"
   echo "- **merge-base:** \`$MB\`"

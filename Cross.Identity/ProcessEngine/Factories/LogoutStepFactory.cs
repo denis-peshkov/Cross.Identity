@@ -4,7 +4,7 @@
 /// Factory for <see cref="LogoutStep"/>.
 /// JSON parameters:
 /// <list type="bullet">
-/// <item><description><c>refreshTokenKey</c> — bag key for the refresh token;</description></item>
+/// <item><description><c>jtiKey</c> — bag key for the access-token JTI;</description></item>
 /// <item><description><c>next</c> — (opt.) next step name; <c>null</c> — finish.</description></item>
 /// </list>
 /// </summary>
@@ -18,10 +18,10 @@ internal sealed class LogoutStepFactory : IStepFactory
     {
         return new LogoutStep
         {
-            Kind                 = Kind,
-            JwtTokenService      = sp.GetRequiredService<IJwtTokenService>(),
-            RefreshTokenKey      = cfg.Str("refreshTokenKey"),
-            Next                 = cfg.StrOpt("next"),
+            Kind            = Kind,
+            JwtTokenService = sp.GetRequiredService<IJwtTokenService>(),
+            JtiKey          = cfg.Str("jtiKey"),
+            Next            = cfg.StrOpt("next"),
         };
     }
 }

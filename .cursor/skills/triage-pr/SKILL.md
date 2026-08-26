@@ -1,9 +1,9 @@
 ---
-name: pr-triage
+name: triage-pr
 description: >-
   PR triage for Cross.Identity: audit open PRs, deep review, draft review
   comments; local/branch review vs master|dev without a PR. Args: "all",
-  PR numbers, "branch <name>", "local", "base master|dev",
+  PR numbers, "branch <name>", "local", "base master|dev", "offline",
   "ru"/"en" for table language (default en).
 ---
 
@@ -14,8 +14,9 @@ description: >-
 | Scenario | Action |
 |----------|--------|
 | "Triage PRs" / "pr triage" | Phase 1 audit (GitHub open PRs) |
-| "Triage this branch" / "local triage" | Phase 1b (git diff, no PR) |
+| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\|dev, no PR) |
 | "Review branch X vs master" | Phase 1b + Phase 2 |
+| Orchestrator `triage local` / `triage branch …` | Same as Phase 1b (see `triage` skill) |
 | >5 open PRs without review | Suggest Phase 1 audit |
 | PR stale >14 days | Flag in table |
 
@@ -25,12 +26,12 @@ description: >-
 |------|----------------|-------------|----------------|
 | **PR audit** | `all` or default | `gh pr list` | No (draft only) |
 | **PR deep** | PR number(s) | `gh pr diff {n}` | AskQuestion + template |
-| **Branch** | `branch <name>` `[base master\|dev]` | `git diff base...branch` | No |
-| **Local** | `local` `[base master\|dev]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
+| **Branch** | `branch <name>` `[base master\|dev]` `[offline]` | `git diff base...branch` | No |
+| **Local** | `local` `[base master\|dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
 
 Default **base**: `master` if ambiguous; use `dev` when the user says so or the branch targets `dev`.
 
-Prefer `origin/<base>` after `git fetch` when remote exists.
+Prefer `origin/<base>` after a **successful** `git fetch`. Do **not** swallow fetch failures unless the user passed **`offline`** (see Phase 1b).
 
 ## Prerequisites
 
@@ -78,13 +79,15 @@ For each PR (priority — overlap candidates):
 
 **Size**: XS <50, S 50–200, M 200–500, L 500–1000, XL >1000 additions.
 
-**Detections**: overlaps >50% files, clusters (3+ PRs from same author), stale >14d, CI clean/dirty.
+**Detections**: overlaps >50% files, clusters (3+ PRs from same author), stale >14d, CI clean/unstable/dirty.
 
 **Our PRs**: author in collaborators.
 
-**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, CI clean/unstable.
+**CI rollup** (`statusCheckRollup.state` from `gh pr list`): `SUCCESS` → clean; `FAILURE` → dirty; `PENDING` / missing / anything else → unstable or unknown.
 
-**External — problematic**: XL, conflict, CI dirty, overlap.
+**External — ready**: ≤1000 additions, ≤10 files, not CONFLICTING, **CI clean only** (`SUCCESS` — all required checks passed).
+
+**External — problematic**: XL, conflict, **CI unstable/dirty/unknown**, overlap.
 
 ### Output tables
 
@@ -107,24 +110,66 @@ Use when the user asks for local branch, named branch, or review without a PR. *
 
 ### Resolve refs
 
+Default: refresh remote base; **fail** if fetch cannot run. **`offline`** (user arg): skip fetch; allow local base with an explicit warning in the report.
+
 ```bash
 BASE="${BASE:-master}"          # or: dev
-BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo or origin/hotfix/foo
+BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo (origin/hotfix/foo → stripped to hotfix/foo)
+OFFLINE=0                       # 1 when user passed "offline"
 
-git fetch origin "$BASE" 2>/dev/null || true
-git rev-parse --verify "origin/$BASE" >/dev/null 2>&1 && BASE_REF="origin/$BASE" || BASE_REF="$BASE"
+if [[ "$OFFLINE" -eq 0 ]]; then
+  if ! git fetch origin "$BASE"; then
+    echo "error: git fetch origin $BASE failed — fix network/auth or retry with offline" >&2
+    exit 1
+  fi
+  if ! git rev-parse --verify "origin/$BASE" >/dev/null 2>&1; then
+    echo "error: origin/$BASE missing after fetch" >&2
+    exit 1
+  fi
+  BASE_REF="origin/$BASE"
+else
+  if git rev-parse --verify "origin/$BASE" >/dev/null 2>&1; then
+    BASE_REF="origin/$BASE"
+  elif git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+    BASE_REF="$BASE"
+    # Report must note: offline mode — base may be stale
+  else
+    echo "error: neither origin/$BASE nor local $BASE exists" >&2
+    exit 1
+  fi
+fi
 
-# Named branch not checked out:
-git rev-parse --verify "$BRANCH" >/dev/null 2>&1 || git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1
+# Resolve branch tip (local mode: HEAD; named: foo or origin/foo)
+if [[ "$BRANCH" == "HEAD" ]]; then
+  BRANCH_REF="HEAD"
+else
+  # Strip leading origin/ so fetch/ref never become origin/origin/…
+  BRANCH="${BRANCH#origin/}"
+  if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+    BRANCH_REF="$BRANCH"
+  else
+    if [[ "$OFFLINE" -eq 0 ]]; then
+      git fetch origin "$BRANCH" 2>/dev/null || true
+    fi
+    if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+      BRANCH_REF="origin/$BRANCH"
+    else
+      echo "error: branch '$BRANCH' not found (local or origin/)" >&2
+      exit 1
+    fi
+  fi
+fi
 ```
+
+Use **`$BRANCH_REF`** (not `$BRANCH`) in all log/diff commands below.
 
 ### Collect diff
 
 ```bash
-git log --oneline "$BASE_REF..$BRANCH" | head -30
-git diff --stat "$BASE_REF...$BRANCH"
-git diff --name-status "$BASE_REF...$BRANCH"
-git diff "$BASE_REF...$BRANCH"
+git log --oneline "$BASE_REF..$BRANCH_REF" | head -30
+git diff --stat "$BASE_REF...$BRANCH_REF"
+git diff --name-status "$BASE_REF...$BRANCH_REF"
+git diff "$BASE_REF...$BRANCH_REF"
 ```
 
 Triple-dot (`...`) = changes on the branch since fork from base (merge-base). Prefer this over two-dot for triage.
@@ -160,7 +205,7 @@ Short summary + file list + offer Phase 2 deep review. Save under Saving below.
 **Branch / local mode:**
 
 ```bash
-git diff "$BASE_REF...$BRANCH"
+git diff "$BASE_REF...$BRANCH_REF"
 # or uncommitted: git diff && git diff --cached
 ```
 

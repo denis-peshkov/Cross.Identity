@@ -52,7 +52,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenValidRefreshToken_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
+    public async Task GivenUserAccountId_WhenLogoutAllFlow_ThenRevokesAllUserTokensAsync()
     {
         var userAccountId = Guid.NewGuid();
         var otherUserAccountId = Guid.NewGuid();
@@ -86,7 +86,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
             otherUserAccountId, Guid.NewGuid(), new List<Claim>(), HostSuppliedClientContext.Empty, CancellationToken.None);
 
         var result = await _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = refreshA },
+            new Dictionary<string, object?> { ["UserAccountId"] = userAccountId.ToString() },
             Flow,
             FlowOperationEnum.LogoutAll,
             CancellationToken.None);
@@ -94,28 +94,14 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
         payload["revoked"].Should().Be(true);
 
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshA, CancellationToken.None)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(refreshB, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshA, CancellationToken.None)).Should().BeFalse();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, refreshB, CancellationToken.None)).Should().BeFalse();
         (await _jwtTokenService.ValidateAccessTokenAsync(accessA, CancellationToken.None)).Should().BeFalse();
-        (await _jwtTokenService.ValidateRefreshTokenAsync(otherRefresh, CancellationToken.None)).Should().BeTrue();
+        (await TokenTestHelpers.IsRefreshTokenActiveAsync(Context, otherRefresh, CancellationToken.None)).Should().BeTrue();
 
         var userRefresh = await Context.RefreshTokens.Where(x => x.UserAccountId == userAccountId).ToListAsync();
         userRefresh.Should().OnlyContain(t => t.RevokedAt != null);
         Context.Audits.Should().Contain(a =>
             a.UserAccountId == userAccountId && a.RevokedReason == RefreshTokenRevokedReason.USER_LOGOUT_ALL);
-    }
-
-    [Test]
-    [Category(TestCategory.INTEGRATION)]
-    public async Task GivenInvalidRefreshToken_WhenLogoutAllFlow_ThenThrowsNotAuthorizedAsync()
-    {
-        var act = () => _flowExecutor.ExecuteAsync(
-            new Dictionary<string, object?> { ["RefreshToken"] = new string('x', 32) },
-            Flow,
-            FlowOperationEnum.LogoutAll,
-            CancellationToken.None);
-
-        await act.Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Invalid or expired refresh token*");
     }
 }
