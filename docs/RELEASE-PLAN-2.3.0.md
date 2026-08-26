@@ -1,12 +1,12 @@
 ﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.3.0`
-**Ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
-**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.3.0
-
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-
-**Предыдущий план:** [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)
+> **Версия:** `2.3.0` · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
+>
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.3.0
+>
+> **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+>
+>**Предыдущий план:** [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)
 
 **CodeRabbit:** `2026-08-26` · log `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-all-20260826-022142.jsonl` · 10 findings (0 Critical, 3 Major, 7 Minor)
 
