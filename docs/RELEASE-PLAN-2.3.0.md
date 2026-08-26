@@ -57,6 +57,11 @@
 | ✅ #M57 `repository-link.sh`: `ssh://git@github.com/` | SSH SCP + `ssh://` → `https://github.com/org/repo` |
 | ✅ #M58 `scaffold-breaking-section.sh`: ANCHOR при `--from` | ANCHOR всегда из effective FROM/TO (`from-{from}-to-{to}`) |
 | ✅ #L12 triage orchestrator local/branch modes | `triage local` / `triage branch` vs `origin/master`; rule + README |
+| ✅ #M61 coderabbit: Fix-in-same-turn keep existing `#Id` | already-open → same id in «Закрыто»; new → allocate next; no Minor→`L` |
+| ✅ #M62 release-plan bump: `dev→master` example cell | третья колонка `n/a (ask first)`; ask minor/patch/major |
+| ✅ #M63 release-plan Phase 3 numbering | dismissed: 2 peer steps (`BREAKING` + Language) — нумерация OK по Workflow numbering |
+| ✅ #H17 triage-pr: strip leading `origin/` on BRANCH | `BRANCH#origin/` before fetch/`origin/$BRANCH`; no `origin/origin/…` |
+| ✅ #C1 double UTF-8 BOM in Logout flow tests | CR Critical: `Main_Logout*_FlowTests.cs` — ровно один BOM (был двойной) |
 
 ---
 
@@ -64,7 +69,7 @@
 
 - User-scoped flows (2.2.0): host-authorized `UserAccountId` без library refresh session proof.
 - Token lifecycle (2.3.0): rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
-- CodeRabbit по дельте: **нет** открытых findings в `JwtTokenService` / stock logout-refresh steps после закрытия H11–H16, M51–M60, L12.
+- CodeRabbit по дельте: **нет** открытых findings в `JwtTokenService` / stock logout-refresh steps после закрытия H11–H17, M51–M63, L12, C1.
 
 ---
 

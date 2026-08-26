@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
