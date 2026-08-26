@@ -41,7 +41,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 
 From sibling skills use relative link: `[`release-plan`](../release-plan/SKILL.md)`.
 
-**Workflow numbering:** phases `### Phase N — …` (under `## Workflow`, or `## Phase N` for orchestrators). Numbered steps **only when a phase has 2+ peer steps**; single-step phase = prose directly under the heading (no lone `1.`). **No** `1.` wrapper with a nested sub-list — one flat list or prose.
+**Workflow numbering:** phases `### Phase N — …` (under `## Workflow`, or `## Phase N` for orchestrators). Numbered steps **only when a phase has 2 and more peer steps**; single-step phase = prose directly under the heading (no lone `1.`). **No** `1.` wrapper with a nested sub-list — one flat list or prose.
 
 ## Two version-plan files
 
@@ -168,7 +168,7 @@ bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh \
   --out .cursor/skills/release-plan/.cache/breaking-X.Y.Z.md
 ```
 
-Optional: `--pr N`, `--from`, `--to`, `--version`.
+Optional: `--from`, `--to`, `--version`. **`--pr N` required** (or an open PR on the current branch — script resolves via `gh`).
 
 ### Phase 2 — Edit `docs/BREAKING.md`
 
@@ -180,7 +180,7 @@ Optional: `--pr N`, `--from`, `--to`, `--version`.
 - **First** block after intro: intro ends with `---` — no extra `---` before heading.
 - **Later** blocks: `---` immediately before `## From …` (no blank between `---` and `##`).
 - **After** `## From … to …` — blank line, then `Release:` (or `###` if no `Release:`).
-- **`Release:`** — `[vX.Y.Z](release-url)`; `([PR #N](…)).` when PR known. No `(planned)`, no `See FLOWS.md…`.
+- **`Release:`** — `[vX.Y.Z](release-url) ([PR #N](…)).` — version **and** PR always. No `(planned)`, no `See FLOWS.md…`.
 
 When editing `docs/BREAKING.md`, sync dev-to-master checklist if related plan items change (DOC6, §10) — run `release-plan-summary.mjs --write` (see below).
 
