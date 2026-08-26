@@ -114,7 +114,7 @@ Default: refresh remote base; **fail** if fetch cannot run. **`offline`** (user 
 
 ```bash
 BASE="${BASE:-master}"          # or: dev
-BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo or origin/hotfix/foo
+BRANCH="${BRANCH:-HEAD}"        # local: HEAD; named: hotfix/foo (origin/hotfix/foo → stripped to hotfix/foo)
 OFFLINE=0                       # 1 when user passed "offline"
 
 if [[ "$OFFLINE" -eq 0 ]]; then
@@ -142,17 +142,21 @@ fi
 # Resolve branch tip (local mode: HEAD; named: foo or origin/foo)
 if [[ "$BRANCH" == "HEAD" ]]; then
   BRANCH_REF="HEAD"
-elif git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
-  BRANCH_REF="$BRANCH"
 else
-  if [[ "$OFFLINE" -eq 0 ]]; then
-    git fetch origin "$BRANCH" 2>/dev/null || true
-  fi
-  if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
-    BRANCH_REF="origin/$BRANCH"
+  # Strip leading origin/ so fetch/ref never become origin/origin/…
+  BRANCH="${BRANCH#origin/}"
+  if git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
+    BRANCH_REF="$BRANCH"
   else
-    echo "error: branch '$BRANCH' not found (local or origin/)" >&2
-    exit 1
+    if [[ "$OFFLINE" -eq 0 ]]; then
+      git fetch origin "$BRANCH" 2>/dev/null || true
+    fi
+    if git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
+      BRANCH_REF="origin/$BRANCH"
+    else
+      echo "error: branch '$BRANCH' not found (local or origin/)" >&2
+      exit 1
+    fi
   fi
 fi
 ```
