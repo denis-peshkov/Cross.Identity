@@ -168,7 +168,7 @@ bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh \
   --out .cursor/skills/release-plan/.cache/breaking-X.Y.Z.md
 ```
 
-Optional: `--from`, `--to`, `--version`. **`--pr N` required** (or an open PR on the current branch — script resolves via `gh`).
+Optional: `--pr N`, `--from`, `--to`, `--version`.
 
 ### Phase 2 — Edit `docs/BREAKING.md`
 
@@ -180,7 +180,7 @@ Optional: `--from`, `--to`, `--version`. **`--pr N` required** (or an open PR on
 - **First** block after intro: intro ends with `---` — no extra `---` before heading.
 - **Later** blocks: `---` immediately before `## From …` (no blank between `---` and `##`).
 - **After** `## From … to …` — blank line, then `Release:` (or `###` if no `Release:`).
-- **`Release:`** — `[vX.Y.Z](release-url) ([PR #N](…)).` — version **and** PR always. No `(planned)`, no `See FLOWS.md…`.
+- **`Release:`** — `[vX.Y.Z](release-url)`; `([PR #N](…)).` when PR known. No `(planned)`, no `See FLOWS.md…`.
 
 When editing `docs/BREAKING.md`, sync dev-to-master checklist if related plan items change (DOC6, §10) — run `release-plan-summary.mjs --write` (see below).
 
