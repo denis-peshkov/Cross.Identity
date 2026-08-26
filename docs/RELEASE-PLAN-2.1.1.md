@@ -1,12 +1,12 @@
-﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.1.1` (published / closed)
-**Ветка:** `release/replace-ConcurrencyStampInterceptor-with-owerride-SaveChanges` · **база:** `origin/master` · **дата:** `2026-08-24`
-**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1
-
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-
-**Предыдущий план:** [`RELEASE-PLAN-2.0.0.md`](RELEASE-PLAN-2.0.0.md)
+> **Версия:** `2.1.1` (published / closed) · **ветка:** `release/replace-ConcurrencyStampInterceptor-with-owerride-SaveChanges` · **база:** `origin/master` · **дата:** `2026-08-24`
+>
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1
+>
+> **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+>
+> **Предыдущий план:** [`RELEASE-PLAN-2.0.0.md`](RELEASE-PLAN-2.0.0.md)
 
 ---
 

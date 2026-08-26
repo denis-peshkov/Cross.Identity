@@ -1,12 +1,12 @@
-﻿Ниже — **проблемы внутри библиотеки** (код `Cross.Identity/`), по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-**Версия:** `2.2.0` (published / closed)
-**Ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`
-**Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.2.0
-
-**Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
-
-**Предыдущий план:** [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
+> **Версия:** `2.2.0` (published / closed) · **ветка:** `release/remove-refresh-session-proof-from-user-scoped-flows` · **база:** `origin/master` · **дата:** `2026-08-25`
+>
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.2.0
+>
+> **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
+>
+> **Предыдущий план:** [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
 
 ---
 
