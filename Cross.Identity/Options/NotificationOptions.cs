@@ -3,7 +3,7 @@
 /// <summary>
 /// Branding placeholders for OTP and security-notification templates
 /// (<c>Authentication:Notifications</c>).
-/// Used by <c>SendCodeStep</c> and <c>ResetPasswordStep</c>.
+/// Used by <see cref="ProcessEngine.Helpers.NotificationComposer"/>.
 /// </summary>
 public sealed class NotificationOptions
 {
@@ -22,6 +22,6 @@ public sealed class NotificationOptions
     /// <summary><c>{{fullName}}</c> (signature) in templates.</summary>
     public string FullName { get; set; }
 
-    /// <summary><c>{{support}}</c> / <c>{{supportEmail}}</c> in templates.</summary>
+    /// <summary><c>{{supportEmail}}</c> in templates.</summary>
     public string SupportEmail { get; set; }
 }

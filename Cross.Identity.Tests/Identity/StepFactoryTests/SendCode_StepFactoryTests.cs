@@ -28,6 +28,10 @@ public class SendCode_StepFactoryTests
         sc.AddScoped<IProcessDefinitionProvider>(p => Mock.Of<IProcessDefinitionProvider>());
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         sc.AddSingleton(Microsoft.Extensions.Options.Options.Create(new NotificationOptions()));
+        sc.AddSingleton<INotificationComposer>(sp =>
+            new NotificationComposer(
+                sp.GetRequiredService<IProcessDefinitionProvider>(),
+                sp.GetRequiredService<IOptions<NotificationOptions>>()));
         _sp = sc.BuildServiceProvider();
     }
 
@@ -62,7 +66,7 @@ public class SendCode_StepFactoryTests
         step.CodeService.Should().NotBeNull();
         step.UserService.Should().NotBeNull();
         step.Environment.Should().NotBeNull();
-        step.ProcessDefinitionProvider.Should().NotBeNull();
+        step.NotificationComposer.Should().NotBeNull();
     }
 
     [Test]

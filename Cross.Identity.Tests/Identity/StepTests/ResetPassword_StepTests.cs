@@ -27,7 +27,7 @@ public class ResetPassword_StepTests
         _processDefinitionProvider = new Mock<IProcessDefinitionProvider>();
         _processDefinitionProvider
             .Setup(p => p.GetTemplate("password-changed", "en", "txt"))
-            .Returns("Password changed at {{changedAt}} from IP {{ip}}. Support: {{support}}");
+            .Returns("Password changed at {{changedAt}} from IP {{ip}}. Support: {{supportEmail}}");
         _processDefinitionProvider
             .Setup(p => p.GetTemplate("password-changed", "en", "html"))
             .Returns("<p>Password changed at <strong>{{changedAt}}</strong> from IP <strong>{{ip}}</strong>.</p>");
@@ -43,11 +43,11 @@ public class ResetPassword_StepTests
             Template = "password-changed",
             Subject = "Password changed",
             UserService = _userService.Object,
-            EmailSenderService = _emailSenderService.Object,
-            SmsSenderService = _smsSenderService.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = new NotificationComposer(
+                _processDefinitionProvider.Object,
+                Microsoft.Extensions.Options.Options.Create(new NotificationOptions())),
+            SecurityNotifier = new SecurityNotifier(_emailSenderService.Object, _smsSenderService.Object),
             Logger = _logger.Object,
             Next = next,
         };
@@ -106,7 +106,7 @@ public class ResetPassword_StepTests
 
         _processDefinitionProvider
             .Setup(p => p.GetTemplate("password-changed", "ru", "txt"))
-            .Returns("Пароль изменён в {{changedAt}} с IP {{ip}}. Поддержка: {{support}}");
+            .Returns("Пароль изменён в {{changedAt}} с IP {{ip}}. Поддержка: {{supportEmail}}");
         _processDefinitionProvider
             .Setup(p => p.GetTemplate("password-changed", "ru", "html"))
             .Returns("<p>Пароль изменён в <strong>{{changedAt}}</strong> с IP <strong>{{ip}}</strong>.</p>");

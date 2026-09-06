@@ -15,6 +15,12 @@ public class SendCode_StepTests
 
     private static Selector DefaultSelector { get; } = new();
 
+
+    private INotificationComposer CreateComposer(NotificationOptions? notifications = null) =>
+        new NotificationComposer(
+            _processDefinitionProvider.Object,
+            Microsoft.Extensions.Options.Options.Create(notifications ?? new NotificationOptions()));
+
     private void SetupOtpTarget(ChannelEnum channel, string address)
     {
         _communicationEndpoints
@@ -87,8 +93,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -147,8 +152,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -188,7 +192,7 @@ public class SendCode_StepTests
             .ReturnsAsync(userAccountId);
         SetupOtpTarget(ChannelEnum.Email, email);
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
-            .Returns("{{company}} {{brand}} {{support}} {{fullName}}");
+            .Returns("{{company}} {{brand}} {{supportEmail}} {{fullName}}");
         _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
             .Returns("<html>{{company}}</html>");
         _codeService.Setup(c => c.SendAsync(
@@ -205,14 +209,13 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions
+            NotificationComposer = CreateComposer(new NotificationOptions
             {
                 Brand = "acme.test",
                 Company = "Acme",
                 FullName = "Acme Support",
                 SupportEmail = "help@acme.test",
-            },
+            }),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -267,8 +270,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -326,8 +328,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -384,8 +385,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -437,8 +437,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -494,8 +493,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -547,8 +545,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -593,8 +590,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -646,8 +642,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _developerConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
@@ -707,8 +702,7 @@ public class SendCode_StepTests
             CodeService = _codeService.Object,
             UserService = _userService.Object,
             Environment = _environment.Object,
-            ProcessDefinitionProvider = _processDefinitionProvider.Object,
-            Notifications = new NotificationOptions(),
+            NotificationComposer = CreateComposer(),
             Configuration = _defaultConfiguration,
             Logger = _logger.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,

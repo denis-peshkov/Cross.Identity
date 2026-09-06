@@ -7,5 +7,5 @@ To continue, open this link:
 {{url}}
 
 If you didn’t request this, just ignore this email.
-Support: {{support}}
+Support: {{supportEmail}}
 © {{year}} {{brand}}

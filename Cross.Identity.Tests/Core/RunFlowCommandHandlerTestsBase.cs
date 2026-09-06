@@ -116,8 +116,21 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
         _serviceProviderMock
-            .Setup(x => x.GetService(typeof(IOptions<NotificationOptions>)))
-            .Returns(Microsoft.Extensions.Options.Options.Create(new NotificationOptions()));
+            .Setup(x => x.GetService(typeof(INotificationComposer)))
+            .Returns(new NotificationComposer(
+                _processDefinitionProvider,
+                Microsoft.Extensions.Options.Options.Create(new NotificationOptions())));
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(IEmailSenderService)))
+            .Returns(Mock.Of<IEmailSenderService>());
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(ISmsSenderService)))
+            .Returns(Mock.Of<ISmsSenderService>());
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(ISecurityNotifier)))
+            .Returns(() => new SecurityNotifier(
+                (IEmailSenderService)_serviceProviderMock.Object.GetService(typeof(IEmailSenderService))!,
+                (ISmsSenderService)_serviceProviderMock.Object.GetService(typeof(ISmsSenderService))!));
 
         var jwtMock = new Mock<IJwtTokenService>();
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);

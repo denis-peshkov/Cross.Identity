@@ -16,6 +16,14 @@ public class ResetPassword_StepFactoryTests
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         sc.AddSingleton<IProcessDefinitionProvider>(_ => Mock.Of<IProcessDefinitionProvider>());
         sc.AddSingleton(Microsoft.Extensions.Options.Options.Create(new NotificationOptions()));
+        sc.AddSingleton<INotificationComposer>(sp =>
+            new NotificationComposer(
+                sp.GetRequiredService<IProcessDefinitionProvider>(),
+                sp.GetRequiredService<IOptions<NotificationOptions>>()));
+        sc.AddSingleton<ISecurityNotifier>(sp =>
+            new SecurityNotifier(
+                sp.GetRequiredService<IEmailSenderService>(),
+                sp.GetRequiredService<ISmsSenderService>()));
         _sp = sc.BuildServiceProvider();
     }
 
@@ -48,7 +56,8 @@ public class ResetPassword_StepFactoryTests
         step.Subject.Should().Be("Password changed");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
-        step.ProcessDefinitionProvider.Should().NotBeNull();
+        step.NotificationComposer.Should().NotBeNull();
+        step.SecurityNotifier.Should().NotBeNull();
     }
 
     [Test]

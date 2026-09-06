@@ -19,8 +19,7 @@ internal sealed class SendCodeStep : IStep
     public required ICodeService CodeService { get; init; }
     public required IUserService UserService { get; init; }
     public required IHostEnvironment Environment { get; init; }
-    public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
-    public required NotificationOptions Notifications { get; init; }
+    public required INotificationComposer NotificationComposer { get; init; }
     public required ILogger Logger { get; init; }
 
     /// <summary>Identity selector (bag keys for field name + value).</summary>
@@ -95,42 +94,25 @@ internal sealed class SendCodeStep : IStep
             ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
 
         var actionUrl = BuildActionUrl(clientUrl, code, selector);
-        var year = DateTime.UtcNow.Year.ToString();
-        var brand = Notifications.Brand;
-        var site = Notifications.Site;
-        var company = Notifications.Company;
-        var fullName = Notifications.FullName;
-        var support = Notifications.SupportEmail;
-
-        string Replace(string s) => s
-            .Replace("{{company}}", company)
-            .Replace("{{site}}", site)
-            .Replace("{{brand}}", brand)
-            .Replace("{{email}}", selector.Value)
-            .Replace("{{code}}", code)
-            .Replace("{{url}}", actionUrl)
-            .Replace("{{verificationLink}}", actionUrl)
-            .Replace("{{helpLink}}", actionUrl)
-            .Replace("{{logoLink}}", actionUrl)
-            .Replace("{{imageLink}}", actionUrl)
-            .Replace("{{logoWidth}}", "34")
-            .Replace("{{logoHeight}}", "34")
-            .Replace("{{imageWidth}}", "34")
-            .Replace("{{imageHeight}}", "34")
-            .Replace("{{fullName}}", fullName)
-            .Replace("{{expires}}", ttl.ToHumanString())
-            .Replace("{{year}}", year)
-            .Replace("{{support}}", support)
-            .Replace("{{supportEmail}}", support);
-
-        var language = HostSuppliedLanguageContext.Read(ctx);
-        var textTemplate = language.ResolveTemplate(ProcessDefinitionProvider, Template, "txt");
-        var htmlTemplate = language.ResolveTemplate(ProcessDefinitionProvider, Template, "html");
+        var bodies = NotificationComposer.Compose(
+            ctx,
+            Template,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["{{email}}"] = selector.Value,
+                ["{{code}}"] = code,
+                ["{{url}}"] = actionUrl,
+                ["{{verificationLink}}"] = actionUrl,
+                ["{{helpLink}}"] = actionUrl,
+                ["{{logoLink}}"] = actionUrl,
+                ["{{imageLink}}"] = actionUrl,
+                ["{{expires}}"] = ttl.ToHumanString(),
+            });
 
         var msg = NotificationMessage.For(target.Channel, target.Address)
             .WithSubject(Subject)
-            .WithTextBody(Replace(textTemplate))
-            .WithTextHtml(Replace(htmlTemplate));
+            .WithTextBody(bodies.TextBody)
+            .WithTextHtml(bodies.HtmlBody);
 
         try
         {

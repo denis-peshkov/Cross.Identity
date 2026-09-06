@@ -7,5 +7,5 @@ Pentru a continua, deschideți acest link:
 {{url}}
 
 Dacă nu ați solicitat resetarea, ignorați acest email.
-Suport: {{support}}
+Suport: {{supportEmail}}
 © {{year}} {{brand}}

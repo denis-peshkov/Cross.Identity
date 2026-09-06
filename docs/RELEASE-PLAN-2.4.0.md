@@ -48,6 +48,7 @@
 | ✅ #M71 `password-changed` templates | `ResetPasswordStep` notify: txt/html из `Definitions/Templates` (как `SendCodeStep`); JSON `template`/`subject` |
 | ✅ #M72 `HostSuppliedLanguageContext` | `collectForm.LanguageCode` (2 letters, opt.); `SendCode`/`ResetPassword` template lang + fallback `en` |
 | ✅ #M73 `Authentication:Notifications` | brand/site/company/fullName/supportEmail для template placeholders; defaults = прежние hardcoded |
+| ✅ #M74 `NotificationComposer` + `ISecurityNotifier` | общая загрузка/brand/placeholders; OTP → CodeService; FYI notify → SecurityNotifier |
 
 ---
 

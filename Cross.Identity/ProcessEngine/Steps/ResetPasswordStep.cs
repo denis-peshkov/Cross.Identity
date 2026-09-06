@@ -3,7 +3,7 @@
 /// <summary>
 /// Step for changing a user password by selector.
 /// On success, notifies via <see cref="ICommunicationEndpointService.ResolveDeliveryTargetAsync"/>
-/// using templates from <see cref="IProcessDefinitionProvider"/> (same pattern as <see cref="SendCodeStep"/>).
+/// using <see cref="INotificationComposer"/> and <see cref="ISecurityNotifier"/>.
 /// Template language is selected via <see cref="HostSuppliedLanguageContext"/> (<c>collectForm.LanguageCode</c>).
 /// </summary>
 internal sealed class ResetPasswordStep : IStep
@@ -28,11 +28,9 @@ internal sealed class ResetPasswordStep : IStep
 
     public required ILogger Logger { get; init; }
     public required IUserService UserService { get; init; }
-    public required IEmailSenderService EmailSenderService { get; init; }
-    public required ISmsSenderService SmsSenderService { get; init; }
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
-    public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
-    public required NotificationOptions Notifications { get; init; }
+    public required INotificationComposer NotificationComposer { get; init; }
+    public required ISecurityNotifier SecurityNotifier { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -69,36 +67,20 @@ internal sealed class ResetPasswordStep : IStep
         }
 
         var ip = string.IsNullOrWhiteSpace(hostSuppliedClientContext.IpAddress) ? "unknown" : hostSuppliedClientContext.IpAddress;
-        var changedAt = DateTime.UtcNow.ToString("u");
-        var year = DateTime.UtcNow.Year.ToString();
-        var brand = Notifications.Brand;
-        var site = Notifications.Site;
-        var support = Notifications.SupportEmail;
-
-        string Replace(string s) => s
-            .Replace("{{changedAt}}", changedAt)
-            .Replace("{{ip}}", ip)
-            .Replace("{{brand}}", brand)
-            .Replace("{{site}}", site)
-            .Replace("{{year}}", year)
-            .Replace("{{support}}", support)
-            .Replace("{{supportEmail}}", support);
-
-        var language = HostSuppliedLanguageContext.Read(ctx);
-        var textBody = Replace(language.ResolveTemplate(ProcessDefinitionProvider, Template, "txt"));
-        var htmlBody = Replace(language.ResolveTemplate(ProcessDefinitionProvider, Template, "html"));
+        var bodies = NotificationComposer.Compose(
+            ctx,
+            Template,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["{{changedAt}}"] = DateTime.UtcNow.ToString("u"),
+                ["{{ip}}"] = ip,
+            });
 
         try
         {
-            switch (channel)
-            {
-                case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", target.Address, Subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
-                    break;
-                case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(target.Address, textBody, cancellationToken).ConfigureAwait(false);
-                    break;
-            }
+            await SecurityNotifier
+                .SendAsync(channel, target.Address, Subject, bodies.TextBody, bodies.HtmlBody, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {

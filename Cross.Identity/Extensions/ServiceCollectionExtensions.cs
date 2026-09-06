@@ -53,6 +53,8 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<ICodeService, CodeService>();
         services.TryAddScoped<IEmailSenderService, EmailSenderService>();
         services.TryAddScoped<ISmsSenderService, SmsSenderService>();
+        services.TryAddScoped<INotificationComposer, NotificationComposer>();
+        services.TryAddScoped<ISecurityNotifier, SecurityNotifier>();
 
         // using var provider = services.BuildServiceProvider(validateScopes: true);
         // provider.GetRequiredService<ICodeService>();
