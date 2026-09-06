@@ -11,19 +11,19 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets them from server-side metadata before `ExecuteAsync`; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
+- **Client context (all flows):** optional `LanguageCode` (exactly 2 letters, e.g. `en` / `ru` / `ro`), `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets client metadata from server-side sources before `ExecuteAsync`; on refresh the library compares IP/UA/fingerprint with `Created*` on the token family (see [Client context (host)](#client-context-host)). `LanguageCode` selects notification templates (`SendCodeStep` / `ResetPasswordStep`); missing/invalid code or missing template file → fallback `en`.
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify by `UserName` uses the user's **preferred verified** communication endpoint (email or phone address); Email/PhoneNumber use the submitted value directly.
 
 ### Client context (host)
 
-Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedClientContext` into direct APIs); `HostSuppliedClientContext.Read(bag)` reads whatever the host put there.
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills optional `collectForm.LanguageCode`, then `IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedLanguageContext` / `HostSuppliedClientContext` into direct APIs); `HostSuppliedLanguageContext.Read(bag)` / `HostSuppliedClientContext.Read(bag)` read whatever the host put there.
 
 **Trusted pipeline**
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
-| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
+| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Uses `HostSuppliedLanguageContext` for template language with fallback to `en`. Does not read `HttpContext` or `Accept-Language`. |
 
 ### User-scoped authorization (host responsibility)
 
@@ -38,6 +38,7 @@ Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refre
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
+| `collectForm.LanguageCode` | Product locale / negotiated culture (2 letters) for notification templates | Omit → library uses `en`; missing template file for that language → `en` |
 | `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
 | `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
@@ -52,6 +53,7 @@ using Cross.Identity.ProcessEngine.Core;
 var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
 
 // Host-derived metadata — not from the client request body
+bag["collectForm.LanguageCode"] = "ru"; // optional; notification templates (fallback en)
 bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
 bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
 bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional

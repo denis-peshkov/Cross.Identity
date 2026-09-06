@@ -98,6 +98,56 @@ public class ResetPassword_StepTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public async Task GivenLanguageCodeRu_WhenExecuteAsync_ThenLoadsRuTemplateAsync()
+    {
+        var email = _faker.Internet.Email();
+        var password = "P@ssw0rd!";
+
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "ru", "txt"))
+            .Returns("Пароль изменён в {{changedAt}} с IP {{ip}}. Поддержка: {{support}}");
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "ru", "html"))
+            .Returns("<p>Пароль изменён в <strong>{{changedAt}}</strong> с IP <strong>{{ip}}</strong>.</p>");
+
+        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = email });
+
+        var step = CreateStep();
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+        bag.Set("forgotPassword.password", password);
+        bag.Set("collectForm.LanguageCode", "ru");
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "ru", "txt"), Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "ru", "html"), Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "en", "txt"), Times.Never);
+        _emailSenderService.Verify(
+            x => x.SendAsync(
+                "",
+                email,
+                "Password changed",
+                It.Is<string>(b => b.StartsWith("Пароль изменён")),
+                It.Is<string>(b => b.Contains("Пароль изменён")),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public async Task GivenUserIdSelector_WhenExecuteAsync_ThenSetsPasswordAndNotifiesResolvedTargetAsync()
     {
         var userAccountId = Guid.NewGuid();

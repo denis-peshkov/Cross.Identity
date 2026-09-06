@@ -4,6 +4,7 @@
 /// Step for changing a user password by selector.
 /// On success, notifies via <see cref="ICommunicationEndpointService.ResolveDeliveryTargetAsync"/>
 /// using templates from <see cref="IProcessDefinitionProvider"/> (same pattern as <see cref="SendCodeStep"/>).
+/// Template language is selected via <see cref="HostSuppliedLanguageContext"/> (<c>collectForm.LanguageCode</c>).
 /// </summary>
 internal sealed class ResetPasswordStep : IStep
 {
@@ -81,8 +82,9 @@ internal sealed class ResetPasswordStep : IStep
             .Replace("{{support}}", support)
             .Replace("{{supportEmail}}", support);
 
-        var textBody = Replace(ProcessDefinitionProvider.GetTemplate(Template, "en", "txt"));
-        var htmlBody = Replace(ProcessDefinitionProvider.GetTemplate(Template, "en", "html"));
+        var language = HostSuppliedLanguageContext.Read(ctx);
+        var textBody = Replace(language.ResolveTemplate(ProcessDefinitionProvider, Template, "txt"));
+        var htmlBody = Replace(language.ResolveTemplate(ProcessDefinitionProvider, Template, "html"));
 
         try
         {

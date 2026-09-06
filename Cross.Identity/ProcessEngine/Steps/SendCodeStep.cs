@@ -3,6 +3,7 @@
 /// <summary>
 /// Step for sending a one-time code to the user.
 /// Delivery channel/address come from <see cref="ICommunicationEndpointService.ResolveOtpTargetAsync"/>.
+/// Template language is selected via <see cref="HostSuppliedLanguageContext"/> (<c>collectForm.LanguageCode</c>).
 /// Unknown identity / missing OTP channel surface as <see cref="NotAuthorizedException"/> (<c>Invalid credentials.</c>);
 /// the real reason is logged at Information (anti user-enumeration).
 /// </summary>
@@ -118,8 +119,9 @@ internal sealed class SendCodeStep : IStep
             .Replace("{{support}}", support)
             .Replace("{{supportEmail}}", support);
 
-        var textTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "txt");
-        var htmlTemplate = ProcessDefinitionProvider.GetTemplate(Template, "en", "html");
+        var language = HostSuppliedLanguageContext.Read(ctx);
+        var textTemplate = language.ResolveTemplate(ProcessDefinitionProvider, Template, "txt");
+        var htmlTemplate = language.ResolveTemplate(ProcessDefinitionProvider, Template, "html");
 
         var msg = NotificationMessage.For(target.Channel, target.Address)
             .WithSubject(Subject)
