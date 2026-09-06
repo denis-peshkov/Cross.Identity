@@ -72,8 +72,8 @@
 
 ## Что в библиотеке уже нормально
 
-- User-scoped flows (2.2.0): host-authorized `UserAccountId` без library refresh session proof.
-- Token lifecycle (2.3.0): rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
+- User-scoped flows: host-authorized `UserAccountId` без library refresh session proof.
+- Token lifecycle: rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
 - CodeRabbit по дельте: **нет** открытых findings после закрытия H11–H17, M51–M65, L12, C1.
 
 ---
