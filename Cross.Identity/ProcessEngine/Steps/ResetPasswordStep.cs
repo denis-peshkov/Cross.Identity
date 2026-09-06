@@ -32,6 +32,7 @@ internal sealed class ResetPasswordStep : IStep
     public required ISmsSenderService SmsSenderService { get; init; }
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
     public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
+    public required NotificationOptions Notifications { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -70,14 +71,15 @@ internal sealed class ResetPasswordStep : IStep
         var ip = string.IsNullOrWhiteSpace(hostSuppliedClientContext.IpAddress) ? "unknown" : hostSuppliedClientContext.IpAddress;
         var changedAt = DateTime.UtcNow.ToString("u");
         var year = DateTime.UtcNow.Year.ToString();
-        const string support = "support@peshkov.biz";
-        const string brand = "peshkov.biz";
+        var brand = Notifications.Brand;
+        var site = Notifications.Site;
+        var support = Notifications.SupportEmail;
 
         string Replace(string s) => s
             .Replace("{{changedAt}}", changedAt)
             .Replace("{{ip}}", ip)
             .Replace("{{brand}}", brand)
-            .Replace("{{site}}", brand)
+            .Replace("{{site}}", site)
             .Replace("{{year}}", year)
             .Replace("{{support}}", support)
             .Replace("{{supportEmail}}", support);

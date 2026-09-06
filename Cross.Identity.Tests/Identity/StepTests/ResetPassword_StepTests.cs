@@ -47,6 +47,7 @@ public class ResetPassword_StepTests
             SmsSenderService = _smsSenderService.Object,
             CommunicationEndpoints = _communicationEndpoints.Object,
             ProcessDefinitionProvider = _processDefinitionProvider.Object,
+            Notifications = new NotificationOptions(),
             Logger = _logger.Object,
             Next = next,
         };

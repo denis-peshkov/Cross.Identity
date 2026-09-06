@@ -16,6 +16,7 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
         var emailSenderService        = sp.GetRequiredService<IEmailSenderService>();
         var smsSenderService          = sp.GetRequiredService<ISmsSenderService>();
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
+        var notificationOptions       = sp.GetRequiredService<IOptions<NotificationOptions>>().Value;
 
         return new ResetPasswordStep
         {
@@ -29,6 +30,7 @@ internal sealed class ResetPasswordStepFactory : IStepFactory
             SmsSenderService           = smsSenderService,
             CommunicationEndpoints     = sp.GetRequiredService<ICommunicationEndpointService>(),
             ProcessDefinitionProvider  = processDefinitionProvider,
+            Notifications              = notificationOptions,
             Logger                     = loggerFactory.CreateLogger<ResetPasswordStep>(),
             Next                       = cfg.StrOpt("next"),
         };

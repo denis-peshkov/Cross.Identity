@@ -23,7 +23,7 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | Party | Responsibility |
 |-------|----------------|
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
-| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Uses `HostSuppliedLanguageContext` for template language with fallback to `en`. Does not read `HttpContext` or `Accept-Language`. |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Uses `HostSuppliedLanguageContext` for template language with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{support}}`) come from `Authentication:Notifications` (defaults match former hardcoded Peshkov values). Does not read `HttpContext` or `Accept-Language`. |
 
 ### User-scoped authorization (host responsibility)
 

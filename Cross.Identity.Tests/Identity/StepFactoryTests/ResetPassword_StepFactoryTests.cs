@@ -15,6 +15,7 @@ public class ResetPassword_StepFactoryTests
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
         sc.AddSingleton<IProcessDefinitionProvider>(_ => Mock.Of<IProcessDefinitionProvider>());
+        sc.AddSingleton(Microsoft.Extensions.Options.Options.Create(new NotificationOptions()));
         _sp = sc.BuildServiceProvider();
     }
 

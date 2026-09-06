@@ -20,6 +20,7 @@ internal sealed class SendCodeStep : IStep
     public required IUserService UserService { get; init; }
     public required IHostEnvironment Environment { get; init; }
     public required IProcessDefinitionProvider ProcessDefinitionProvider { get; init; }
+    public required NotificationOptions Notifications { get; init; }
     public required ILogger Logger { get; init; }
 
     /// <summary>Identity selector (bag keys for field name + value).</summary>
@@ -95,12 +96,15 @@ internal sealed class SendCodeStep : IStep
 
         var actionUrl = BuildActionUrl(clientUrl, code, selector);
         var year = DateTime.UtcNow.Year.ToString();
-        const string support = "support@peshkov.biz";
-        const string brand = "peshkov.biz";
+        var brand = Notifications.Brand;
+        var site = Notifications.Site;
+        var company = Notifications.Company;
+        var fullName = Notifications.FullName;
+        var support = Notifications.SupportEmail;
 
         string Replace(string s) => s
-            .Replace("{{company}}", "Peshkov")
-            .Replace("{{site}}", brand)
+            .Replace("{{company}}", company)
+            .Replace("{{site}}", site)
             .Replace("{{brand}}", brand)
             .Replace("{{email}}", selector.Value)
             .Replace("{{code}}", code)
@@ -113,7 +117,7 @@ internal sealed class SendCodeStep : IStep
             .Replace("{{logoHeight}}", "34")
             .Replace("{{imageWidth}}", "34")
             .Replace("{{imageHeight}}", "34")
-            .Replace("{{fullName}}", "Denis Peshkov")
+            .Replace("{{fullName}}", fullName)
             .Replace("{{expires}}", ttl.ToHumanString())
             .Replace("{{year}}", year)
             .Replace("{{support}}", support)

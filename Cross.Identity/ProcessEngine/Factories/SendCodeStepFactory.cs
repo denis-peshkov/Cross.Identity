@@ -17,6 +17,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
         var hostEnvironment           = sp.GetRequiredService<IHostEnvironment>();
         var processDefinitionProvider = sp.GetRequiredService<IProcessDefinitionProvider>();
         var configuration             = sp.GetRequiredService<IConfiguration>();
+        var notificationOptions       = sp.GetRequiredService<IOptions<NotificationOptions>>().Value;
 
         return new SendCodeStep
         {
@@ -30,6 +31,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             CommunicationEndpoints    = sp.GetRequiredService<ICommunicationEndpointService>(),
             Environment               = hostEnvironment,
             ProcessDefinitionProvider = processDefinitionProvider,
+            Notifications             = notificationOptions,
             Logger                    = loggerFactory.CreateLogger(nameof(SendCodeStep)),
             Configuration             = configuration,
             Next                      = cfg.StrOpt("next")
