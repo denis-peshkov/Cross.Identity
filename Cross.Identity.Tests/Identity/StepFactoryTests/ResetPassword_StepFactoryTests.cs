@@ -14,6 +14,7 @@ public class ResetPassword_StepFactoryTests
         sc.AddScoped<ISmsSenderService>(_ => Mock.Of<ISmsSenderService>());
         sc.AddSingleton<ILoggerFactory>(_ => new LoggerFactory());
         sc.AddSingleton<ICommunicationEndpointService>(_ => Mock.Of<ICommunicationEndpointService>());
+        sc.AddSingleton<IProcessDefinitionProvider>(_ => Mock.Of<IProcessDefinitionProvider>());
         _sp = sc.BuildServiceProvider();
     }
 
@@ -28,8 +29,9 @@ public class ResetPassword_StepFactoryTests
             """
             {
               "kind": "resetPassword",
-              "channel": "email",
               "passwordKey": "forgotPassword.password",
+              "template": "password-changed",
+              "subject": "Password changed",
               "next": "done"
             }
             """);
@@ -41,8 +43,11 @@ public class ResetPassword_StepFactoryTests
         step.Selector.FieldKey.Should().Be("collectForm.Field");
         step.Selector.ValueKey.Should().Be("collectForm.Value");
         step.PasswordKey.Should().Be("forgotPassword.password");
+        step.Template.Should().Be("password-changed");
+        step.Subject.Should().Be("Password changed");
         step.Next.Should().Be("done");
         step.UserService.Should().NotBeNull();
+        step.ProcessDefinitionProvider.Should().NotBeNull();
     }
 
     [Test]
@@ -53,7 +58,8 @@ public class ResetPassword_StepFactoryTests
             """
             {
               "kind": "resetPassword",
-              "channel": "email"
+              "template": "password-changed",
+              "subject": "Password changed"
             }
             """);
 
@@ -66,20 +72,41 @@ public class ResetPassword_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
+    public void GivenMissingTemplate_WhenCreate_ThenThrowsKeyNotFoundException()
     {
         using var json = JsonDocument.Parse(
             """
             {
               "kind": "resetPassword",
-              "passwordKey": "password"
+              "passwordKey": "password",
+              "subject": "Password changed"
             }
             """);
 
         var factory = new ResetPasswordStepFactory();
-        var step = (ResetPasswordStep)factory.Create(json.RootElement, _sp);
 
-        step.PasswordKey.Should().Be("password");
+        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
+            .Should()
+            .Throw<KeyNotFoundException>();
     }
 
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenMissingSubject_WhenCreate_ThenThrowsKeyNotFoundException()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "resetPassword",
+              "passwordKey": "password",
+              "template": "password-changed"
+            }
+            """);
+
+        var factory = new ResetPasswordStepFactory();
+
+        FluentActions.Invoking(() => factory.Create(json.RootElement, _sp))
+            .Should()
+            .Throw<KeyNotFoundException>();
+    }
 }
