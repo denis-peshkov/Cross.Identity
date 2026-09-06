@@ -43,6 +43,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new VerifyTokenStepFactory());
         _registry.Register(new CommunicationEndpointsGetAllStepFactory());
         _registry.Register(new CommunicationEndpointSetPreferredStepFactory());
+        _registry.Register(new ChangeAccountEmailStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -165,6 +166,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             pepperVault.Object,
             passwordHasher.Object,
             jwtMock.Object,
+            new AuditService(Context),
             communicationEndpoints,
             communicationEndpoints,
             CreateUserServiceOptions());

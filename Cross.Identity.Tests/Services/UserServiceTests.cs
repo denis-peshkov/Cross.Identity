@@ -40,6 +40,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
+            new AuditService(Context),
             _communicationEndpoints,
             _communicationEndpoints,
             _options.Object);
@@ -625,6 +626,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
+            new AuditService(Context),
             _communicationEndpoints,
             _communicationEndpoints,
             _options.Object);
@@ -960,6 +962,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
+            new AuditService(Context),
             communicationEndpoints,
             communicationEndpoints,
             _options.Object);
@@ -1200,6 +1203,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
+            Mock.Of<IAuditService>(),
             Mock.Of<ICommunicationEndpointService>(),
             Mock.Of<ICommunicationEndpointUpsertService>(),
             _options.Object);
@@ -1242,6 +1246,7 @@ public class UserServiceTests : EFTestsBase
             _pepperVault.Object,
             _hasher.Object,
             _jwtTokenService.Object,
+            Mock.Of<IAuditService>(),
             Mock.Of<ICommunicationEndpointService>(),
             Mock.Of<ICommunicationEndpointUpsertService>(),
             _options.Object);
@@ -1339,5 +1344,174 @@ public class UserServiceTests : EFTestsBase
         var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
         user.AccessFailedCount.Should().Be(0);
         user.LockoutEnd.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ChangeAccountEmail_WhenMatchesLinkedProvider_ShouldAutoVerify()
+    {
+        var userAccountId = Guid.NewGuid();
+        var providerId = SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = "account@example.com",
+            EmailVerified = true,
+            IsActive = true,
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = providerId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "oauth.user@gmail.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var dto = await _userService.ChangeAccountEmailAsync(
+            userAccountId,
+            "oauth.user@gmail.com",
+            new HostSuppliedClientContext("10.0.0.2", "ua", "fp"));
+
+        dto.Address.Should().Be("oauth.user@gmail.com");
+        dto.IsVerified.Should().BeTrue();
+        dto.IsPreferred.Should().BeTrue();
+        dto.Source.Should().Be(CommunicationEndpointSource.ExternalProvider);
+
+        var account = await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId);
+        account.Email.Should().Be("oauth.user@gmail.com");
+        account.EmailVerified.Should().BeTrue();
+
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.AccountEmailChanged
+            && a.EntityType == AuditEntityType.UserAccount
+            && a.EntityId == userAccountId.ToString()
+            && a.IpAddress == "10.0.0.2"
+            && a.UserAgent == "ua"
+            && a.DeviceFingerprint == "fp"
+            && a.Notes!.Contains("verified"));
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ChangeAccountEmail_WhenNotLinkedProvider_ShouldStayUnverified()
+    {
+        var userAccountId = Guid.NewGuid();
+        var providerId = SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = "account@example.com",
+            EmailVerified = true,
+            IsActive = true,
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = providerId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "oauth.user@gmail.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var dto = await _userService.ChangeAccountEmailAsync(
+            userAccountId,
+            "other@example.com",
+            HostSuppliedClientContext.Empty);
+
+        dto.Address.Should().Be("other@example.com");
+        dto.IsVerified.Should().BeFalse();
+        dto.IsPreferred.Should().BeFalse();
+        dto.Source.Should().Be(CommunicationEndpointSource.Manual);
+
+        var account = await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId);
+        account.Email.Should().Be("other@example.com");
+        account.EmailVerified.Should().BeFalse();
+
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.AccountEmailChanged
+            && a.EntityType == AuditEntityType.UserAccount
+            && a.EntityId == userAccountId.ToString()
+            && a.Notes!.Contains("pending verification"));
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ChangeAccountEmail_WhenSameVerifiedEmail_ShouldNotDowngrade()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = "same@example.com",
+            EmailVerified = true,
+            IsActive = true,
+        });
+
+        var dto = await _userService.ChangeAccountEmailAsync(
+            userAccountId,
+            "same@example.com",
+            HostSuppliedClientContext.Empty);
+
+        dto.Address.Should().Be("same@example.com");
+        dto.IsVerified.Should().BeTrue();
+        dto.IsPreferred.Should().BeTrue();
+        dto.Source.Should().Be(CommunicationEndpointSource.Account);
+
+        var account = await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId);
+        account.EmailVerified.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task ChangeAccountEmail_WhenOtherPreferredExists_ShouldNotStealPreferred()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = "old@example.com",
+            EmailVerified = true,
+            IsActive = true,
+        });
+
+        var sms = await _communicationEndpoints.UpsertAsync(
+            userAccountId,
+            ChannelEnum.Sms,
+            "+15550001111",
+            CommunicationEndpointSource.Manual,
+            isVerified: true);
+        await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
+
+        var dto = await _userService.ChangeAccountEmailAsync(
+            userAccountId,
+            "new@example.com",
+            HostSuppliedClientContext.Empty);
+
+        dto.IsVerified.Should().BeFalse();
+        dto.IsPreferred.Should().BeFalse();
+
+        var all = await _communicationEndpoints.GetAllAsync(userAccountId);
+        all.Single(x => x.Id == sms.Id).IsPreferred.Should().BeTrue();
+        all.Where(x => x.Id != sms.Id).Should().OnlyContain(x => !x.IsPreferred);
+    }
+
+    private short SeedProvider(string name)
+    {
+        var provider = new ProviderEntity
+        {
+            Name = name,
+            Scheme = name.ToLowerInvariant(),
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        AddToDb(provider);
+        return provider.Id;
     }
 }

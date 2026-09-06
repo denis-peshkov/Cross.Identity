@@ -81,6 +81,7 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointsGetAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetPreferredStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, ChangeAccountEmailStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();

@@ -9,6 +9,7 @@
 /// <item><description><c>PasswordAuthStep</c> — <see cref="ValidatePasswordAsync"/></description></item>
 /// <item><description><c>TokenStep</c> — <see cref="ValidatePasswordAsync"/>, <see cref="ValidateCodeAsync"/>, <see cref="GetUserByAsync"/></description></item>
 /// <item><description><c>ResetPasswordStep</c> — <see cref="SetPasswordAsync"/></description></item>
+/// <item><description><c>ChangeAccountEmailStep</c> — <see cref="ChangeAccountEmailAsync"/></description></item>
 /// <item><description><c>RefreshTokenStep</c>, <c>ExternalLoginCompleteStep</c> — <see cref="GetUserByAsync"/></description></item>
 /// </list>
 /// </summary>
@@ -123,4 +124,26 @@ internal interface IUserService
         string newPassword,
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Change the account primary email (<c>UsersAccounts.Email</c>) and upsert the email communication endpoint.
+    /// When the address matches a linked external login <c>ProviderEmail</c>, the email is treated as verified
+    /// (<c>EmailVerified = true</c>, source <see cref="CommunicationEndpointSource.ExternalProvider"/>) without OTP.
+    /// Otherwise the email is stored unverified and requires the usual confirmation flow.
+    /// Used by <c>ChangeAccountEmailStep</c>. The host must authorize the caller for <paramref name="userAccountId"/>.
+    /// </summary>
+    /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
+    /// <param name="email">New primary email address.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata; use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// The upserted email endpoint. Does not force <c>IsPreferred</c> —
+    /// preferred delivery stays under <see cref="ICommunicationEndpointService.SetPreferredAsync"/> / upsert bootstrap
+    /// (verified + no existing preferred). Trusted delivery still requires <c>IsVerified</c>.
+    /// </returns>
+    Task<CommunicationEndpointDto> ChangeAccountEmailAsync(
+        Guid userAccountId,
+        string email,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken = default);
 }

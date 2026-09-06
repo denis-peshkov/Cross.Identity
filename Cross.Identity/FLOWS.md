@@ -104,6 +104,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `main` | LogoutAll | `main.LogoutAll.json` |
 | `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
 | `main` | CommunicationEndpointSetPreferred | `main.CommunicationEndpointSetPreferred.json` |
+| `main` | ChangeAccountEmail | `main.ChangeAccountEmail.json` |
 
 ---
 
@@ -242,7 +243,9 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
+> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: a provider with attested verified email can create a new local account alongside any unverified rows. Without a verified provider email, merge onto an existing verified local email is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
+>
+> **New registration (no existing external login / no email merge):** `CreateUserAsync` sets `UsersAccounts.EmailVerified = true` when the provider returns a non-empty email **and** `ExternalOAuthProfile.EmailVerified` is true; otherwise the account is created with `EmailVerified = false`. The synced email communication endpoint uses the same attestation (`IsVerified`). Subsequent logins / link refresh update `ProviderEmail` and the endpoint — they do **not** flip `UsersAccounts.EmailVerified`.
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
@@ -346,6 +349,21 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ---
 
+## `main.ChangeAccountEmail.json`
+
+**Purpose:** change the account primary email for the given user. When the address matches a linked external login `ProviderEmail`, it is auto-verified (no OTP).
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserAccountId`, `Email` (required); optional client context. → `changeAccountEmail` |
+| `changeAccountEmail` | changeAccountEmail | `userAccountIdKey`, `emailKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `email`, `email_verified`, `endpoint`. `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
+> Does **not** force `IsPreferred` on the upserted email endpoint (account email ≠ delivery preferred). Preferred stays via `CommunicationEndpointSetPreferred` or upsert bootstrap (verified + no existing preferred). Trusted delivery still requires `IsVerified`.
+
+---
+
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
@@ -369,6 +387,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `verifyToken` | Validate access token; return `valid` (+ `user_account_id` / `jti` when valid) |
 | `communicationEndpointsGetAll` | List user communication endpoints |
 | `communicationEndpointSetPreferred` | Set preferred communication endpoint |
+| `changeAccountEmail` | Change account primary email via `IUserService.ChangeAccountEmailAsync`; auto-verify when address matches linked provider email |
 
 ### Form validators (`schemaDef.validators`)
 

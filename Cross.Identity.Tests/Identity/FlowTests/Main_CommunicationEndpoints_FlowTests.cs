@@ -19,10 +19,12 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CommunicationEndpointsGetAllStepFactory>();
         AddRegistryStep<CommunicationEndpointSetPreferredStepFactory>();
+        AddRegistryStep<ChangeAccountEmailStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(_endpoints);
+        RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
     }
 
     [Test]
@@ -81,5 +83,64 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
             a.Operation == AuditOperation.CommunicationEndpointChanged
             && a.IpAddress == "10.0.0.42"
             && a.UserAgent == "tests");
+    }
+
+    [Test]
+    public async Task ChangeAccountEmail_WhenMatchesLinkedProvider_ShouldReturnVerified()
+    {
+        var userAccountId = Guid.NewGuid();
+        var provider = new ProviderEntity
+        {
+            Name = "Google",
+            Scheme = "google",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        AddToDb(provider);
+        AddToDb(new UserAccountEntity
+        {
+            Id = userAccountId,
+            Email = "account@example.com",
+            EmailVerified = true,
+            IsActive = true,
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = provider.Id,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "oauth.user@gmail.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["UserAccountId"] = userAccountId.ToString(),
+                ["Email"] = "oauth.user@gmail.com",
+                ["IpAddress"] = "10.0.0.7",
+                ["UserAgent"] = "flow-tests",
+            },
+            Flow,
+            FlowOperationEnum.ChangeAccountEmail,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["email"].Should().Be("oauth.user@gmail.com");
+        payload["email_verified"].Should().Be(true);
+        payload["endpoint"].Should().BeOfType<CommunicationEndpointDto>()
+            .Which.IsVerified.Should().BeTrue();
+
+        (await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId))
+            .EmailVerified.Should().BeTrue();
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.AccountEmailChanged
+            && a.EntityType == AuditEntityType.UserAccount
+            && a.EntityId == userAccountId.ToString()
+            && a.IpAddress == "10.0.0.7"
+            && a.UserAgent == "flow-tests");
     }
 }

@@ -180,3 +180,14 @@ Content-Type: application/json
   "RefreshToken": "{{REFRESH_TOKEN}}",
   "EndpointId": "{{ENDPOINT_ID}}"
 }
+
+###
+# @name main-change-account-email
+# Change account primary email. Auto-verifies when Email matches a linked provider ProviderEmail.
+POST {{HOST}}/api/identity/main/ChangeAccountEmail
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "Email": "new@example.com"
+}

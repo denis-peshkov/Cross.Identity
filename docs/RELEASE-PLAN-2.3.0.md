@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.3.0` · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
+> **Версия:** `2.3.0` (published / closed) · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.3.0
 >
@@ -74,10 +74,10 @@
 
 - User-scoped flows (2.2.0): host-authorized `UserAccountId` без library refresh session proof.
 - Token lifecycle (2.3.0): rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
-- CodeRabbit / follow-ups: открытых C/H/M/L нет (закрыто через #C1, H11–H17, M51–M65, L12).
+- CodeRabbit по дельте: **нет** открытых findings после закрытия H11–H17, M51–M65, L12, C1.
 
 ---
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — релиз `2.3.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
