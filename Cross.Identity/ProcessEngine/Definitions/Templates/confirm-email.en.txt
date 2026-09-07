@@ -1,0 +1,11 @@
+Hello, {{fullName}},
+
+Confirm {{email}} for {{company}}.
+Your code: {{code}} (valid for {{expires}}).
+
+Confirm here:
+{{url}}
+
+If you didn’t request this, ignore this email.
+Support: {{supportEmail}}
+© {{year}} {{brand}}

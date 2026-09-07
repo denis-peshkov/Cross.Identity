@@ -1,24 +1,28 @@
-Bioclinica
+{{company}}
 
-Bună Pieshkov Denys,
+Bună, {{fullName}},
 
-Ne bucurăm că ni te-ai alăturat pe platforma Bioclinica. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
+Ne bucurăm că ni te-ai alăturat pe platforma {{company}}. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
 
-958748
+{{code}}
 
-Utilizează codul
-Dacă butonul nu funcționează, te rugăm să copiezi următorul link https://bioclinica.ro/contul-meu/confirmare-cont și să îl introduci în browser-ul tău.
+👉 Utilizează codul
+
+Dacă butonul nu funcționează, te rugăm să copiezi următorul link și să îl introduci în browser-ul tău:
+{{verificationLink}}
 
 Numai bine,
-Echipa Bioclinica
+Echipa {{company}}
 
-Atenție! Codul este valabil doar 3 ore. După cele 3 ore va trebui să reinițiezi procesul de confirmare cont.
+⚠️ Atenție! Codul este valabil {{expires}}. După aceea va trebui să reinițiezi procesul de confirmare cont.
 
-În cazul în care nu te-ai înregistrat pe platforma Bioclinica, poți ignora acest e-mail.
-Întâmpini dificultăți în confirmarea contului? Scrie-ne pe contact@bioclinica.ro.
+În cazul în care nu te-ai înregistrat pe platforma {{company}}, poți ignora acest e-mail.
 
-Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe bioclinica.ro?
-Vizitează secțiunea Contul Meu - Ajutor
+Întâmpini dificultăți în confirmarea contului? Scrie-ne pe {{supportEmail}}.
 
-Facebook Instagram YouTube
-bioclinica.ro
+Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
+Vizitează secțiunea Contul Meu - Ajutor:
+{{helpLink}}
+
+Facebook | Instagram | YouTube
+{{site}}

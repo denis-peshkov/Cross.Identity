@@ -49,6 +49,7 @@
 | ✅ #M72 `HostSuppliedLanguageContext` | `collectForm.LanguageCode` (2 letters, opt.); `SendCode`/`ResetPassword` template lang + fallback `en` |
 | ✅ #M73 `Authentication:Notifications` | brand/site/company/fullName/supportEmail для template placeholders; defaults = прежние hardcoded |
 | ✅ #M74 `NotificationComposer` + `ISecurityNotifier` | общая загрузка/brand/placeholders; OTP → CodeService; FYI notify → SecurityNotifier |
+| ✅ #M75 Templates placeholders cleanup | `verify`/`register`/`confirm-email` rewritten (en/ru/ro); unified placeholders; stock flows still use `verify` / `reset` / `password-changed` |
 
 ---
 

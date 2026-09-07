@@ -1,0 +1,11 @@
+Bună, {{fullName}},
+
+Confirmă {{email}} pentru {{company}}.
+Codul tău: {{code}} (valabil {{expires}}).
+
+Confirmă aici:
+{{url}}
+
+Dacă nu ai solicitat asta, ignoră e-mailul.
+Suport: {{supportEmail}}
+© {{year}} {{brand}}
