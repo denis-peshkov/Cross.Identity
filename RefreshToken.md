@@ -3,14 +3,14 @@
 The lifetime of a **refresh token** depends directly on the security architecture, but there are clear practical guidelines used in production:
 
 ## Practical formula
-| Mode                       | Access Token | Refresh Token        | Example behavior                                                                                    |
-|----------------------------|--------------|----------------------|-----------------------------------------------------------------------------------------------------|
-| Web apps (SPA + API)       | 10 - 15 min  | 7–30 days            | User rarely logs out, but not forever. Allows extending the session without logging in again.       |
-| Fintech/banks              | 7 - 10 min   | 1–14 days            | Stricter security requirements.                                                                     |
-| Standard login             | 15 min       | 7 days               | user is automatically logged out after a week                                                         |
-| Remember me                | 30 min       | 60 days              | no need to log in again for 2 months                                                                |
-| Service client             | 5 min        | 1 day                | secure API integrator                                                                               |
-| Admin panel / bank         | 5 min        | 1 day / no refresh   | heightened security                                                                                 |
+| Mode | Access Token | Refresh Token | Example behavior |
+|---|---|---|---|
+| Web apps (SPA + API) | 10 - 15 min | 7–30 days | User rarely logs out, but not forever. Allows extending the session without logging in again. |
+| Fintech/banks | 7 - 10 min | 1–14 days | Stricter security requirements. |
+| Standard login | 15 min | 7 days | user is automatically logged out after a week |
+| Remember me | 30 min | 60 days | no need to log in again for 2 months |
+| Service client | 5 min | 1 day | secure API integrator |
+| Admin panel / bank | 5 min | 1 day / no refresh | heightened security |
 
 ## Good practice — refresh token rotation
 - On each use of a refresh token:
@@ -34,12 +34,12 @@ _refreshTokenExpiration = TimeSpan.FromDays(30);
   - SecurityStamp (Identity mechanism — reset on password change).
 
 ## Security recommendations
-| Mechanism           | Why it matters                                                                 |
-|---------------------|--------------------------------------------------------------------------------|
-| One-time use        | refresh token can be used only once, then it is replaced                       |
-| Database storage    | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `LastActivityAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
-| Device binding      | Host sets `HostSuppliedClientContext` on login; library stores `Created*` and compares on refresh (see below) |
-| Revoke chain        | on compromise of an old token — mark the entire chain as Revoked                |
+| Mechanism | Why it matters |
+|---|---|
+| One-time use | refresh token can be used only once, then it is replaced |
+| Database storage | `RefreshTokens`: jti, `UserAccountId`, `FamilyId`, `TokenHash`, `ExpiresAt`, `AbsoluteExpiresAt`, `CreatedAt`, `LastActivityAt`, `Created*` (binding), `ReplacedByTokenId`, `RevokedAt`. Revoke reason + IP/UA/fingerprint → `auth.Audits`. |
+| Device binding | Host sets `HostSuppliedClientContext` on login; library stores `Created*` and compares on refresh (see below) |
+| Revoke chain | on compromise of an old token — mark the entire chain as Revoked |
 
 ## Replay detection (family revoke + `REPLAY_DETECTED`)
 
@@ -187,7 +187,7 @@ Stored in Secure Storage (Keychain / Keystore). The app sends it to the host API
 Good practice — bind up to three dimensions (each optional; only non-empty values are checked):
 
 | Field | Example value | Host source |
-|-------|---------------|-------------|
+|---|---|---|
 | `DeviceFingerprint` | `bdb38b8f2c0a6a17884e23f9a7b05c4e` | Validated device id / host-computed hash |
 | `UserAgent` | `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)...` | `HttpContext.Request.Headers.User-Agent` |
 | `IpAddress` | `203.0.113.42` | `RemoteIpAddress` after `ForwardedHeaders` |
