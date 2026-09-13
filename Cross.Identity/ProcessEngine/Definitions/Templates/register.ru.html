@@ -6,9 +6,8 @@
   <meta name="x-apple-disable-message-reformatting">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
   <title>Добро пожаловать</title>
-
   <style>
-    /* autosize / email-client fluid layout (from Sample verify.ro pattern) */
+    /* unified email shell + autosize */
     html, body { margin:0 !important; padding:0 !important; width:100% !important; }
     * { box-sizing:border-box; -ms-text-size-adjust:100%; -webkit-text-size-adjust:100%; }
     table { border-collapse:separate !important; mso-table-lspace:0pt; mso-table-rspace:0pt; }
@@ -52,6 +51,7 @@
   </style>
 </head>
 <body style="margin:0;padding:0;background:#f5f7fb;">
+
 <table role="presentation" class="email-shell" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;width:100%;">
   <tr>
     <td class="email-pad" align="center" style="padding:24px;box-sizing:border-box;">
@@ -68,19 +68,22 @@
         </tr>
         <tr>
           <td style="padding:28px 32px 8px 32px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#111827;">
-            <h1 style="margin:0 0 12px 0;font-size:20px">Здравствуйте, {{fullName}}</h1>
+            <h1 style="margin:0 0 12px 0;font-size:20px">Здравствуйте, {{{{fullName}}}}</h1>
             <p style="margin:0 0 16px 0;font-size:14px;color:#374151">
-              Добро пожаловать в <strong>{{company}}</strong>. Аккаунт для <strong>{{email}}</strong> готов.
+              Добро пожаловать в <strong>{{{{company}}}}</strong>. Аккаунт для <strong>{{{{email}}}}</strong> готов.
             </p>
           </td>
         </tr>
+
         <tr>
           <td align="center" style="padding:12px 32px 8px 32px">
-            <a href="{{url}}" class="email-btn" style="display:inline-block;background:#0d6efd;box-sizing:border-box;max-width:100%;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-family:Segoe UI,Roboto,Arial,sans-serif;font-size:14px;font-weight:600">
+            <a href="{{{{url}}}}" class="email-btn" style="display:inline-block;background:#0d6efd;box-sizing:border-box;max-width:100%;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-family:Segoe UI,Roboto,Arial,sans-serif;font-size:14px;font-weight:600">
               Открыть аккаунт
             </a>
           </td>
         </tr>
+
+
         <tr>
           <td style="padding:0 32px 28px 32px;font-family:Segoe UI,Roboto,Arial,sans-serif">
             <hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0 16px 0">
@@ -90,8 +93,9 @@
         </tr>
       </table>
       <div class="email-foot" style="width:100%;max-width:600px;margin-top:12px;font-family:Segoe UI,Roboto,Arial,sans-serif;font-size:12px;color:#6b7280;box-sizing:border-box;">
-        Если кнопка не работает, откройте ссылку в браузере:<br><span style="word-break:break-all">{{url}}</span>
+        Если кнопка не работает, откройте ссылку в браузере:<br><span style="word-break:break-all">{{{{url}}}}</span>
       </div>
+
     </td>
   </tr>
 </table>
