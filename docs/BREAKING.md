@@ -22,8 +22,6 @@ DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/READM
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
 
-When shipping a new breaking change: insert a **From X.Y.Z to A.B.C** section **at the top** of the versioned sections (and a matching TOC row), and prefix the **PR title** with `BREAKING:`.
-
 ---
 
 ## From 2.2.0 to 2.3.0
@@ -89,6 +87,7 @@ The following members are **removed** (not used by stock flows/steps). Host toke
 **Kept:** `GenerateIdToken`, `GenerateAccessTokenAsync`, `GenerateRefreshTokenAsync`, `ValidateAccessTokenAsync`, `ValidateAccessTokenJtiAsync` (`JwtBearer` / host), `EnsureRefreshTokenActiveForRotationAsync(Guid, …)`, `GetRefreshTokenByIdAsync`, `InvalidateRefreshTokenAsync(Guid, Guid, …)`, `GetClaimValue`, `RevokeSessionForLogoutAsync`, `RevokeAllTokensForUserAsync`, `CleanupExpiredRefreshTokensAsync`.
 
 ---
+
 ## From 2.1.1 to 2.2.0
 
 Release: [v2.2.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.2.0) ([PR #19](https://github.com/denis-peshkov/Cross.Identity/pull/19)).
@@ -119,6 +118,7 @@ User-scoped operations no longer take a refresh token as library session proof. 
 4. Update any custom flow overrides / step factories that still pass `refreshTokenKey` into the removed parameters.
 
 ---
+
 ## From 2.0.x to 2.1.1
 
 Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1) ([PR #18](https://github.com/denis-peshkov/Cross.Identity/pull/18)).
@@ -137,6 +137,7 @@ Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 **Bulk concurrency contract** (unchanged intent; wording clarified with SaveChanges-based rotation): `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic stamp handling. Filter by the **original** `ConcurrencyStamp`, check the **affected-row count** (0 = conflict), and assign a **new** stamp only via `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` cannot set a stamp — use it only in the WHERE. Prefer tracked `SaveChanges` when possible.
 
 ---
+
 ## From 1.10.x to 2.0.0
 
 Release: [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) ([PR #16](https://github.com/denis-peshkov/Cross.Identity/pull/16)).
@@ -553,6 +554,7 @@ Query params carry **identity** for SPA deep links; OTP **channel** is still res
 **Action:** pass `Guid` (stock `SendCodeStep` already does).
 
 ---
+
 ## From 1.9.x to 1.10.0
 
 ### `IJwtTokenService.GetClaimValueAsync` → `GetClaimValue`
@@ -592,6 +594,7 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 **Action:** update callers and custom `IJwtTokenService` implementations accordingly.
 
 ---
+
 ## From 1.6.x to 1.7.0
 
 ### External OAuth step type rename
@@ -606,6 +609,7 @@ Flow operations stay `ExternalLogin` / `ExternalLoginCallback`. Step **type** na
 **Action:** update custom flow overrides that reference the old step types; stock `main.ExternalLogin*.json` already use the new names.
 
 ---
+
 ## From 1.5.x to 1.6.0
 
 ### Removed operation: `TokenByCode`
@@ -620,6 +624,7 @@ OTP exchange is handled by **`Token`** (`main.Token`) with `{ Email|PhoneNumber,
 **Action:** call `main` / `Token` instead of `TokenByCode`; drop custom `TokenByCode` overrides.
 
 ---
+
 ## From ≤1.4.x to 1.5.0
 
 ### Built-in flow rename: `license` → `main`
