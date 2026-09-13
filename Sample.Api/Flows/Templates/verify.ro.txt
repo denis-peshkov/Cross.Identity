@@ -1,27 +1,28 @@
 {{company}}
 
-Bună, {{fullName}},
+Hello, {{fullName}},
 
-Ne bucurăm că ni te-ai alăturat pe platforma {{company}}. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
+We’re glad to have you on the {{company}} platform!
+To complete your account setup, please use the following verification code:
 
 {{code}}
 
-👉 Utilizează codul
+👉 Use the code
 
-Dacă butonul nu funcționează, te rugăm să copiezi următorul link și să îl introduci în browser-ul tău:
+If the button doesn’t work, please copy and paste the following link into your browser:
 {{verificationLink}}
 
-Numai bine,
-Echipa {{company}}
+Best regards,
+The {{company}} Team
 
-⚠️ Atenție! Codul este valabil {{expires}}. După aceea va trebui să reinițiezi procesul de confirmare cont.
+⚠️ Attention! The code is valid for {{expires}}. After that, you’ll need to restart the account confirmation process.
 
-În cazul în care nu te-ai înregistrat pe platforma {{company}}, poți ignora acest e-mail.
+If you didn’t register on the {{company}} platform, you can safely ignore this email.
 
-Întâmpini dificultăți în confirmarea contului? Scrie-ne pe {{supportEmail}}.
+Having trouble confirming your account? Write to us at {{supportEmail}}.
 
-Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
-Vizitează secțiunea Contul Meu - Ajutor:
+Do you have questions or need help using your account on {{site}}?
+Visit the My Account – Help section:
 {{helpLink}}
 
 Facebook | Instagram | YouTube
