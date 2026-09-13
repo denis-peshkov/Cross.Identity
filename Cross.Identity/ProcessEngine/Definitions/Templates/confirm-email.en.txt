@@ -1,11 +1,23 @@
-Hello, {{fullName}},
+Hello, {{fullName}}!
 
-Confirm {{email}} for {{company}}.
-Your code: {{code}} (valid for {{expires}}).
+Please confirm {{email}} for {{company}}.
 
-Confirm here:
+Your verification code:
+{{code}}
+
+👉 Confirm email:
 {{url}}
 
-If you didn’t request this, ignore this email.
-Support: {{supportEmail}}
+⚠️ Attention! The code is valid for {{expires}}.
+
+If you didn’t request this, you can safely ignore this email.
+
+Having trouble? Write to us at {{supportEmail}}.
+
+Do you have questions about your account on {{site}}?
+Visit the My Account – Help section.
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

@@ -1,11 +1,23 @@
-Hello,
+Hello, {{fullName}}!
 
 You requested a password reset for {{email}}.
-Your code: {{code}} (valid for {{expires}}).
 
-To continue, open this link:
+Your verification code:
+{{code}}
+
+👉 Reset your password:
 {{url}}
 
-If you didn’t request this, just ignore this email.
-Support: {{supportEmail}}
+⚠️ Attention! The code is valid for {{expires}}.
+
+If you didn’t request this, you can safely ignore this email.
+
+Having trouble? Write to us at {{supportEmail}}.
+
+Do you have questions about your account on {{site}}?
+Visit the My Account – Help section.
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

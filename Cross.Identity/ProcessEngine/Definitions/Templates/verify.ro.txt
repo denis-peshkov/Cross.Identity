@@ -1,8 +1,7 @@
-{{company}}
+Bună, {{fullName}}!
 
-Bună, {{fullName}},
-
-Ne bucurăm că ni te-ai alăturat pe platforma {{company}}. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
+Ne bucurăm că ni te-ai alăturat pe platforma {{company}}.
+Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
 
 {{code}}
 

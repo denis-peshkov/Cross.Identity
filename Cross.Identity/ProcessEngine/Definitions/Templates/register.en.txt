@@ -2,8 +2,18 @@ Hello, {{fullName}},
 
 Welcome to {{company}}. Your account for {{email}} is ready.
 
-Open your account:
+👉 Log in to your account:
 {{url}}
 
+Best regards,
+The {{company}} Team
+
+Do you have questions or need help using your account on {{site}}?
+Visit the My Account – Help section.
+
 Questions? {{supportEmail}}
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

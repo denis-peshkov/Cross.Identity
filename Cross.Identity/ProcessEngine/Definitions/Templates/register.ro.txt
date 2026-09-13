@@ -2,8 +2,18 @@ Bună, {{fullName}},
 
 Bine ai venit la {{company}}. Contul pentru {{email}} este gata.
 
-Deschide contul:
+👉 Intră în cont:
 {{url}}
 
+Numai bine,
+Echipa {{company}}
+
+Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
+Vizitează secțiunea Contul Meu - Ajutor.
+
 Întrebări? {{supportEmail}}
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

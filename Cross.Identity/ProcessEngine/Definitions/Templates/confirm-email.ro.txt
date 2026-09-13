@@ -1,11 +1,23 @@
-Bună, {{fullName}},
+Bună, {{fullName}}!
 
-Confirmă {{email}} pentru {{company}}.
-Codul tău: {{code}} (valabil {{expires}}).
+Te rugăm să confirmi {{email}} pentru {{company}}.
 
-Confirmă aici:
+Codul tău de verificare:
+{{code}}
+
+👉 Confirmă e-mailul:
 {{url}}
 
-Dacă nu ai solicitat asta, ignoră e-mailul.
-Suport: {{supportEmail}}
+⚠️ Atenție! Codul este valabil {{expires}}.
+
+Dacă nu ai solicitat acest lucru, poți ignora acest e-mail.
+
+Întâmpini dificultăți? Scrie-ne pe {{supportEmail}}.
+
+Ai nelămuriri legate de contul tău pe {{site}}?
+Vizitează secțiunea Contul Meu - Ajutor.
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

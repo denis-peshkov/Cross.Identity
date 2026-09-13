@@ -1,6 +1,4 @@
-{{company}}
-
-Hello, {{fullName}},
+Hello, {{fullName}}!
 
 We’re glad to have you on the {{company}} platform!
 To complete your account setup, please use the following verification code:
