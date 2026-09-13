@@ -2,226 +2,75 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="x-apple-disable-message-reformatting">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{company}} — Подтверждение аккаунта</title>
-  <style>
-    /* Base */
-    body {
-      margin: 0;
-      padding: 0;
-      background: #f5f7f7;
-      color: #033030;
-    }
-
-    table {
-      border-collapse: separate;
-      border-spacing: 0;
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
-    }
-
-    td {
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
-    }
-
-    img {
-      border: 0;
-      outline: none;
-      text-decoration: none;
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }
-
-    a {
-      color: #3498db;
-      text-decoration: underline;
-    }
-
-    /* Layout */
-    .container {
-      width: 100%;
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 10px;
-      font-family: sans-serif;
-      font-size: 16px;
-      line-height: 1.4;
-    }
-
-    .section {
-      padding: 20px;
-    }
-
-    .center {
-      text-align: center;
-    }
-
-    .card {
-      background: #ffffff;
-      box-shadow: 0 3px 6px #00000029;
-      border-radius: 8px; /* slightly larger radius looks better */
-      overflow: hidden; /* key to a smooth transition */
-    }
-
-    .h1 {
-      margin: 0 0 30px;
-      font: 300 35px/1.4 "Times New Roman", serif;
-      color: #000;
-    }
-
-    .hr {
-      border: 0;
-      border-bottom: 1px solid #aaa;
-      margin: 20px 0;
-    }
-
-    /* Button */
-    .btn-wrap {
-      text-align: center;
-      padding-bottom: 15px;
-    }
-
-    .btn {
-      display: inline-block;
-      min-width: 250px;
-      padding: 12px 25px;
-      font-size: 18px;
-      color: #fff;
-      background: #074F4F;
-      border: 1px solid #074F4F;
-      border-radius: 500px;
-      text-decoration: none;
-    }
-
-    /* Code box */
-    .code {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: 2px;
-    }
-
-    /* List */
-    .list td {
-      padding-bottom: 20px;
-    }
-
-    /* Footer */
-    .social a {
-      display: inline-block;
-      margin: 0 10px;
-    }
-
-    @media only screen and (max-width: 620px) {
-      .h1 {
-        font-size: 28px;
-        margin-bottom: 10px;
-      }
-
-      .container {
-        padding: 10px;
-      }
-
-      .section {
-        padding: 10px;
-      }
-
-      .btn {
-        width: 100%;
-      }
-    }
-  </style>
+  <title>Подтверждение аккаунта</title>
 </head>
-<body>
-<table role="presentation" width="100%" bgcolor="#f5f7f7">
+<body style="margin:0;padding:0;background:#f5f7fb;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
+  Ваш код: {{code}}. Действует {{expires}}.
+</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fb;">
   <tr>
-    <td align="center">
-      <div class="container">
-
-        <!-- Header -->
-        <div class="section center" style="display:inline-block; margin:0 auto; padding-top:20px;">
-          <a href="https://{{site}}/" target="_blank" rel="noopener">
-            <img src="{{imageLink}}" alt="{{company}}" width="{{imageWidth}}" height="{{imageHeight}}">
-          </a>
-        </div>
-
-        <!-- Greeting -->
-        <div class="section center">
-          <h1 class="h1">Здравствуйте, {{fullName}}!</h1>
-        </div>
-
-        <!-- Main card -->
-        <table role="presentation" class="card" width="100%">
-          <tr>
-            <td class="section">
-              <p style="margin:0 0 15px;">
-                Мы рады, что вы присоединились к платформе {{company}}. Чтобы завершить настройку вашего аккаунта, пожалуйста, используйте следующий код подтверждения:
-              </p>
-
-              <p class="center code" style="margin:0 0 20px;">{{code}}</p>
-
-              <div class="btn-wrap">
-                <a class="btn" href="{{verificationLink}}" target="_blank" rel="noopener">
-                  Использовать код
-                </a>
-              </div>
-
-              <p style="margin:0 0 15px;">
-                Если кнопка не работает, скопируйте следующую ссылку <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> и вставьте её в ваш браузер.
-              </p>
-
-              <p class="center" style="margin:20px 0 0;">
-                С наилучшими пожеланиями,<br> Команда {{company}}
-              </p>
-
-            </td>
-          </tr>
-
-          <tr>
-            <td style="padding:0;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-spacing:0;">
-                <tr>
-                  <td style="background:#83CBDB; color:#033030; padding:16px 20px; text-align:center;">
-                    <strong>Внимание!</strong> Код действителен <strong>{{expires}}</strong>.
-                    После этого вам нужно будет заново инициировать процесс подтверждения аккаунта.
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-
-        <!-- Small help note -->
-        <div class="section center" style="font-size:12px;">
-          <p style="margin:0; padding-top:20px;">
-            Если вы не регистрировались на платформе {{company}}, просто проигнорируйте это письмо.
-            <br>
-            Возникли сложности с подтверждением аккаунта? Напишите нам на <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
-          </p>
-        </div>
-
-        <hr class="hr">
-
-        <!-- Help section -->
-        <div class="section center">
-          <p style="margin:0; padding-top:20px;">
-            Есть вопросы или неясности по работе вашего аккаунта на {{site}}?
-            <br>
-            <a href="{{helpLink}}" target="_blank" rel="noopener">Посетите раздел «Мой аккаунт – Помощь»</a>
-          </p>
-        </div>
-
-        <hr class="hr">
-
-        <!-- Footer -->
-        <div class="section center">
-          <div style="padding-top:20px;">
-            <a href="https://{{site}}/" target="_blank" rel="noopener" style="text-decoration:none; color:#033030;">{{site}}</a>
-          </div>
-        </div>
-
+    <td align="center" style="padding:24px;">
+      <table role="presentation" width="600" style="max-width:600px;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(16,24,40,.08);">
+        <tr>
+          <td style="padding:24px 32px;background:#0d6efd;color:#fff;font-family:Segoe UI,Roboto,Arial,sans-serif;">
+            <table width="100%">
+              <tr>
+                <td style="font-weight:700;font-size:18px">{{brand}}</td>
+                <td align="right" style="font-size:12px;opacity:.9">Подтверждение аккаунта</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:28px 32px 8px 32px;font-family:Segoe UI,Roboto,Arial,sans-serif;color:#111827;">
+            <h1 style="margin:0 0 12px 0;font-size:20px">Здравствуйте, {{fullName}}</h1>
+            <p style="margin:0 0 16px 0;font-size:14px;color:#374151">
+              Мы рады, что вы присоединились к платформе <strong>{{company}}</strong>. Чтобы завершить настройку аккаунта, используйте код ниже.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 32px 8px 32px">
+            <table role="presentation" width="100%" style="border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb;">
+              <tr>
+                <td align="center" style="padding:18px 16px;font-family:ui-monospace,Consolas,'Courier New',monospace;">
+                  <div style="font-size:28px;letter-spacing:4px;font-weight:700;color:#111827">{{code}}</div>
+                  <div style="font-size:12px;color:#6b7280;margin-top:8px">Код действует {{expires}}.</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" style="padding:12px 32px 8px 32px">
+            <a href="{{verificationLink}}" style="display:inline-block;background:#0d6efd;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-family:Segoe UI,Roboto,Arial,sans-serif;font-size:14px;font-weight:600">
+              Использовать код
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:8px 32px 8px 32px;font-family:Segoe UI,Roboto,Arial,sans-serif">
+            <p style="margin:0 0 10px 0;font-size:12px;color:#6b7280">
+              Если вы не регистрировались на платформе {{company}}, просто проигнорируйте это письмо. Никому не передавайте код.
+            </p>
+            <p style="margin:0 0 10px 0;font-size:12px;color:#6b7280">
+              Вопросы по аккаунту на {{site}}?
+              <a href="{{helpLink}}" style="color:#6b7280;text-decoration:underline">Раздел «Мой аккаунт – Помощь»</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:0 32px 28px 32px;font-family:Segoe UI,Roboto,Arial,sans-serif">
+            <hr style="border:none;border-top:1px solid #e5e7eb;margin:8px 0 16px 0">
+            <p style="margin:0;font-size:12px;color:#9ca3af">Нужна помощь? <a href="mailto:{{supportEmail}}" style="color:#6b7280;text-decoration:underline">{{supportEmail}}</a></p>
+            <p style="margin:8px 0 0 0;font-size:11px;color:#9ca3af">© {{year}} {{brand}}. Все права защищены.</p>
+          </td>
+        </tr>
+      </table>
+      <div style="max-width:600px;margin-top:12px;font-family:Segoe UI,Roboto,Arial,sans-serif;font-size:12px;color:#6b7280">
+        Если кнопка не работает, откройте ссылку в браузере:<br><span style="word-break:break-all">{{verificationLink}}</span>
       </div>
     </td>
   </tr>
