@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ro">
+<html lang="ru">
 <head>
   <meta charset="utf-8">
   <meta name="x-apple-disable-message-reformatting">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{company}} — Verificare cont</title>
+  <title>{{company}} — Подтверждение аккаунта</title>
   <style>
     /* Base */
     body {
@@ -149,7 +149,7 @@
 
         <!-- Greeting -->
         <div class="section center">
-          <h1 class="h1">Bună, {{fullName}},</h1>
+          <h1 class="h1">Здравствуйте, {{fullName}}!</h1>
         </div>
 
         <!-- Main card -->
@@ -157,23 +157,23 @@
           <tr>
             <td class="section">
               <p style="margin:0 0 15px;">
-                Ne bucurăm că ni te-ai alăturat pe platforma {{company}}. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
+                Мы рады, что вы присоединились к платформе {{company}}. Чтобы завершить настройку вашего аккаунта, пожалуйста, используйте следующий код подтверждения:
               </p>
 
               <p class="center code" style="margin:0 0 20px;">{{code}}</p>
 
               <div class="btn-wrap">
                 <a class="btn" href="{{verificationLink}}" target="_blank" rel="noopener">
-                  Utilizează codul
+                  Использовать код
                 </a>
               </div>
 
               <p style="margin:0 0 15px;">
-                Dacă butonul nu funcționează, te rugăm să copiezi următorul link <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> și să îl introduci în browser-ul tău.
+                Если кнопка не работает, скопируйте следующую ссылку <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> и вставьте её в ваш браузер.
               </p>
 
               <p class="center" style="margin:20px 0 0;">
-                Numai bine,<br> Echipa {{company}}
+                С наилучшими пожеланиями,<br> Команда {{company}}
               </p>
 
             </td>
@@ -184,8 +184,8 @@
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-spacing:0;">
                 <tr>
                   <td style="background:#83CBDB; color:#033030; padding:16px 20px; text-align:center;">
-                    <strong>Atenție!</strong> Codul este valabil <strong>{{expires}}</strong>.
-                    După aceea va trebui să reinițiezi procesul de confirmare cont.
+                    <strong>Внимание!</strong> Код действителен <strong>{{expires}}</strong>.
+                    После этого вам нужно будет заново инициировать процесс подтверждения аккаунта.
                   </td>
                 </tr>
               </table>
@@ -196,9 +196,9 @@
         <!-- Small help note -->
         <div class="section center" style="font-size:12px;">
           <p style="margin:0; padding-top:20px;">
-            În cazul în care nu te-ai înregistrat pe platforma {{company}}, poți ignora acest e-mail.
+            Если вы не регистрировались на платформе {{company}}, просто проигнорируйте это письмо.
             <br>
-            Întâmpini dificultăți în confirmarea contului? Scrie-ne pe <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
+            Возникли сложности с подтверждением аккаунта? Напишите нам на <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
           </p>
         </div>
 
@@ -207,9 +207,9 @@
         <!-- Help section -->
         <div class="section center">
           <p style="margin:0; padding-top:20px;">
-            Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
+            Есть вопросы или неясности по работе вашего аккаунта на {{site}}?
             <br>
-            <a href="{{helpLink}}" target="_blank" rel="noopener">Vizitează secțiunea Contul Meu - Ajutor</a>
+            <a href="{{helpLink}}" target="_blank" rel="noopener">Посетите раздел «Мой аккаунт – Помощь»</a>
           </p>
         </div>
 

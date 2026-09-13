@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ro">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="x-apple-disable-message-reformatting">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>{{company}} — Verificare cont</title>
+  <title>{{company}} — Verify your account</title>
   <style>
     /* Base */
     body {
@@ -149,7 +149,7 @@
 
         <!-- Greeting -->
         <div class="section center">
-          <h1 class="h1">Bună, {{fullName}},</h1>
+          <h1 class="h1">Hello, {{fullName}},</h1>
         </div>
 
         <!-- Main card -->
@@ -157,23 +157,23 @@
           <tr>
             <td class="section">
               <p style="margin:0 0 15px;">
-                Ne bucurăm că ni te-ai alăturat pe platforma {{company}}. Pentru a finaliza configurarea contului tău, te rugăm să folosești următorul cod de verificare:
+                We’re glad you joined the {{company}} platform. To finish setting up your account, please use the verification code below:
               </p>
 
               <p class="center code" style="margin:0 0 20px;">{{code}}</p>
 
               <div class="btn-wrap">
                 <a class="btn" href="{{verificationLink}}" target="_blank" rel="noopener">
-                  Utilizează codul
+                  Use the code
                 </a>
               </div>
 
               <p style="margin:0 0 15px;">
-                Dacă butonul nu funcționează, te rugăm să copiezi următorul link <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> și să îl introduci în browser-ul tău.
+                If the button doesn’t work, copy and paste this link <a href="{{verificationLink}}" target="_blank" rel="noopener">{{verificationLink}}</a> into your browser.
               </p>
 
               <p class="center" style="margin:20px 0 0;">
-                Numai bine,<br> Echipa {{company}}
+                Best regards, <br> {{company}} Team
               </p>
 
             </td>
@@ -184,8 +184,8 @@
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-spacing:0;">
                 <tr>
                   <td style="background:#83CBDB; color:#033030; padding:16px 20px; text-align:center;">
-                    <strong>Atenție!</strong> Codul este valabil <strong>{{expires}}</strong>.
-                    După aceea va trebui să reinițiezi procesul de confirmare cont.
+                    <strong>Attention!</strong> The code is valid for <strong>{{expires}}</strong>.
+                    After that, you’ll need to restart the account confirmation process.
                   </td>
                 </tr>
               </table>
@@ -196,9 +196,9 @@
         <!-- Small help note -->
         <div class="section center" style="font-size:12px;">
           <p style="margin:0; padding-top:20px;">
-            În cazul în care nu te-ai înregistrat pe platforma {{company}}, poți ignora acest e-mail.
+            If you didn’t sign up on the {{company}} platform, you can ignore this email.
             <br>
-            Întâmpini dificultăți în confirmarea contului? Scrie-ne pe <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
+            Having trouble confirming your account? Write to us at <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.
           </p>
         </div>
 
@@ -207,9 +207,9 @@
         <!-- Help section -->
         <div class="section center">
           <p style="margin:0; padding-top:20px;">
-            Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
+            Questions about how your account works on {{site}}?
             <br>
-            <a href="{{helpLink}}" target="_blank" rel="noopener">Vizitează secțiunea Contul Meu - Ajutor</a>
+            <a href="{{helpLink}}" target="_blank" rel="noopener">Visit the “My Account – Help” section</a>
           </p>
         </div>
 
@@ -217,6 +217,17 @@
 
         <!-- Footer -->
         <div class="section center">
+          <div class="social">
+            <a href="https://facebook.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Facebook">
+              <img src="https://bioclinica.ro/images/emails/facebook.png" alt="Facebook" width="24" height="24">
+            </a>
+            <a href="https://instagram.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Instagram">
+              <img src="https://bioclinica.ro/images/emails/instagram.png" alt="Instagram" width="24" height="24">
+            </a>
+            <a href="https://www.youtube.com/channel/UCqGFIgNFyE-R3zFbcpym9Rg" target="_blank" rel="noopener" title="YouTube">
+              <img src="https://bioclinica.ro/images/emails/youtube.png" alt="YouTube" width="24" height="24">
+            </a>
+          </div>
           <div style="padding-top:20px;">
             <a href="https://{{site}}/" target="_blank" rel="noopener" style="text-decoration:none; color:#033030;">{{site}}</a>
           </div>

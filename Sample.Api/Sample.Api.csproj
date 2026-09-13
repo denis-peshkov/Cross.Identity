@@ -11,10 +11,6 @@
     <NoWarn>1701;1702;1591;CS8618;</NoWarn>
   </PropertyGroup>
 
-  <Target Name="DeleteBinObjFolders" BeforeTargets="Clean">
-    <RemoveDir Directories=".\bin" />
-    <Delete Files=".\obj\**\*.cs" />
-  </Target>
 
   <ItemGroup>
     <PackageReference Include="Cross.CQRS" Version="10.1.3" />
@@ -31,13 +27,30 @@
     <PackageReference Include="PhoneNumbersCore" Version="1.1.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="SystemTextJsonPatch" Version="3.2.1" />
-
   </ItemGroup>
 
   <ItemGroup>
     <Content Update="appsettings.Development.json">
       <DependentUpon>appsettings.json</DependentUpon>
     </Content>
+    <Content Update="Flows\Templates\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="Flows\Definitions\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="Flows\Templates\.gitkeep">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Flows\Definitions\**\*.json">
+      <LogicalName>$(RootNamespace).Flows.Definitions.%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
