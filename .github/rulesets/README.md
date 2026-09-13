@@ -1,31 +1,24 @@
-# Cross.Identity — GitHub Ruleset recipes
+# Cross.CQRS — GitHub Ruleset recipes
 
 Importable JSON for [repository rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository), aligned with `CONTRIBUTING.md` branch policy.
 
 Based on [github/ruleset-recipes](https://github.com/github/ruleset-recipes).
 
-## Prerequisite (important)
+## Prerequisite
 
-`Cross.Identity` is a **private** repository. Repository rulesets on private repos require **[GitHub Pro](https://docs.github.com/en/get-started/learning-about-github/githubs-plans)** (or a public repo).
+`Cross.CQRS` is a **public** repository, so repository rulesets are available without GitHub Pro.
 
-Without Pro, Settings → Rules → Rulesets and the Rulesets API return:
-
-```text
-Upgrade to GitHub Pro or make this repository public to enable this feature.
-```
-
-Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy.yml`.
+Until rulesets are imported and set to **Active**, keep enforcing policy via `.github/workflows/branch-policy.yml`.
 
 ## Import
 
-1. Enable **GitHub Pro** (or make the repo public).
-2. Open the repo → **Settings** → **Rules** → **Rulesets**.
-3. **New ruleset** → **Import a ruleset**.
-4. Import files below **one by one** (order recommended).
-5. Review each ruleset:
+1. Open the repo → **Settings** → **Rules** → **Rulesets**.
+2. **New ruleset** → **Import a ruleset**.
+3. Import files below **one by one** (order recommended).
+4. Review each ruleset:
    - Confirm **status check** context is `build` (job name in `.github/workflows/dotnet.yml`). If GitHub shows a different name (e.g. `.NET / build`), edit the required check after the first green run.
    - Confirm **Bypass** is Repository admin only (`RepositoryRole` / Admin).
-6. Save with **Active** (or start with **Evaluate** if available on your plan).
+5. Save with **Active** (or start with **Evaluate** if available on your plan).
 
 ## Files
 
@@ -35,7 +28,7 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 | [`02-protect-dev.json`](02-protect-dev.json) | `dev` | No force-push/delete; PR + required `build`; admin bypass. Back-merge CI pushes with `TAGTOKEN` |
 | [`03-protect-release-hotfix.json`](03-protect-release-hotfix.json) | `release/*`, `hotfix/*` | Create/update/delete only via admin bypass |
 | [`04-protect-release-tags.json`](04-protect-release-tags.json) | tags `v*` | Protect NuGet/GitVersion tags; create via admin / `TAGTOKEN` CI |
-| [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Not available** on personal repos (org-owned private/internal only) |
+| [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Often org-only** — may fail import on personal repos |
 
 ## Bypass actors
 
@@ -66,13 +59,6 @@ Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope
 - “Only owner may open PR to `master`” — use admin-only merge + `branch-policy.yml`, or require reviews from CODEOWNERS.
 - Contributor branch prefixes `feature|fix|chore` — optional; add `branch_name_pattern` later in Evaluate mode.
 
-## Push ruleset (05) — not importable here
+## Push ruleset (05) — may not import on personal repos
 
-GitHub rejects push rulesets on **personal** repositories:
-
-```text
-Source public repos cannot have push rules
-Source only org-owned repos can have push rules
-```
-
-Keep `05-push-block-secrets.json` as a draft for a future org transfer, or rely on `.gitignore` + `branch-policy.yml`.
+GitHub may reject push rulesets on **personal** repositories. Keep `05-push-block-secrets.json` as a draft for a future org transfer, or rely on `.gitignore` + `branch-policy.yml`.

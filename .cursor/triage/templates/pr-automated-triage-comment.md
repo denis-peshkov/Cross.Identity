@@ -1,9 +1,12 @@
 # PR Automated Triage Comment Template
 
-Agent fills JSON fields; `format-pr-comment.mjs` renders this layout.
+The agent fills JSON fields; `format-pr-comment.mjs` renders the layout (repository name and URL — from `gh repo view` / `GITHUB_REPOSITORY`).
+
+**The markdown template body and JSON schema below are in English** (GitHub / CI posts are always EN; the agent `summary` is EN as well).
 
 ```markdown
-> <img src="https://raw.githubusercontent.com/denis-peshkov/Cross.Identity/master/IdentityServer.png" width="48" height="48" alt="Cross.Identity"> **Cross.Identity** · Automated triage by AI
+> **{repository_name}** · Automated triage by AI
+> _(optional icon when `TRIAGE_ICON_REL_PATH` is set, e.g. `icon.png`)_
 
 ## 🔍 Automated Triage
 
@@ -29,7 +32,7 @@ Agent fills JSON fields; `format-pr-comment.mjs` renders this layout.
 {security_block}
 
 ---
-*Triaged automatically by [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
+*Triaged automatically by [{repository_name}]({repository_url}) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
 <!-- triage -->
 ```
 
@@ -42,16 +45,16 @@ Agent fills JSON fields; `format-pr-comment.mjs` renders this layout.
   "confidence": 85,
   "summary": "2-4 sentences in English.",
   "maintainerHint": "Optional one-line hint, e.g. simple fix / needs security review",
-  "relevantFiles": ["Cross.Identity/Services/JwtTokenService.cs"],
+  "relevantFiles": ["path/from/this-pr.cs"],
   "securityNotes": "Optional; omit if N/A"
 }
 ```
 
-## Category / priority rules (Cross.Identity)
+## Category / priority rules
 
-- **security** + **critical/high** for JWT, OAuth, token leak, auth bypass
-- **bug** for broken flows/tests
-- **feature** for new flows/capabilities
+- **security** + **critical/high** for secret leaks, auth/licensing bypass, token misuse, PII exposure, payment issues
+- **bug** for regressions and failing tests
+- **feature** for new functionality
 - **enhancement** for refactors/perf without behavior change
 
 ## GitHub labels (CI)

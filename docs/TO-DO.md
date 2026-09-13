@@ -31,9 +31,6 @@ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) �
 ### M40. `FLOWS.md` `main.Register` bag key
 В таблице `userAccountIdKey: UserId`, в JSON / `collectResult` — `UserAccountId`.
 
-### M41. `EndpointId` GUID regex
-`main.CommunicationEndpointSetPreferred.json` — только `min/max: 36`, без GUID regex.
-
 ### M42. `JsonHelpers` `Enum.IsDefined`
 После `Enum.TryParse` требовать `Enum.IsDefined`.
 
@@ -88,5 +85,5 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 1. **H1:** DbUp journal heuristic в EF Core guidance.
 2. **M13–M14:** half-validate API docs / misuse guidance.
 3. **M39:** idle double-audit.
-4. **M40–M44:** FLOWS / EndpointId / JsonHelpers / template / language.
+4. **M40, M42–M44:** FLOWS Register key / JsonHelpers / template / language.
 5. **L1–L10:** техдолг / XML / style / triage `ru`.

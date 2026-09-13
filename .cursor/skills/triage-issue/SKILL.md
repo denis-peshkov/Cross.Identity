@@ -1,15 +1,15 @@
 ---
 name: triage-issue
 description: >-
-  Issue triage for Cross.Identity: audit open issues, categorization,
-  duplicates, cross-ref with PRs, risk assessment (auth/JWT/security), draft comments.
-  Args: "all" — deep analysis of all; numbers "42 57" — focus; "ru"/"fr" — table
+  Issue triage: audit open issues, categorization, duplicates, cross-ref with
+  PRs, risk assessment (auth/secrets/licensing), draft comments.
+  Args: "all" — deep analysis of all; numbers "42 57" — focus; "ru"/"en" — table
   language (default en).
 ---
 
-# Issue Triage — Cross.Identity
+# Issue Triage
 
-GitHub issue triage for the **Cross.Identity** repository (NuGet identity/auth library: JWT, process engine, OAuth flows).
+GitHub issue triage for the **current repository** (name/layout from `gh repo view` / README).
 
 ## When to use
 
@@ -89,7 +89,7 @@ REPO=$(.cursor/triage/gh-wrapper.sh repo view --json nameWithOwner -q .nameWithO
 - Overlap keywords in body >50% → stronger signal
 - Compare with 20 most recent closed
 
-**4. Risk** (for identity library — security priority):
+**4. Risk** (for CQRS library — security priority):
 
 - **Red**: CVE, vulnerability, injection, auth bypass, security, exploit, token leak, credentials, RCE, XSS, jwt bypass, refresh token
 - **Yellow**: breaking change, migration, deprecation, API removal, incompatible
@@ -117,12 +117,12 @@ After tables — copy to clipboard (`pbcopy` / `xclip` / `wl-copy`).
 
 For selected issues — `Task` with `subagent_type: generalPurpose` in parallel.
 
-Cross.Identity context for the agent:
+Repository context for the agent (from README / tree, not hard-coded paths):
 
-- Library: `Cross.Identity/` — process engine, JWT, OAuth, flows in `ProcessEngine/Definitions/Flows/`
-- Tests: `Cross.Identity.Tests/`
-- Documentation: `FLOWS.md`, `RefreshToken.md`
-- Rules: `.cursor/rules/104-backend-auth.mdc`, `105-backend-security.mdc`
+- Library / `src/` — public API, DI, pipeline
+- `*Tests*/` — automated tests
+- Documentation: `README.md`, `docs/BREAKING.md`, `docs/CHANGELOG.md` (when present)
+- Checklist: `.cursor/skills/triage-pr/references/dotnet-checklist.md`
 
 Comment template: `templates/issue-comment.md`.
 
@@ -134,14 +134,14 @@ Comment template: `templates/issue-comment.md`.
 
 **Never** post/close without `AskQuestion`.
 
-## Cross.Identity — specifics in comments
+## Comment specifics
 
 For bug reports request:
 
-- NuGet version / commit
-- Target framework (net8/net10)
-- Flow name (`main.Token`, `main.Register`, etc.)
-- Reproduction steps without real tokens/passwords
+- Package / NuGet version or git commit
+- Target framework (e.g. net8.0)
+- Area (from README / folder layout)
+- Reproduction steps without real secrets/tokens/license keys
 
 ## Edge cases
 

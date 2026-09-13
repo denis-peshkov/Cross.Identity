@@ -2,7 +2,11 @@
 # Collect branch delta vs a base ref for RELEASE-PLAN drafting.
 # Usage:
 #   bash .cursor/skills/release-plan/scripts/collect-release-delta.sh \
-#     [--base origin/master] [--version 2.2.0] [--out PATH]
+#     [--base origin/master] [--version 2.2.0] [--out PATH] \
+#     [--focus PATH]... [--no-default-focus]
+#
+# Version defaults from resolve-target-version.sh (GitVersion); optional --version overrides.
+# By default appends diff for docs/BREAKING.md. Extra hot paths — repeatable --focus.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
@@ -15,6 +19,8 @@ source "$SCRIPT_DIR/lib/repository-link.sh"
 BASE="origin/master"
 VERSION=""
 OUT=""
+NO_DEFAULT_FOCUS=false
+FOCUS=()
 
 require_value() {
   local flag="$1"
@@ -23,6 +29,19 @@ require_value() {
     echo "error: $flag requires a non-option value" >&2
     exit 1
   fi
+}
+
+append_unique() {
+  local path="$1"
+  local existing
+  if ((${#FOCUS[@]} > 0)); then
+    for existing in "${FOCUS[@]}"; do
+      if [[ "$existing" == "$path" ]]; then
+        return 0
+      fi
+    done
+  fi
+  FOCUS+=("$path")
 }
 
 while [[ $# -gt 0 ]]; do
@@ -42,8 +61,17 @@ while [[ $# -gt 0 ]]; do
       OUT="$2"
       shift 2
       ;;
+    --focus)
+      require_value "$1" "${2-}"
+      append_unique "$2"
+      shift 2
+      ;;
+    --no-default-focus)
+      NO_DEFAULT_FOCUS=true
+      shift
+      ;;
     -h|--help)
-      sed -n '2,6p' "$0"
+      sed -n '2,9p' "$0"
       exit 0
       ;;
     *)
@@ -52,6 +80,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$NO_DEFAULT_FOCUS" != true ]]; then
+  append_unique "docs/BREAKING.md"
+fi
 
 if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then
   if git rev-parse --verify master >/dev/null 2>&1; then
@@ -66,11 +98,18 @@ fi
 BRANCH="$(git branch --show-current 2>/dev/null || echo DETACHED)"
 DATE="$(date +%Y-%m-%d)"
 REPOSITORY_LINK="$(repository_link "$(git remote get-url origin 2>/dev/null || true)")"
+if [[ -z "$VERSION" ]]; then
+  VERSION="$("$SCRIPT_DIR/resolve-target-version.sh" --base "$BASE" --json | python3 -c 'import json,sys; print(json.load(sys.stdin).get("target_version") or "")')"
+fi
+if [[ -z "$VERSION" ]]; then
+  echo "error: could not resolve target_version (GitVersion or --version)" >&2
+  exit 1
+fi
 CACHE_DIR="$ROOT/.cursor/skills/release-plan/.cache"
 mkdir -p "$CACHE_DIR"
 SAFE_BRANCH="${BRANCH//\//-}"
 if [[ -z "$OUT" ]]; then
-  OUT="$CACHE_DIR/delta-${VERSION:-unknown}-${SAFE_BRANCH}.md"
+  OUT="$CACHE_DIR/delta-${VERSION}-${SAFE_BRANCH}.md"
 fi
 
 MB="$(git merge-base "$BASE" HEAD)"
@@ -80,7 +119,7 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
 {
   echo "# Release delta cache"
   echo
-  echo "- **version:** ${VERSION:-_(unset)_}"
+  echo "- **version:** $VERSION"
   echo "- **repository_link:** $REPOSITORY_LINK"
   echo "- **branch:** \`$BRANCH\`"
   echo "- **base:** \`$BASE\`"
@@ -105,43 +144,17 @@ FILES="$(git diff --name-only "${BASE}...HEAD" | wc -l | tr -d ' ')"
   echo '```'
   git diff --name-status "${BASE}...HEAD"
   echo '```'
-  echo
-  echo "## Focus: public service interfaces"
-  echo
-  echo '```diff'
-  git diff "${BASE}...HEAD" -- \
-    'Cross.Identity/Services/I*.cs' \
-    'Cross.Identity/Services/**/I*.cs' \
-    2>/dev/null || true
-  echo '```'
-  echo
-  echo "## Focus: stock flows JSON"
-  echo
-  echo '```diff'
-  git diff "${BASE}...HEAD" -- 'Cross.Identity/ProcessEngine/Definitions/Flows/*.json'
-  echo '```'
-  echo
-  echo "## Focus: FLOWS.md"
-  echo
-  echo '```diff'
-  git diff "${BASE}...HEAD" -- 'Cross.Identity/FLOWS.md'
-  echo '```'
-  echo
-  echo "## Focus: BREAKING.md"
-  echo
-  echo '```diff'
-  git diff "${BASE}...HEAD" -- 'docs/BREAKING.md'
-  echo '```'
-  echo
-  echo "## Focus: steps / factories / services (paths only)"
-  echo
-  echo '```'
-  git diff --name-only "${BASE}...HEAD" -- \
-    'Cross.Identity/ProcessEngine/Steps/' \
-    'Cross.Identity/ProcessEngine/Factories/' \
-    'Cross.Identity/Services/' \
-    'Cross.Identity.Tests/'
-  echo '```'
+
+  if ((${#FOCUS[@]} > 0)); then
+    for focus_path in "${FOCUS[@]}"; do
+      echo
+      echo "## Focus: \`$focus_path\`"
+      echo
+      echo '```diff'
+      git diff "${BASE}...HEAD" -- "$focus_path" 2>/dev/null || true
+      echo '```'
+    done
+  fi
 } > "$OUT"
 
 echo "$OUT"

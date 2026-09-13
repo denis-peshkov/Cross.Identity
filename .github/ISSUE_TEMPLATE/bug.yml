@@ -1,5 +1,5 @@
-name: Bug report
-description: Reproducible defect in Cross.Identity (library, flow, JWT/OAuth, licensing integration).
+﻿name: Bug report
+description: Reproducible defect in Cross.CQRS (pipeline, registration, validation, licensing).
 labels:
   - bug
 body:
@@ -8,14 +8,14 @@ body:
       value: |
         We may close this issue without comment if required fields are empty or verification boxes are not checked honestly.
 
-        **Never paste** license keys, pepper secrets, OAuth client secrets, passwords, OTP codes, or live JWT/refresh tokens. Redact or use placeholders.
+        **Never paste** license keys, passwords, or live JWT tokens. Redact or use placeholders.
 
   - type: input
     id: package-version
     attributes:
       label: Cross.Identity NuGet version
-      description: e.g. `10.2.1` from [nuget.org](https://www.nuget.org/packages/Cross.Identity/)
-      placeholder: "10.2.1"
+      description: e.g. `10.0.0` from [nuget.org](https://www.nuget.org/packages/Cross.CQRS/)
+      placeholder: "x.y.z"
     validations:
       required: true
 
@@ -37,8 +37,8 @@ body:
     id: host
     attributes:
       label: Host / integration surface
-      description: e.g. ASP.NET Core Minimal API, MVC controller, Sample.Api, unit test only
-      placeholder: "ASP.NET Core 8 Minimal API + AddCrossIdentity"
+      description: e.g. ASP.NET Core Minimal API, SampleWebApp, unit test only
+      placeholder: "ASP.NET Core 8 Minimal API + AddCQRS"
     validations:
       required: true
 
@@ -48,9 +48,9 @@ body:
       label: Verification
       description: Please verify before submitting. If you cannot check these honestly, use the **Question** template instead.
       options:
-        - label: I searched [open and closed issues](https://github.com/denis-peshkov/Cross.Identity/issues?q=is%3Aissue) and did not find a duplicate.
+        - label: I searched [open and closed issues](https://github.com/denis-peshkov/Cross.CQRS/issues?q=is%3Aissue) and did not find a duplicate.
           required: true
-        - label: I am on the latest **Cross.Identity** version listed on NuGet (or the issue also reproduces on the latest).
+        - label: I am on the latest **Cross.CQRS** version listed on NuGet (or the issue also reproduces on the latest).
           required: true
         - label: I can reproduce this with a **minimal** setup (not only in a large private app), or I attached the smallest repro I can share.
           required: true
@@ -61,7 +61,7 @@ body:
     id: context
     attributes:
       label: What were you trying to do (and why)?
-      description: Flow name, operation, endpoint, or API surface involved.
+      description: Command/query type, registration snippet, or API surface involved.
     validations:
       required: true
 
@@ -69,7 +69,7 @@ body:
     id: actual
     attributes:
       label: What happened?
-      description: Actual behavior, exceptions, HTTP status, log excerpts (redacted).
+      description: Actual behavior, exceptions, log excerpts (redacted).
     validations:
       required: true
 
@@ -85,12 +85,11 @@ body:
     attributes:
       label: Step-by-step reproduction
       description: |
-        Include flow/operation (e.g. `main` / `Register`), request shape, relevant appsettings keys (values redacted), and commands if applicable.
+        Include AddCQRS registration, request type, and commands if applicable.
       render: shell
       placeholder: |
-        dotnet run --project Sample.Api
-        POST /api/identity/main/Register
-        { "Email": "user@example.com", "Password": "..." }
+        services.AddCQRS(cfg => cfg.RegisterFromAssemblies(typeof(Program).Assembly));
+        await mediator.Send(new SomeCommand());
     validations:
       required: true
 
@@ -104,7 +103,7 @@ body:
         - JWT / refresh token
         - OAuth / external login
         - Password / OTP / email / SMS
-        - Licensing (CrossIdentity:LicenseKey)
+        - Licensing (LicenseKey / ILicenseProductInfo)
         - EF / UserService / entities
         - Sample.Api / hosting / DI
         - Documentation

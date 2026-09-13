@@ -70,14 +70,14 @@ git log --oneline "$BASE_REF..$BRANCH_REF" | head -40
 git diff --stat "$BASE_REF...$BRANCH_REF"
 git diff --name-status "$BASE_REF...$BRANCH_REF"
 # Prefer reading hotspots; full diff if needed for deep
-git diff "$BASE_REF...$BRANCH_REF" -- Cross.Identity/ Cross.Identity.Tests/
+git diff "$BASE_REF...$BRANCH_REF" -- <path>/ <tests-path>/
 ```
 
 Size bands + hotspots: same as `triage-pr` Phase 1. CI / mergeable / reviews → **N/A (branch mode)**.
 
 ### Phase L3 — Optional deep (`deep` or user asks)
 
-`triage-pr` Phase 2 checklist (JWT / auth / ProcessEngine). Optional `Task` bugbot.
+`triage-pr` Phase 2 checklist (licensing / pipeline / registration). Optional `Task` bugbot.
 
 ### Phase L4 — Output + save
 
@@ -159,7 +159,7 @@ Rules: smaller scope, CI clean, internal PR, overlap >80% → conflict.
 
 #### 4.2 Security gaps
 
-For issues with "red" risk — findings without PR (especially JWT, refresh tokens, OAuth).
+For issues with "red" risk — findings without PR (especially license JWT, secret leaks).
 
 #### 4.3 P0/P1 without PR
 

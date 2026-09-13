@@ -1,6 +1,7 @@
 # Branch and pull request policy
 
 name: Branch policy
+permissions: {}
 
 on:
   pull_request:
