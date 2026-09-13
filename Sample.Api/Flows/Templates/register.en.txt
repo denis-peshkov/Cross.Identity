@@ -1,8 +1,8 @@
-Bioclinica
+{{company}}
 
-Hello, Denys Pieshkov,
+Hello, {{fullName}},
 
-From now on, you can enjoy all the benefits your Bioclinica account offers:
+From now on, you can enjoy all the benefits your {{company}} account offers:
 1.	Schedule appointments online
 2.	Modify existing appointments
 3.	View your test results
@@ -11,10 +11,10 @@ From now on, you can enjoy all the benefits your Bioclinica account offers:
 👉 Log in to your account
 
 Best regards,
-The Bioclinica Team
+The {{company}} Team
 
-Do you have questions or need help using your account on bioclinica.ro?
+Do you have questions or need help using your account on {{site}}?
 Visit the My Account – Help section.
 
 Facebook | Instagram | YouTube
-bioclinica.ro
+{{site}}

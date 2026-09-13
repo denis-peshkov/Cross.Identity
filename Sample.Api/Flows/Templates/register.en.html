@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="x-apple-disable-message-reformatting">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Bioclinica</title>
+  <title>{{company}}</title>
   <style>
     /* base email styles */
     body { margin:0; padding:0; background:#f5f7f7; color:#033030; }
@@ -41,15 +41,15 @@
       <div class="container">
         <!-- header -->
         <div class="center" style="padding-top:20px;">
-          <a href="https://bioclinica.ro/" target="_blank" rel="noopener">
-            <img src="https://bioclinica.ro/images/emails/logo-green.png" alt="Bioclinica" width="220" height="34">
+          <a href="https://{{site}}/" target="_blank" rel="noopener">
+            <img src="{{imageLink}}" alt="{{company}}" width="220" height="34">
           </a>
         </div>
 
         <!-- intro -->
         <div class="section center">
-          <h1 class="h1">Bună Pieshkov Denys,</h1>
-          <p>De acum poți să te bucuri de toate beneficiile pe care ți le oferă contul Bioclinica:</p>
+          <h1 class="h1">Bună {{fullName}},</h1>
+          <p>De acum poți să te bucuri de toate beneficiile pe care ți le oferă contul {{company}}:</p>
         </div>
 
         <!-- main card -->
@@ -78,10 +78,10 @@
 
               <!-- CTA -->
               <div class="btn-wrap">
-                <a class="btn" href="https://bioclinica.ro/contul-meu/login" target="_blank" rel="noopener">Intră în cont</a>
+                <a class="btn" href="{{url}}" target="_blank" rel="noopener">Intră în cont</a>
               </div>
 
-              <p class="center" style="margin:0;">Numai bine, <br>Echipa Bioclinica</p>
+              <p class="center" style="margin:0;">Numai bine, <br>Echipa {{company}}</p>
             </td>
           </tr>
         </table>
@@ -91,8 +91,8 @@
         <!-- help -->
         <div class="section center">
           <p style="margin:0; padding-top:20px;">
-            Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe bioclinica.ro?<br>
-            <a href="https://bioclinica.ro/contul-meu/ajutor" target="_blank" rel="noopener">Vizitează secțiunea Contul Meu - Ajutor</a>
+            Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?<br>
+            <a href="{{helpLink}}" target="_blank" rel="noopener">Vizitează secțiunea Contul Meu - Ajutor</a>
           </p>
         </div>
 
@@ -101,18 +101,18 @@
         <!-- footer -->
         <div class="section center">
           <div class="social">
-            <a href="https://facebook.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Facebook">
-              <img src="https://bioclinica.ro/images/emails/facebook.png" alt="Facebook" width="24" height="24">
+            <a href="https://{{site}}/" target="_blank" rel="noopener" title="Facebook">
+              <img src="https://{{site}}/images/emails/facebook.png" alt="Facebook" width="24" height="24">
             </a>
-            <a href="https://instagram.com/laboratoarele.bioclinica" target="_blank" rel="noopener" title="Instagram">
-              <img src="https://bioclinica.ro/images/emails/instagram.png" alt="Instagram" width="24" height="24">
+            <a href="https://{{site}}/" target="_blank" rel="noopener" title="Instagram">
+              <img src="https://{{site}}/images/emails/instagram.png" alt="Instagram" width="24" height="24">
             </a>
-            <a href="https://www.youtube.com/channel/UCqGFIgNFyE-R3zFbcpym9Rg" target="_blank" rel="noopener" title="YouTube">
-              <img src="https://bioclinica.ro/images/emails/youtube.png" alt="YouTube" width="24" height="24">
+            <a href="https://{{site}}/" target="_blank" rel="noopener" title="YouTube">
+              <img src="https://{{site}}/images/emails/youtube.png" alt="YouTube" width="24" height="24">
             </a>
           </div>
           <div style="padding-top:20px;">
-            <a href="https://bioclinica.ro/" target="_blank" rel="noopener" style="text-decoration:none; color:#033030;">bioclinica.ro</a>
+            <a href="https://{{site}}/" target="_blank" rel="noopener" style="text-decoration:none; color:#033030;">{{site}}</a>
           </div>
         </div>
       </div>
