@@ -1,4 +1,4 @@
-﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
 > **Версия:** `2.4.0` · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` (`v2.3.0`) · **дата:** `2026-09-13`
 >
@@ -7,10 +7,12 @@
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
+>
+> Дельта: `origin/master...HEAD` — **45** коммита · **161** файлов · **+5148 / −1681**. Open C/H/M/L пустые.
 
-**Дельта:** `origin/master..HEAD` — 41 commit · 136 files (+3645/−1191). Product work после `v2.3.0`: `ChangeAccountEmail`, `LanguageCode` / notification templates, `NotificationComposer` + `ISecurityNotifier`, Sonar project key.  
-**База bump:** `latest_published=2.3.0` → target `2.4.0` (`resolve-target-version.sh`).  
-**WIP (uncommitted):** правки `register.*` / `verify.*` templates в working tree — не в «Закрыто».
+**CodeRabbit:** не запускался.
+
+**PR:** —
 
 ---
 
@@ -30,7 +32,7 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 ### `ChangeAccountEmail` — account op + endpoint sync
 Смена primary email — зона `IUserService` (не `ICommunicationEndpointService`). Upsert email-endpoint остаётся side-effect для синхрона delivery/OTP; flow может отдавать `endpoint` DTO хосту без второго `GetAll`.
@@ -43,7 +45,7 @@
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ #M66 `main.ChangeAccountEmail` flow | stock JSON / `ChangeAccountEmailStep` / factory / flow-тесты; host-authorized `UserAccountId` |
 | ✅ #M67 `IUserService.ChangeAccountEmailAsync` | account `Email`/`EmailVerified` + upsert endpoint; auto-verify via linked `ProviderEmail` |
 | ✅ #M68 Audit `AccountEmailChanged` | `AuditOperation.AccountEmailChanged`; `EntityType=UserAccount`, `EntityId=userAccountId` |

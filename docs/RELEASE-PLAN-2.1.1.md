@@ -1,4 +1,4 @@
-﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
 > **Версия:** `2.1.1` (published / closed) · **ветка:** `release/replace-ConcurrencyStampInterceptor-with-owerride-SaveChanges` · **база:** `origin/master` · **дата:** `2026-08-24`
 >
@@ -7,6 +7,12 @@
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.0.0.md`](RELEASE-PLAN-2.0.0.md)
+>
+> Дельта: `v2.0.0...v2.1.1` — **5** коммита · **14** файлов · **+155 / −69**. Open C/H/M/L пустые.
+
+**CodeRabbit:** не запускался.
+
+**PR:** —
 
 ---
 
@@ -26,14 +32,14 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 ---
 
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ `ConcurrencyStamp` rotation | `ConcurrencyStampInterceptor` + `OnConfiguring` **removed**; rotation in `IdentityContext.SaveChanges` / `SaveChangesAsync` |
 | ✅ Pooled DbContext | `AddDbContextPool` / `AddPooledDbContextFactory` supported (no auto-`AddInterceptors` in `OnConfiguring`) |
 | ✅ Bulk concurrency docs | `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass SaveChanges — filter by original stamp, check affected rows; new stamp only via `SetProperty` |

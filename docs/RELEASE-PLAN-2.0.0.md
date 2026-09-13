@@ -1,4 +1,4 @@
-﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
+Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
 > **Версия:** `2.0.0` (published / closed) · **ветка:** `release/add-new-flows` · **база:** `origin/master` · **дата:** `2026-08-23`
 >
@@ -7,6 +7,12 @@
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** —
+>
+> Дельта: `v1.10.0...v2.0.0` — **109** коммита · **324** файлов · **+11867 / −4444**. Open C/H/M/L пустые.
+
+**CodeRabbit:** не запускался.
+
+**PR:** [#16](https://github.com/denis-peshkov/Cross.Identity/pull/16).
 
 ---
 
@@ -26,7 +32,7 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 ### Refresh rotation без атомарности
 `RefreshTokenStep`: validate → issue → invalidate без DB-транзакции внутри библиотеки. Хост оборачивает refresh во **внешнюю транзакцию** (`FLOWS.md`).
@@ -95,7 +101,7 @@ Legacy typo **`WatsApp` удалён**; единственное имя — **`W
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ #29 OAuth unverified squat (CR отклонён) | verified OAuth + local unverified → новый verified account; см. «Принято» |
 | ✅ OAuth takeover по email | auto-link только при `profile.EmailVerified` + local verified |
 | ✅ Account linking без auth | linking требует `RefreshToken` того же user |
