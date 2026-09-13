@@ -13,11 +13,11 @@ public sealed class NotificationOptions
     /// <summary><c>{{brand}}</c> in templates.</summary>
     public string Brand { get; set; }
 
-    /// <summary><c>{{site}}</c> in templates.</summary>
-    public string Site { get; set; }
-
     /// <summary><c>{{company}}</c> in templates.</summary>
     public string Company { get; set; }
+
+    /// <summary><c>{{site}}</c> in templates.</summary>
+    public string Site { get; set; }
 
     /// <summary><c>{{fullName}}</c> (signature) in templates.</summary>
     public string FullName { get; set; }
