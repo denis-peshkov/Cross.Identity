@@ -6,7 +6,6 @@
 - `000-global.mdc` - Global project rules
 - `001-team-workflow.mdc` - Branches, PR targets (`dev` vs owner-only `master` / `release/*` / `hotfix/*`)
 - `002-multi-repo.mdc` - Multi-repository workflow rules
-- `003-triage.mdc` - GitHub triage (issues/PRs, skills, CI)
 
 ### Cursor triage scripts
 
