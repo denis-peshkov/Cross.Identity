@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **45** коммита · **161** файлов · **+5148 / −1681**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **53** коммита · **170** файлов · **+5 454 / −1 656**. Open: H1 M1.
 
 **CodeRabbit:** не запускался.
 
@@ -22,9 +22,15 @@
 
 ## Высокий (логика / auth model)
 
+### H18. Branch missing `origin/master` tip (`v2.3.0`)
+`HEAD` (`3ef55fe`) **не** содержит `e3f7d34`; merge-base с `origin/master` = `6a04f50` (`v2.2.0`). Перед PR — back-merge / rebase `origin/master`, затем `dotnet test`.
+
 ---
 
 ## Средний (противоречия / баги контрактов)
+
+### M76. Uncommitted register/verify templates
+В working tree: правки `register.*` / `verify.*` (вкл. новые `register.ru.html`, `verify.ru.html`) **не** в `HEAD`. До ship — commit или revert, иначе M75/CHANGELOG drift.
 
 ---
 
@@ -38,7 +44,7 @@
 Смена primary email — зона `IUserService` (не `ICommunicationEndpointService`). Upsert email-endpoint остаётся side-effect для синхрона delivery/OTP; flow может отдавать `endpoint` DTO хосту без второго `GetAll`.
 
 ### Optional `LanguageCode` + `Authentication:Notifications`
-Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` с defaults = прежние hardcoded Peshkov values — additive config, не breaking.
+Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` с defaults = прежние hardcoded Peshkov values — additive config, не breaking. Stock templates: `{{supportEmail}}` (не `{{support}}`).
 
 ---
 
@@ -58,6 +64,9 @@
 | ✅ #M75 Templates placeholders cleanup | `verify`/`register`/`confirm-email` rewritten (en/ru/ro); unified placeholders; stock flows: `verify` / `reset` / `password-changed` |
 | ✅ #M41 `EndpointId` GUID regex | `main.CommunicationEndpointSetPreferred.json` — `min/max: 36` + Guid regex (verified on branch / master) |
 | ✅ #L13 Sonar project key in CI | `dotnet.yml` / SonarCloud project key + name aligned |
+| ✅ #M77 License dotted product claim | `License` parse dotted JWT product names ↔ underscore enum; tests |
+| ✅ #M78 Package icons `icon.png`/`icon.svg` | rename from IdentityServer.*; `config.nuspec` / `.slnx` |
+| ✅ #L14 GitHub templates / rulesets | ISSUE/PR templates + rulesets README под Cross.Identity |
 
 ---
 
@@ -71,4 +80,8 @@
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
+1. **H18** — back-merge `origin/master` (`v2.3.0`) в ветку, прогнать тесты.
+2. **M76** — закоммитить или откатить WIP `register`/`verify` templates.
+3. PR → `master` · CI/Sonar · (опц.) CodeRabbit · tag `v2.4.0`.
+
+Внерелизный backlog → [`TO-DO.md`](TO-DO.md).

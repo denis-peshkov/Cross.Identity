@@ -7,22 +7,29 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.4.0 — unreleased
+## v2.4.0 — 13 Sep 2026
 
 ### Library
 
 - Host-supplied language context for notification templates (`HostSuppliedLanguageContext`); OTP / reset-password paths compose messages via `INotificationComposer` + `ISecurityNotifier`.
 - `Authentication:Notifications` (`NotificationOptions`); template placeholder `{{supportEmail}}` (was `{{support}}`).
-- Embedded register / verify templates restored and completed for `en` / `ru` / `ro` (txt + html).
-- `main.ChangeAccountEmail` flow / `IUserService.ChangeAccountEmailAsync` (host-authorized `UserAccountId`).
+- Embedded register / verify / confirm-email / password-changed templates for `en` / `ru` / `ro` (txt + html); stock flows use `verify` / `reset` / `password-changed`.
+- `main.ChangeAccountEmail` flow / `IUserService.ChangeAccountEmailAsync` (host-authorized `UserAccountId`); audit `AccountEmailChanged`.
+- License JWT: dotted product-type claims (e.g. `Cross.Identity`) parsed against underscore enum names; license validation helpers simplified.
+- Package / solution icons renamed to `icon.png` / `icon.svg`.
 
 ### Tests
 
-- Coverage for send-code / reset-password factories and steps, embedded template placeholders, communication-endpoint and ChangeAccountEmail flows.
+- Coverage for send-code / reset-password factories and steps, embedded template placeholders, communication-endpoint and ChangeAccountEmail flows, license dotted product claim.
 
 ### Documentation
 
-- Version plans / `TO-DO` backlog sync; `CHANGELOG` for all published tags.
+- Version plan `2.4.0` / `TO-DO` backlog sync; `FLOWS.md` / README host-authorize notes for ChangeAccountEmail; CHANGELOG for published tags.
+
+### CI / repo
+
+- SonarCloud project key + name aligned in `dotnet.yml`.
+- GitHub issue / PR templates and rulesets aligned to Cross.Identity.
 
 ---
 
