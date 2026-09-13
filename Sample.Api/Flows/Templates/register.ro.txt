@@ -1,21 +1,21 @@
 {{company}}
 
-Bună {{fullName}},
+Hello, {{fullName}},
 
-De acum poți să te bucuri de toate beneficiile pe care ți le oferă contul {{company}}:
+From now on, you can enjoy all the benefits your {{company}} account offers:
 
-1.	Programează-te online
-2.	Modifică programările existente
-3.	Vizualizează rezultatele analizelor tale
-4.	Menține un istoric al tuturor analizelor efectuate
+1.	Schedule appointments online
+2.	Modify existing appointments
+3.	View your test results
+4.	Keep a history of all your performed analyses
 
-👉 Intră în cont
+👉 Log in to your account
 
-Numai bine,
-Echipa {{company}}
+Best regards,
+The {{company}} Team
 
-Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
-Vizitează secțiunea Contul Meu - Ajutor
+Do you have questions or need help using your account on {{site}}?
+Visit the My Account – Help section.
 
 Facebook | Instagram | YouTube
 {{site}}

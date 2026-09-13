@@ -3,6 +3,7 @@
 Hello, {{fullName}},
 
 From now on, you can enjoy all the benefits your {{company}} account offers:
+
 1.	Schedule appointments online
 2.	Modify existing appointments
 3.	View your test results
