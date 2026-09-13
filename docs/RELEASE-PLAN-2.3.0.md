@@ -8,7 +8,8 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)
 
-**CodeRabbit:** `2026-08-26` · log `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-all-20260826-022142.jsonl` · 10 findings (0 Critical, 3 Major, 7 Minor) → все закрыты в этом плане.  
+**CodeRabbit:** `2026-08-26` · log `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-all-20260826-022142.jsonl` · 10 findings (0 Critical, 3 Major, 7 Minor) → все закрыты в этом плане.
+
 **PR:** [#20](https://github.com/denis-peshkov/Cross.Identity/pull/20) (`BREAKING:` Logout/RefreshToken → `Jti`, LogoutAll/ChangePassword → `UserAccountId`).
 
 ---
