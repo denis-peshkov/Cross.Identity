@@ -1,14 +1,20 @@
-# Cross.CQRS — GitHub Ruleset recipes
+# Cross.Identity — GitHub Ruleset recipes
 
 Importable JSON for [repository rulesets](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository), aligned with `CONTRIBUTING.md` branch policy.
 
 Based on [github/ruleset-recipes](https://github.com/github/ruleset-recipes).
 
-## Prerequisite
+## Prerequisite (important)
 
-`Cross.CQRS` is a **public** repository, so repository rulesets are available without GitHub Pro.
+`Cross.Identity` is a **private** repository. Repository rulesets on private repos require **[GitHub Pro](https://docs.github.com/en/get-started/learning-about-github/githubs-plans)** (or a public repo).
 
-Until rulesets are imported and set to **Active**, keep enforcing policy via `.github/workflows/branch-policy.yml`.
+Without Pro, Settings → Rules → Rulesets and the Rulesets API return:
+
+```text
+Upgrade to GitHub Pro or make this repository public to enable this feature.
+```
+
+Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy.yml`.
 
 ## Import
 
@@ -28,7 +34,7 @@ Until rulesets are imported and set to **Active**, keep enforcing policy via `.g
 | [`02-protect-dev.json`](02-protect-dev.json) | `dev` | No force-push/delete; PR + required `build`; admin bypass. Back-merge CI pushes with `TAGTOKEN` |
 | [`03-protect-release-hotfix.json`](03-protect-release-hotfix.json) | `release/*`, `hotfix/*` | Create/update/delete only via admin bypass |
 | [`04-protect-release-tags.json`](04-protect-release-tags.json) | tags `v*` | Protect NuGet/GitVersion tags; create via admin / `TAGTOKEN` CI |
-| [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Often org-only** — may fail import on personal repos |
+| [`05-push-block-secrets.json`](05-push-block-secrets.json) | push (repo-wide) | **Not available** on personal repos (org-owned private/internal only) |
 
 ## Bypass actors
 
@@ -59,6 +65,13 @@ Back-merge and tag push must use `secrets.TAGTOKEN` (owner PAT with `repo` scope
 - “Only owner may open PR to `master`” — use admin-only merge + `branch-policy.yml`, or require reviews from CODEOWNERS.
 - Contributor branch prefixes `feature|fix|chore` — optional; add `branch_name_pattern` later in Evaluate mode.
 
-## Push ruleset (05) — may not import on personal repos
+## Push ruleset (05) — not importable here
 
-GitHub may reject push rulesets on **personal** repositories. Keep `05-push-block-secrets.json` as a draft for a future org transfer, or rely on `.gitignore` + `branch-policy.yml`.
+GitHub rejects push rulesets on **personal** repositories:
+
+```text
+Source public repos cannot have push rules
+Source only org-owned repos can have push rules
+```
+
+Keep `05-push-block-secrets.json` as a draft for a future org transfer, or rely on `.gitignore` + `branch-policy.yml`.

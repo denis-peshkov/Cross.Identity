@@ -1,10 +1,10 @@
-﻿name: Question
+name: Question
 description: Usage question, integration help, or unclear behavior — not a confirmed bug.
 body:
   - type: markdown
     attributes:
       value: |
-        Use this template when you are **not sure** the behavior is a bug, or you need guidance integrating Cross.CQRS.
+        Use this template when you are **not sure** the behavior is a bug, or you need guidance integrating Cross.Identity.
 
         If you have a **reproducible defect**, use **Bug report** instead.
 
@@ -15,13 +15,13 @@ body:
     attributes:
       label: Verification
       options:
-        - label: I searched [issues](https://github.com/denis-peshkov/Cross.CQRS/issues?q=is%3Aissue) and the [README](https://github.com/denis-peshkov/Cross.CQRS/blob/master/README.md) first.
+        - label: I searched [issues](https://github.com/denis-peshkov/Cross.Identity/issues?q=is%3Aissue) and [FLOWS.md](https://github.com/denis-peshkov/Cross.Identity/blob/dev/Cross.Identity/FLOWS.md) first.
           required: true
 
   - type: input
     id: package-version
     attributes:
-      label: Cross.CQRS NuGet version (if applicable)
+      label: Cross.Identity NuGet version (if applicable)
       placeholder: "x.y.z"
     validations:
       required: false
@@ -30,7 +30,7 @@ body:
     id: question
     attributes:
       label: Your question
-      description: What are you trying to achieve? Include TFM and registration snippet if relevant.
+      description: What are you trying to achieve? Include TFM and flow/operation if relevant.
     validations:
       required: true
 

@@ -1,12 +1,12 @@
-﻿name: Feature request
-description: Propose new behavior, pipeline extension, or public API for Cross.CQRS.
+name: Feature request
+description: Propose new behavior, flow, step, or public API for Cross.Identity.
 labels:
   - enhancement
 body:
   - type: markdown
     attributes:
       value: |
-        Feature requests help shape the library. Registration and pipeline contracts are **public API** — breaking changes need a migration path.
+        Feature requests help shape the library. Flow JSON and `collectResult` shapes are **public API** — breaking changes need a migration path.
 
         For small doc fixes or typos, a pull request is often faster than an issue.
 
@@ -15,9 +15,9 @@ body:
     attributes:
       label: Verification
       options:
-        - label: I searched [existing issues](https://github.com/denis-peshkov/Cross.CQRS/issues?q=is%3Aissue) and did not find this request already open.
+        - label: I searched [existing issues](https://github.com/denis-peshkov/Cross.Identity/issues?q=is%3Aissue) and did not find this request already open.
           required: true
-        - label: I read the [README](https://github.com/denis-peshkov/Cross.CQRS/blob/master/README.md) and this is not already supported.
+        - label: I read [FLOWS.md](https://github.com/denis-peshkov/Cross.Identity/blob/dev/Cross.Identity/FLOWS.md) and this is not already supported by an existing flow/step.
           required: true
 
   - type: textarea
@@ -32,7 +32,7 @@ body:
     id: proposal
     attributes:
       label: Proposed solution
-      description: API shape, new behavior, configuration option, etc.
+      description: API shape, new step `kind`, flow name, configuration option, etc.
     validations:
       required: true
 
@@ -40,7 +40,7 @@ body:
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: Workarounds in the host app, or different designs.
+      description: Workarounds, custom steps in the host app, or different designs.
     validations:
       required: false
 
@@ -51,7 +51,7 @@ body:
       options:
         - "No"
         - "Maybe — needs discussion"
-        - "Yes — needs release notes / BREAKING entry"
+        - "Yes — needs release notes / BREAKING.md entry"
     validations:
       required: true
 
@@ -59,6 +59,6 @@ body:
     id: extra
     attributes:
       label: Additional context
-      description: Links, diagrams, related PRs, SampleWebApp scenarios.
+      description: Links, diagrams, related PRs, Sample.Api scenarios.
     validations:
       required: false
