@@ -7,7 +7,7 @@
     <owners>Denis Peshkov</owners>
     <projectUrl>https://github.com/denis-peshkov/Cross.Identity</projectUrl>
     <repository type="git" url="https://github.com/denis-peshkov/Cross.Identity.git" />
-    <icon>IdentityServer.png</icon>
+    <icon>icon.png</icon>
     <readme>README.md</readme>
     <copyright>Copyright 2026 Denis Peshkov</copyright>
     <license type="file">LICENSE.md</license>
@@ -70,6 +70,6 @@ Also: External OAuth, refresh-token AbsoluteExpiresAt / rotation, DeveloperMode 
     <file src="..\Cross.Identity\bin\Release\net10.0\Cross.Identity*.*" target="lib\net10.0" />
     <file src="..\LICENSE.md" target="LICENSE.md" />
     <file src="..\README.md" target="" />
-    <file src="..\IdentityServer.png" target="" />
+    <file src="..\icon.png" target="" />
   </files>
 </package>
