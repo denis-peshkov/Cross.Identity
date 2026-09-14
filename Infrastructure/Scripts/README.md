@@ -11,7 +11,7 @@ The EF model is **provider-agnostic** (no SQL Server-specific column types). The
 **Schema and seed evolution** use **DbUp numbered SQL scripts**, not EF Code First Migrations (`Add-Migration` / `__EFMigrationsHistory` as the primary path).
 
 | Approach | Role here |
-|----------|-----------|
+|---|---|
 | EF Core | Mapping, queries, `SaveChanges`, optional greenfield model alignment |
 | DbUp SQL folders | Apply DDL/DML to existing and new databases in a fixed layer order |
 
@@ -103,7 +103,7 @@ On PostgreSQL / MySQL use the provider equivalent (`INSERT … ON CONFLICT` / `I
 - **Script file naming** — `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
 
 | Part | Meaning |
-|------|---------|
+|---|---|
 | `FolderNumber` | DbUp folder id (`1` … `5` → `1_PreDeployment` … `5_PostDeployment`) |
 | `Layer` | **Dependency stage** within that folder (`00`, `01`, `02`, …). **Not** a per-file sequence. Several scripts may share the same `Layer` when they are **independent**. Bump `Layer` only when a script **depends on** work that must already have run in a **previous** stage. |
 | `EntityName` / optional `_comment` | Short purpose / entity hint |
@@ -214,7 +214,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 ## Type mapping notes
 
 | Concept | SQL Server | PostgreSQL | MySQL |
-|---------|------------|------------|-------|
+|---|---|---|---|
 | Guid | `UNIQUEIDENTIFIER` | `uuid` | `CHAR(36)` (Pomelo default) |
 | DateTime | `DATETIME2` | `timestamp` | `DATETIME(6)` |
 | DateTimeOffset | `DATETIMEOFFSET` | `timestamptz` | `DATETIME(6)` (UTC) |
@@ -226,7 +226,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 ## EF mapping
 
 | Table | Script | Entity |
-|---------|--------|--------|
+|---|---|---|
 | `auth.UsersAccounts` | `2_01_auth_UsersAccounts.sql` | `UserAccountEntity` |
 | `auth.Providers` | `2_01_auth_Providers.sql` | `ProviderEntity` |
 | `auth.UsersExternalLogins` | `2_01_auth_UsersExternalLogins.sql` | `UserExternalLoginEntity` |

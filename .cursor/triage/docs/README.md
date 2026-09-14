@@ -56,7 +56,7 @@ Workflow `.github/workflows/triage.yml`:
 ### Secrets
 
 | Secret | Required | Purpose |
-|--------|----------|---------|
+|---|---|---|
 | `CURSOR_API_KEY` | Yes (for the AI report) | Cursor SDK in CI |
 | `GITHUB_TOKEN` | Auto | `gh` CLI |
 
@@ -78,7 +78,7 @@ Manual test: **Actions → Triage → Run workflow** → `pr_number` field.
 Optional env (CI / local):
 
 | Env | Purpose |
-|-----|---------|
+|---|---|
 | `TRIAGE_APPLY_LABELS` | Sync GitHub labels from agent JSON (default: `1` / on; `false` / `0` / `no` / `off` to disable) |
 | `TRIAGE_LABEL_MIN_CONFIDENCE` | Min agent confidence (0–100) required when labels are enabled (default `70`) |
 | `TRIAGE_ICON_REL_PATH` | Repo-relative icon for PR comment header (e.g. `icon.png`) |

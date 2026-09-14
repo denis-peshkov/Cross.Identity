@@ -21,7 +21,7 @@ Language: same as the skill body (RU). Keep the reply short.
 ## Placeholders
 
 | Placeholder | Fill with |
-|-------------|-----------|
+|---|---|
 | `{{VERSION}}` | SemVer without `v` (e.g. `2.4.0`) |
 | `{{LEFTOVERS_OR_NONE}}` | Comma-separated open ids moved to TO-DO (`H18, M79`), or `нет (open C/H/M/L уже были пустые)` |
 | `{{ACCEPTED_SYNC_SUMMARY}}` | Short note: count + topics synced into TO-DO «Принято», or `без изменений (уже были)` / `нет новых` |

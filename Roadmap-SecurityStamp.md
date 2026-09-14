@@ -96,7 +96,7 @@
 ## Summary table
 
 | Event | Rotate stamp? | Revoke tokens? | In code now |
-|--------|----------------|----------------|--------------------|
+|---|---|---|---|
 | Password change/reset | yes | yes (`PASSWORD_CHANGED`) | ✅ |
 | Unlink external login | yes | yes (`EXTERNAL_LOGIN_REMOVED`) | ✅ |
 | Disable / lock account | yes | yes (`ACCOUNT_DISABLED`) | ❌ API |

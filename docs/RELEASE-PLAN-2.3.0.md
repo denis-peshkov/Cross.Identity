@@ -69,7 +69,7 @@
 | ✅ #M64 scaffold-breaking: PR on Release optional | принято: суффикс PR только при `--pr`; без auto-`gh` / fail |
 | ✅ #H17 triage-pr: strip leading `origin/` on BRANCH | `BRANCH#origin/` before fetch/`origin/$BRANCH`; no `origin/origin/…` |
 | ✅ #C1 double UTF-8 BOM in Logout flow tests | CR Critical: `Main_Logout*_FlowTests.cs` — ровно один BOM (был двойной) |
-| ✅ #M65 FLOWS.md MD055 / MD028 | Host table row closing `\|`; убрана blank line между Host/Transaction blockquotes |
+| ✅ #M65 FLOWS.md MD055 / MD028 | Host table row closing `\ | `; убрана blank line между Host/Transaction blockquotes |
 
 ---
 

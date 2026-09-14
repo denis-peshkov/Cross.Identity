@@ -3,7 +3,7 @@
 ## Branches and pull requests
 
 | Who | Create branch | Open PR into |
-|-----|---------------|--------------|
+|---|---|---|
 | **Contributors** | `feature/*`, `fix/*`, `chore/*` | **`dev` only** |
 | **Repository owner** | any, including `release/*`, `hotfix/*` | `dev`, `master`, release/hotfix as needed |
 

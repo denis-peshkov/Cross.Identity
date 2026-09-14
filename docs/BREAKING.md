@@ -3,18 +3,18 @@
 Breaking changes for **Cross.Identity**, grouped by **from → to** package version.
 Sections are **newest first** (top) → **oldest last** (bottom). When skipping releases, apply every intervening section **from oldest to newest** (bottom-up through the relevant range), e.g. `1.4 → 1.10` = `≤1.4→1.5`, then `1.5→1.6`, … through `1.9→1.10`.
 
-| Upgrade path         | Section                                     |
-|----------------------|---------------------------------------------|
-| `2.2.0` → `2.3.0+`   | [From 2.2.0 to 2.3.0](#from-220-to-230)     |
-| `2.1.1` → `2.2.0+`   | [From 2.1.1 to 2.2.0](#from-211-to-220)     |
-| `2.0.x` → `2.1.1+`   | [From 2.0.x to 2.1.1](#from-20x-to-211)     |
-| `1.10.x` → `2.0.0+`  | [From 1.10.x to 2.0.0](#from-110x-to-200)   |
-| `1.9.x` → `1.10.0+`  | [From 1.9.x to 1.10.0](#from-19x-to-1100)   |
-| `1.8.x` → `1.9.0+`   | no breaking API / flow-contract changes |
-| `1.7.x` → `1.8.0+`   | no breaking API / flow-contract changes |
-| `1.6.x` → `1.7.0+`   | [From 1.6.x to 1.7.0](#from-16x-to-170)     |
-| `1.5.x` → `1.6.0+`   | [From 1.5.x to 1.6.0](#from-15x-to-160)     |
-| `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150)    |
+| Upgrade path | Section |
+|---|---|
+| `2.2.0` → `2.3.0+` | [From 2.2.0 to 2.3.0](#from-220-to-230) |
+| `2.1.1` → `2.2.0+` | [From 2.1.1 to 2.2.0](#from-211-to-220) |
+| `2.0.x` → `2.1.1+` | [From 2.0.x to 2.1.1](#from-20x-to-211) |
+| `1.10.x` → `2.0.0+` | [From 1.10.x to 2.0.0](#from-110x-to-200) |
+| `1.9.x` → `1.10.0+` | [From 1.9.x to 1.10.0](#from-19x-to-1100) |
+| `1.8.x` → `1.9.0+` | no breaking API / flow-contract changes |
+| `1.7.x` → `1.8.0+` | no breaking API / flow-contract changes |
+| `1.6.x` → `1.7.0+` | [From 1.6.x to 1.7.0](#from-16x-to-170) |
+| `1.5.x` → `1.6.0+` | [From 1.5.x to 1.6.0](#from-15x-to-160) |
+| `≤ 1.4.x` → `1.5.0+` | [From ≤1.4.x to 1.5.0](#from-14x-to-150) |
 
 There was no `2.1.0` package — next published release after [v2.0.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.0.0) is [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.1.1).
 
@@ -31,7 +31,7 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ### `main.ChangePassword` input: `Id` → `UserAccountId`
 
 | Area | Was (2.2.0) | Now (2.3.0+) |
-|------|-------------|--------------|
+|---|---|---|
 | Form field / selector | `Id` (Guid string) | `UserAccountId` (Guid string) |
 | Flow input bag | `{ Id, CurrentPassword, NewPassword, … }` | `{ UserAccountId, CurrentPassword, NewPassword, … }` |
 
@@ -42,7 +42,7 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ### `main.Logout`: `RefreshToken` → `Jti`
 
 | Area | Was (2.2.0) | Now (2.3.0+) |
-|------|-------------|--------------|
+|---|---|---|
 | Flow input bag | `{ RefreshToken, … }` | `{ Jti, … }` (access-token JTI Guid string) |
 | Stock `logout` step | `refreshTokenKey` → `RevokeRefreshTokenForLogoutAsync` | `jtiKey` → `RevokeSessionForLogoutAsync` |
 
@@ -51,7 +51,7 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ### `main.LogoutAll`: `RefreshToken` → `UserAccountId`
 
 | Area | Was (2.2.0) | Now (2.3.0+) |
-|------|-------------|--------------|
+|---|---|---|
 | Flow input bag | `{ RefreshToken, … }` | `{ UserAccountId, … }` |
 | Session proof | library validated refresh token | **host** authorizes caller and passes `UserAccountId` (e.g. from access-token `sub`) |
 | Stock `logoutAll` step | `refreshTokenKey` → `RevokeAllTokensForLogoutAsync` | `userAccountIdKey` → `RevokeAllTokensForUserAsync` (`USER_LOGOUT_ALL`) |
@@ -62,7 +62,7 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ### `main.RefreshToken`: `RefreshToken` → `Jti`
 
 | Area | Was (2.2.0) | Now (2.3.0+) |
-|------|-------------|--------------|
+|---|---|---|
 | Flow input bag | `{ RefreshToken, … }` (compact JWT string) | `{ Jti, … }` (refresh-token JTI Guid string — `RefreshTokens.Id`) |
 | Stock `refreshToken` step | `refreshTokenKey` → hash lookup + stamp claim | `jtiKey` → row lookup by `RefreshTokens.Id` |
 
@@ -73,7 +73,7 @@ Release: [v2.3.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 The following members are **removed** (not used by stock flows/steps). Host token validation/revoke by compact string must be implemented in the host or a custom wrapper.
 
 | Removed |
-|---------|
+|---|
 | `ValidateRefreshTokenAsync` |
 | `EnsureRefreshTokenBelongsToUserAsync` |
 | `EnsureRefreshTokenActiveForRotationAsync(string, …)` |
@@ -97,7 +97,7 @@ Release: [v2.2.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 User-scoped operations no longer take a refresh token as library session proof. The host must authorize the caller for `UserAccountId` **before** `ExecuteAsync` / direct service calls (e.g. `[Authorize]` + claim/`sub` match, or overwrite bag id from the access-token principal).
 
 | Area | Was (2.1.1) | Now (2.2.0+) |
-|------|-------------|--------------|
+|---|---|---|
 | `ICommunicationEndpointService.GetAllAsync` | `(userAccountId, refreshToken, …)` | `(userAccountId, …)` — **no** `refreshToken` |
 | `ICommunicationEndpointService.SetPreferredAsync` | `(userAccountId, endpointId, refreshToken, hostCtx, …)` | `(userAccountId, endpointId, hostCtx, …)` |
 | `IExternalLoginService.InitiateAsync` (link) | `userAccountId` + `refreshToken` session proof | `userAccountId` only; host authorizes |
@@ -126,7 +126,7 @@ Release: [v2.1.1](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 ### `ConcurrencyStamp` rotation: interceptor → `IdentityContext.SaveChanges`
 
 | Area | Was (2.0.x) | Now (2.1.1+) |
-|------|-------------|--------------|
+|---|---|---|
 | Rotation | `ConcurrencyStampInterceptor` via `IdentityContext.OnConfiguring` | `IdentityContext.SaveChanges` / `SaveChangesAsync` |
 | Public type | `ConcurrencyStampInterceptor` | **removed** |
 | Host `AddInterceptors` | optional (auto-attached) | **not required** |
@@ -154,7 +154,7 @@ Flow steps read metadata via `HostSuppliedClientContext.Read(bag)` from `collect
 The host must supply trusted values via the **trusted pipeline** (see below); the library does not validate them.
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | `JwtTokenService` ctor | `(IdentityContext, IOptionsSnapshot, IHttpContextAccessor)` | `(IdentityContext, IOptionsSnapshot)` |
 | JWT issue / refresh invalidate / logout / logout-all / family / user revoke | IP/UA from `HttpContext` | `HostSuppliedClientContext hostSuppliedClientContext` |
 | `IUserService.SetPasswordAsync` | `(selector, value, password, ct)` | `(selector, value, password, HostSuppliedClientContext hostSuppliedClientContext, ct)` |
@@ -182,7 +182,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 ### `RevokeReason` → `RevokedReason`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Enum | `RefreshTokenRevokeReason` | `RefreshTokenRevokedReason` |
 | Audit (`AuditEntity` / `auth.Audits`) | `RevokeReason` | `RevokedReason` |
 
@@ -193,7 +193,7 @@ The host must supply trusted values via the **trusted pipeline** (see below); th
 ### Session binding: `Created*` on `RefreshTokens` only
 
 | Area | Now |
-|------|-----|
+|---|---|
 | `RefreshTokenEntity` / `auth.RefreshTokens` | `CreatedIpAddress`, `CreatedUserAgent`, `CreatedDeviceFingerprint` — family anchor for session binding on refresh |
 | `AccessTokenEntity` / `auth.AccessTokens` | **No** `Created*` columns |
 
@@ -208,7 +208,7 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `
 ### Session binding: IP check opt-in (`SessionBindingCheckIp`)
 
 | Area | Now |
-|------|-----|
+|---|---|
 | `Authentication:Jwt:SessionBindingCheckIp` | When `true`, refresh compares family anchor IP with current request IP; mismatch → `IP_MISMATCH`. Default: `false` (device fingerprint and User-Agent are still checked when captured). When `true` and the family anchor has binding data, refresh must pass the same trusted `HostSuppliedClientContext` as on Token — not `Empty` — or `ValidationException` (no family revoke). |
 
 **Action:** set `SessionBindingCheckIp: true` in host configuration when strict IP binding is required (e.g. fixed-IP clients). On refresh, populate `collectForm.IpAddress` / `UserAgent` / `DeviceFingerprint` from the trusted pipeline (same as login). Leave default for NAT/mobile-friendly refresh.
@@ -216,7 +216,7 @@ Flow bag keys remain `IpAddress` / `UserAgent` / `DeviceFingerprint` (host → `
 ### Refresh idle timeout: `LastActivityAt` + `RefreshTokenIdleTimeout`
 
 | Area | Now |
-|------|-----|
+|---|---|
 | `RefreshTokenEntity` / `auth.RefreshTokens` | `LastActivityAt` — updated to `UtcNow` on each login/rotation |
 | `Authentication:Jwt:RefreshTokenIdleTimeout` | Max idle time since `LastActivityAt`; `Zero` disables the check |
 
@@ -227,7 +227,7 @@ On refresh, when idle is exceeded, `EnsureRefreshTokenActiveForRotationAsync` re
 ### Revoke audit metadata (`auth.Audits`, not token columns)
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Token row (`AccessTokens` / `RefreshTokens`) | sometimes `RevokedByIp` in custom schemas | `RevokedAt` only |
 | Audit row on revoke | `RevokedByIp` | `Audits.IpAddress`, `Audits.UserAgent`, `Audits.DeviceFingerprint`, `Audits.RevokedReason` |
 
@@ -279,7 +279,7 @@ Identity is bound once on `collectForm` via `selector.candidates` (first non-emp
 Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Flow JSON | `resolveBy`, `selectorKey`, `phoneNumberKey`, `userNameKey` on steps | `collectForm.selector.candidates` only |
 | Steps | per-step identity keys | `new Selector()` + bag Field/Value |
 
@@ -290,7 +290,7 @@ Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 ### `codeAuth` removed → `verifyCode`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Step kind | `codeAuth` | **`verifyCode`** |
 | Behavior | verify OTP + write UserId | same on `verifyCode` (`userAccountIdKey`, default `UserId`) |
 | Bag | `codeAuth.*` | `verifyCode.*` |
@@ -300,7 +300,7 @@ Later steps call `Selector.Resolve` — no per-step `resolveBy` / `selectorKey`.
 ### `forgotPassword` step removed → `sendCode`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Step kind | `forgotPassword` | **`sendCode`** |
 | Stock flow | `main.ForgotPassword.json` → `forgotPassword` | → `sendCode` with `template: reset`, `subject: Reset your password` |
 | Bag | `forgotPassword.LastCode` | `sendCode.LastCode` |
@@ -312,7 +312,7 @@ Hardcoded `http://localhost:4000` is gone: **`Authentication:ClientUrl`** is req
 ### `sendCode`: `template` and `subject` are required
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | JSON | optional / implied `verify` | **required** `template` + `subject` (`cfg.Str`) |
 | Register / RequestCode | often omitted | must set `template: verify`, `subject: Verification Code` |
 | ForgotPassword | separate step / `reset` templates | `template: reset`, `subject: Reset your password` |
@@ -324,7 +324,7 @@ Action URL path and identity query params depend on `template` — see [`SendCod
 ### `main.ChangePassword` input: `Email` → `Id`
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | Form fields | `Email`, `CurrentPassword`, `NewPassword` | `Id` (Guid string), `CurrentPassword`, `NewPassword` (+ optional client context on `collectForm`) |
 | Identity | `resolveBy` / `selectorKey` on steps | `collectForm.selector.candidates: ["Id"]` + `Selector.Resolve` |
 
@@ -347,7 +347,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### `main.Token`: invalid credentials → exception (not `is_invalid_code`)
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | `TokenStep` on bad password/code | `StepResult.Ok`, bag `token.IsInvalidCode = true`, flow continues to `collectResult` | `StepResult.Fail(NotAuthorizedException)` — flow aborts |
 | `collectResult` fields | included `is_invalid_code` | removed; success response is tokens only |
 
@@ -356,7 +356,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### Password lockout (`Authentication:Lockout`)
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | `LockoutEnd` / `AccessFailedCount` / `LockoutEnabled` on `UsersAccounts` | columns only | enforced in `ValidatePasswordAsync` **and** `ValidateCodeAsync` (Token code-login) |
 | Failed password / OTP code | always `false`, no counter | increments `AccessFailedCount`; at threshold sets `LockoutEnd` |
 | Locked account | ignored | password **and** code-login validation returns `false` until `LockoutEnd` elapses |
@@ -371,7 +371,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### OTP send rate limit (`Authentication:OtpSendRateLimit`)
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | OTP resend | unlimited | cooldown + optional window cap in `CodeService.SendAsync` |
 | Defaults | — | `Cooldown` = `00:01:00`, `MaxSendsPerWindow` = `5`, `Window` = `01:00:00` |
 | Disable | — | `Cooldown` = `00:00:00` and `MaxSendsPerWindow` = `0` |
@@ -382,7 +382,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### `sendCode` / `verifyCode` / `getUserAccountId`: unknown identity → `Invalid credentials.` (not `NotFound`)
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | `SendCodeStep` when user missing | `NotFoundException` (`User not found.` / `User with given … not found`) | `NotAuthorizedException` (`Invalid credentials.`) — no OTP sent |
 | `SendCodeStep` when user exists but no OTP channel | `ValidationException` (distinct message) | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
 | `VerifyCodeStep` when user missing / bad code / no OTP channel | `KeyNotFoundException` / distinct messages | `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information |
@@ -393,7 +393,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### Delivery channel: preferred / email / `LockChannelAsEmail`
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | Stock JSON `channel` on `sendCode` / `verifyCode` / `resetPassword` | required enum | **removed** — ignored if present in overrides |
 | Channel selection | largely login field + JSON `channel` | `ResolveDeliveryTargetAsync` / `ResolveOtpTargetAsync` |
 | Order | field-based | `Authentication:LockChannelAsEmail` → preferred verified → email → **phone** |
@@ -406,7 +406,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### `ICodeService.VerifyAsync` requires `userId`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Signature | `VerifyAsync(channel, identity, code, ct)` | `VerifyAsync(userId, channel, identity, code, ct)` |
 | Lookup | latest active row by email/phone only | same **and** `UserAccountId == userId` |
 
@@ -415,7 +415,7 @@ Host must pass `UserAccountId` + session proof in the bag (no ambient auth user)
 ### Microsoft OAuth: `EmailVerified` requires OIDC attestation
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | `ExternalOAuthProfile` flag | `EmailConfirmed` | **`EmailVerified`** (aligns with `UsersAccounts.EmailVerified`) |
 | Profile source | Graph `/me` only | Graph `/me` (id, displayName, fallback email) + OIDC `https://graph.microsoft.com/oidc/userinfo` |
 | Provider attestation | `true` when Graph `mail` / UPN non-empty | `true` only when userinfo has **non-empty `email`** and `email_verified: true` (Graph fallback email alone never verifies) |
@@ -427,7 +427,7 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verifi
 ### `EmailConfirmed` / `PhoneNumberConfirmed` → `EmailVerified` / `PhoneNumberVerified`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | `UserAccountEntity` | `EmailConfirmed`, `PhoneNumberConfirmed` | **`EmailVerified`**, **`PhoneNumberVerified`** |
 | `ExternalOAuthProfile` | `EmailConfirmed` | **`EmailVerified`** |
 | DDL `auth.UsersAccounts` | same old column names | renamed columns; filtered unique indexes use `EmailVerified` / `PhoneNumberVerified` |
@@ -437,7 +437,7 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verifi
 ### `UsersCommunicationEndpoints`: one preferred endpoint per user
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | DB constraint | app-only (`SetPreferredAsync` clears others) | filtered unique index `UX_auth_UsersCommunicationEndpoints_User_Preferred` on `UserAccountId` where `IsPreferred` |
 | EF | no index | `UserCommunicationEndpointEntityConfiguration` matches DDL |
 
@@ -446,7 +446,7 @@ Graph `mail` / `userPrincipalName` alone no longer trigger auto-link to a verifi
 ### `UsersExternalLogins.UserExternalLoginId`: `bigint` → `uuid` / `UNIQUEIDENTIFIER`
 
 | Area | Was (1.x / early 2.0 deploy) | Now (2.0+) |
-|------|------------------------------|------------|
+|---|---|---|
 | PK column | `BIGINT IDENTITY` / `bigint` / `AUTO_INCREMENT` | **`uuid` / `UNIQUEIDENTIFIER` / `CHAR(36)`** |
 | EF `UserExternalLoginEntity.Id` | `Guid` (always) | unchanged |
 | Optional column | `LastUsedAt` | **`UpdatedAt`** (renamed when present) |
@@ -461,7 +461,7 @@ Migration assigns a **new random Guid per row** (not deterministic from old id).
 ### `UsersAccounts.CreatedBy` removed
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | `UserAccountEntity.CreatedBy` | `Guid` column (unused; register left default / OAuth wrote `Guid.Empty`) | **removed** |
 | DDL | `CreatedBy` on `auth.UsersAccounts` | column dropped |
 
@@ -472,7 +472,7 @@ Self-register and OAuth create accounts without an actor id; the column was neve
 ### Access / refresh JWT: `security_stamp` claim
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | Access / refresh JWT claims | no account stamp | `security_stamp` (`ClaimConstants.SecurityStamp`) = current `UsersAccounts.SecurityStamp` |
 | `ValidateAccessTokenAsync` | crypto + `jti` row + `IsActive` | same **and** claim must match account stamp when stamp is set |
 | `ValidateRefreshTokenAsync` / refresh rotation | hash + idle/session binding + `IsActive` | same **and** stamp claim must match |
@@ -485,7 +485,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 ### Flow bag keys: `UserId` → `UserAccountId` / `user_id` → `user_account_id`
 
 | Area | Was (2.0 early) | Now (2.0+) |
-|------|-----------------|------------|
+|---|---|---|
 | Step config JSON | `userIdKey` | `userAccountIdKey` |
 | Step property | `UserIdKey` | `UserAccountIdKey` |
 | Default bag suffix / step output | `UserId` (e.g. `createUser.UserId`, `token.UserId`) | `UserAccountId` |
@@ -503,7 +503,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 ### Operation / step / service rename: `GetUserId` → `GetUserAccountId`
 
 | Area | Was (2.0 early) | Now (2.0+) |
-|------|-----------------|------------|
+|---|---|---|
 | `FlowOperationEnum` / route | `GetUserId` | `GetUserAccountId` (`/api/identity/main/GetUserAccountId`) |
 | Flow file | `main.GetUserId.json` | `main.GetUserAccountId.json` |
 | Step kind (JSON) | `getUserId` | `getUserAccountId` |
@@ -515,7 +515,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 ### Type rename: `ClientContext` → `HostSuppliedClientContext`
 
 | Area | Was (2.0 early / 1.10 docs) | Now (2.0+) |
-|------|-------------------------------|------------|
+|---|---|---|
 | Type / file | `ClientContext`, `ClientContext.cs` | `HostSuppliedClientContext`, `HostSuppliedClientContext.cs` |
 | Sentinel | `ClientContext.Empty` | `HostSuppliedClientContext.Empty` |
 | Flow bag reader | `ClientContext.Read(bag)` | `HostSuppliedClientContext.Read(bag)` |
@@ -526,7 +526,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 ### Verified contact duplicate → `ConflictException`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | `UserService.CreateUserAsync` (verified email/phone, duplicate username) | `InvalidOperationException` | **`ConflictException`** |
 | `UserAccountGuard.EnsureNoOtherVerifiedEmailAsync` / `…PhoneAsync` (OTP confirm) | `InvalidOperationException` | **`ConflictException`** |
 
@@ -535,7 +535,7 @@ Caller-supplied `security_stamp` claims are stripped on issue — the library al
 ### `SendCodeStep` action URL by `template`
 
 | `template` (flow JSON) | Action link (`{{url}}`, `{{verificationLink}}`, …) |
-|------------------------|-----------------------------------------------------|
+|---|---|
 | `verify` (Register, RequestCode, …) | `{Authentication:ClientUrl}/verify?code=…` + `&email=` / `&phone=` when selector is Email / PhoneNumber |
 | `reset` (ForgotPassword) | `{Authentication:ClientUrl}/reset-password?code=…` + `&email=` / `&phone=` when selector is Email / PhoneNumber |
 
@@ -546,7 +546,7 @@ Query params carry **identity** for SPA deep links; OTP **channel** is still res
 ### `ICodeService.SendAsync` requires `Guid userAccountId`
 
 | Area | Was (1.10) | Now (2.0+) |
-|------|------------|------------|
+|---|---|---|
 | Signature | `SendAsync(…, string userId, …)` | **`SendAsync(…, Guid userAccountId, …)`** — same id type as `VerifyAsync` |
 
 `ICodeService` is internal; update only if you replace/mock the OTP service or call it from custom steps.
@@ -562,7 +562,7 @@ Query params carry **identity** for SPA deep links; OTP **channel** is still res
 Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async API was removed.
 
 | Was (1.9) | Now (1.10+) |
-|-----------|-------------|
+|---|---|
 | `Task<string?> GetClaimValueAsync(...)` | `string? GetClaimValue(...)` |
 
 **Action:** replace `await jwt.GetClaimValueAsync(...)` with `jwt.GetClaimValue(...)`.
@@ -572,7 +572,7 @@ Claim extraction from a compact JWT is in-memory only (no I/O). The fake-async A
 Id-token issuance is in-memory only (sign JWT, no I/O). The fake-async API was removed.
 
 | Was (1.9) | Now (1.10+) |
-|-----------|-------------|
+|---|---|
 | `Task<string> GenerateIdTokenAsync(...)` | `string GenerateIdToken(...)` |
 
 **Action:** replace `await jwt.GenerateIdTokenAsync(...)` with `jwt.GenerateIdToken(...)`.
@@ -580,7 +580,7 @@ Id-token issuance is in-memory only (sign JWT, no I/O). The fake-async API was r
 ### `IJwtTokenService.ValidateAccessTokenAsync`
 
 | Was (1.9) | Now (1.10+) |
-|-----------|-------------|
+|---|---|
 | `Task<bool> ValidateAccessTokenAsync(string accessToken)` — parses JWT with `ReadJsonWebToken` (no crypto) then checks DB `jti` | `Task<bool> ValidateAccessTokenAsync(string accessToken, CancellationToken cancellationToken)` — `ValidateTokenAsync` (signature, issuer, audience, lifetime; JWE decrypt when enabled), then DB `jti` |
 
 Forged tokens that only copy a real `jti` into an unsigned/wrong-key JWT no longer pass. Custom `IJwtTokenService` implementations must match the signature (including required `CancellationToken`) and must not trust raw/unvalidated claims before the DB lookup.
@@ -602,7 +602,7 @@ On `IJwtTokenService`, `CancellationToken` is required on async methods (includi
 Flow operations stay `ExternalLogin` / `ExternalLoginCallback`. Step **type** names in JSON and DI changed:
 
 | Was (1.6) | Now (1.7+) |
-|-----------|------------|
+|---|---|
 | `InitiateExternalLogin` | `ExternalLoginInitiate` |
 | `CompleteExternalLogin` | `ExternalLoginComplete` |
 
@@ -617,7 +617,7 @@ Flow operations stay `ExternalLogin` / `ExternalLoginCallback`. Step **type** na
 OTP exchange is handled by **`Token`** (`main.Token`) with `{ Email|PhoneNumber, Code }` (same payload shape as before).
 
 | Area | Was (1.5) | Now (1.6+) |
-|------|-----------|------------|
+|---|---|---|
 | Operation / route | `TokenByCode` | `Token` |
 | Flow file | `main.TokenByCode.json` | removed — use `main.Token.json` |
 
@@ -630,7 +630,7 @@ OTP exchange is handled by **`Token`** (`main.Token`) with `{ Email|PhoneNumber,
 ### Built-in flow rename: `license` → `main`
 
 | Area | Was (≤1.4) | Now (1.5+) |
-|------|------------|------------|
+|---|---|---|
 | Flow id | `ExecuteAsync(..., "license", operation, ...)` | `ExecuteAsync(..., "main", operation, ...)` |
 | Definition files | `license.{Operation}.json` | `main.{Operation}.json` |
 | Sample/API path | `/api/identity/license/{Operation}` | `/api/identity/main/{Operation}` |
@@ -642,7 +642,7 @@ Removed demo flows: `game.*`, `shop.*`, `edoctors.*`.
 ### Operation rename: `GetUser` → `GetUserId`
 
 | Area | Was | Now |
-|------|-----|-----|
+|---|---|---|
 | Enum / route | `GetUser` | `GetUserId` (→ `GetUserAccountId` in 2.0; see [2.0 section](#from-110x-to-200)) |
 | Flow file | `license.GetUser.json` / `main.GetUser.json` | `main.GetUserAccountId.json` |
 
@@ -651,7 +651,7 @@ Removed demo flows: `game.*`, `shop.*`, `edoctors.*`.
 ### `collectResult` with a single field
 
 | Was | Now |
-|-----|-----|
+|---|---|
 | bare scalar (`"abc"`) | always an object (`{ "fieldName": "abc" }`) |
 
 **Action:** adjust client deserialization.

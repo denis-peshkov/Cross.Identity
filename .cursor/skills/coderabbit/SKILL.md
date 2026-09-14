@@ -31,7 +31,7 @@ description: >-
 ## Defaults
 
 | Flag | Value |
-|------|-------|
+|---|---|
 | Base | `origin/master` (fallback `master`) |
 | Scope | committed branch delta (`--committed`) |
 | Output | `--agent` (JSONL findings for agents) |
@@ -48,7 +48,7 @@ Local `coderabbit review` ≠ the GitHub bot. To re-run on a PR after auto-pause
 ```
 
 | Command | Effect |
-|---------|--------|
+|---|---|
 | `@coderabbitai full review` | full review of the entire PR from scratch |
 | `@coderabbitai review` | only new changes since the last review |
 
@@ -134,7 +134,7 @@ Immediately merge findings into that plan’s open severity sections **only as C
 - Refresh the blockquote **Дельта:** line (`{{BASE}}...HEAD` counts + `Open C/H/M/L …`) when open C/H/M/L change in the same turn.
 
 | CodeRabbit | Plan section |
-|------------|--------------|
+|---|---|
 | Critical | `## Критично` → `C…` |
 | Major | `## Высокий` → `H…` |
 | Minor | `## Средний` → `M…` |

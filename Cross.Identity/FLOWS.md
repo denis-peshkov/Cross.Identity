@@ -21,7 +21,7 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 **Trusted pipeline**
 
 | Party | Responsibility |
-|-------|----------------|
+|---|---|
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
 | **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{supportEmail}}`) come from `Authentication:Notifications` (host config; no built-in library defaults). Does not read `HttpContext` or `Accept-Language`. |
 
@@ -30,14 +30,14 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
-|-------|----------------|
+|---|---|
 | **Host** | Ensure the caller is allowed to act as that `UserAccountId` before `ExecuteAsync` (e.g. `[Authorize]` + claim/`sub` matches bag id, or map id from the access-token principal and overwrite the bag). |
 | **Cross.Identity** | Executes the operation for the given `UserAccountId`. Does not re-check session adequacy for these flows. |
 
 Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refresh-token `Jti` (host resolves from the client refresh token). `Logout` takes access-token `Jti`. `LogoutAll` takes `UserAccountId`.
 
 | Field | Set from (trusted) | Do not use |
-|-------|-------------------|------------|
+|---|---|---|
 | `collectForm.LanguageCode` | Product locale / negotiated culture (2 letters) for notification templates | Omit → library uses `en`; missing template file for that language → `en` |
 | `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
@@ -66,7 +66,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 ### Operations (`FlowOperationEnum`)
 
 | File (example) | Enum |
-|----------------|------|
+|---|---|
 | `*.Register.json` | `Register` |
 | `*.Token.json` | `Token` |
 | `*.VerifyToken.json` | `VerifyToken` |
@@ -89,7 +89,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 ### All flow files (18)
 
 | Flow | Operation | File |
-|------|-----------|------|
+|---|---|---|
 | `main` | Register | `main.Register.json` |
 | `main` | Token | `main.Token.json` |
 | `main` | VerifyToken | `main.VerifyToken.json` |
@@ -116,7 +116,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** start password recovery (send code).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` (either); optional client context. `selector.candidates`: Email, PhoneNumber. → `sendCode` |
 | `sendCode` | sendCode | `template: reset`, `subject: Reset your password` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
@@ -128,7 +128,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** get `user_account_id` by identity.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `getUserAccountId` |
 | `getUserAccountId` | getUserAccountId | resolves via `Selector`; writes `getUserAccountId.UserAccountId`. Unknown → `Invalid credentials.` (logged). → `collectResult` |
 | `collectResult` | collectResult | `user_account_id = getUserAccountId.UserAccountId`. `next: null` |
@@ -140,7 +140,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** refresh token pair using refresh-token `jti` (`RefreshTokens.Id`).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Jti` (refresh-token JTI Guid string); optional client context. → `refreshToken` |
 | `refreshToken` | refreshToken | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. `next: null` |
@@ -162,7 +162,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** registration by email with an optional password and confirmation code delivery.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
@@ -175,7 +175,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** send an email code with configurable TTL.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan, required); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
@@ -187,7 +187,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** change password by `UserAccountId` after validating the current password.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: UserAccountId. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
 | `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword`; notify via `ResolveDeliveryTargetAsync` using template `password-changed` (txt/html). `next: null` |
@@ -201,7 +201,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** change password after verifying the recovery code.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserAccountId`. → `resetPassword` |
 | `resetPassword` | resetPassword | `passwordKey: collectForm.Password`; notify via `ResolveDeliveryTargetAsync` using template `password-changed` (txt/html). `next: null` |
@@ -215,7 +215,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** tokens by identity and password **or** code (at least one credential required).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Password` (opt., 8–32), `Code` (opt., 6–12); optional client context. Validators: `requiredIf`, `atLeastOneRequired`. `selector.candidates`: Email, PhoneNumber, UserName. → `token` |
 | `token` | token | `passwordKey`, `codeKey`. Bag output keys are fixed by `TokenPairIssuer` (`AccessToken`, `RefreshToken`, `TokenType`, `ExpiresIn`, `UserAccountId`). → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`. Invalid credentials → `NotAuthorizedException` (same as `passwordAuth` / `verifyCode`). `next: null` |
@@ -227,7 +227,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** start OAuth (redirect to provider).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Provider` (2–32), `ReturnUrl` (opt.), `UserAccountId` (opt. Guid string); optional client context. → `externalLoginInitiate` |
 | `externalLoginInitiate` | externalLoginInitiate | `providerKey`, `returnUrlKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `url = externalLoginInitiate.Url`. `next: null` |
@@ -241,7 +241,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** complete OAuth after provider redirect.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `State` (required); `Code` / `Error` (either); `ErrorDescription` (opt.); optional client context. → `externalLoginComplete` |
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
@@ -259,7 +259,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** unlink an external OAuth provider from the given user.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (required Guid string), `Provider` (2–32); optional client context. → `externalLoginUnlink` |
 | `externalLoginUnlink` | externalLoginUnlink | `providerKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
@@ -273,7 +273,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** list enabled OAuth providers and link status for the given user.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `externalLoginGetAll` |
 | `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
@@ -287,7 +287,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** revoke the current session identified by access-token `jti` (`USER_LOGOUT`). Host resolves `Jti` from the client access token before `ExecuteAsync`.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `Jti` (required Guid string); optional client context. → `logout` |
 | `logout` | logout | `jtiKey: collectForm.Jti`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logout.Revoked`. `next: null` |
@@ -301,7 +301,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** revoke all sessions for the user (`USER_LOGOUT_ALL`). Host must authorize the caller and pass `UserAccountId` (e.g. resolve `sub` from the client’s access token before `ExecuteAsync`).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `logoutAll` |
 | `logoutAll` | logoutAll | `userAccountIdKey: collectForm.UserAccountId`. → `collectResult` |
 | `collectResult` | collectResult | `revoked = logoutAll.Revoked`. `next: null` |
@@ -315,7 +315,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** check whether an access token is still valid (crypto + storage + `security_stamp` vs `UserAccount.SecurityStamp`).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `AccessToken` (required, max 2048); optional client context. → `verifyToken` |
 | `verifyToken` | verifyToken | `accessTokenKey: collectForm.AccessToken`. → `collectResult` |
 | `collectResult` | collectResult | `valid`, `user_account_id`, `jti` (user_account_id/jti only when valid). `next: null` |
@@ -329,7 +329,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** list communication endpoints for the given user.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `communicationEndpointsGetAll` |
 | `communicationEndpointsGetAll` | communicationEndpointsGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `endpoints`. `next: null` |
@@ -343,7 +343,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** set the preferred communication endpoint for the given user.
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId`, `EndpointId` (required Guid strings); optional client context. → `communicationEndpointSetPreferred` |
 | `communicationEndpointSetPreferred` | communicationEndpointSetPreferred | `userAccountIdKey`, `endpointIdKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `preferred`. `next: null` |
@@ -357,7 +357,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 **Purpose:** change the account primary email for the given user. When the address matches a linked external login `ProviderEmail`, it is auto-verified (no OTP).
 
 | Step | kind | Details |
-|------|------|---------|
+|---|---|---|
 | `collectForm` | collectForm | `UserAccountId`, `Email` (required); optional client context. → `changeAccountEmail` |
 | `changeAccountEmail` | changeAccountEmail | `userAccountIdKey`, `emailKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `email`, `email_verified`, `endpoint`. `next: null` |
@@ -370,7 +370,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
-|------|---------|
+|---|---|
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
@@ -395,7 +395,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 ### Form validators (`schemaDef.validators`)
 
 | kind | Description |
-|------|-------------|
+|---|---|
 | `equal` | Two fields must be equal |
 | `notEqual` | Two fields must not be equal |
 | `oneOf` | Value from a list |

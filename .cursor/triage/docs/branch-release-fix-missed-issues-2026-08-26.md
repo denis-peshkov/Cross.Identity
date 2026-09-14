@@ -20,7 +20,7 @@ Cross.Identity **2.3.0 BREAKING** delta: token-lifecycle bags move off compact r
 ## Commits (`origin/master..HEAD`)
 
 | Focus | Commits (representative) |
-|-------|--------------------------|
+|---|---|
 | Flows JWT | Logout / LogoutAll / RefreshToken → Jti / UserAccountId; JWT API slim |
 | Docs | `BREAKING.md` §2.3.0, `FLOWS.md`, `README`, `RELEASE-PLAN-2.3.0.md` |
 | CR follow-ups | H11–H13, M52–M58 closed |
@@ -34,7 +34,7 @@ Cross.Identity **2.3.0 BREAKING** delta: token-lifecycle bags move off compact r
 ### Library (auth)
 
 | Path | Change |
-|------|--------|
+|---|---|
 | `Services/IJwtTokenService.cs` / `JwtTokenService.cs` | Remove unused string refresh helpers; Guid/Jti rotation & logout paths |
 | `Steps/*Logout*`, `RefreshTokenStep` + factories | Bag keys → `Jti` / `UserAccountId` |
 | `main.Logout.json`, `main.RefreshToken.json`, `main.LogoutAll.json`, `main.ChangePassword.json` | collectForm contract |
@@ -42,14 +42,14 @@ Cross.Identity **2.3.0 BREAKING** delta: token-lifecycle bags move off compact r
 ### Tests
 
 | Path | Change |
-|------|--------|
+|---|---|
 | `TokenTestHelpers.cs` | Test-only active-refresh checks (+ `CancellationToken`) |
 | `JwtTokenServiceTests`, `Main_*Logout*`, `Main_RefreshToken_*` | Updated to new contracts |
 
 ### Docs / tooling
 
 | Path | Change |
-|------|--------|
+|---|---|
 | `docs/BREAKING.md`, `FLOWS.md`, `README.md` | Host guidance for 2.3.0 |
 | `.cursor/skills/{triage,triage-pr,release-plan,coderabbit}/` | Workflows; local triage |
 
@@ -58,7 +58,7 @@ Cross.Identity **2.3.0 BREAKING** delta: token-lifecycle bags move off compact r
 ## Risks (auth / JWT)
 
 | Risk | Notes |
-|------|--------|
+|---|---|
 | **Host misuse** | Library trusts bag `Jti` / `UserAccountId` — host **must** validate JWT / authorize caller before `ExecuteAsync` |
 | **BREAKING consumers** | Old bags with compact `RefreshToken` fail validation; removed public JWT helpers |
 | **Session binding / idle** | Unchanged model on refresh path; still depends on host-supplied client context when configured |
@@ -79,7 +79,7 @@ No new open plan security items; CR did not flag JwtTokenService/steps on last r
 ## Numeric summary
 
 | Metric | Value |
-|--------|-------|
+|---|---|
 | Commits | 20 |
 | Files | 61 |
 | Lines | +1347 / −942 |

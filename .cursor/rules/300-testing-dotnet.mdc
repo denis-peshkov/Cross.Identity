@@ -76,7 +76,7 @@ public async Task GivenValidResume_WhenSubmitResume_ThenReturnsSuccess()
 Put `[Category(…)]` **on each `[Test]` method only** — never on the test class, `[TestFixture]`, or a base class (e.g. `EFTestsBase`). Use the project's `TestCategory` constants when present.
 
 | Category | Purpose |
-|----------|---------|
+|---|---|
 | `Unit` | Isolated unit under test; mocks; no real I/O / DB |
 | `Integration` | Components together (e.g. InMemory DB, HTTP mocks, end-to-end in-process flows) |
 | `Functional` | Broader E2E / TestServer / external dependencies (use sparingly) |
