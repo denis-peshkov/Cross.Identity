@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.5.0` (closed) · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.5.0` (published / closed) · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.5.0
 >

@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H27` `M92` `L17`
+**Id high-water (не переиспользовать ≤):** `C1` `H27` `M96` `L19`
 
 ---
 
@@ -98,3 +98,5 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - CHANGELOG dated pre-tag для ship prep — ок; Unreleased не обязателен.
 - `repository-link` при missing/non-GitHub origin — soft empty + exit 0 (не hard-fail).
 - Register `Password` optional: blank/whitespace → `PasswordPhc` null; OTP / set-password на хосте; клиенты с паролем не ломаются.
+- GitVersion: squash `hotfix/*` → Patch, `release/*` → Minor (`main.source-branches` = release+hotfix only; root Patch; commit-message incrementing off; branch digits ignored).
+- GitVersion `next-version: 1.0.0` — низкий ConfiguredNextVersion fallback; при тегах побеждает `TaggedCommit`; не поднимать под каждый ship.

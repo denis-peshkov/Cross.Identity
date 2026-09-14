@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.5.1` · **ветка:** `hotfix/gitversion-hotfix-patch-increment` · **база:** `origin/master` (`v2.5.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.5.1` (closed) · **ветка:** `hotfix/gitversion-hotfix-patch-increment` · **база:** `origin/master` (`v2.5.0`) · **дата:** `2026-09-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.5.1
 >
@@ -8,11 +8,11 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.5.0.md`](RELEASE-PLAN-2.5.0.md)
 >
-> Дельта: `origin/master...HEAD` — **2** коммита · **8** файлов · **+271 / −168**. **WT:** **3** файла (этот refresh plan/CHANGELOG/to-master). Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **3** коммита · **8** файлов · **+273 / −170**. Open C/H/M/L пустые.
 
 **CodeRabbit:** не запускался.
 
-**PR:** —
+**PR:** [#23](https://github.com/denis-peshkov/Cross.Identity/pull/23) (`Fix GitVersion increment`).
 
 ---
 
@@ -64,8 +64,4 @@
 
 ## Приоритет фиксов
 
-1. Commit этот docs refresh · PR → `master` · CI.
-2. После merge: GitVersion на master = **`2.5.1`** (Patch), не `2.6.0`.
-3. Tag `v2.5.1` + NuGet (CI).
-
-Внерелизный backlog → [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.5.1` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
