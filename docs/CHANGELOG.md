@@ -7,7 +7,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.4.0 — 13 Sep 2026
+## v2.4.0 — 14 Sep 2026
 
 ### Library
 
@@ -30,6 +30,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 - SonarCloud project key + name aligned in `dotnet.yml`.
 - GitHub issue / PR templates and rulesets aligned to Cross.Identity.
+- Sample.Api: `Authentication:Notifications` section in `appsettings.json`.
 
 ---
 
