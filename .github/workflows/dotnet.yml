@@ -16,9 +16,9 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - master
-      - dev
       - release/*
       - hotfix/*
+      - dev
   workflow_dispatch: # allows manual runs from the Actions tab
 
 jobs:
@@ -56,14 +56,15 @@ jobs:
         uses: NuGet/setup-nuget@v2.0.0
 
       - name: Setup GitVersion
-        uses: gittools/actions/gitversion/setup@v1.1.1
+        # v1.x only allows GV >=5.2 <6.1; 6.8.x needs actions v4.7.x
+        # https://github.com/GitTools/actions/blob/main/docs/versions.md
+        uses: gittools/actions/gitversion/setup@v4.7.0
         with:
-          versionSpec: 5.12.0
+          versionSpec: 6.8.2
 
       - name: Determine Version
-        uses: gittools/actions/gitversion/execute@v1.1.1
-        with:
-          useConfigFile: true
+        uses: gittools/actions/gitversion/execute@v4.7.0
+        # defaults to configFilePath: GitVersion.yml (useConfigFile removed in v3+/v4)
 
       - name: Restore dependencies
         run: dotnet restore
@@ -100,7 +101,7 @@ jobs:
         with:
           args: >
             -Dsonar.organization=denis-peshkov
-            -Dsonar.projectKey=dCross.Identity
+            -Dsonar.projectKey=Cross.Identity
             -Dsonar.projectName=Cross.Identity
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
@@ -117,31 +118,36 @@ jobs:
       - name: Nuget Pack
         run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}
 
+      # Git tags: only stable SemVer on master/release/hotfix.
       - name: Create git Tag
-        if: ${{ contains('refs/heads/master', github.ref) || contains('refs/heads/release', github.ref) || contains('refs/heads/hotfix', github.ref) }}
+        if: >
+          !contains(env.semVer, '-') &&
+          (
+            github.ref == 'refs/heads/master' ||
+            startsWith(github.ref, 'refs/heads/release/') ||
+            startsWith(github.ref, 'refs/heads/hotfix/')
+          )
         run: |
           git tag v${{ env.semVer }}
 
       - name: Push git Tag
-        if: ${{ contains(fromJson('["refs/heads/master", "refs/heads/release", "refs/heads/hotfix"]'), github.ref) }}
-        env:
-          TAGTOKEN: ${{ secrets.TAGTOKEN }}
+        if: >
+          !contains(env.semVer, '-') &&
+          (
+            github.ref == 'refs/heads/master' ||
+            startsWith(github.ref, 'refs/heads/release/') ||
+            startsWith(github.ref, 'refs/heads/hotfix/')
+          )
         run: |
-          set -euo pipefail
-
-          if [ -z "${TAGTOKEN}" ]; then
-            echo "::error::Secret TAGTOKEN is missing or empty. Create an owner classic PAT (repo scope) and add it as Actions secret TAGTOKEN."
-            exit 1
-          fi
-
-          # Drop any leftover checkout auth header so push uses TAGTOKEN (admin bypass on Protect release tags).
-          git config --local --unset-all http.https://github.com/.extraheader 2>/dev/null || true
-
           git config --global user.name 'Denis Peshkov'
           git config --global user.email 'denis.peshkov@outlook.com'
-          git remote set-url origin "https://x-access-token:${TAGTOKEN}@github.com/${{ github.repository }}.git"
+          git remote set-url origin https://x-access-token:${{ secrets.TAGTOKEN }}@github.com/${{ github.repository }}
           git push origin v${{ env.semVer }}
 
       - name: Nuget Push
-        if: ${{ !startsWith(github.ref, 'refs/pull') }}
+        if: >
+          github.ref == 'refs/heads/master' ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/heads/hotfix/') ||
+          github.ref == 'refs/heads/dev'
         run: nuget push **/Cross.Identity.${{ env.semVer }}.symbols.nupkg -ApiKey ${{ secrets.NUGET_API_KEY }} -Source "https://api.nuget.org/v3/index.json" -SkipDuplicate

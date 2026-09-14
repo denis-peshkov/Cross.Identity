@@ -7,7 +7,22 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.4.1 — 14 Sep 2026
+## v2.5.1 — 14 Sep 2026
+
+### Versioning / CI
+
+- Migrate `GitVersion.yml` to GitVersion **6.x**: root `increment: Patch`; `main` inherits from **release** (Minor) / **hotfix** (Patch) only (not `develop`); ignore digits in branch names; commit-message incrementing disabled.
+- CI: GitVersion actions **v4.7.0** / tool **6.8.2**; create/push git tags only for **stable** SemVer (no `-` prerelease); NuGet push limited to `master` / `release/*` / `hotfix/*` / `dev`.
+- SonarCloud `projectKey` → `Cross.Identity` (aligned with `projectName`).
+
+### Documentation
+
+- Align closed plan / CHANGELOG / checklist naming with tag **`v2.5.0`** (was mistakenly labeled `2.4.1`).
+- `TO-DO` «Принято» bullets: drop SemVer / release numbers from trade-off text (`release-plan` skill rule).
+
+---
+
+## v2.5.0 — 14 Sep 2026
 
 ### Library
 
