@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.4.0` (closed) · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` (`v2.3.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.4.0` (published / closed) · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` (`v2.3.0`) · **дата:** `2026-09-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.4.0
 >
@@ -82,7 +82,7 @@
 | ✅ #H27 `update-changelog` `--version`/`--from` | both flags → return directly, skip tag resolver; unit test |
 | ✅ #H26 Change summary label | canonical `Change summary`; legacy Checklist* replaced; skill + tests |
 | ✅ #M82 CHANGELOG dated pre-tag | принято: `v2.4.0 — 14 Sep 2026` до tag ок; Unreleased не заводим |
-| ✅ #M83 Maintenance script path | already ok: `.cursor/skills/release-plan/scripts/release-plan-summary.mjs`; CR `docs/scripts/…` неверен |
+| ✅ #M83 Maintenance script path | already ok: `.cursor/skills/release-plan/scripts/release-plan-to-master.mjs`; CR `docs/scripts/…` неверен |
 | ✅ #M84 `triage.yml` `ready_for_review` | `pull_request` + `pull_request_target` types; draft→ready triggers triage |
 | ✅ #M85 triage-issue Risk CQRS qualifier | drop «for CQRS library»; Risk = any repo |
 | ✅ #M86 triage deep-review path placeholders | `'path/' 'tests-path/'` + take paths from `--name-status` |

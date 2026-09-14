@@ -114,7 +114,7 @@ internal sealed class UserService : IUserService
         var pepperVersion = _pepperVault.CurrentVersion;
         _pepperVault.TryGetCurrentValue(out var pepper);
         ArgumentNullException.ThrowIfNull(pepper);
-        var passwordPhc = passwordRaw is string password
+        var passwordPhc = passwordRaw is string password && !string.IsNullOrWhiteSpace(password)
             ? _hasher.Hash(password, pepper)
             : null;
 

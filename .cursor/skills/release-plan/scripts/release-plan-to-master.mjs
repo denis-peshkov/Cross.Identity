@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 /**
- * Recalculate the "Change summary" line in docs/RELEASE-PLAN-dev-to-master.md.
+ * Recalculate the "Change summary" line in docs/RELEASE-PLAN-to-master.md.
  *
  * Includes:
  * - table rows with IDs like P1, B1, Q1, N1, A1, G1 (status — last emoji in the table row);
  * - §10 markers (release gate + go/no-go bullets), if present.
  *
  * Usage:
- *   node .cursor/skills/release-plan/scripts/release-plan-summary.mjs           # print the line
- *   node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write   # update the plan file
+ *   node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs           # print the line
+ *   node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write   # update the plan file
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
-const PLAN = join(ROOT, 'docs/RELEASE-PLAN-dev-to-master.md');
+const PLAN = join(ROOT, 'docs/RELEASE-PLAN-to-master.md');
 
 const ID_ROW = /^\| ([A-Z]+[0-9]+) \|/;
 const BULLET = /^- (✅|🟨|⬜|❌) /;

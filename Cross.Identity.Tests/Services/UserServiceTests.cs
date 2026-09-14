@@ -96,6 +96,22 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmailWithoutPassword_WhenCreateUserAsync_ThenPasswordPhcIsNull()
+    {
+        var map = new Dictionary<string, object?>
+        {
+            ["Email"] = "nopass-svc@example.com",
+        };
+
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.PasswordPhc.Should().BeNull();
+        _hasher.Verify(h => h.Hash(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenNonStringUserName_WhenCreateUserAsync_ThenUserNameMatchesNormalizedSourceAsync()
     {
         _hasher.Setup(h => h.Hash(It.IsAny<string>(), It.IsAny<string>())).Returns("$pbkdf2-test-hash");

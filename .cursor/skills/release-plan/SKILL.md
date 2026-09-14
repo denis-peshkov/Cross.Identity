@@ -8,10 +8,10 @@ description: >-
   затем удаляет из open-секций TO-DO.
   Финализация version plan переносит все оставшиеся open-пункты в TO-DO и
   переписывает план по finalized-шаблону. Также ведёт исторический чеклист
-  dev→master (docs/RELEASE-PLAN-dev-to-master.md) через
-  scripts/release-plan-summary.mjs. Использовать при черновике release notes,
+  → master (docs/RELEASE-PLAN-to-master.md) через
+  scripts/release-plan-to-master.mjs. Использовать при черновике release notes,
   release plans, закрытии version plan или обновлении RELEASE-PLAN-X.Y.Z.md /
-  TO-DO.md / BREAKING.md / чеклиста dev-to-master.
+  TO-DO.md / BREAKING.md / чеклиста to-master.
 ---
 
 # Release plan по delta ветки
@@ -160,7 +160,7 @@ bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --json
 | Версия неизвестна | `resolve-target-version.sh` (GitVersion) или явный `--version X.Y.Z` |
 
 **Запрещено:**
-- `ls` / glob / read-all `docs/RELEASE-PLAN-*.md` (вкл. `dev-to-master`), чтобы «найти текущий»
+- `ls` / glob / read-all `docs/RELEASE-PLAN-*.md` (вкл. `to-master`), чтобы «найти текущий»
 - изобретать stub-план без workflow этого skill; пропускать создание плана, когда его нет
 - рутинно открывать исторические version plan (только текущий + TO-DO; ссылка на предыдущий план — только при черновике шапки **нового** плана)
 
@@ -170,7 +170,7 @@ bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --json
 
 Ручной override: `--version X.Y.Z`. Скрипт: `dotnet-gitversion` (`PATH` / `~/.dotnet/tools`). `from_version` — последний стабильный `vX.Y.Z` tag. Поля BREAKING: `breaking_from`, `breaking_to`.
 
-**Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии (`target_version` / user / `**Версия:**` в файле). Писать закрытия только в **текущий** plan — не в shipped historical plans. Не использовать `RELEASE-PLAN-dev-to-master.md`.
+**Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии (`target_version` / user / `**Версия:**` в файле). Писать закрытия только в **текущий** plan — не в shipped historical plans. Не использовать `RELEASE-PLAN-to-master.md`.
 
 ## `docs/BREAKING.md`
 
@@ -201,7 +201,7 @@ bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh \
 - **После** `## From … to …` — пустая строка, затем `Release:` (или `###`, если нет `Release:`).
 - **`Release:`** — `[vX.Y.Z](release-url)`; `([PR #N](…)).` когда PR известен. Без `(planned)`, без отсылок к project-specific docs — см. `README.md`.
 
-При правке `docs/BREAKING.md` синхронизировать чеклист dev-to-master, если меняются связанные пункты плана (DOC6, §10) — запустить `release-plan-summary.mjs --write` (см. ниже).
+При правке `docs/BREAKING.md` синхронизировать чеклист to-master, если меняются связанные пункты плана (DOC6, §10) — запустить `release-plan-to-master.mjs --write` (см. ниже).
 
 ## Close from TO-DO (обязательно, любой dismiss)
 
@@ -308,10 +308,10 @@ node .cursor/skills/release-plan/scripts/update-changelog.mjs --write
 | Файл | Роль |
 |------|------|
 | `RELEASE-PLAN.md` (корень репо) | Аудит библиотеки / hardening backlog |
-| `docs/RELEASE-PLAN-dev-to-master.md` | Исторические readiness-чеклисты `dev` → `master` |
+| `docs/RELEASE-PLAN-to-master.md` | Исторические readiness-чеклисты → `master` |
 | `docs/BREAKING.md` | Breaking changes для NuGet-потребителей |
 
-Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выше. **Не** подменять чеклист dev-to-master version plan’ом.
+Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выше. **Не** подменять чеклист to-master version plan’ом.
 
 ### Статус-метки корневого `RELEASE-PLAN.md`
 
@@ -323,24 +323,26 @@ Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выш
 2. Добавить/обновить строку в **Закрыто** с `✅ #N …`.
 3. Убрать пункт из открытых списков **Приоритет фиксов**.
 
-### `docs/RELEASE-PLAN-dev-to-master.md` — Change summary
+### `docs/RELEASE-PLAN-to-master.md` — Change summary
 
-**При любом изменении** `docs/RELEASE-PLAN-dev-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывать и обновлять строку **"Change summary"** в шапке документа (сразу после легенды).
+**Maintainer / agent only** (не контрибьюторский чеклист; не в PR template). Skill `release-plan` ведёт файл; скрипт лишь синхронизирует строку **Change summary**.
+
+**При любом изменении** `docs/RELEASE-PLAN-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывать и обновлять строку **"Change summary"** в шапке документа (сразу после легенды).
 
 То же при правке `docs/BREAKING.md`, если меняется статус связанных пунктов плана (напр. DOC6, §10.8, P1 для `collectResult`).
 
 ```bash
-node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write
+node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write
 ```
 
 Без `--write` — только вывести строку для проверки. Не править проценты и счётчики вручную, если скрипт можно запустить.
 
 **Легенда статусов:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
 
-### Breaking changes ↔ план dev-to-master
+### Breaking changes ↔ план to-master
 
-| Область | Где в плане dev-to-master |
-|---------|---------------------------|
+| Область | Где в плане to-master |
+|---|---|
 | `docs/BREAKING.md` | §2 `B1`–`B4`, go/no-go `G2` |
 | `config.nuspec` releaseNotes | §2 `B3`, §4 `N1` (version-plan L#) |
 | Version plan / TO-DO | §1 `P2`–`P3`, §5 `A3` |
@@ -355,7 +357,7 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 | [`scaffold-breaking-section.sh`](scripts/scaffold-breaking-section.sh) | Строка TOC + блок `From X to Y` (только cache; агент правит `docs/BREAKING.md`) |
 | [`collect-release-delta.sh`](scripts/collect-release-delta.sh) | Cache delta ветки для черновика плана; default focus `docs/BREAKING.md`; `--focus PATH` (repeatable) |
 | [`update-changelog.mjs`](scripts/update-changelog.mjs) | Upsert `docs/CHANGELOG.md` § `vX.Y.Z` из delta (`v{from}..HEAD` + WT); `--write` / `--dry-run` |
-| [`release-plan-summary.mjs`](scripts/release-plan-summary.mjs) | Строка Change summary в `RELEASE-PLAN-dev-to-master.md` |
+| [`release-plan-to-master.mjs`](scripts/release-plan-to-master.mjs) | Строка Change summary в `RELEASE-PLAN-to-master.md` |
 
 Другие skills: **Cross-skill references** (ссылка одной строкой; без дублирования скриптов или prose про layout).
 
