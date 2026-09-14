@@ -1,8 +1,8 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.4.1` (closed) · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.5.0` (published / closed) · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
 >
-> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.4.1
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.5.0
 >
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
@@ -64,4 +64,4 @@ Stock `main.Register`: `Password` `required: false`; `CreateUserAsync` не хе
 
 ## Приоритет фиксов
 
-_(пусто — релиз `2.4.1` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — релиз `2.5.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
