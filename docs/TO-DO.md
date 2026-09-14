@@ -26,14 +26,8 @@ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) �
 ### M39. Idle revoke double-audit
 `HandleRefreshTokenIdleExpiredAsync` / idle path в `JwtTokenService` — presented token может аудититься/ревокаться дважды при family revoke.
 
-### M40. `FLOWS.md` `main.Register` bag key
-В таблице `userAccountIdKey: UserId`, в JSON / `collectResult` — `UserAccountId`.
-
 ### M42. `JsonHelpers` `Enum.IsDefined`
 После `Enum.TryParse` требовать `Enum.IsDefined`.
-
-### M43. Release-plan template: duplicate `{{OPTIONAL_CR_OR_NOTES}}`
-CodeRabbit: в `.cursor/skills/release-plan/templates/RELEASE-PLAN.md` убрать дубль placeholder, чтобы notes рендерились один раз.
 
 ### M44. Release-plan language (EN vs RU) — CR Major
 CodeRabbit **Major** (deferred): English throughout release-plan workflow docs.
@@ -55,14 +49,8 @@ Skip send (`Authentication:DeveloperMode`); утечка OTP через response
 ### L3. `AuditService.Record` без `SaveChanges`
 Audit теряется, если caller не закоммитит.
 
-### L4. Закомментированный `IJwtIssuer`
-В `IJwtTokenService.cs`.
-
 ### L5. Legacy-поля в `UserAccountEntity`
 Закомментированы `PasswordSalt`, `PasswordHash`, …
-
-### L6. `HostSuppliedClientContext` XML properties
-XML для record properties `IpAddress` / `UserAgent` / `DeviceFingerprint`.
 
 ### L7. `AuditEntity` XML properties
 XML для public properties.

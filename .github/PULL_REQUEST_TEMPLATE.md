@@ -40,14 +40,12 @@ N/A
 ## Checklist
 
 - [ ] I have read and followed [CONTRIBUTING.md](../CONTRIBUTING.md).
-- [ ] PR title matches the intended squash merge title and lead commit message.
 - [ ] There is no other open [pull request](https://github.com/denis-peshkov/Cross.Identity/pulls) for the same fix or feature.
 - [ ] **One PR = one feature or one fix** — no unrelated refactors or drive-by formatting.
 - [ ] `.editorconfig` respected; no secrets committed.
 - [ ] If this PR changes a public flow or step JSON, update [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) and add/update an integration test in `Cross.Identity.Tests/Identity/FlowTests/`.
 - [ ] If this PR changes public API, options, or consumer contract, update README / XML docs as needed.
 - [ ] If this PR is breaking for NuGet consumers, update [`docs/BREAKING.md`](../docs/BREAKING.md) (sole breaking-change list) and prefix the **PR title** with `BREAKING:`.
-- [ ] If this PR edits `docs/RELEASE-PLAN-dev-to-master.md`, run `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`.
 - [ ] If this PR touches auth / JWT / OAuth / licensing / passwords, the risks are described above and the diff contains no secrets.
 
 ---

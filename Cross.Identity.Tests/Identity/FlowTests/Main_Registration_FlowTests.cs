@@ -70,6 +70,27 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmailWithoutPassword_WhenExecuteRegisterFlow_ThenSucceeds()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = "nopass@example.com",
+        };
+
+        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None);
+
+        result.Should().NotBeNull();
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload.Should().ContainKey("UserAccountId");
+        payload["UserAccountId"].Should().BeOfType<string>().Which.Should().NotBeNullOrWhiteSpace();
+
+        var userAccountId = Guid.Parse((string)payload["UserAccountId"]!);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.PasswordPhc.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRegistrationInput_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange

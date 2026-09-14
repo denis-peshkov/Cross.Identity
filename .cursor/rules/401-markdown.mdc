@@ -1,0 +1,61 @@
+---
+description: Markdown table formatting — short separators, single spaces, pipe bookends
+globs: "**/*.md"
+alwaysApply: false
+---
+
+# Markdown formatting
+
+## Tables
+
+Apply when creating or editing GFM tables in any `.md` file.
+
+### Separator row — always short
+
+Use minimal hyphens. Do **not** pad separators to match header width.
+
+```markdown
+<!-- ✅ GOOD -->
+| Step | kind | Details |
+|---|---|---|
+
+<!-- ❌ BAD -->
+| Step | kind | Details |
+|------|------|---------|
+```
+
+### Cells — exactly one space around content
+
+One space after `|` and one space before the next `|`. No column padding / alignment spaces.
+
+```markdown
+<!-- ✅ GOOD -->
+| Step | kind | Details |
+|---|---|---|
+| collectForm | collectForm | `Email` (required). → `createUser` |
+
+<!-- ❌ BAD — extra spaces for column alignment -->
+| Step        | kind        | Details                          |
+| ----------- | ----------- | -------------------------------- |
+| collectForm | collectForm | `Email` (required). → `createUser` |
+```
+
+### Pipe bookends
+
+Every table line (header, separator, body) **must** start and end with `|`.
+
+```markdown
+<!-- ✅ GOOD -->
+| A | B |
+|---|---|
+| 1 | 2 |
+
+<!-- ❌ BAD — missing leading or trailing pipe -->
+A | B |
+---|---
+| 1 | 2
+```
+
+### Empty cells
+
+Keep the single-space cell form: `| |` (pipe, space, pipe), not `||`.
