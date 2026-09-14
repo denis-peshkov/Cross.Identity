@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.4.0` · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` (`v2.3.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.4.0` (closed) · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` (`v2.3.0`) · **дата:** `2026-09-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.4.0
 >
@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **85** коммита · **173** файлов · **+7 754 / −2 207**. Open C/H/M/L: **0C / 0H / 0M / 0L**.
+> Дельта: `origin/master...HEAD` — **85** коммита · **173** файлов · **+7 754 / −2 207**. Open C/H/M/L пустые.
 
 **CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **open C/H/M/L пусты**; #H23/#H24/#H26/#H27/#M83–#M87 закрыты; #H25/#H19/#H21/#M82/#M88 принято; #H20/#H22 закрыты.
 
@@ -112,8 +112,4 @@
 
 ## Приоритет фиксов
 
-Open C/H/M/L в этом плане пусты.
-
-Ship: [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) — CI green (`.NET` build ×2 · SonarCloud · CodeQL · CodeRabbit) · merge → tag `v2.4.0` + NuGet.
-
-Внерелизный backlog → [`TO-DO.md`](TO-DO.md).
+_(пусто — план `2.4.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

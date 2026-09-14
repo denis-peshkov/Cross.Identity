@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H17` `M65` `L12`
+**Id high-water (не переиспользовать ≤):** `C1` `H27` `M89` `L15`
 
 ---
 
@@ -102,3 +102,10 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - User-scoped flows (2.2): session proof на стороне хоста; библиотека принимает `UserAccountId` без RefreshToken.
 - Lifecycle bags (2.3): хост резолвит identity до `ExecuteAsync` (`Jti` / `UserAccountId`); без parse compact refresh на logout/refresh/change-password paths.
 - Scaffold `Release:` — PR optional (`--pr`); без auto-`gh`.
+- `ChangeAccountEmail` — account op на `IUserService`; upsert email-endpoint = delivery/OTP sync side-effect (не `ICommunicationEndpointService` как owner).
+- Optional `LanguageCode` + `Authentication:Notifications` — host config; library без built-in brand defaults; stock `{{supportEmail}}` (не `{{support}}`).
+- `{{support}}` → `{{supportEmail}}` унификация — не consumer-breaking (поле всегда `SupportEmail`; `{{support}}` был typo/alias).
+- OTP в HTML email preheader — осознанный UX; кастомный host template может убрать.
+- `NotificationComposer` без HtmlEncode brand/placeholders — sanitize зона хоста / доверенный config.
+- CHANGELOG dated pre-tag для ship prep — ок; Unreleased не обязателен.
+- `repository-link` при missing/non-GitHub origin — soft empty + exit 0 (не hard-fail).
