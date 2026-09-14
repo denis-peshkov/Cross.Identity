@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 8H / 7M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 7H / 7M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **8H + 7M открыты в плане** (#H20–#H27, #M82–#M88); #H19 принято (OTP в preheader).
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **7H + 7M открыты в плане** (#H21–#H27, #M82–#M88); #H19 принято; #H20 закрыт.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -21,9 +21,6 @@
 ---
 
 ## Высокий (логика / auth model)
-
-### H20. Quadruple-brace placeholders vs `{{…}}` Replace
-⬜ Stock HTML uses `{{{{name}}}}`; `NotificationComposer` replaces `{{name}}` → leftover `{{value}}` (demo: `{{{{code}}}}` + `123456` → `{{123456}}`). Normalize to `{{…}}` across verify/reset/register/confirm-email/password-changed. `Contain("{{code}}")` tests false-pass on quads.
 
 ### H21. HTML-encode dynamic values in `NotificationComposer`
 ⬜ `Apply` inserts brand + caller placeholders into HtmlBody without HtmlEncode; keep TextBody raw.
@@ -86,7 +83,7 @@
 Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` — **host config** (additive; класс **без** built-in defaults). Stock templates: `{{supportEmail}}` (не `{{support}}`). Sample: `Sample.Api` / `appsettings.json`.
 
 ### OTP in HTML email preheader (CR #H19)
-Осознанно: код в hidden preview — UX (сниппет inbox / notification). Риск утечки OTP в list view принят; кастомный host template может убрать. После **#H20** braces preheader должен реально подставлять `{{code}}`.
+Осознанно: код в hidden preview — UX (сниппет inbox / notification). Риск утечки OTP в list view принят; кастомный host template может убрать. Placeholders в preheader — `{{code}}` / `{{expires}}` (после ✅ #H20).
 
 ---
 
@@ -94,6 +91,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #H20 Quadruple-brace placeholders | stock HTML `{{{{…}}}}` → `{{…}}` (93); tests `NotContain("{{{{")` + compose smoke |
 | ✅ #H19 OTP in HTML email preheader | принято: код в preheader — желаемый UX; не убираем |
 | ✅ #M66 `main.ChangeAccountEmail` flow | stock JSON / `ChangeAccountEmailStep` / factory / flow-тесты; host-authorized `UserAccountId` |
 | ✅ #M67 `IUserService.ChangeAccountEmailAsync` | account `Email`/`EmailVerified` + upsert endpoint; auto-verify via linked `ProviderEmail` |
@@ -129,12 +127,11 @@
 
 ## Приоритет фиксов
 
-1. **H20** — `{{{{…}}}}` → `{{…}}` (stock templates + placeholder tests; preheader тоже заработает).
-2. **H21** — HtmlEncode in `NotificationComposer` HTML path.
-3. **H22** — Sample.Api template localization / placeholders / `{{expires}}`.
-4. **H23** — Given/When/Then rename for new 2.4.0 tests.
-5. **H24** / **H25** / **H26** / **H27** — docs/tooling contract fixes.
-6. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
+1. **H21** — HtmlEncode in `NotificationComposer` HTML path.
+2. **H22** — Sample.Api template localization / placeholders / `{{expires}}`.
+3. **H23** — Given/When/Then rename for new 2.4.0 tests.
+4. **H24** / **H25** / **H26** / **H27** — docs/tooling contract fixes.
+5. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 

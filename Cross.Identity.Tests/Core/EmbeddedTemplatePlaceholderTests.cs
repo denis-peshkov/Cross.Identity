@@ -3,6 +3,13 @@
 [TestFixture]
 public sealed class EmbeddedTemplatePlaceholderTests
 {
+    private static readonly string[] TemplateNames =
+    {
+        "verify", "reset", "confirm-email", "register", "password-changed",
+    };
+
+    private static readonly string[] Languages = { "en", "ru", "ro" };
+
     private static EmbeddedResourceProcessDefinitionProvider CreateSut() =>
         new(Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
         {
@@ -29,6 +36,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
             body.Should().Contain("{{supportEmail}}");
             body.Should().Contain("{{site}}");
             body.Should().Contain("{{helpLink}}");
+            body.Should().NotContain("{{{{");
             body.Should().NotContain("Bioclinica");
             body.Should().NotContain("958748");
         }
@@ -55,6 +63,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
             body.Should().Contain("{{supportEmail}}");
             body.Should().Contain("{{brand}}");
             body.Should().Contain("{{year}}");
+            body.Should().NotContain("{{{{");
             body.Should().NotContain("Bioclinica");
         }
     }
@@ -75,6 +84,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
             body.Should().Contain("{{supportEmail}}");
             body.Should().Contain("{{brand}}");
             body.Should().Contain("{{year}}");
+            body.Should().NotContain("{{{{");
         }
     }
 
@@ -96,7 +106,28 @@ public sealed class EmbeddedTemplatePlaceholderTests
             body.Should().Contain("{{supportEmail}}");
             body.Should().Contain("{{brand}}");
             body.Should().Contain("{{year}}");
+            body.Should().NotContain("{{{{");
             body.Should().NotContain("Bioclinica");
+        }
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenAllEmbeddedTemplates_WhenLoaded_ThenHaveNoQuadrupleBracePlaceholders()
+    {
+        var sut = CreateSut();
+        foreach (var name in TemplateNames)
+        {
+            foreach (var lang in Languages)
+            {
+                foreach (var format in new[] { "txt", "html" })
+                {
+                    var body = sut.GetTemplate(name, lang, format);
+                    body.Should().NotContain(
+                        "{{{{",
+                        because: $"{name}.{lang}.{format} must use double-brace placeholders for NotificationComposer");
+                }
+            }
         }
     }
 }

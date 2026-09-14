@@ -52,4 +52,43 @@ public class NotificationComposerTests
         bodies.TextBody.Should().Be("Код 99");
         provider.Verify(p => p.GetTemplate("verify", "en", "txt"), Times.Never);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenEmbeddedVerifyHtml_WhenCompose_ThenCodeHasNoLeftoverBraces()
+    {
+        var provider = new EmbeddedResourceProcessDefinitionProvider(
+            Microsoft.Extensions.Options.Options.Create(new EmbeddedProcessDefinitionOptions
+            {
+                Assembly = typeof(EmbeddedResourceProcessDefinitionProvider).Assembly,
+                BaseNamespace = "Cross.Identity.ProcessEngine.Definitions",
+            }));
+
+        var sut = new NotificationComposer(
+            provider,
+            Microsoft.Extensions.Options.Options.Create(new NotificationOptions
+            {
+                Brand = "BrandX",
+                Company = "Acme",
+                FullName = "Ada",
+                Site = "https://example.test",
+                SupportEmail = "help@acme.test",
+            }));
+
+        var bodies = sut.Compose(
+            new Bag(),
+            "verify",
+            new Dictionary<string, string>
+            {
+                ["{{code}}"] = "123456",
+                ["{{expires}}"] = "15m",
+                ["{{verificationLink}}"] = "https://example.test/v",
+                ["{{helpLink}}"] = "https://example.test/help",
+            });
+
+        bodies.HtmlBody.Should().Contain("123456");
+        bodies.HtmlBody.Should().NotContain("{{123456}}");
+        bodies.HtmlBody.Should().NotContain("{{{{");
+        bodies.HtmlBody.Should().Contain("Your code: 123456.");
+    }
 }
