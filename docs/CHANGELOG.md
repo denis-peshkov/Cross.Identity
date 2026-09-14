@@ -12,7 +12,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - Host-supplied language context for notification templates (`HostSuppliedLanguageContext`); OTP / reset-password paths compose messages via `INotificationComposer` + `ISecurityNotifier`.
-- `Authentication:Notifications` (`NotificationOptions`) — host-supplied brand placeholders; no built-in library defaults; template placeholder `{{supportEmail}}` (was `{{support}}`).
+- `Authentication:Notifications` (`NotificationOptions`) — host-supplied brand placeholders; no built-in library defaults; stock templates unified on `{{supportEmail}}` (config field was always `SupportEmail`; `{{support}}` was a template alias/typo).
 - Embedded register / verify / confirm-email / password-changed templates for `en` / `ru` / `ro` (txt + html); stock flows use `verify` / `reset` / `password-changed`.
 - `main.ChangeAccountEmail` flow / `IUserService.ChangeAccountEmailAsync` (host-authorized `UserAccountId`); audit `AccountEmailChanged`.
 - License JWT: dotted product-type claims (e.g. `Cross.Identity`) parsed against underscore enum names; license validation helpers simplified.

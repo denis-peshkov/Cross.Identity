@@ -42,6 +42,7 @@ function usage() {
 Options:
   --version X.Y.Z   Target version (default: resolve-target-version.sh)
   --from X.Y.Z      Base published version / tag without v (default: from resolve)
+                    When both --version and --from are set, skips the tag resolver.
   --changelog PATH  CHANGELOG path (default: docs/CHANGELOG.md)
   --date TEXT       Heading date (default: local "D Mon YYYY")
   --write           Write docs/CHANGELOG.md
@@ -120,10 +121,14 @@ function run(cmd, cmdArgs, { cwd = ROOT, check = true } = {}) {
 
 /**
  * Resolve target/from SemVer via `resolve-target-version.sh` (optional CLI overrides).
+ * When both `--version` and `--from` are set, return them directly (no tag/GitVersion resolver).
  * @param {{ version?: string|null, from?: string|null }} opts Parsed CLI version/from fields.
  * @returns {{ version: string, from: string, repositoryLink: string }}
  */
-function resolveVersions({ version, from }) {
+export function resolveVersions({ version, from }) {
+  if (version && from) {
+    return { version, from, repositoryLink: '' };
+  }
   const script = join(SCRIPT_DIR, 'resolve-target-version.sh');
   const cli = [];
   if (version) cli.push('--version', version);

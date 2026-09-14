@@ -5,7 +5,7 @@ public class HostSuppliedLanguageContextTests
 {
     [Test]
     [Category(TestCategory.UNIT)]
-    public void Read_WhenMissing_ReturnsEmpty()
+    public void GivenMissingLanguage_WhenRead_ThenReturnsEmpty()
     {
         var bag = new Bag();
         var ctx = HostSuppliedLanguageContext.Read(bag);
@@ -15,7 +15,7 @@ public class HostSuppliedLanguageContextTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void Read_WhenPresent_NormalizesToLower()
+    public void GivenLanguageCodeUpperRu_WhenRead_ThenNormalizesToLower()
     {
         var bag = new Bag();
         bag.Set("collectForm.LanguageCode", "RU");
@@ -24,7 +24,7 @@ public class HostSuppliedLanguageContextTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void ResolveLanguageCode_WhenInvalid_FallsBackToEn()
+    public void GivenInvalidLanguageCode_WhenResolveLanguageCode_ThenFallsBackToEn()
     {
         new HostSuppliedLanguageContext("r").ResolveLanguageCode().Should().Be("en");
         new HostSuppliedLanguageContext("rus").ResolveLanguageCode().Should().Be("en");
@@ -33,7 +33,7 @@ public class HostSuppliedLanguageContextTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void ResolveTemplate_WhenLanguageMissing_FallsBackToEn()
+    public void GivenMissingLanguageTemplate_WhenResolveTemplate_ThenFallsBackToEn()
     {
         var provider = new Mock<IProcessDefinitionProvider>();
         provider.Setup(p => p.GetTemplate("verify", "ru", "txt"))
@@ -51,7 +51,7 @@ public class HostSuppliedLanguageContextTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void ResolveTemplate_WhenLanguagePresent_UsesIt()
+    public void GivenLanguageTemplatePresent_WhenResolveTemplate_ThenUsesIt()
     {
         var provider = new Mock<IProcessDefinitionProvider>();
         provider.Setup(p => p.GetTemplate("verify", "ru", "txt")).Returns("RU body");

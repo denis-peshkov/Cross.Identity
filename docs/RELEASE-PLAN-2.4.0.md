@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 5H / 7M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 2H / 7M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **5H + 7M открыты в плане** (#H23–#H27, #M82–#M88); #H19/#H21 принято; #H20/#H22 закрыты.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **2H + 7M открыты в плане** (#H24, #H26, #M82–#M88); #H23/#H27 закрыты; #H25/#H19/#H21 принято; #H20/#H22 закрыты.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -22,20 +22,11 @@
 
 ## Высокий (логика / auth model)
 
-### H23. New 2.4.0 tests: `Given/When/Then` (+ `Async`)
-⬜ Rename NotificationOptions / Composer / EmbeddedTemplate / HostSuppliedLanguage / SecurityNotifier / ChangeAccountEmail tests per `.cursor/rules/300-testing-dotnet.mdc`.
-
 ### H24. TO-DO «Принято»: ChangePassword still says `Id`
 ⬜ Stale line — contract is `UserAccountId` (+ current password), not historical `Id` (2.3).
 
-### H25. B2 `{{support}}` → `{{supportEmail}}` as breaking
-⬜ `RELEASE-PLAN-dev-to-master` B2/D3: document host custom-template migration; add/confirm `BREAKING.md` § From 2.3.0 to 2.4.0 (no `supportEmail` § yet).
-
 ### H26. `release-plan-summary` SUMMARY_RE case
 ⬜ Match documented `Checklist Summary` vs `Checklist summary` so `--write` replaces instead of duplicating.
-
-### H27. `update-changelog.mjs` honor `--version` / `--from`
-⬜ When both flags set, return them directly (bypass tag-requiring resolver).
 
 ---
 
@@ -76,6 +67,9 @@
 ### Optional `LanguageCode` + `Authentication:Notifications`
 Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` — **host config** (additive; класс **без** built-in defaults). Stock templates: `{{supportEmail}}` (не `{{support}}`). Sample: `Sample.Api` / `appsettings.json`.
 
+### `{{support}}` vs `{{supportEmail}}` — не breaking (CR #H25)
+Поле всегда было `SupportEmail`; `{{support}}` в части stock-шаблонов 2.3 — опечатка/алиас (рантайм подставлял оба). В 2.4 унификация на `{{supportEmail}}` + снятие dual-replace — **не** consumer-breaking API; § в `BREAKING.md` не заводим.
+
 ### OTP in HTML email preheader (CR #H19)
 Осознанно: код в hidden preview — UX (сниппет inbox / notification). Риск утечки OTP в list view принят; кастомный host template может убрать. Placeholders в preheader — `{{code}}` / `{{expires}}` (после ✅ #H20).
 
@@ -106,6 +100,9 @@
 | ✅ #L13 Sonar project key in CI | `dotnet.yml` / SonarCloud project key + name aligned |
 | ✅ #M77 License dotted product claim | `License` parse dotted JWT product names ↔ underscore enum; tests |
 | ✅ #M78 Package icons `icon.png`/`icon.svg` | rename from IdentityServer.*; `config.nuspec` / `.slnx` |
+| ✅ #H27 `update-changelog` `--version`/`--from` | both flags → return directly, skip tag resolver; unit test |
+| ✅ #H25 B2 `{{support}}` → `{{supportEmail}}` | принято: не breaking — поле всегда `SupportEmail`; `{{support}}` = typo/alias; § BREAKING снят |
+| ✅ #H23 New 2.4.0 tests Given/When/Then | rename NotificationOptions/Composer/EmbeddedTemplate/HostSuppliedLanguage/SecurityNotifier/ChangeAccountEmail; no Async on tests |
 | ✅ #L14 GitHub templates / rulesets | ISSUE/PR templates + rulesets README под Cross.Identity |
 | ✅ #M76 register/verify templates committed | localize/standardize en/ru/ro в ветке |
 | ✅ #M80 Sample.Api `Notifications` config | `Authentication:Notifications` в `appsettings.json` |
@@ -126,9 +123,8 @@
 
 ## Приоритет фиксов
 
-1. **H23** — Given/When/Then rename for new 2.4.0 tests.
-2. **H24** / **H25** / **H26** / **H27** — docs/tooling contract fixes.
-3. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
+1. **H24** / **H26** — docs/tooling contract fixes.
+2. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 

@@ -9,7 +9,7 @@ public class NotificationOptionsTests
     /// </summary>
     [Test]
     [Category(TestCategory.UNIT)]
-    public void NewInstance_HasNoBuiltInBrandDefaults()
+    public void GivenNewOptions_WhenConstructed_ThenHasNoBuiltInBrandDefaults()
     {
         var opt = new NotificationOptions();
         opt.Brand.Should().BeNull();

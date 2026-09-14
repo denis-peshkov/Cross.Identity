@@ -25,7 +25,7 @@ Stack: **NUnit** (adapt category constants to the test project's shared helpers 
   - **Given** — context / preconditions (`[X]`)
   - **When** — action under test (`[Y]`)
   - **Then** — expected outcome (`[Z]`)
-- **Async tests:** method name **must** end with `Async` (same rule as production async APIs).
+- **Do not** append `Async` to test method names (even when the method returns `async Task`).
 - **Do not** use `Method_Should_Expected_When_Condition` or other legacy styles for new or renamed tests.
 - Names must be descriptive; `[X]` / `[Y]` / `[Z]` are PascalCase phrases without spaces.
 
@@ -39,7 +39,7 @@ public void GivenValidInput_WhenHandlerRuns_ThenReturnsSuccess()
 }
 
 [Test]
-public async Task GivenValidInput_WhenHandlerRuns_ThenReturnsSuccessAsync()
+public async Task GivenValidInput_WhenHandlerRuns_ThenReturnsSuccess()
 {
     // Arrange / Act / Assert
 }
@@ -54,7 +54,7 @@ Example:
 
 ```csharp
 [Test]
-public async Task GivenValidResume_WhenSubmitResume_ThenReturnsSuccessAsync()
+public async Task GivenValidResume_WhenSubmitResume_ThenReturnsSuccess()
 {
     // Arrange
     var dto = new SubmitResumeDto
@@ -90,7 +90,7 @@ public void GivenValidInput_WhenParse_ThenReturnsValue() { /* … */ }
 
 [Test]
 [Category(TestCategory.INTEGRATION)]
-public async Task GivenPersistedToken_WhenValidate_ThenReturnsTrueAsync() { /* … */ }
+public async Task GivenPersistedToken_WhenValidate_ThenReturnsTrue() { /* … */ }
 ```
 
 ```bash

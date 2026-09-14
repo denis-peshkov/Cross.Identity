@@ -7,8 +7,20 @@ import {
   formatSection,
   parseArgs,
   pathBullet,
+  resolveVersions,
   upsertChangelog,
 } from './update-changelog.mjs';
+
+describe('resolveVersions', () => {
+  it('returns CLI --version and --from directly when both are set (no tag resolver)', () => {
+    const got = resolveVersions({ version: '2.4.0', from: '2.3.0' });
+    assert.deepEqual(got, {
+      version: '2.4.0',
+      from: '2.3.0',
+      repositoryLink: '',
+    });
+  });
+});
 
 describe('parseArgs', () => {
   it('defaults to dry-run when --write is absent', () => {
@@ -96,7 +108,7 @@ describe('collectDelta', () => {
   });
 
   it('returns paths/subjects when baseline tag exists', () => {
-    const delta = collectDelta('11.1.0');
+    const delta = collectDelta('2.3.0');
     assert.ok(Array.isArray(delta.paths));
     assert.ok(Array.isArray(delta.subjects));
   });

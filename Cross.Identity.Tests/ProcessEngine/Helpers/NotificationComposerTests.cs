@@ -5,7 +5,7 @@ public class NotificationComposerTests
 {
     [Test]
     [Category(TestCategory.UNIT)]
-    public void Compose_AppliesBrandAndPlaceholders()
+    public void GivenBrandAndPlaceholders_WhenCompose_ThenAppliesBoth()
     {
         var provider = new Mock<IProcessDefinitionProvider>();
         provider.Setup(p => p.GetTemplate("verify", "en", "txt"))
@@ -33,7 +33,7 @@ public class NotificationComposerTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public void Compose_WhenLanguageRu_UsesRuTemplate()
+    public void GivenLanguageCodeRu_WhenCompose_ThenUsesRuTemplate()
     {
         var provider = new Mock<IProcessDefinitionProvider>();
         provider.Setup(p => p.GetTemplate("verify", "ru", "txt")).Returns("Код {{code}}");

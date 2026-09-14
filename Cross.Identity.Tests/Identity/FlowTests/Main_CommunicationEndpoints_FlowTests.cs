@@ -86,7 +86,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     }
 
     [Test]
-    public async Task ChangeAccountEmail_WhenMatchesLinkedProvider_ShouldReturnVerified()
+    public async Task GivenLinkedProviderEmail_WhenChangeAccountEmailFlow_ThenReturnsVerified()
     {
         var userAccountId = Guid.NewGuid();
         var provider = new ProviderEntity

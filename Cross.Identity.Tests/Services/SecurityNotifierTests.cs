@@ -5,7 +5,7 @@ public class SecurityNotifierTests
 {
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task SendAsync_WhenEmail_CallsEmailSender()
+    public async Task GivenEmailChannel_WhenSend_ThenCallsEmailSender()
     {
         var email = new Mock<IEmailSenderService>();
         var sms = new Mock<ISmsSenderService>();
@@ -23,7 +23,7 @@ public class SecurityNotifierTests
 
     [Test]
     [Category(TestCategory.UNIT)]
-    public async Task SendAsync_WhenSms_CallsSmsSender()
+    public async Task GivenSmsChannel_WhenSend_ThenCallsSmsSender()
     {
         var email = new Mock<IEmailSenderService>();
         var sms = new Mock<ISmsSenderService>();

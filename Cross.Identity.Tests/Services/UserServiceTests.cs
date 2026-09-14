@@ -1348,7 +1348,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ChangeAccountEmail_WhenMatchesLinkedProvider_ShouldAutoVerify()
+    public async Task GivenLinkedProviderEmail_WhenChangeAccountEmail_ThenAutoVerifies()
     {
         var userAccountId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -1397,7 +1397,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ChangeAccountEmail_WhenNotLinkedProvider_ShouldStayUnverified()
+    public async Task GivenUnlinkedEmail_WhenChangeAccountEmail_ThenStaysUnverified()
     {
         var userAccountId = Guid.NewGuid();
         var providerId = SeedProvider("Google");
@@ -1443,7 +1443,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ChangeAccountEmail_WhenSameVerifiedEmail_ShouldNotDowngrade()
+    public async Task GivenSameVerifiedEmail_WhenChangeAccountEmail_ThenDoesNotDowngrade()
     {
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
@@ -1470,7 +1470,7 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task ChangeAccountEmail_WhenOtherPreferredExists_ShouldNotStealPreferred()
+    public async Task GivenOtherPreferredEndpoint_WhenChangeAccountEmail_ThenDoesNotStealPreferred()
     {
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity

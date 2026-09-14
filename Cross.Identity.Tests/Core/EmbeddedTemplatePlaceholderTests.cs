@@ -22,7 +22,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("verify", "en")]
     [TestCase("verify", "ru")]
     [TestCase("verify", "ro")]
-    public void VerifyTemplates_ContainRequiredPlaceholders(string name, string lang)
+    public void GivenVerifyTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string name, string lang)
     {
         var sut = CreateSut();
         foreach (var format in new[] { "txt", "html" })
@@ -50,7 +50,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("confirm-email", "en")]
     [TestCase("confirm-email", "ru")]
     [TestCase("confirm-email", "ro")]
-    public void OtpTemplates_ContainRequiredPlaceholders(string name, string lang)
+    public void GivenOtpTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string name, string lang)
     {
         var sut = CreateSut();
         foreach (var format in new[] { "txt", "html" })
@@ -73,7 +73,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("en")]
     [TestCase("ru")]
     [TestCase("ro")]
-    public void PasswordChangedTemplates_ContainRequiredPlaceholders(string lang)
+    public void GivenPasswordChangedTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string lang)
     {
         var sut = CreateSut();
         foreach (var format in new[] { "txt", "html" })
@@ -93,7 +93,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("en")]
     [TestCase("ru")]
     [TestCase("ro")]
-    public void RegisterTemplates_ContainRequiredPlaceholders(string lang)
+    public void GivenRegisterTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string lang)
     {
         var sut = CreateSut();
         foreach (var format in new[] { "txt", "html" })

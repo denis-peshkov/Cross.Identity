@@ -10,7 +10,7 @@
 > **Sources:** `git` / `dotnet test` / version plan / [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (verified 2026-09-14)  
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **56** items — ✅ **43** (77%) · 🟨 **2** (4%) · ⬜ **11** (20%) · ❌ **0** (0%)
+**Checklist summary:** **56** items — ✅ **46** (82%) · 🟨 **0** (0%) · ⬜ **10** (18%) · ❌ **0** (0%)
 
 ---
 
@@ -72,7 +72,7 @@
 | # | Change | Action | Status |
 |---|--------|--------|--------|
 | B1 | Lifecycle bags already on master (`Jti` / `UserAccountId`) | Consumers on `v2.3.0` — no new bag rename in 2.4 | ✅ |
-| B2 | `{{support}}` → `{{supportEmail}}` in stock templates | Custom host templates must use new placeholder | 🟨 CHANGELOG / Accepted; no `BREAKING` § 2.3→2.4 |
+| B2 | `{{support}}` → `{{supportEmail}}` in stock templates | Typo/alias cleanup; config always `SupportEmail` | ✅ принято: не breaking (H25); no BREAKING § |
 | B3 | `Authentication:Notifications` | Additive host config; **no** built-in library defaults | ✅ Принято (M79) |
 | B4 | ChangeAccountEmail boundary | `IUserService` owns account email; endpoint upsert = delivery sync | ✅ Принято |
 
@@ -108,7 +108,7 @@
 |---|----------|--------|
 | D1 | [`RELEASE-PLAN-2.4.0.md`](RELEASE-PLAN-2.4.0.md) | ✅ refreshed 2026-09-14 |
 | D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.4.0 | ✅ dated `14 Sep 2026` |
-| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.3.0 to 2.4.0 | ⬜ none (additive); confirm B2 if needed |
+| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.3.0 to 2.4.0 | ✅ none — B2 not consumer-breaking (H25 Accepted) |
 | D4 | `FLOWS.md` / README host-authorize for ChangeAccountEmail | ✅ |
 | D5 | [`TO-DO.md`](TO-DO.md) cross-version backlog | ✅ not a 2.4 merge blocker |
 
@@ -165,7 +165,7 @@ Execute in order; proceed after closing the previous step (or an explicit skip i
 - ✅ **2. Push** — branch in sync with origin
 - ✅ **3. PR** → `master` [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21)
 - ⬜ **4. CI / Sonar** on PR
-- 🟨 **5. Docs** — BREAKING 2.3→2.4 only if B2 treated as consumer-breaking
+- ✅ **5. Docs** — no BREAKING 2.3→2.4 (B2/H25 Accepted: not breaking)
 - ⬜ **6. CodeRabbit** (optional)
 - ⬜ **7. Merge + tag `v2.4.0` + NuGet**
 
