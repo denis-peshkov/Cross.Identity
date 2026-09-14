@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 7M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 5M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **7M открыты в плане** (#M82–#M88); #H23/#H24/#H26/#H27 закрыты; #H25/#H19/#H21 принято; #H20/#H22 закрыты.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **5M открыты в плане** (#M84–#M88); #H23/#H24/#H26/#H27/#M83 закрыты; #H25/#H19/#H21/#M82 принято; #H20/#H22 закрыты.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -25,12 +25,6 @@
 ---
 
 ## Средний (противоречия / баги контрактов)
-
-### M82. CHANGELOG v2.4.0 dated before tag
-⬜ Mark Unreleased until GitHub release/tag exists (heading currently dated 14 Sep 2026).
-
-### M83. `RELEASE-PLAN-dev-to-master` maintenance script path
-⬜ Documented path should match real script (`.cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`).
 
 ### M84. `triage.yml` `ready_for_review`
 ⬜ Add `ready_for_review` to `pull_request` types (draft → ready).
@@ -70,6 +64,9 @@
 ### `NotificationComposer` без HtmlEncode (CR #H21)
 Осознанно: brand/placeholders в HtmlBody сырым `Replace`; санитайз — зона хоста / доверенный `Authentication:Notifications` + свои значения. Text/HTML один `Apply`.
 
+### CHANGELOG `v2.4.0` dated pre-tag (CR #M82)
+Осознанно: секция `## v2.4.0 — 14 Sep 2026` до GitHub release/tag — ок для ship prep; Unreleased не заводим.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -96,6 +93,8 @@
 | ✅ #M78 Package icons `icon.png`/`icon.svg` | rename from IdentityServer.*; `config.nuspec` / `.slnx` |
 | ✅ #H27 `update-changelog` `--version`/`--from` | both flags → return directly, skip tag resolver; unit test |
 | ✅ #H26 Change summary label | canonical `Change summary`; legacy Checklist* replaced; skill + tests |
+| ✅ #M82 CHANGELOG dated pre-tag | принято: `v2.4.0 — 14 Sep 2026` до tag ок; Unreleased не заводим |
+| ✅ #M83 Maintenance script path | already ok: `.cursor/skills/release-plan/scripts/release-plan-summary.mjs`; CR `docs/scripts/…` неверен |
 | ✅ #H24 TO-DO ChangePassword `Id` | «Принято»: stale `Id` → `UserAccountId` (+ current password) |
 | ✅ #H25 B2 `{{support}}` → `{{supportEmail}}` | принято: не breaking — поле всегда `SupportEmail`; `{{support}}` = typo/alias; § BREAKING снят |
 | ✅ #H23 New 2.4.0 tests Given/When/Then | rename NotificationOptions/Composer/EmbeddedTemplate/HostSuppliedLanguage/SecurityNotifier/ChangeAccountEmail; no Async on tests |
@@ -119,7 +118,7 @@
 
 ## Приоритет фиксов
 
-1. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
+1. **M84–M88** — triage/CI/scripts polish.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 
