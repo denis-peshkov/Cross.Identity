@@ -1,4 +1,4 @@
-# This workflow runs automated issue/PR triage for Cross.Identity.
+# Automated issue/PR triage (Cursor SDK).
 # Requires repository secret: CURSOR_API_KEY (Cursor Dashboard → Integrations)
 name: Triage
 
@@ -27,7 +27,11 @@ on:
   issues:
     types: [opened]
   pull_request:
-    types: [opened, synchronize, reopened, edited]
+    # No `edited` — title/body edits would re-burn Cursor quota
+    types: [opened, synchronize, reopened, ready_for_review]
+  # Fork PRs: secrets available; must never checkout/run head (see job steps).
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
@@ -42,13 +46,37 @@ jobs:
   pr-triage-comment:
     name: PR automated comment
     runs-on: ubuntu-22.04
+    # Same-repo → pull_request (secrets OK). Fork → pull_request_target (secrets OK).
+    # Mutually exclusive on head.repo so a PR never runs twice. Skip drafts.
     if: >
-      (github.event_name == 'pull_request' && github.event.pull_request.draft == false) ||
+      (
+        github.event_name == 'pull_request' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      ) ||
+      (
+        github.event_name == 'pull_request_target' &&
+        github.event.pull_request.draft == false &&
+        github.event.pull_request.head.repo.full_name != github.repository
+      ) ||
       (github.event_name == 'workflow_dispatch' && inputs.pr_number != '')
 
     steps:
+      # Same-repo / manual: full history so local agent tools see base...head, not tip-only.
       - name: Checkout
+        if: github.event_name != 'pull_request_target'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Fork path: ONLY base SHA — never head.sha. Diff/commits come from gh API in yarn pr-triage.
+      - name: Checkout base only (fork PR)
+        if: github.event_name == 'pull_request_target'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,13 +94,17 @@ jobs:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr_number }}
+          TRIAGE_ICON_REL_PATH: icon.png
         working-directory: .cursor/triage
         run: yarn pr-triage
 
   triage:
     name: Repository triage
     runs-on: ubuntu-22.04
-    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr_number == '') || github.event_name == 'issues'
+    if: >
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && inputs.pr_number == '') ||
+      github.event_name == 'issues'
 
     env:
       TRIAGE_MODE: ${{ github.event.inputs.mode || 'audit' }}

@@ -18,14 +18,13 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 
 ## Import
 
-1. Enable **GitHub Pro** (or make the repo public).
-2. Open the repo → **Settings** → **Rules** → **Rulesets**.
-3. **New ruleset** → **Import a ruleset**.
-4. Import files below **one by one** (order recommended).
-5. Review each ruleset:
+1. Open the repo → **Settings** → **Rules** → **Rulesets**.
+2. **New ruleset** → **Import a ruleset**.
+3. Import files below **one by one** (order recommended).
+4. Review each ruleset:
    - Confirm **status check** context is `build` (job name in `.github/workflows/dotnet.yml`). If GitHub shows a different name (e.g. `.NET / build`), edit the required check after the first green run.
    - Confirm **Bypass** is Repository admin only (`RepositoryRole` / Admin).
-6. Save with **Active** (or start with **Evaluate** if available on your plan).
+5. Save with **Active** (or start with **Evaluate** if available on your plan).
 
 ## Files
 

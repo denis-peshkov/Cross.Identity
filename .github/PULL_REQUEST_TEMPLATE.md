@@ -1,8 +1,8 @@
-<!-- PR body: short narrative + minimal checklist. English only — used in GitHub history and triage. -->
+﻿<!-- PR body: short narrative + minimal checklist. English only. -->
 
 ## Summary
 
-<!-- What changed and why. The PR title should already be the intended squash merge title. Prefix the PR title with BREAKING: when needed. Add "Closes: #0000" if applicable. -->
+<!-- What changed and why. Prefix the PR title with BREAKING: when needed. Add "Closes: #0000" if applicable. -->
 
 Closes: #0000
 
@@ -35,7 +35,6 @@ Closes: #0000
 
 N/A
 
-
 ---
 
 ## Checklist
@@ -51,14 +50,12 @@ N/A
 - [ ] If this PR edits `docs/RELEASE-PLAN-dev-to-master.md`, run `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`.
 - [ ] If this PR touches auth / JWT / OAuth / licensing / passwords, the risks are described above and the diff contains no secrets.
 
-
 ---
 
 ## AI assistance
 
 - [ ] AI was used to generate or assist with this PR. *Describe briefly what AI helped with and what you manually verified.*
 
-
 ---
 
-**License:** By opening this PR, you agree that contributions are under [RPL 1.5](../LICENSE) (or [Peshkov commercial license](https://peshkov.biz/license) where applicable).
+**License:** By opening this PR, you agree that contributions are under [RPL 1.5](../LICENSE.md) (or [Peshkov commercial license](https://peshkov.biz/license) where applicable).

@@ -1,43 +1,37 @@
-# Cross.Identity PR Review Checklist
+# PR Review Checklist
 
-Use for deep review of PRs in `triage-pr` and `bugbot`.
+Use for deep review of PRs in `triage-pr` and `bugbot`. Paths below are examples — prefer the PR delta / solution layout.
 
-## Security & Auth (critical)
+## Security & Licensing (critical)
 
-- No logging of passwords, refresh/access tokens, verification codes
-- JWT: correct claims, expiry, signing key handling
-- OAuth/external login: state validation, callback security
-- Input validation (FluentValidation / ModelState)
-- Parameterized EF Core queries (no SQL concatenation)
-- See `.cursor/rules/104-backend-auth.mdc`, `105-backend-security.mdc`
+- No logging of real license JWTs, private keys, or production secrets
+- License validation: product metadata (name, type, edition, dates) matches the registered product info
+- License-check behavior order and any reserved pipeline slots for sibling packages
+- Input validation (FluentValidation) stays aligned with registered assemblies
+- See `docs/BREAKING.md` when changing public licensing / registration surface
 
 ## .NET & Code Style
 
 - `Nullable enable`, `Async` suffix on async methods
-- `GlobalUsings.cs` in projects
-- UTF-8 with BOM for `.cs`, `.csproj`, `.sln`
+- `GlobalUsings.cs` in projects; `ImplicitUsings` = `disable`
+- UTF-8 with BOM for `.cs`, `.csproj`, `.sln` / `.slnx`
 - Follow `.editorconfig`
-- Minimal logic in controllers (if Sample.Api is affected)
+- Library awaits: `ConfigureAwait(false)` (CA2007); sample/test projects may NoWarn CA2007
 
-## Process Engine
+## Pipeline & Registration
 
-- New/changed flows: JSON in `ProcessEngine/Definitions/Flows/`
-- Steps registered via factories
-- Update `FLOWS.md` when public flows change
-- Email/SMS templates in `Definitions/Templates/`
+- Behavior order: license → (reserved extension slots) → filters / validation / event queue as designed
+- DI / CQRS registration: assemblies, validators, filters, optional `LicenseKey`
+- Command / Query / CommandEvent contracts remain MediatR-compatible
 
 ## Tests
 
-Canonical: `.cursor/rules/300-testing-dotnet.mdc` (keep review comments aligned with it).
-
-- New behavior covered in `Cross.Identity.Tests/`
-- Method names: `Given[X]_When[Y]_Then[Z]`; async tests end with `Async`
-- Flow → `Identity/FlowTests/` (Integration); steps/factories → `StepTests` / `StepFactoryTests` (Unit)
-- `[Category(TestCategory.…)]` on **each test method** only — never on the class / `[TestFixture]` / base
-- Run: `dotnet test Cross.Identity.Tests/Cross.Identity.Tests.csproj`
-- **Do not** request or nitpick missing XML `/// <summary>` on test methods / `[SetUp]` — names are the documentation
+- New behavior covered in the test project (zones from the solution layout)
+- Prefer clear Given/When/Then style names; async tests end with `Async`
+- Run: `dotnet test <TestProject>/<TestProject>.csproj` (path from the solution)
+- **Do not** require XML `/// <summary>` on test methods
 
 ## Breaking Changes
 
-- Public NuGet API — semver impact
-- EF migrations (if any) — backward compatibility
+- Public NuGet API / registration / licensing — semver impact → `docs/BREAKING.md`
+- Update `docs/CHANGELOG.md` and keep `config.nuspec` `releaseNotes` as a short summary + link, not a full duplicate list

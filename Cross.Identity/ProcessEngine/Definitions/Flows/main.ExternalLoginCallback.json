@@ -9,6 +9,7 @@
           { "key": "State", "type": "String", "required": true, "min": 1, "max": 4096 },
           { "key": "Error", "type": "String", "required": false, "max": 256 },
           { "key": "ErrorDescription", "type": "String", "required": false, "max": 1024 },
+          { "key": "LanguageCode", "type": "String", "required": false, "min": 2, "max": 2, "regex": "^[a-zA-Z]{2}$" },
           { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
           { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
           { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }

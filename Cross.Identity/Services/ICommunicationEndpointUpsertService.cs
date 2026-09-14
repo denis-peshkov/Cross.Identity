@@ -1,9 +1,10 @@
-namespace Cross.Identity.Services;
+﻿namespace Cross.Identity.Services;
 
 /// <summary>
 /// Internal write/sync for communication endpoints. Not exposed on the public
 /// <see cref="ICommunicationEndpointService"/> — callers must be pre-authorized
-/// library paths (OAuth provider sync, account contact sync after OTP verification).
+/// library paths (OAuth provider sync, account contact sync after OTP verification,
+/// <see cref="IUserService.ChangeAccountEmailAsync"/>).
 /// </summary>
 internal interface ICommunicationEndpointUpsertService
 {

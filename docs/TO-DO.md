@@ -1,8 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-Нерешённые пункты вне дельты version plan.
-
-**Id high-water (не переиспользовать ≤):** `C0` `H10` `M50` `L11`
+**Id high-water (не переиспользовать ≤):** `C1` `H27` `M89` `L15`
 
 ---
 
@@ -22,17 +20,14 @@ CodeRabbit: в `.cursor/rules/102-backend-efcore.mdc` (и дубль в skill) �
 ### M13. `GetClaimValue` для JWS без подписи
 Публичный API: 3-part JWT — parse payload без crypto. В `VerifyTokenStep` перед этим есть `ValidateAccessTokenAsync` — ок. Риск — **misuse** API напрямую. Нужны docs / misuse guidance.
 
-### M14. `ValidateAccessTokenJtiAsync` / `ValidateRefreshTokenAsync`
-Только DB lookup, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается. Нужны docs / misuse guidance.
+### M14. `ValidateAccessTokenJtiAsync`
+Только DB lookup по JTI, без JWT crypto. Для middleware после `OnTokenValidated` — ок; без crypto снаружи — дыра. В stock не вызывается. Нужны docs / misuse guidance.
 
 ### M39. Idle revoke double-audit
 `HandleRefreshTokenIdleExpiredAsync` / idle path в `JwtTokenService` — presented token может аудититься/ревокаться дважды при family revoke.
 
 ### M40. `FLOWS.md` `main.Register` bag key
 В таблице `userAccountIdKey: UserId`, в JSON / `collectResult` — `UserAccountId`.
-
-### M41. `EndpointId` GUID regex
-`main.CommunicationEndpointSetPreferred.json` — только `min/max: 36`, без GUID regex.
 
 ### M42. `JsonHelpers` `Enum.IsDefined`
 После `Enum.TryParse` требовать `Enum.IsDefined`.
@@ -83,10 +78,34 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 
 ---
 
-## Приоритет (подсказка)
+## Принято (осознанный trade-off)
 
-1. **H1:** DbUp journal heuristic в EF Core guidance.
-2. **M13–M14:** half-validate API docs / misuse guidance.
-3. **M39:** idle double-audit.
-4. **M40–M44:** FLOWS / EndpointId / JsonHelpers / template / language.
-5. **L1–L10:** техдолг / XML / style / triage `ru`.
+- Refresh rotation без атомарности в библиотеке — хост оборачивает refresh во внешнюю транзакцию (`FLOWS.md`); race → `REPLAY_DETECTED` + family revoke.
+- Sync-over-async в `GetClaimValue` (JWE): `GetAwaiter().GetResult()`; основной путь — JWS без async I/O.
+- `HostSuppliedClientContext` — trusted pipeline хоста (Ip/UA/Fingerprint); библиотека не читает `HttpContext`.
+- Delivery channel: `LockChannelAsEmail` → preferred verified → account email/phone; selector Email/Phone — только identity lookup.
+- Публичные half-validate API (`GetClaimValue` / JTI lookup) — для второго шага после crypto, не standalone auth (см. open M13/M14).
+- OTP plaintext в логах `CodeService.SendAsync` — хост не утекает verbose logs в SIEM.
+- Messenger preferred → SMS (`ToEmailOrSms`); нет messenger sender / remapping.
+- Apple в registry без реализации (`NotSupportedException`) — не включать в Providers до реализации.
+- `main.GetUserAccountId` existence oracle — продуктовое решение; reject-пути дают единый `Invalid credentials.`
+- `PasswordAlgoEnum.SHA256` obsolete; pepper ignored; default Argon2id/PBKDF2.
+- `ChangePassword` без library session proof — `UserAccountId` + current password; session proof опционально на хосте.
+- OAuth `ReturnUrl` — библиотека только хранит/отдаёт; allowlist open redirect — хост.
+- Refresh + `Empty` при `SessionBindingCheckIp=true` → `ValidationException`; при `false` — прежняя UA/FP логика.
+- Password max 32 в stock `collectForm` — контракт UX/JSON, не hasher/БД.
+- OAuth unverified squat + verified profile → новый verified account (не auto-link).
+- Audit PII в `auth.Audits` (Ip/UA/Fingerprint) — forensics by design; retention — хост.
+- PII в логах auth steps (email/phone) — forensics; redaction/sink — хост.
+- Выбор типа канала / messenger bot (#40/#41) — вне 2.0 stock scope.
+- `ChannelEnum.WhatsApp` — typo `WatsApp` удалён; без obsolete alias.
+- User-scoped flows (2.2): session proof на стороне хоста; библиотека принимает `UserAccountId` без RefreshToken.
+- Lifecycle bags (2.3): хост резолвит identity до `ExecuteAsync` (`Jti` / `UserAccountId`); без parse compact refresh на logout/refresh/change-password paths.
+- Scaffold `Release:` — PR optional (`--pr`); без auto-`gh`.
+- `ChangeAccountEmail` — account op на `IUserService`; upsert email-endpoint = delivery/OTP sync side-effect (не `ICommunicationEndpointService` как owner).
+- Optional `LanguageCode` + `Authentication:Notifications` — host config; library без built-in brand defaults; stock `{{supportEmail}}` (не `{{support}}`).
+- `{{support}}` → `{{supportEmail}}` унификация — не consumer-breaking (поле всегда `SupportEmail`; `{{support}}` был typo/alias).
+- OTP в HTML email preheader — осознанный UX; кастомный host template может убрать.
+- `NotificationComposer` без HtmlEncode brand/placeholders — sanitize зона хоста / доверенный config.
+- CHANGELOG dated pre-tag для ship prep — ок; Unreleased не обязателен.
+- `repository-link` при missing/non-GitHub origin — soft empty + exit 0 (не hard-fail).

@@ -1,11 +1,23 @@
-Bună,
+Bună, {{fullName}}!
 
-Ați solicitat resetarea parolei pentru {{email}}.
-Codul dvs.: {{code}} (valabil {{expires}}).
+Ai solicitat resetarea parolei pentru {{email}}.
 
-Pentru a continua, deschideți acest link:
+Codul tău de verificare:
+{{code}}
+
+👉 Resetează parola:
 {{url}}
 
-Dacă nu ați solicitat resetarea, ignorați acest email.
-Suport: {{support}}
+⚠️ Atenție! Codul este valabil {{expires}}.
+
+Dacă nu ai solicitat acest lucru, poți ignora acest e-mail.
+
+Întâmpini dificultăți? Scrie-ne pe {{supportEmail}}.
+
+Ai nelămuriri legate de contul tău pe {{site}}?
+Vizitează secțiunea Contul Meu - Ajutor.
+
+Facebook | Instagram | YouTube
+{{site}}
+
 © {{year}} {{brand}}

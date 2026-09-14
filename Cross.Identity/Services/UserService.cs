@@ -11,6 +11,7 @@ internal sealed class UserService : IUserService
     private readonly IPepperVaultProvider _pepperVault;
     private readonly IPasswordHasher _hasher;
     private readonly IJwtTokenService _jwtTokenService;
+    private readonly IAuditService _audit;
     private readonly ICommunicationEndpointService _communicationEndpoints;
     private readonly ICommunicationEndpointUpsertService _communicationEndpointUpsert;
     private readonly AuthenticationOptions _options;
@@ -21,6 +22,7 @@ internal sealed class UserService : IUserService
         IPepperVaultProvider pepperVault,
         IPasswordHasher hasher,
         IJwtTokenService jwtTokenService,
+        IAuditService audit,
         ICommunicationEndpointService communicationEndpoints,
         ICommunicationEndpointUpsertService communicationEndpointUpsert,
         IOptionsSnapshot<AuthenticationOptions> options)
@@ -30,6 +32,7 @@ internal sealed class UserService : IUserService
         _pepperVault = pepperVault;
         _hasher = hasher;
         _jwtTokenService = jwtTokenService;
+        _audit = audit;
         _communicationEndpoints = communicationEndpoints;
         _communicationEndpointUpsert = communicationEndpointUpsert;
         _options = options.Value;
@@ -352,6 +355,106 @@ internal sealed class UserService : IUserService
             .ConfigureAwait(false);
 
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc/>
+    public async Task<CommunicationEndpointDto> ChangeAccountEmailAsync(
+        Guid userAccountId,
+        string email,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        await UserAccountGuard.EnsureIsActiveAsync(_context, userAccountId, cancellationToken).ConfigureAwait(false);
+
+        var normalizedEmail = ChannelEnum.Email.NormalizeAddress(email);
+        var account = await _context.UsersAccounts
+            .FirstOrDefaultAsync(x => x.Id == userAccountId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException("User account was not found.");
+
+        var sameEmail = string.Equals(account.Email, normalizedEmail, StringComparison.Ordinal);
+        var trustedByExternalProvider = await IsTrustedByLinkedExternalProviderAsync(
+                userAccountId,
+                normalizedEmail,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        // Same address: never downgrade verification; upgrade when a linked provider now attests it.
+        var emailVerified = sameEmail
+            ? account.EmailVerified || trustedByExternalProvider
+            : trustedByExternalProvider;
+
+        if (emailVerified)
+        {
+            await UserAccountGuard.EnsureNoOtherVerifiedEmailAsync(
+                    _context,
+                    userAccountId,
+                    normalizedEmail,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        account.Email = normalizedEmail;
+        account.EmailVerified = emailVerified;
+
+        var source = trustedByExternalProvider
+            ? CommunicationEndpointSource.ExternalProvider
+            : sameEmail && emailVerified
+                ? CommunicationEndpointSource.Account
+                : CommunicationEndpointSource.Manual;
+
+        var endpoint = await _communicationEndpointUpsert
+            .UpsertAsync(
+                userAccountId,
+                ChannelEnum.Email,
+                normalizedEmail,
+                source,
+                isVerified: emailVerified,
+                cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
+
+        _audit.Record(new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            Operation = AuditOperation.AccountEmailChanged,
+            EntityType = AuditEntityType.UserAccount,
+            EntityId = userAccountId.ToString(),
+            IpAddress = hostSuppliedClientContext.IpAddress,
+            UserAgent = hostSuppliedClientContext.UserAgent,
+            DeviceFingerprint = hostSuppliedClientContext.DeviceFingerprint,
+            Notes = emailVerified
+                ? "Account email changed (verified)."
+                : "Account email changed (pending verification).",
+        });
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        return endpoint;
+    }
+
+    private async Task<bool> IsTrustedByLinkedExternalProviderAsync(
+        Guid userAccountId,
+        string normalizedEmail,
+        CancellationToken cancellationToken)
+    {
+        var providerEmails = await _context.UsersExternalLogins
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == userAccountId
+                        && x.ProviderEmail != null
+                        && x.ProviderEmail != string.Empty)
+            .Select(x => x.ProviderEmail!)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return providerEmails.Any(x =>
+            string.Equals(
+                ChannelEnum.Email.NormalizeAddress(x),
+                normalizedEmail,
+                StringComparison.Ordinal));
     }
 
     private static string ResolveSelectorField(string selectorField)

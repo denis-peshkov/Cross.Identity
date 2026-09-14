@@ -737,7 +737,7 @@ internal class JwtTokenService : IJwtTokenService
         var entity = await _context.RefreshTokens
             .FirstOrDefaultAsync(x => x.Id == refreshTokenJti, cancellationToken)
             .ConfigureAwait(false)
-                     ?? throw new InvalidOperationException("Refresh token not found.");
+            ?? throw new InvalidOperationException("Refresh token not found.");
 
         await InvalidateRefreshTokenEntityAsync(entity, newRefreshTokenJti, hostSuppliedClientContext, cancellationToken)
             .ConfigureAwait(false);

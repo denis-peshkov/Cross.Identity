@@ -9,6 +9,7 @@ public static class ServiceCollectionExtensions
     private static IServiceCollection AddJwtTokenAuth(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationOptions.SectionName));
+        services.Configure<NotificationOptions>(configuration.GetSection(NotificationOptions.SectionName));
         services.TryAddScoped<IAuditService, AuditService>();
         services.TryAddScoped<IJwtTokenService, JwtTokenService>();
         services.AddHostedService<ExpiredRefreshTokenCleanupHostedService>();
@@ -52,6 +53,8 @@ public static class ServiceCollectionExtensions
         services.TryAddScoped<ICodeService, CodeService>();
         services.TryAddScoped<IEmailSenderService, EmailSenderService>();
         services.TryAddScoped<ISmsSenderService, SmsSenderService>();
+        services.TryAddScoped<INotificationComposer, NotificationComposer>();
+        services.TryAddScoped<ISecurityNotifier, SecurityNotifier>();
 
         // using var provider = services.BuildServiceProvider(validateScopes: true);
         // provider.GetRequiredService<ICodeService>();
@@ -81,6 +84,7 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointsGetAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetPreferredStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, ChangeAccountEmailStepFactory>(),
             });
 
         services.TryAddScoped<IFormValidatorFactory, UnifiedFormValidatorFactory>();

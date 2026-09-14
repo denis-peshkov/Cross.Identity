@@ -2,7 +2,7 @@
 [![GitHub Release Date](https://img.shields.io/github/release-date/denis-peshkov/Cross.Identity?label=released)](https://github.com/denis-peshkov/Cross.Identity/releases)
 [![NuGetVersion](https://img.shields.io/nuget/v/Cross.Identity.svg)](https://nuget.org/packages/Cross.Identity/)
 [![NugetDownloads](https://img.shields.io/nuget/dt/Cross.Identity.svg)](https://nuget.org/packages/Cross.Identity/)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=denis-peshkov.Cross.Identity&metric=coverage)](https://sonarcloud.io/summary/new_code?id=denis-peshkov.Cross.Identity)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Cross.Identity&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Cross.Identity)
 [![issues](https://img.shields.io/github/issues/denis-peshkov/Cross.Identity)](https://github.com/denis-peshkov/Cross.Identity/issues)
 [![.NET PR](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml/badge.svg?event=pull_request)](https://github.com/denis-peshkov/Cross.Identity/actions/workflows/dotnet.yml)
 
@@ -136,7 +136,7 @@ services.AddCrossIdentity(configuration);
 // LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
 ```
 
-3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
+3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
 
 License key (optional) — `CrossIdentity` section in configuration or the `CrossIdentity__LicenseKey` environment variable:
 

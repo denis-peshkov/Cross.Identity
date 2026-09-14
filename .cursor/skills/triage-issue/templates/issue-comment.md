@@ -1,6 +1,6 @@
-# Issue Comment Templates — Cross.Identity
+# Issue Comment Templates
 
-GitHub comments — **in English**.
+GitHub comments — **in English**. Resolve `{repository_name}` / `{repository_url}` from `gh repo view`.
 
 ---
 
@@ -15,15 +15,15 @@ GitHub comments — **in English**.
 
 ### Assessment
 
-{1-2 sentences about the issue and why it matters for an identity/auth library.}
+{1-2 sentences about the issue and why it matters for this library.}
 
 ### Missing Information
 
 To move forward, we need:
 
-- **NuGet version** or git commit (`Cross.Identity` package version)
+- **Package / NuGet version** or git commit
 - **Target framework** (e.g. net8.0)
-- **Flow name** if auth-related (see `FLOWS.md`, e.g. `main.Token`)
+- **Area** if relevant (from README / folder layout)
 - **Reproduction steps** (no real passwords, tokens, or PII)
 
 ### Next Steps
@@ -31,7 +31,7 @@ To move forward, we need:
 {What happens after the info is provided.}
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
+*Triaged via [{repository_name}]({repository_url}) Cursor `/triage-issue`*
 ```
 
 ---
@@ -50,7 +50,7 @@ This issue covers the same problem as #{original_number}: **{original_title}**.
 If your scenario differs materially, please reopen with that context. Otherwise, follow the original issue.
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
+*Triaged via [{repository_name}]({repository_url}) Cursor `/triage-issue`*
 ```
 
 ---
@@ -62,10 +62,10 @@ If your scenario differs materially, please reopen with that context. Otherwise,
 
 This issue has been open for {N} days without activity. We're closing it to keep the backlog actionable.
 
-If still relevant, reopen with your current NuGet version, target framework, and reproduction steps.
+If still relevant, reopen with your current package version, target framework, and reproduction steps.
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
+*Triaged via [{repository_name}]({repository_url}) Cursor `/triage-issue`*
 ```
 
 ---
@@ -75,7 +75,7 @@ If still relevant, reopen with your current NuGet version, target framework, and
 ```markdown
 ## Closing: Out of Scope
 
-After review, this request falls outside Cross.Identity's current scope as an identity/auth library.
+After review, this request falls outside this repository’s current scope.
 
 ### Rationale
 
@@ -83,8 +83,8 @@ After review, this request falls outside Cross.Identity's current scope as an id
 
 ### Alternatives
 
-{If applicable: extension points, Sample.Api, or separate package.}
+{If applicable: extension points, sample host, or sibling packages.}
 
 ---
-*Triaged via [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) Cursor `/triage-issue`*
+*Triaged via [{repository_name}]({repository_url}) Cursor `/triage-issue`*
 ```

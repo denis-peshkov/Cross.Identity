@@ -7,8 +7,12 @@
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** {{PREVIOUS_PLAN_LINK_OR_DASH}}
+>
+> Дельта: `{{BASE}}...HEAD` — **{{DELTA_COMMITS}}** коммита · **{{DELTA_FILES}}** файлов · **{{DELTA_PLUS}} / {{DELTA_MINUS}}**. {{OPEN_CHML_STATUS}}
 
-{{OPTIONAL_NOTES}}
+**CodeRabbit:** `{{CR_DATE}}` · log `{{CR_LOG_PATH}}` · {{CR_FINDINGS_COUNT}} findings ({{CR_CRITICAL}} Critical, {{CR_MAJOR}} Major, {{CR_MINOR}} Minor) → {{CR_PLAN_STATUS}}.
+
+**PR:** {{PR_LINE_OR_DASH}}
 
 ---
 
@@ -36,7 +40,7 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 {{ACCEPTED_OR_EMPTY}}
 
@@ -45,7 +49,7 @@
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ #{{CLOSED_ID}} {{CLOSED_TITLE}} | {{CLOSED_SUMMARY}} |
 
 ---

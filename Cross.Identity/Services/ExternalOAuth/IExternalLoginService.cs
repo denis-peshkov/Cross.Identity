@@ -58,6 +58,8 @@ internal interface IExternalLoginService
     /// Complete the OAuth callback: validate and consume state, exchange <paramref name="code"/> for a provider access token,
     /// resolve or create the local user, upsert <c>auth.UsersExternalLogins</c>, and optionally run
     /// <see cref="IExternalLoginUserProvisioner"/>.
+    /// New registration sets <c>UsersAccounts.EmailVerified</c> from <see cref="ExternalOAuthProfile.EmailVerified"/>
+    /// (true only when the provider attests a non-empty verified email); re-login does not change that flag.
     /// </summary>
     /// <param name="code">
     /// Authorization code from the provider.

@@ -5,7 +5,9 @@ import {
   normalizeCategoryLabel,
   normalizePriorityLabel,
   applyPrTriageLabels,
+  shouldApplyTriageLabels,
   MANAGED_TRIAGE_LABELS,
+  DEFAULT_LABEL_MIN_CONFIDENCE,
 } from './apply-pr-labels.mjs';
 
 describe('normalizeCategoryLabel', () => {
@@ -40,6 +42,43 @@ describe('labelsFromTriage', () => {
     assert.deepEqual(toAdd, ['enhancement', 'priority:medium']);
     assert.ok(managed.includes('priority:low'));
     assert.equal(managed.length, MANAGED_TRIAGE_LABELS.length);
+  });
+});
+
+describe('shouldApplyTriageLabels', () => {
+  it('defaults to applying labels when env unset (default 1)', () => {
+    const gate = shouldApplyTriageLabels({ confidence: 95 }, {});
+    assert.equal(gate.apply, true);
+  });
+
+  it('opt-out via TRIAGE_APPLY_LABELS=false', () => {
+    const gate = shouldApplyTriageLabels(
+      { confidence: 95 },
+      { TRIAGE_APPLY_LABELS: 'false' }
+    );
+    assert.equal(gate.apply, false);
+    assert.match(gate.reason, /disabled/);
+  });
+
+  it('requires confidence floor when enabled', () => {
+    const low = shouldApplyTriageLabels({ confidence: 40 }, {});
+    assert.equal(low.apply, false);
+    assert.equal(low.minConfidence, DEFAULT_LABEL_MIN_CONFIDENCE);
+
+    const ok = shouldApplyTriageLabels(
+      { confidence: 80 },
+      { TRIAGE_APPLY_LABELS: '1' }
+    );
+    assert.equal(ok.apply, true);
+  });
+
+  it('honors TRIAGE_LABEL_MIN_CONFIDENCE', () => {
+    const gate = shouldApplyTriageLabels(
+      { confidence: 85 },
+      { TRIAGE_LABEL_MIN_CONFIDENCE: '90' }
+    );
+    assert.equal(gate.apply, false);
+    assert.equal(gate.minConfidence, 90);
   });
 });
 

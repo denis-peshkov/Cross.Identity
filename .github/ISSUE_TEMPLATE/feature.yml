@@ -51,7 +51,7 @@ body:
       options:
         - "No"
         - "Maybe — needs discussion"
-        - "Yes — needs BREAKING.md entry"
+        - "Yes — needs release notes / BREAKING.md entry"
     validations:
       required: true
 
