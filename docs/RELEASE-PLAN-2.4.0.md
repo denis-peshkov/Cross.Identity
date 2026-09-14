@@ -8,11 +8,11 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **69** коммита · **195** файлов · **+8 688 / −2 974**. Open: H1.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L пустые.
 
 **CodeRabbit:** не запускался.
 
-**PR:** —
+**PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
 ---
 
@@ -21,9 +21,6 @@
 ---
 
 ## Высокий (логика / auth model)
-
-### H18. Branch missing `origin/master` tip (`v2.3.0`)
-`HEAD` (`3f6f5a0`) **не** содержит `e3f7d34`; merge-base с `origin/master` = `6a04f50` (`v2.2.0`). Перед PR — back-merge / rebase `origin/master`, затем `dotnet test`.
 
 ---
 
@@ -41,7 +38,7 @@
 Смена primary email — зона `IUserService` (не `ICommunicationEndpointService`). Upsert email-endpoint остаётся side-effect для синхрона delivery/OTP; flow может отдавать `endpoint` DTO хосту без второго `GetAll`.
 
 ### Optional `LanguageCode` + `Authentication:Notifications`
-Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` — **host config** (additive; класс без built-in defaults). Stock templates: `{{supportEmail}}` (не `{{support}}`). Sample: `Sample.Api` / `appsettings.json`.
+Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` — **host config** (additive; класс **без** built-in defaults). Stock templates: `{{supportEmail}}` (не `{{support}}`). Sample: `Sample.Api` / `appsettings.json`.
 
 ---
 
@@ -64,10 +61,12 @@
 | ✅ #M77 License dotted product claim | `License` parse dotted JWT product names ↔ underscore enum; tests |
 | ✅ #M78 Package icons `icon.png`/`icon.svg` | rename from IdentityServer.*; `config.nuspec` / `.slnx` |
 | ✅ #L14 GitHub templates / rulesets | ISSUE/PR templates + rulesets README под Cross.Identity |
-| ✅ #M76 register/verify templates committed | WIP закрыт: localize/standardize en/ru/ro в ветке; working tree clean |
+| ✅ #M76 register/verify templates committed | localize/standardize en/ru/ro в ветке |
 | ✅ #M80 Sample.Api `Notifications` config | `Authentication:Notifications` в `appsettings.json` |
-| ✅ #M81 Template polish pass | structure/placeholders/responsive en/ru/ro (post-M75 commits) |
-| ✅ #M79 `NotificationOptions` test contract | no library defaults; `NewInstance_HasNoBuiltInBrandDefaults`; brand via host `Authentication:Notifications` |
+| ✅ #M81 Template polish pass | structure/placeholders/responsive en/ru/ro (post-M75) |
+| ✅ #M79 `NotificationOptions` no library defaults | host config only; `NewInstance_HasNoBuiltInBrandDefaults` |
+| ✅ #H18 back-merge `origin/master` | merge-base = `e3f7d34` (`v2.3.0`); tip master in `HEAD` (`ec24409`) |
+| ✅ #L15 Sonar exclude email templates | `dotnet.yml` — templates out of duplicate-code detection |
 
 ---
 
@@ -75,13 +74,12 @@
 
 - Lifecycle bags: `Logout` / `RefreshToken` — `Jti`; `LogoutAll` / `ChangePassword` — `UserAccountId`; host resolves identity before `ExecuteAsync`.
 - Смена account email через user service + sync communication endpoint.
-- Notification templates: optional `LanguageCode`, shared composer, `password-changed` / verify / register / confirm-email.
+- Notification templates: optional `LanguageCode`, shared composer, host `Authentication:Notifications`, `password-changed` / verify / register / confirm-email.
 
 ---
 
 ## Приоритет фиксов
 
-1. **H18** — back-merge `origin/master` (`v2.3.0`) в ветку.
-2. `dotnet test` · PR → `master` · CI/Sonar · (опц.) CodeRabbit · tag `v2.4.0`.
+_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
 
-Внерелизный backlog → [`TO-DO.md`](TO-DO.md).
+Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · (опц.) CodeRabbit · merge → tag `v2.4.0` + NuGet.

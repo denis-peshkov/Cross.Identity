@@ -12,7 +12,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - Host-supplied language context for notification templates (`HostSuppliedLanguageContext`); OTP / reset-password paths compose messages via `INotificationComposer` + `ISecurityNotifier`.
-- `Authentication:Notifications` (`NotificationOptions`); template placeholder `{{supportEmail}}` (was `{{support}}`).
+- `Authentication:Notifications` (`NotificationOptions`) — host-supplied brand placeholders; no built-in library defaults; template placeholder `{{supportEmail}}` (was `{{support}}`).
 - Embedded register / verify / confirm-email / password-changed templates for `en` / `ru` / `ro` (txt + html); stock flows use `verify` / `reset` / `password-changed`.
 - `main.ChangeAccountEmail` flow / `IUserService.ChangeAccountEmailAsync` (host-authorized `UserAccountId`); audit `AccountEmailChanged`.
 - License JWT: dotted product-type claims (e.g. `Cross.Identity`) parsed against underscore enum names; license validation helpers simplified.
@@ -20,7 +20,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Tests
 
-- Coverage for send-code / reset-password factories and steps, embedded template placeholders, communication-endpoint and ChangeAccountEmail flows, license dotted product claim.
+- Coverage for send-code / reset-password factories and steps, embedded template placeholders, communication-endpoint and ChangeAccountEmail flows, license dotted product claim; `NotificationOptions` asserts no built-in brand defaults.
 
 ### Documentation
 
@@ -28,7 +28,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### CI / repo
 
-- SonarCloud project key + name aligned in `dotnet.yml`.
+- SonarCloud project key + name aligned in `dotnet.yml`; email templates excluded from duplicate-code detection.
 - GitHub issue / PR templates and rulesets aligned to Cross.Identity.
 - Sample.Api: `Authentication:Notifications` section in `appsettings.json`.
 
