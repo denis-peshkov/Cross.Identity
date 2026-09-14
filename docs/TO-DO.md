@@ -85,10 +85,10 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth unverified squat + verified profile → новый verified account (не auto-link).
 - Audit PII в `auth.Audits` (Ip/UA/Fingerprint) — forensics by design; retention — хост.
 - PII в логах auth steps (email/phone) — forensics; redaction/sink — хост.
-- Выбор типа канала / messenger bot (#40/#41) — вне 2.0 stock scope.
+- Выбор типа канала / messenger bot (#40/#41) — вне stock scope.
 - `ChannelEnum.WhatsApp` — typo `WatsApp` удалён; без obsolete alias.
-- User-scoped flows (2.2): session proof на стороне хоста; библиотека принимает `UserAccountId` без RefreshToken.
-- Lifecycle bags (2.3): хост резолвит identity до `ExecuteAsync` (`Jti` / `UserAccountId`); без parse compact refresh на logout/refresh/change-password paths.
+- User-scoped flows: session proof на стороне хоста; библиотека принимает `UserAccountId` без RefreshToken.
+- Lifecycle bags: хост резолвит identity до `ExecuteAsync` (`Jti` / `UserAccountId`); без parse compact refresh на logout/refresh/change-password paths.
 - Scaffold `Release:` — PR optional (`--pr`); без auto-`gh`.
 - `ChangeAccountEmail` — account op на `IUserService`; upsert email-endpoint = delivery/OTP sync side-effect (не `ICommunicationEndpointService` как owner).
 - Optional `LanguageCode` + `Authentication:Notifications` — host config; library без built-in brand defaults; stock `{{supportEmail}}` (не `{{support}}`).
@@ -97,4 +97,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - `NotificationComposer` без HtmlEncode brand/placeholders — sanitize зона хоста / доверенный config.
 - CHANGELOG dated pre-tag для ship prep — ок; Unreleased не обязателен.
 - `repository-link` при missing/non-GitHub origin — soft empty + exit 0 (не hard-fail).
-- Register `Password` optional (2.4.1): blank/whitespace → `PasswordPhc` null; OTP / set-password на хосте; клиенты с паролем не ломаются.
+- Register `Password` optional: blank/whitespace → `PasswordPhc` null; OTP / set-password на хосте; клиенты с паролем не ломаются.

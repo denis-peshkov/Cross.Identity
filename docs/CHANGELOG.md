@@ -7,7 +7,27 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.4.1 — 14 Sep 2026
+## v2.5.1 — 14 Sep 2026
+
+### CI / release process
+
+- CI / GitHub Actions paths updated: `.github/workflows/dotnet.yml`.
+
+### Versioning
+
+- Versioning config updated: `GitVersion.yml`.
+
+### Documentation
+
+- Docs updated: `docs/RELEASE-PLAN-2.5.0.md`, `docs/RELEASE-PLAN-2.5.1.md`, `docs/RELEASE-PLAN-to-master.md`, `docs/TO-DO.md`.
+
+### Repository tooling
+
+- Repo tooling updated: `.cursor/skills/release-plan/SKILL.md`.
+
+---
+
+## v2.5.0 — 14 Sep 2026
 
 ### Library
 
