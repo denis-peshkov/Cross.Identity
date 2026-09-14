@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H27` `M89` `L15`
+**Id high-water (не переиспользовать ≤):** `C1` `H27` `M92` `L17`
 
 ---
 
@@ -97,3 +97,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - `NotificationComposer` без HtmlEncode brand/placeholders — sanitize зона хоста / доверенный config.
 - CHANGELOG dated pre-tag для ship prep — ок; Unreleased не обязателен.
 - `repository-link` при missing/non-GitHub origin — soft empty + exit 0 (не hard-fail).
+- Register `Password` optional (2.4.1): blank/whitespace → `PasswordPhc` null; OTP / set-password на хосте; клиенты с паролем не ломаются.

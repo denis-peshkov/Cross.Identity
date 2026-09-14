@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.4.1` · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
+> **Версия:** `2.4.1` (closed) · **ветка:** `hotfix/register-password-optional` · **база:** `origin/master` (`v2.4.0`) · **дата:** `2026-09-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.4.1
 >
@@ -8,11 +8,11 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.4.0.md`](RELEASE-PLAN-2.4.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · **0** файлов (ветка = tip `master` / `v2.4.0`). **WT:** **20** файлов · **+406 / −240**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **1** коммит · **20** файлов · **+403 / −240**. Open C/H/M/L пустые.
 
-**CodeRabbit:** не запускался.
+**CodeRabbit:** `2026-09-14` · pasted agent finding (FLOWS Register Purpose) · 1 finding (Trivial/Info) → все закрыты в этом плане.
 
-**PR:** —
+**PR:** [#22](https://github.com/denis-peshkov/Cross.Identity/pull/22) (`Make Register Password optional; rename RELEASE-PLAN-to-master`).
 
 ---
 
@@ -34,6 +34,9 @@
 
 ## Принято (осознанный trade-off)
 
+### Register `Password` optional
+Stock `main.Register`: `Password` `required: false`; `CreateUserAsync` не хеширует blank/whitespace → `PasswordPhc = null`. Регистрация без пароля = осознанный product path (дальше OTP / set password на хосте). Клиенты, которые всегда слали пароль, не ломаются.
+
 ---
 
 ## Закрыто (проверено в коде)
@@ -48,6 +51,7 @@
 | ✅ #L4 commented `IJwtIssuer` | dismiss: в `IJwtTokenService.cs` уже нет |
 | ✅ #L6 `HostSuppliedClientContext` XML | dismiss: `<param>` на Ip/UA/Fingerprint уже есть |
 | ✅ #L16 markdown table rule | `.cursor/rules/401-markdown.mdc` — short separators / one-space cells |
+| ✅ #L17 Register Purpose optional password | `FLOWS.md` Purpose: email + optional password (aligned with JSON) |
 
 ---
 
@@ -60,6 +64,4 @@
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
-
-Ship: commit WT · PR → `master` · CI · tag `v2.4.1`.
+_(пусто — релиз `2.4.1` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

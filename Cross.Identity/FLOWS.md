@@ -159,7 +159,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.Register.json`
 
-**Purpose:** registration by email + password with confirmation code delivery.
+**Purpose:** registration by email with an optional password and confirmation code delivery.
 
 | Step | kind | Details |
 |------|------|---------|
