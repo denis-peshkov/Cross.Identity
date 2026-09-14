@@ -40,7 +40,9 @@ internal sealed class CollectFormStep : IStep
         // 2) validation
         var res = await Validator.ValidateAsync(data, cancellationToken).ConfigureAwait(false);
         if (!res.IsValid)
+        {
             return StepResult.Fail(new ValidationException(res.Errors));
+        }
 
         // 3) write to Bag with the step name prefix; PhoneNumber → PhoneE164.
         // Always materialize every schema field (null when absent) so later steps can use Get<T?>.

@@ -2,7 +2,7 @@
 # Run CodeRabbit CLI on the current branch vs a base (default origin/master).
 # Usage:
 #   bash .cursor/skills/coderabbit/scripts/run-coderabbit-review.sh \
-#     [--base origin/master] [--dir Cross.Identity] [--light] [--uncommitted]
+#     [--base origin/master] [--dir <path>] [--light] [--uncommitted]
 #     [--out PATH]
 set -euo pipefail
 
@@ -99,7 +99,7 @@ echo "base:    $BASE"
 echo "files:   $FILE_COUNT (in scope)"
 echo "out:     $OUT"
 if [[ "$FILE_COUNT" -gt 150 ]]; then
-  echo "warn: >150 files — Free CodeRabbit plans often fail; prefer --dir Cross.Identity (or split scopes)" >&2
+  echo "warn: >150 files — Free CodeRabbit plans often fail; prefer --dir <path> (separate runs) or --light" >&2
 fi
 
 ARGS=(review --committed --base "$BASE" --agent)

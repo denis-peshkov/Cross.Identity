@@ -1,14 +1,17 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.3.0` · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
+> **Версия:** `2.3.0` (published / closed) · **ветка:** `release/fix-missed-issues` · **база:** `origin/master` · **дата:** `2026-08-26`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.3.0
 >
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.2.0.md`](RELEASE-PLAN-2.2.0.md)
+>
+> Дельта: `v2.2.0...v2.3.0` — **1** коммита · **66** файлов · **+1637 / −984**. Open C/H/M/L пустые.
 
-**CodeRabbit:** `2026-08-26` · log `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-all-20260826-022142.jsonl` · 10 findings (0 Critical, 3 Major, 7 Minor) → все закрыты в этом плане.  
+**CodeRabbit:** `2026-08-26` · log `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-all-20260826-022142.jsonl` · 10 findings (0 Critical, 3 Major, 7 Minor) → все закрыты в этом плане.
+
 **PR:** [#20](https://github.com/denis-peshkov/Cross.Identity/pull/20) (`BREAKING:` Logout/RefreshToken → `Jti`, LogoutAll/ChangePassword → `UserAccountId`).
 
 ---
@@ -29,7 +32,7 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 ### Lifecycle bags: host resolves identity before `ExecuteAsync`
 `Logout` / `RefreshToken` принимают **`Jti`** (access / refresh JWT `jti` = DB id); `LogoutAll` / `ChangePassword` — **`UserAccountId`**. Библиотека **не** парсит compact refresh string на этих путях и не доказывает session через refresh payload. Хост валидирует client token / авторизует caller **до** `ExecuteAsync` (продолжение модели 2.2.0 для user-scoped; lifecycle выровнен в 2.3.0). См. [`FLOWS.md`](../Cross.Identity/FLOWS.md), [BREAKING § From 2.2.0 to 2.3.0](BREAKING.md#from-220-to-230).
@@ -42,7 +45,7 @@
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ #H14 `main.Logout` → access `Jti` | stock JSON / `LogoutStep` / factory / tests; `RevokeSessionForLogoutAsync` |
 | ✅ #H15 `main.RefreshToken` → refresh `Jti` | stock JSON / `RefreshTokenStep` / Guid rotation helpers / tests |
 | ✅ #H16 `main.LogoutAll` → `UserAccountId` | stock JSON / step; `RevokeAllTokensForUserAsync`; drop `RevokeAllTokensForLogoutAsync` |
@@ -72,12 +75,12 @@
 
 ## Что в библиотеке уже нормально
 
-- User-scoped flows (2.2.0): host-authorized `UserAccountId` без library refresh session proof.
-- Token lifecycle (2.3.0): rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
-- CodeRabbit / follow-ups: открытых C/H/M/L нет (закрыто через #C1, H11–H17, M51–M65, L12).
+- User-scoped flows: host-authorized `UserAccountId` без library refresh session proof.
+- Token lifecycle: rotation/logout по `Jti` / `UserAccountId`; host resolves claims before bag.
+- CodeRabbit по дельте: **нет** открытых findings после закрытия H11–H17, M51–M65, L12, C1.
 
 ---
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — релиз `2.3.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

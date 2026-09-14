@@ -7,6 +7,12 @@
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.1.1.md`](RELEASE-PLAN-2.1.1.md)
+>
+> Дельта: `v2.1.1...v2.2.0` — **1** коммита · **71** файлов · **+1884 / −718**. Open C/H/M/L пустые.
+
+**CodeRabbit:** не запускался.
+
+**PR:** [#19](https://github.com/denis-peshkov/Cross.Identity/pull/19).
 
 ---
 
@@ -26,7 +32,7 @@
 
 ---
 
-## Принято (осознанный trade-off / контракт хоста)
+## Принято (осознанный trade-off)
 
 ### User-scoped flows: session proof на стороне хоста
 Библиотека **не** требует `RefreshToken` на `CommunicationEndpointsGetAll` / `CommunicationEndpointSetPreferred`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`. Bag / API принимают **`UserAccountId`**; хост обязан авторизовать caller для этого id (access token / principal) **до** `ExecuteAsync`. `IJwtTokenService.EnsureRefreshTokenBelongsToUserAsync` — **optional** host helper (stock steps больше не вызывают).
@@ -40,7 +46,7 @@
 ## Закрыто (проверено в коде)
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ User-scoped: нет library RefreshToken session proof | flows JSON / steps / factories — без `RefreshToken`; host authorizes `UserAccountId` |
 | ✅ `ICommunicationEndpointService` refreshToken removed | `GetAllAsync` / `SetPreferredAsync` — параметр `refreshToken` убран |
 | ✅ `IExternalLoginService` без refresh session proof | link / unlink / getAll — без refresh session proof params |

@@ -1,6 +1,10 @@
 /**
  * Apply GitHub labels from automated PR triage (category + priority).
  * Manages only known triage labels; other labels on the PR are left untouched.
+ *
+ * Labels sync by default when confidence ≥ `TRIAGE_LABEL_MIN_CONFIDENCE`
+ * (default 70). Set `TRIAGE_APPLY_LABELS=false` to disable. Category/priority
+ * stay allowlisted. Comment suggestions are independent of this gate.
  */
 
 export const CATEGORY_LABELS = Object.freeze([
@@ -21,11 +25,13 @@ export const MANAGED_TRIAGE_LABELS = Object.freeze([
   ...PRIORITY_VALUES.map((p) => `priority:${p}`),
 ]);
 
+export const DEFAULT_LABEL_MIN_CONFIDENCE = 70;
+
 const LABEL_META = Object.freeze({
   feature: { color: '0e8a16', description: 'New capability or flow' },
   bug: { color: 'd73a4a', description: 'Something is broken' },
   enhancement: { color: 'a2eeef', description: 'Improvement without major behavior change' },
-  security: { color: 'b60205', description: 'Auth / JWT / OAuth / token security' },
+  security: { color: 'b60205', description: 'Auth/JWT/OAuth, secrets, licensing, PII, payment, or token security' },
   docs: { color: '0075ca', description: 'Documentation only' },
   chore: { color: 'fef2c0', description: 'Build, CI, tooling, deps' },
   question: { color: 'd876e3', description: 'Question / clarification' },
@@ -78,6 +84,53 @@ export function labelsFromTriage(data) {
 }
 
 /**
+ * Gate: labels on by default; opt-out via TRIAGE_APPLY_LABELS=false|0|no|off.
+ * Also requires confidence floor (allowlist is in labelsFromTriage).
+ *
+ * @param {{ confidence?: unknown }} data
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {{ apply: boolean; reason: string; confidence: number; minConfidence: number }}
+ */
+export function shouldApplyTriageLabels(data, env = process.env) {
+  const flag = String(env.TRIAGE_APPLY_LABELS ?? '1')
+    .trim()
+    .toLowerCase();
+  const disabled = flag === 'false' || flag === '0' || flag === 'no' || flag === 'off';
+  const enabled = !disabled;
+  const parsedMin = Number(env.TRIAGE_LABEL_MIN_CONFIDENCE);
+  const minConfidence =
+    Number.isFinite(parsedMin) && parsedMin >= 0
+      ? Math.min(100, parsedMin)
+      : DEFAULT_LABEL_MIN_CONFIDENCE;
+  const confidence = Math.min(100, Math.max(0, Number(data?.confidence) || 0));
+
+  if (!enabled) {
+    return {
+      apply: false,
+      reason: 'TRIAGE_APPLY_LABELS is disabled (comment-only suggestions)',
+      confidence,
+      minConfidence,
+    };
+  }
+
+  if (confidence < minConfidence) {
+    return {
+      apply: false,
+      reason: `confidence ${confidence} < min ${minConfidence}`,
+      confidence,
+      minConfidence,
+    };
+  }
+
+  return {
+    apply: true,
+    reason: 'enabled and confidence gate passed',
+    confidence,
+    minConfidence,
+  };
+}
+
+/**
  * @param {(args: string[], opts?: { json?: boolean }) => unknown} gh
  * @param {string} name
  */
@@ -101,6 +154,7 @@ function ensureLabel(gh, name) {
 
 /**
  * Sync triage labels on a PR: drop previous managed triage labels, set current ones.
+ * Caller must gate with {@link shouldApplyTriageLabels} before invoking.
  *
  * @param {(args: string[], opts?: { json?: boolean }) => unknown} gh
  * @param {number|string} prNumber

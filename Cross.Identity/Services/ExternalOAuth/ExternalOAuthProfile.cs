@@ -14,7 +14,9 @@ public sealed class ExternalOAuthProfile
 
     /// <summary>
     /// Whether the provider attests that <see cref="Email"/> is verified at the identity provider.
-    /// Maps onto <c>UsersAccounts.EmailVerified</c> when creating a local account.
+    /// On <b>new</b> local registration via OAuth, copied to <c>UsersAccounts.EmailVerified</c>
+    /// (true only when this flag is true and <see cref="Email"/> is non-empty).
+    /// Re-login / link does not update <c>UsersAccounts.EmailVerified</c>; endpoint sync uses this flag for <c>IsVerified</c>.
     /// </summary>
     public bool EmailVerified { get; init; }
 

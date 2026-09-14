@@ -32,7 +32,7 @@ internal sealed class LicenseAccessor
             }
 
             var licenseClaims = ValidateKey(key);
-            return licenseClaims.Length > 0
+            return licenseClaims.Any()
                 ? new License(new ClaimsPrincipal(new ClaimsIdentity(licenseClaims)))
                 : new License();
         }
@@ -55,8 +55,7 @@ internal sealed class LicenseAccessor
         var rsa = new RSAParameters
         {
             Exponent = Convert.FromBase64String("AQAB"),
-            Modulus = Convert.FromBase64String(
-                "wLWWXccoyaqk6RVn1kDNSX6WNJDtuOB2Lpu5Kh1q3ENDzkieia2xDlffpvo14XoI1JJOunY1k11XDg0HfRxVC2FwdcrouCDZKDQp87jvnY2vsxIZVAIYQ5wUetNOD4GVAoLAGYUhc647nyRgasC4ATIxCbH0XKjJZdWwb9BIKK9OCbqcDwHHX3IKK7v0sbiw/OOQQHhUZ7EeiPzZavnu8ZWwA1M4bsk9s/2qc5t+fFC0EWVhuGlV7U3dtwRKJ3/rvqbpo9MHUT4HzsZPMA6+/uNcZhjZLADjKsNrGs7vIDoaizneg1TUyiIiy+0K50C2vs/vbSNiz49JOTcr81RjFw=="),
+            Modulus = Convert.FromBase64String("wLWWXccoyaqk6RVn1kDNSX6WNJDtuOB2Lpu5Kh1q3ENDzkieia2xDlffpvo14XoI1JJOunY1k11XDg0HfRxVC2FwdcrouCDZKDQp87jvnY2vsxIZVAIYQ5wUetNOD4GVAoLAGYUhc647nyRgasC4ATIxCbH0XKjJZdWwb9BIKK9OCbqcDwHHX3IKK7v0sbiw/OOQQHhUZ7EeiPzZavnu8ZWwA1M4bsk9s/2qc5t+fFC0EWVhuGlV7U3dtwRKJ3/rvqbpo9MHUT4HzsZPMA6+/uNcZhjZLADjKsNrGs7vIDoaizneg1TUyiIiy+0K50C2vs/vbSNiz49JOTcr81RjFw=="),
         };
 
         var key = new RsaSecurityKey(rsa)
@@ -94,6 +93,8 @@ internal sealed class LicenseAccessor
         }
 
         var parts = token.Split('.');
+        // JWS: EncodedHeader.EncodedPayload.EncodedSignature
+        // JWE: EncodedProtectedHeader.EncodedEncryptedKey.EncodedInitializationVector.EncodedCiphertext.EncodedAuthenticationTag
         return parts.Length is 3 or 5;
     }
 }

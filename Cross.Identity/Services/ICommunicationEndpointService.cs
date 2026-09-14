@@ -12,7 +12,8 @@
 /// <item><description><c>CommunicationEndpointSetPreferredStep</c> — <see cref="SetPreferredAsync"/></description></item>
 /// </list>
 /// <para>
-/// <see cref="GetAllAsync"/> / <see cref="SetPreferredAsync"/> trust <c>userAccountId</c> from the host.
+/// <see cref="GetAllAsync"/> / <see cref="SetPreferredAsync"/>
+/// trust <c>userAccountId</c> from the host.
 /// The host must authorize the caller for that account (for example via access-token middleware);
 /// the library does not require a refresh token as session proof on these APIs.
 /// </para>

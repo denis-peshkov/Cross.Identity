@@ -2,11 +2,9 @@
  * Renders wshm-style automated PR triage comment from agent JSON.
  */
 
-export const TRIAGE_MARKER = '<!-- triage -->';
-/** Legacy marker still matched when updating existing PR comments. */
-export const TRIAGE_MARKER_LEGACY = '<!-- cross-identity-triage -->';
+import { execFileSync } from 'node:child_process';
 
-const DEFAULT_REPO = 'denis-peshkov/Cross.Identity';
+export const TRIAGE_MARKER = '<!-- triage -->';
 
 const PRIORITY_EMOJI = {
   critical: '🔴',
@@ -16,11 +14,57 @@ const PRIORITY_EMOJI = {
 };
 
 /**
+ * @param {string} [fallback]
+ * @returns {string}
+ */
+export function resolveRepo(fallback = '') {
+  const fromEnv = process.env.GITHUB_REPOSITORY?.trim();
+  if (fromEnv) {
+    return fromEnv;
+  }
+
+  try {
+    const url = execFileSync('git', ['remote', 'get-url', 'origin'], {
+      encoding: 'utf8',
+    }).trim();
+    const match = url.match(/github\.com[:/](.+?)(?:\.git)?\/?$/);
+    if (match) {
+      return match[1];
+    }
+  } catch {
+    // ignore — use fallback
+  }
+
+  return fallback;
+}
+
+/**
+ * @param {string} repo nameWithOwner
+ * @returns {string}
+ */
+export function displayRepoName(repo) {
+  if (!repo) {
+    return 'Repository';
+  }
+
+  const slash = repo.lastIndexOf('/');
+  return slash >= 0 ? repo.slice(slash + 1) : repo;
+}
+
+/**
+ * Optional icon via TRIAGE_ICON_REL_PATH (path in repo, e.g. icon.png).
+ *
  * @param {string} repo nameWithOwner
  * @param {string} branch default branch (master, dev, …)
+ * @returns {string | null}
  */
-export function getTriageIconUrl(repo = DEFAULT_REPO, branch = 'master') {
-  return `https://raw.githubusercontent.com/${repo}/${branch}/IdentityServer.png`;
+export function getTriageIconUrl(repo, branch = 'master') {
+  const rel = process.env.TRIAGE_ICON_REL_PATH?.trim();
+  if (!rel || !repo) {
+    return null;
+  }
+
+  return `https://raw.githubusercontent.com/${repo}/${branch}/${rel}`;
 }
 
 /**
@@ -59,11 +103,17 @@ export function formatPrTriageComment(data, options = {}) {
     ? `\n### Security notes\n\n${securityNotes}\n`
     : '';
 
-  const repo = options.repo || DEFAULT_REPO;
+  const repo = options.repo || resolveRepo();
+  const displayName = displayRepoName(repo);
   const branch = options.defaultBranch || process.env.TRIAGE_ICON_BRANCH || 'master';
   const iconUrl = getTriageIconUrl(repo, branch);
+  const repoUrl = repo ? `https://github.com/${repo}` : 'https://github.com';
 
-  return `> <img src="${iconUrl}" width="48" height="48" alt="Cross.Identity"> **Cross.Identity** · Automated triage by AI
+  const header = iconUrl
+    ? `> <img src="${iconUrl}" width="48" height="48" alt="${displayName}"> **${displayName}** · Automated triage by AI`
+    : `> **${displayName}** · Automated triage by AI`;
+
+  return `${header}
 
 ## 🔍 Automated Triage
 
@@ -86,7 +136,7 @@ ${filesList}
 </details>
 ${securityBlock}
 ---
-*Triaged automatically by [Cross.Identity](https://github.com/denis-peshkov/Cross.Identity) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
+*Triaged automatically by [${displayName}](${repoUrl}) · [Cursor](https://cursor.com)* · This is an automated analysis, not a human review.
 ${TRIAGE_MARKER}
 `;
 }

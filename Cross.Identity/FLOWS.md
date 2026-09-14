@@ -11,19 +11,19 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets them from server-side metadata before `ExecuteAsync`; on refresh the library compares them with `Created*` on the token family (see [Client context (host)](#client-context-host)).
+- **Client context (all flows):** optional `LanguageCode` (exactly 2 letters, e.g. `en` / `ru` / `ro`), `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets client metadata from server-side sources before `ExecuteAsync`; on refresh the library compares IP/UA/fingerprint with `Created*` on the token family (see [Client context (host)](#client-context-host)). `LanguageCode` selects notification templates (`SendCodeStep` / `ResetPasswordStep`); missing/invalid code or missing template file → fallback `en`.
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify by `UserName` uses the user's **preferred verified** communication endpoint (email or phone address); Email/PhoneNumber use the submitted value directly.
 
 ### Client context (host)
 
-Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills `collectForm.IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedClientContext` into direct APIs); `HostSuppliedClientContext.Read(bag)` reads whatever the host put there.
+Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpContext` inside steps. The **host Web API** fills optional `collectForm.LanguageCode`, then `IpAddress`, `UserAgent`, and `DeviceFingerprint` in the bag (or passes `HostSuppliedLanguageContext` / `HostSuppliedClientContext` into direct APIs); `HostSuppliedLanguageContext.Read(bag)` / `HostSuppliedClientContext.Read(bag)` read whatever the host put there.
 
 **Trusted pipeline**
 
 | Party | Responsibility |
 |-------|----------------|
-| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. |
-| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep`), and session binding. Does not read `HttpContext` or validate metadata origin. |
+| **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{supportEmail}}`) come from `Authentication:Notifications` (defaults match former hardcoded Peshkov values). Does not read `HttpContext` or `Accept-Language`. |
 
 ### User-scoped authorization (host responsibility)
 
@@ -38,6 +38,7 @@ Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refre
 
 | Field | Set from (trusted) | Do not use |
 |-------|-------------------|------------|
+| `collectForm.LanguageCode` | Product locale / negotiated culture (2 letters) for notification templates | Omit → library uses `en`; missing template file for that language → `en` |
 | `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
 | `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
@@ -52,6 +53,7 @@ using Cross.Identity.ProcessEngine.Core;
 var bag = new Dictionary<string, object?> { /* credentials, tokens, … */ };
 
 // Host-derived metadata — not from the client request body
+bag["collectForm.LanguageCode"] = "ru"; // optional; notification templates (fallback en)
 bag["collectForm.IpAddress"] = httpContext.Connection.RemoteIpAddress?.ToString();
 bag["collectForm.UserAgent"] = httpContext.Request.Headers.UserAgent.ToString();
 bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
@@ -104,6 +106,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `main` | LogoutAll | `main.LogoutAll.json` |
 | `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
 | `main` | CommunicationEndpointSetPreferred | `main.CommunicationEndpointSetPreferred.json` |
+| `main` | ChangeAccountEmail | `main.ChangeAccountEmail.json` |
 
 ---
 
@@ -186,7 +189,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `UserAccountId` (Guid string, 36), `CurrentPassword` (8–32), `NewPassword` (8–32); optional client context. `selector.candidates`: UserAccountId. → `passwordAuth` |
 | `passwordAuth` | passwordAuth | `passwordKey: collectForm.CurrentPassword`. → `resetPassword` |
-| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.NewPassword`; notify via `ResolveDeliveryTargetAsync` using template `password-changed` (txt/html). `next: null` |
 
 > Uses the current password as proof of ownership. Unlike `main.ResetPassword`, this flow does **not** require a recovery code.
 
@@ -200,7 +203,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 |------|------|---------|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Code` (6–12), `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `verifyCode` |
 | `verifyCode` | verifyCode | `codeKey: collectForm.Code`; verify against `ResolveOtpTargetAsync`; writes `verifyCode.UserAccountId`. → `resetPassword` |
-| `resetPassword` | resetPassword | `passwordKey: collectForm.Password` (notify via `ResolveDeliveryTargetAsync` — verified email / verified preferred only). `next: null` |
+| `resetPassword` | resetPassword | `passwordKey: collectForm.Password`; notify via `ResolveDeliveryTargetAsync` using template `password-changed` (txt/html). `next: null` |
 
 > Recovery `Code` must be present, valid, and not expired; otherwise the flow rejects before changing the password.
 
@@ -242,7 +245,9 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: verified OAuth creates a new verified account alongside any unverified rows. Without a verified provider email, merge is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
+> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: a provider with attested verified email can create a new local account alongside any unverified rows. Without a verified provider email, merge onto an existing verified local email is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
+>
+> **New registration (no existing external login / no email merge):** `CreateUserAsync` sets `UsersAccounts.EmailVerified = true` when the provider returns a non-empty email **and** `ExternalOAuthProfile.EmailVerified` is true; otherwise the account is created with `EmailVerified = false`. The synced email communication endpoint uses the same attestation (`IsVerified`). Subsequent logins / link refresh update `ProviderEmail` and the endpoint — they do **not** flip `UsersAccounts.EmailVerified`.
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
 
@@ -346,6 +351,21 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ---
 
+## `main.ChangeAccountEmail.json`
+
+**Purpose:** change the account primary email for the given user. When the address matches a linked external login `ProviderEmail`, it is auto-verified (no OTP).
+
+| Step | kind | Details |
+|------|------|---------|
+| `collectForm` | collectForm | `UserAccountId`, `Email` (required); optional client context. → `changeAccountEmail` |
+| `changeAccountEmail` | changeAccountEmail | `userAccountIdKey`, `emailKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `email`, `email_verified`, `endpoint`. `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
+> Does **not** force `IsPreferred` on the upserted email endpoint (account email ≠ delivery preferred). Preferred stays via `CommunicationEndpointSetPreferred` or upsert bootstrap (verified + no existing preferred). Trusted delivery still requires `IsVerified`.
+
+---
+
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
@@ -357,7 +377,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `verifyCode` | Verify OTP and write `UserAccountId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `getUserAccountId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `passwordAuth` | Verify identity + password; writes `UserAccountId` |
-| `resetPassword` | Set new password (identity from `Selector`) |
+| `resetPassword` | Set new password (identity from `Selector`); notify with `password-changed` templates |
 | `token` | Issue access/refresh tokens |
 | `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
 | `externalLoginInitiate` | OAuth redirect URL |
@@ -369,6 +389,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `verifyToken` | Validate access token; return `valid` (+ `user_account_id` / `jti` when valid) |
 | `communicationEndpointsGetAll` | List user communication endpoints |
 | `communicationEndpointSetPreferred` | Set preferred communication endpoint |
+| `changeAccountEmail` | Change account primary email via `IUserService.ChangeAccountEmailAsync`; auto-verify when address matches linked provider email |
 
 ### Form validators (`schemaDef.validators`)
 

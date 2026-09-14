@@ -6,6 +6,7 @@
 #   bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh --version 2.3.0 --out .cursor/skills/release-plan/.cache/breaking-2.3.0.md
 #   bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh --from 2.2.0 --to 2.3.0 --pr 42
 #
+# FROM/TO: both --from and --to/--version → skip resolve; else default from resolve-target-version.sh (GitVersion).
 # Does not edit docs/BREAKING.md — output only (agent pastes + fills body + TOC row).
 set -euo pipefail
 
@@ -70,20 +71,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-RESOLVE_ARGS=(--base "$BASE" --json)
-if [[ -n "$TO" ]]; then
-  RESOLVE_ARGS+=(--version "$TO")
-fi
-
-JSON="$("$RESOLVE" "${RESOLVE_ARGS[@]}")" || {
-  code=$?
-  if [[ $code -eq 2 ]]; then
-    echo "error: target version unknown — pass --to X.Y.Z or use release/* / hotfix/* branch" >&2
-    echo "$JSON" >&2
-  fi
-  exit "$code"
-}
-
 read_json() {
   python3 - "$1" "$2" <<'PY'
 import json, sys
@@ -92,12 +79,33 @@ print(data.get(sys.argv[1], ""))
 PY
 }
 
-if [[ -z "$FROM" ]]; then
-  FROM="$(read_json breaking_from "$JSON")"
+# Both ends known → scaffold only (no GitVersion / tag resolve).
+if [[ -z "$FROM" || -z "$TO" ]]; then
+  RESOLVE_ARGS=(--base "$BASE" --json)
+  if [[ -n "$TO" ]]; then
+    RESOLVE_ARGS+=(--version "$TO")
+  fi
+
+  JSON="$("$RESOLVE" "${RESOLVE_ARGS[@]}")" || {
+    code=$?
+    echo "error: resolve-target-version failed (exit $code) — check GitVersion CLI / GitVersion.yml / tags, or pass --from and --to/--version" >&2
+    echo "$JSON" >&2
+    exit "$code"
+  }
+
+  if [[ -z "$FROM" ]]; then
+    FROM="$(read_json breaking_from "$JSON")"
+  fi
+  if [[ -z "$TO" ]]; then
+    TO="$(read_json breaking_to "$JSON")"
+  fi
 fi
-if [[ -z "$TO" ]]; then
-  TO="$(read_json breaking_to "$JSON")"
+
+if [[ -z "$FROM" || -z "$TO" ]]; then
+  echo "error: could not determine FROM/TO — pass --from and --to/--version" >&2
+  exit 1
 fi
+
 # Always rebuild from effective FROM/TO (CLI --from/--to may override JSON)
 ANCHOR="$(printf 'from-%s-to-%s' "${FROM//./}" "${TO//./}" | tr '[:upper:]' '[:lower:]')"
 
@@ -109,6 +117,7 @@ fi
 
 BODY="$(cat <<EOF
 ---
+
 ## From ${FROM} to ${TO}
 
 Release: [v${TO}](${REPOSITORY_LINK}/releases/tag/v${TO})${PR_SUFFIX}.

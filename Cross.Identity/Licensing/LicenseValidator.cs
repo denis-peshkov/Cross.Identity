@@ -20,11 +20,10 @@ internal sealed class LicenseValidator
 
         if (license is not { IsConfigured: true })
         {
-            var message =
-                $"You do not have a valid license key for the {licenseProductInfo.Company} {licenseProductInfo.Product}. " +
-                "This is allowed for development and testing scenarios. " +
-                "If you are running in production you are required to have a licensed version. " +
-                $"Please visit {licenseProductInfo.Site} to obtain a valid license.";
+            var message = $"You do not have a valid license key for the {licenseProductInfo.Company} {licenseProductInfo.Product}. " +
+                          "This is allowed for development and testing scenarios. " +
+                          "If you are running in production you are required to have a licensed version. " +
+                          $"Please visit {licenseProductInfo.Site} to obtain a valid license.";
 
             _logger.LogCritical(message);
             return;

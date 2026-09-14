@@ -1,20 +1,19 @@
-Bioclinica
+Hello, {{fullName}},
 
-Hello, Denys Pieshkov,
+Welcome to {{company}}. Your account for {{email}} is ready.
 
-From now on, you can enjoy all the benefits your Bioclinica account offers:
-1.	Schedule appointments online
-2.	Modify existing appointments
-3.	View your test results
-4.	Keep a history of all your performed analyses
-
-👉 Log in to your account
+👉 Log in to your account:
+{{url}}
 
 Best regards,
-The Bioclinica Team
+The {{company}} Team
 
-Do you have questions or need help using your account on bioclinica.ro?
+Do you have questions or need help using your account on {{site}}?
 Visit the My Account – Help section.
 
+Questions? {{supportEmail}}
+
 Facebook | Instagram | YouTube
-bioclinica.ro
+{{site}}
+
+© {{year}} {{brand}}

@@ -1,0 +1,29 @@
+{{company}}
+
+Hello, {{fullName}},
+
+We’re glad to have you on the {{company}} platform!
+To complete your account setup, please use the following verification code:
+
+{{code}}
+
+👉 Use the code
+
+If the button doesn’t work, please copy and paste the following link into your browser:
+{{verificationLink}}
+
+Best regards,
+The {{company}} Team
+
+⚠️ Attention! The code is valid for {{expires}}. After that, you’ll need to restart the account confirmation process.
+
+If you didn’t register on the {{company}} platform, you can safely ignore this email.
+
+Having trouble confirming your account? Write to us at {{supportEmail}}.
+
+Do you have questions or need help using your account on {{site}}?
+Visit the My Account – Help section:
+{{helpLink}}
+
+Facebook | Instagram | YouTube
+{{site}}

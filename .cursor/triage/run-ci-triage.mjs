@@ -39,7 +39,7 @@ function buildPrompt() {
   const collaborators = readDataFile('collaborators.txt') ?? '';
   const prFiles = readDataFile('pr-files.jsonl') ?? '';
 
-  return `You are running automated triage for the Cross.Identity GitHub repository (${repo}).
+  return `You are running automated triage for this GitHub repository (${repo}). See README.md for project layout.
 
 Follow the workflow in the triage skill below.
 Mode: ${MODE} (audit = tables + cross-analysis only, no GitHub comments).
@@ -75,13 +75,14 @@ Write a complete markdown triage report in Russian with:
 5. Prioritized action list (top 10)
 
 Do NOT post to GitHub. Output only the markdown report body.
-Security focus: JWT, OAuth, refresh tokens, auth flows.
+Security focus: secrets, auth/licensing, PII, payments, and domain-critical paths from README.md.
 `;
 }
 
 async function main() {
   mkdirSync(join(ROOT, '.cursor/triage/docs'), { recursive: true });
 
+  const repo = readDataFile('repo.txt')?.trim() ?? 'unknown';
   const prompt = buildPrompt();
   console.log(`Running Cursor agent triage (${MODE})...`);
 
@@ -98,7 +99,7 @@ async function main() {
     }
 
     const body = result.result?.trim() || '# Triage\n\nNo output from agent.';
-    const report = `# Cross.Identity CI Triage — ${DATE}\n\n${body}\n`;
+    const report = `# CI Triage — ${repo} — ${DATE}\n\n${body}\n`;
     writeFileSync(OUT, report, 'utf8');
     console.log(`Report written: ${OUT}`);
 

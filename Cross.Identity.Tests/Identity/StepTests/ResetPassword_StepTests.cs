@@ -8,6 +8,7 @@ public class ResetPassword_StepTests
     private Mock<ICommunicationEndpointService> _communicationEndpoints = null!;
     private Mock<IEmailSenderService> _emailSenderService = null!;
     private Mock<ISmsSenderService> _smsSenderService = null!;
+    private Mock<IProcessDefinitionProvider> _processDefinitionProvider = null!;
     private Mock<ILogger> _logger = null!;
 
     private static Selector DefaultSelector { get; } = new();
@@ -23,8 +24,33 @@ public class ResetPassword_StepTests
         _userService = new Mock<IUserService>();
         _emailSenderService = new Mock<IEmailSenderService>();
         _smsSenderService = new Mock<ISmsSenderService>();
+        _processDefinitionProvider = new Mock<IProcessDefinitionProvider>();
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "en", "txt"))
+            .Returns("Password changed at {{changedAt}} from IP {{ip}}. Support: {{supportEmail}}");
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "en", "html"))
+            .Returns("<p>Password changed at <strong>{{changedAt}}</strong> from IP <strong>{{ip}}</strong>.</p>");
         _logger = new Mock<ILogger>();
     }
+
+    private ResetPasswordStep CreateStep(string passwordKey = "forgotPassword.password", string? next = "done")
+        => new()
+        {
+            Kind = "resetPassword",
+            Selector = DefaultSelector,
+            PasswordKey = passwordKey,
+            Template = "password-changed",
+            Subject = "Password changed",
+            UserService = _userService.Object,
+            CommunicationEndpoints = _communicationEndpoints.Object,
+            NotificationComposer = new NotificationComposer(
+                _processDefinitionProvider.Object,
+                Microsoft.Extensions.Options.Options.Create(new NotificationOptions())),
+            SecurityNotifier = new SecurityNotifier(_emailSenderService.Object, _smsSenderService.Object),
+            Logger = _logger.Object,
+            Next = next,
+        };
 
     [Test]
     [Category(TestCategory.UNIT)]
@@ -41,18 +67,7 @@ public class ResetPassword_StepTests
             .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = email });
 
-        var step = new ResetPasswordStep
-        {
-            Kind = "resetPassword",
-            Selector = DefaultSelector,
-            PasswordKey = "forgotPassword.password",
-            UserService = _userService.Object,
-            EmailSenderService = _emailSenderService.Object,
-            SmsSenderService = _smsSenderService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Logger = _logger.Object,
-            Next = "done"
-        };
+        var step = CreateStep();
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Email");
@@ -70,7 +85,65 @@ public class ResetPassword_StepTests
             u => u.SetPasswordAsync("Email", email, password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
             Times.Once);
         _emailSenderService.Verify(
-            x => x.SendAsync("", email, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            x => x.SendAsync(
+                "",
+                email,
+                "Password changed",
+                It.Is<string>(b => b.Contains("from IP unknown")),
+                It.Is<string>(b => b.Contains("<strong>unknown</strong>")),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "en", "txt"), Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "en", "html"), Times.Once);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenLanguageCodeRu_WhenExecuteAsync_ThenLoadsRuTemplateAsync()
+    {
+        var email = _faker.Internet.Email();
+        var password = "P@ssw0rd!";
+
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "ru", "txt"))
+            .Returns("Пароль изменён в {{changedAt}} с IP {{ip}}. Поддержка: {{supportEmail}}");
+        _processDefinitionProvider
+            .Setup(p => p.GetTemplate("password-changed", "ru", "html"))
+            .Returns("<p>Пароль изменён в <strong>{{changedAt}}</strong> с IP <strong>{{ip}}</strong>.</p>");
+
+        _userService.Setup(u => u.SetPasswordAsync("Email", email, password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Guid.NewGuid());
+        _communicationEndpoints
+            .Setup(c => c.ResolveDeliveryTargetAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new DeliveryTarget { Channel = ChannelEnum.Email, Address = email });
+
+        var step = CreateStep();
+
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+        bag.Set("forgotPassword.password", password);
+        bag.Set("collectForm.LanguageCode", "ru");
+        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.UserAgent", null);
+        bag.Set("collectForm.DeviceFingerprint", null);
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Ok);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "ru", "txt"), Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "ru", "html"), Times.Once);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("password-changed", "en", "txt"), Times.Never);
+        _emailSenderService.Verify(
+            x => x.SendAsync(
+                "",
+                email,
+                "Password changed",
+                It.Is<string>(b => b.StartsWith("Пароль изменён")),
+                It.Is<string>(b => b.Contains("Пароль изменён")),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -87,24 +160,13 @@ public class ResetPassword_StepTests
         _userService.Setup(u => u.GetUserAccountIdByAsync("Id", userAccountIdText, It.IsAny<CancellationToken>()))
             .ReturnsAsync(userAccountId);
 
-        var step = new ResetPasswordStep
-        {
-            Kind = "resetPassword",
-            Selector = DefaultSelector,
-            PasswordKey = "collectForm.NewPassword",
-            UserService = _userService.Object,
-            EmailSenderService = _emailSenderService.Object,
-            SmsSenderService = _smsSenderService.Object,
-            CommunicationEndpoints = _communicationEndpoints.Object,
-            Logger = _logger.Object,
-            Next = "done",
-        };
+        var step = CreateStep(passwordKey: "collectForm.NewPassword");
 
         var bag = new Bag();
         bag.Set("collectForm.Field", "Id");
         bag.Set("collectForm.Value", userAccountIdText);
         bag.Set("collectForm.NewPassword", password);
-        bag.Set("collectForm.IpAddress", null);
+        bag.Set("collectForm.IpAddress", "10.0.0.1");
         bag.Set("collectForm.UserAgent", null);
         bag.Set("collectForm.DeviceFingerprint", null);
 
@@ -113,13 +175,19 @@ public class ResetPassword_StepTests
         result.Status.Should().Be(StepStatusEnum.Ok);
         result.Next.Should().Be("done");
         _userService.Verify(
-            u => u.SetPasswordAsync("Id", userAccountIdText, password, HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()),
+            u => u.SetPasswordAsync("Id", userAccountIdText, password, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()),
             Times.Once);
         _userService.Verify(
             u => u.GetUserByAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
             Times.Never);
         _emailSenderService.Verify(
-            x => x.SendAsync("", "notify@example.com", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            x => x.SendAsync(
+                "",
+                "notify@example.com",
+                "Password changed",
+                It.Is<string>(b => b.Contains("from IP 10.0.0.1")),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()),
             Times.Once);
     }
 }

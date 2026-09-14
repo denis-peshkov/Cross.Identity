@@ -32,12 +32,16 @@ else
   "${GH}" pr list --state merged --limit 10 --json author --jq '.[].author.login' | sort -u > "${OUT}/collaborators.txt" || true
 fi
 
-# PR files for overlap (cap at 30 PRs to limit API calls in CI)
+# PR files for overlap (cap at 30 PRs to limit API calls in CI).
+# Emit JSON via gh --jq so paths with quotes/backslash/newlines stay valid JSONL.
 PR_NUMS="$("${GH}" pr list --state open --limit 30 --json number -q '.[].number')"
 : > "${OUT}/pr-files.jsonl"
 for num in ${PR_NUMS}; do
-  files="$("${GH}" pr view "${num}" --json files --jq '[.files[].path] | join(",")' 2>/dev/null || echo "")"
-  printf '{"number":%s,"files":"%s"}\n' "${num}" "${files}" >> "${OUT}/pr-files.jsonl"
+  if ! "${GH}" pr view "${num}" --json files \
+    --jq "{number: ${num}, files: [.files[].path]}" \
+    >> "${OUT}/pr-files.jsonl" 2>/dev/null; then
+    printf '{"number":%s,"files":[]}\n' "${num}" >> "${OUT}/pr-files.jsonl"
+  fi
 done
 
 echo "Done. Files:"

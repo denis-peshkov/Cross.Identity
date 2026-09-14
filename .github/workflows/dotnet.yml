@@ -100,10 +100,12 @@ jobs:
         with:
           args: >
             -Dsonar.organization=denis-peshkov
-            -Dsonar.projectKey=denis-peshkov.Cross.Identity
+            -Dsonar.projectKey=dCross.Identity
+            -Dsonar.projectName=Cross.Identity
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
             -Dsonar.tests=Cross.Identity.Tests/
+            -Dsonar.cpd.exclusions=**/ProcessEngine/Definitions/Templates/**
             -Dsonar.qualitygate.wait=${{ env.QUALITY_GATE_WAIT }}
             -Dsonar.verbose=true
         env:

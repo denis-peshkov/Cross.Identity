@@ -2,6 +2,9 @@
 
 /// <summary>
 /// Step for changing a user password by selector.
+/// On success, notifies via <see cref="ICommunicationEndpointService.ResolveDeliveryTargetAsync"/>
+/// using <see cref="INotificationComposer"/> and <see cref="ISecurityNotifier"/>.
+/// Template language is selected via <see cref="HostSuppliedLanguageContext"/> (<c>collectForm.LanguageCode</c>).
 /// </summary>
 internal sealed class ResetPasswordStep : IStep
 {
@@ -17,11 +20,17 @@ internal sealed class ResetPasswordStep : IStep
     /// <summary>Key in <see cref="Bag"/> to read the password from. May be relative or absolute.</summary>
     public required string PasswordKey { get; init; }
 
-    public ILogger Logger { get; set; }
-    public IUserService UserService { get; set; }
-    public IEmailSenderService EmailSenderService { get; set; }
-    public ISmsSenderService SmsSenderService { get; set; }
+    /// <summary>Template name under Definitions/Templates (e.g. <c>password-changed</c>).</summary>
+    public required string Template { get; init; }
+
+    /// <summary>Notification subject line.</summary>
+    public required string Subject { get; init; }
+
+    public required ILogger Logger { get; init; }
+    public required IUserService UserService { get; init; }
     public required ICommunicationEndpointService CommunicationEndpoints { get; init; }
+    public required INotificationComposer NotificationComposer { get; init; }
+    public required ISecurityNotifier SecurityNotifier { get; init; }
 
     /// <inheritdoc/>
     public async ValueTask<StepResult> ExecuteAsync(Bag ctx, CancellationToken cancellationToken)
@@ -58,22 +67,20 @@ internal sealed class ResetPasswordStep : IStep
         }
 
         var ip = string.IsNullOrWhiteSpace(hostSuppliedClientContext.IpAddress) ? "unknown" : hostSuppliedClientContext.IpAddress;
-        var changedAt = DateTime.UtcNow.ToString("u");
-        var subject = "Password changed";
-        var textBody = $"Your password was changed at {changedAt} from IP {ip}. If this wasn't you, contact support immediately.";
-        var htmlBody = $"<p>Your password was changed at <strong>{changedAt}</strong> from IP <strong>{ip}</strong>.</p><p>If this wasn't you, contact support immediately.</p>";
+        var bodies = NotificationComposer.Compose(
+            ctx,
+            Template,
+            new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["{{changedAt}}"] = DateTime.UtcNow.ToString("u"),
+                ["{{ip}}"] = ip,
+            });
 
         try
         {
-            switch (channel)
-            {
-                case ChannelEnum.Email:
-                    await EmailSenderService.SendAsync("", target.Address, subject, textBody, htmlBody, cancellationToken).ConfigureAwait(false);
-                    break;
-                case ChannelEnum.Sms:
-                    await SmsSenderService.SendAsync(target.Address, textBody, cancellationToken).ConfigureAwait(false);
-                    break;
-            }
+            await SecurityNotifier
+                .SendAsync(channel, target.Address, Subject, bodies.TextBody, bodies.HtmlBody, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (Exception ex)
         {

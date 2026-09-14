@@ -1,13 +1,12 @@
 ---
 name: triage-pr
 description: >-
-  PR triage for Cross.Identity: audit open PRs, deep review, draft review
-  comments; local/branch review vs master|dev without a PR. Args: "all",
-  PR numbers, "branch <name>", "local", "base master|dev", "offline",
-  "ru"/"en" for table language (default en).
+  PR triage: audit open PRs, deep review, draft review comments; local/branch
+  review vs master|dev without a PR. Args: "all", PR numbers, "branch <name>",
+  "local", "base master|dev", "offline", "ru"/"en" for table language (default en).
 ---
 
-# PR Triage — Cross.Identity
+# PR Triage
 
 ## When to use
 
@@ -95,14 +94,14 @@ Sections: Our PRs / External ready / External problematic + Summary.
 
 0 PRs → finish (or offer Phase 1b if user is on a feature/hotfix branch).
 
-### Cross.Identity file hotspots
+### File hotspots
 
-On overlap/review pay attention to:
+Prefer paths from the PR / branch delta (`git diff --name-status`) and README layout. Examples of areas to prioritize when present:
 
-- `Cross.Identity/Services/` — JWT, OAuth, codes
-- `Cross.Identity/ProcessEngine/` — flows, steps
-- `Cross.Identity/Entities/` — EF configurations
-- `Cross.Identity.Tests/` — coverage
+- library / `src/` — public API, DI registration, pipeline
+- `*Tests*/` — coverage for new behavior
+- sample / host app — smoke usage only
+- `.github/workflows/`, `docs/` — CI and consumer docs
 
 ## Phase 1b — Branch / local (no PR)
 
@@ -209,7 +208,7 @@ git diff "$BASE_REF...$BRANCH_REF"
 # or uncommitted: git diff && git diff --cached
 ```
 
-Checklist: `references/dotnet-checklist.md` + `.cursor/rules/105-backend-security.mdc`.
+Checklist: `references/dotnet-checklist.md` (and `docs/BREAKING.md` when public API changes).
 
 Response structure: Critical 🔴 / Important 🟠 / Suggestions 🟡 / What's Good ✅.
 
@@ -225,7 +224,7 @@ On `pull_request` opened/synchronize CI posts a **wshm-style** comment:
 
 - Script: `.cursor/triage/post-pr-triage.mjs`
 - Template: `.cursor/triage/templates/pr-automated-triage-comment.md`
-- Marker: `<!-- triage -->` (update on push, no duplication; legacy `<!-- cross-identity-triage -->` still matched)
+- Marker: `<!-- triage -->` (update on push, no duplication)
 - Draft PR — skip
 
 For a **single-PR automated comment** (same as CI), prefer:

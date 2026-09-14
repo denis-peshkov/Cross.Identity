@@ -22,4 +22,5 @@ public enum FlowOperationEnum
     LogoutAll,
     CommunicationEndpointsGetAll,
     CommunicationEndpointSetPreferred,
+    ChangeAccountEmail,
 }

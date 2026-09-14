@@ -22,7 +22,7 @@ body:
     id: package-version
     attributes:
       label: Cross.Identity NuGet version (if applicable)
-      placeholder: "10.2.1"
+      placeholder: "x.y.z"
     validations:
       required: false
 
@@ -30,7 +30,7 @@ body:
     id: question
     attributes:
       label: Your question
-      description: What are you trying to achieve? Include flow/operation and TFM if relevant.
+      description: What are you trying to achieve? Include TFM and flow/operation if relevant.
     validations:
       required: true
 

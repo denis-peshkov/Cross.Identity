@@ -1,19 +1,19 @@
-Bioclinica
+Bună, {{fullName}},
 
-Bună Pieshkov Denys,
+Bine ai venit la {{company}}. Contul pentru {{email}} este gata.
 
-De acum poți să te bucuri de toate beneficiile pe care ți le oferă contul Bioclinica:
+👉 Intră în cont:
+{{url}}
 
-1.	Programează-te online
-2.	Modifică programările existente
-3.	Vizualizează rezultatele analizelor tale
-4.	Menține un istoric al tuturor analizelor efectuate
-Intră în cont
 Numai bine,
-Echipa Bioclinica
+Echipa {{company}}
 
-Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe bioclinica.ro?
-Vizitează secțiunea Contul Meu - Ajutor
+Ai nelămuriri sau întrebări legate de modul de funcționare al contului tău pe {{site}}?
+Vizitează secțiunea Contul Meu - Ajutor.
+
+Întrebări? {{supportEmail}}
 
 Facebook | Instagram | YouTube
-bioclinica.ro
+{{site}}
+
+© {{year}} {{brand}}

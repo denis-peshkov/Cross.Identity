@@ -7,11 +7,6 @@ internal sealed class License
     {
     }
 
-    internal License()
-    {
-        IsConfigured = false;
-    }
-
     public License(ClaimsPrincipal claims)
     {
         if (Guid.TryParse(claims.FindFirst("sub_id")?.Value, out var subscriptionId))
@@ -39,12 +34,14 @@ internal sealed class License
             ExpirationDate = DateTimeOffset.FromUnixTimeSeconds(exp);
         }
 
-        if (Enum.TryParse(claims.FindFirst("edition")?.Value, out EditionEnum edition))
+        if (Enum.TryParse<EditionEnum>(claims.FindFirst("edition")?.Value, out var edition))
         {
             Edition = edition;
         }
 
-        if (Enum.TryParse(claims.FindFirst("type")?.Value, out ProductTypeEnum productType))
+        // License JWT uses dotted product names (e.g. Cross.Identity); enum members use underscores.
+        var typeClaim = claims.FindFirst("type")?.Value?.Replace('.', '_');
+        if (Enum.TryParse<ProductTypeEnum>(typeClaim, out var productType))
         {
             ProductType = productType;
         }
@@ -59,17 +56,11 @@ internal sealed class License
     }
 
     public Guid? UserId { get; }
-
     public Guid? SubscriptionId { get; }
-
     public DateTimeOffset? StartDate { get; }
-
     public DateTimeOffset? NotBeforeDate { get; }
-
     public DateTimeOffset? ExpirationDate { get; }
-
     public EditionEnum? Edition { get; }
-
     public ProductTypeEnum? ProductType { get; }
 
     public bool IsConfigured { get; }

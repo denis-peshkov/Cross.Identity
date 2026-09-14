@@ -48,6 +48,9 @@ public enum AuditOperation : short
     /// <summary>Communication endpoint added or updated.</summary>
     CommunicationEndpointChanged = 15,
 
+    /// <summary>Account primary email changed (may auto-verify via linked external provider).</summary>
+    AccountEmailChanged = 16,
+
     /// <summary>Catch-all for operations not covered by a dedicated value.</summary>
     Other = 99,
 }

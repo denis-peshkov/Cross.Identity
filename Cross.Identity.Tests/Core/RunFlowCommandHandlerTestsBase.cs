@@ -43,6 +43,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _registry.Register(new VerifyTokenStepFactory());
         _registry.Register(new CommunicationEndpointsGetAllStepFactory());
         _registry.Register(new CommunicationEndpointSetPreferredStepFactory());
+        _registry.Register(new ChangeAccountEmailStepFactory());
         var formValidatorFactory = new UnifiedFormValidatorFactory();
         _requestInput = new RequestInput();
         var identityConfiguration = new IdentityServiceConfiguration();
@@ -114,6 +115,22 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
         _serviceProviderMock
             .Setup(x => x.GetService(typeof(IHostEnvironment)))
             .Returns(env);
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(INotificationComposer)))
+            .Returns(new NotificationComposer(
+                _processDefinitionProvider,
+                Microsoft.Extensions.Options.Options.Create(new NotificationOptions())));
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(IEmailSenderService)))
+            .Returns(Mock.Of<IEmailSenderService>());
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(ISmsSenderService)))
+            .Returns(Mock.Of<ISmsSenderService>());
+        _serviceProviderMock
+            .Setup(x => x.GetService(typeof(ISecurityNotifier)))
+            .Returns(() => new SecurityNotifier(
+                (IEmailSenderService)_serviceProviderMock.Object.GetService(typeof(IEmailSenderService))!,
+                (ISmsSenderService)_serviceProviderMock.Object.GetService(typeof(ISmsSenderService))!));
 
         var jwtMock = new Mock<IJwtTokenService>();
         RegisterToServiceProvider<IJwtTokenService, IJwtTokenService>(jwtMock.Object);
@@ -165,6 +182,7 @@ internal class RunFlowCommandHandlerTestsBase : EFTestsBase
             pepperVault.Object,
             passwordHasher.Object,
             jwtMock.Object,
+            new AuditService(Context),
             communicationEndpoints,
             communicationEndpoints,
             CreateUserServiceOptions());
