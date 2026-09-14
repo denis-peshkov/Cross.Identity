@@ -2,6 +2,7 @@
 # Resolve target release version and related paths for the current branch.
 #
 # Default: GitVersion MajorMinorPatch (GitVersion.yml) on the current branch.
+# Uses `/nofetch` + 15s timeout; on failure falls back to SemVer bump from latest v* tag.
 # Override: --version X.Y.Z (manual)
 #
 # Usage:
@@ -12,7 +13,7 @@
 #
 # Exit codes:
 #   0 — target version resolved
-#   1 — error (no tags / GitVersion missing or empty)
+#   1 — error (no tags / GitVersion missing, timeout, empty, or invalid JSON)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../../.." && pwd)"
@@ -104,7 +105,78 @@ gitversion_major_minor_patch() {
     echo "error: GitVersion CLI not found (install: dotnet tool install -g gitversion.tool)" >&2
     return 1
   fi
-  "$gv" /output json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin).get("MajorMinorPatch") or "")'
+  # /nofetch: avoid hanging on remote fetch (common locally / in sandboxes).
+  # Python wrapper: macOS has no GNU timeout; validate JSON before parse.
+  python3 -c '
+import json, subprocess, sys
+
+gv = sys.argv[1]
+try:
+    p = subprocess.run(
+        [gv, "/output", "json", "/nofetch"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+except subprocess.TimeoutExpired:
+    print("error: GitVersion timed out after 15s", file=sys.stderr)
+    sys.exit(1)
+
+if p.returncode != 0:
+    err = (p.stderr or p.stdout or "").strip()
+    print(
+        f"error: GitVersion exited {p.returncode}"
+        + (f": {err[:400]}" if err else ""),
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+raw = (p.stdout or "").strip()
+if not raw:
+    err = (p.stderr or "").strip()
+    print(
+        "error: GitVersion returned empty stdout"
+        + (f": {err[:400]}" if err else ""),
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+try:
+    data = json.loads(raw)
+except json.JSONDecodeError as e:
+    print(f"error: GitVersion stdout is not JSON ({e})", file=sys.stderr)
+    print(raw[:200], file=sys.stderr)
+    sys.exit(1)
+
+mmp = (data.get("MajorMinorPatch") or "").strip()
+if not mmp:
+    print("error: GitVersion JSON missing MajorMinorPatch", file=sys.stderr)
+    sys.exit(1)
+print(mmp)
+' "$gv"
+}
+
+# Align with GitVersion.yml when CLI is unavailable / sandboxed / timed out.
+# release|dev → Minor; hotfix → Patch; other → Minor (target plan SemVer).
+bump_from_latest_tag() {
+  local latest="$1" branch="$2"
+  python3 -c '
+import re, sys
+latest, branch = sys.argv[1], sys.argv[2]
+parts = latest.split(".")
+if len(parts) != 3 or not all(p.isdigit() for p in parts):
+    print(f"error: invalid latest tag version: {latest}", file=sys.stderr)
+    sys.exit(1)
+maj, minor, patch = (int(x) for x in parts)
+b = branch.lower()
+if re.match(r"^hotfix(es)?[/-]", b):
+    patch += 1
+else:
+    # release/, dev, feature/, fix/, chore/, … → next minor target
+    minor += 1
+    patch = 0
+print(f"{maj}.{minor}.{patch}")
+' "$latest" "$branch"
 }
 
 LATEST="$(latest_published)"
@@ -120,12 +192,17 @@ if [[ -n "$VERSION" ]]; then
   TARGET="$VERSION"
   BUMP="cli-version"
 else
-  TARGET="$(gitversion_major_minor_patch)" || exit 1
+  if TARGET="$(gitversion_major_minor_patch)"; then
+    BUMP="gitversion"
+  else
+    echo "warn: GitVersion failed on branch '$BRANCH'; falling back to tag bump from $LATEST" >&2
+    TARGET="$(bump_from_latest_tag "$LATEST" "$BRANCH")" || exit 1
+    BUMP="fallback-tag"
+  fi
   if [[ -z "$TARGET" ]]; then
-    echo "error: GitVersion returned empty MajorMinorPatch on branch '$BRANCH'" >&2
+    echo "error: could not resolve target version on branch '$BRANCH'" >&2
     exit 1
   fi
-  BUMP="gitversion"
 fi
 
 FROM_VERSION="$LATEST"
