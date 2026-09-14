@@ -12,7 +12,7 @@ description: >-
 Two modes:
 
 | Mode | Trigger | What runs |
-|------|---------|-----------|
+|---|---|---|
 | **GitHub** (default) | `triage` / `запусти triage` without `local`/`branch` | `triage-issue` + `triage-pr` Phase 1 + cross-analysis issues×PRs |
 | **Local / branch** | `local` · `branch <name>` · «текущая ветка» · «vs master» without PR | `triage-pr` **Phase 1b** (`git diff` vs base) — **not** GitHub PR list |
 
@@ -29,11 +29,11 @@ Cross-ref skills: [`triage-issue`](../triage-issue/SKILL.md), [`triage-pr`](../t
 ## Args
 
 | Arg | Effect |
-|-----|--------|
+|---|---|
 | _(none)_ | GitHub mode |
 | `local` | Current `HEAD` vs base (default `origin/master`) |
 | `branch <name>` | Named ref vs base (resolves local or `origin/<name>`) |
-| `base master\|dev` | Diff base (default **master**) |
+| `base master\ | dev` | Diff base (default **master**) |
 | `offline` | Skip `git fetch` (stale base warning) — Phase 1b only |
 | `deep` | After Phase 1b, run `triage-pr` Phase 2 (deep review) |
 | `ru` / `en` | Table language (default **en**) |
@@ -154,7 +154,7 @@ PR files — for overlap detection (see `triage-pr`).
 #### 4.1 Double coverage — 2 PRs for 1 issue
 
 | Issue | PR1 | PR2 | Verdict |
-|-------|-----|-----|---------|
+|---|---|---|---|
 
 Rules: smaller scope, CI clean, internal PR, overlap >80% → conflict.
 
@@ -179,7 +179,7 @@ Internal PRs not linked to an issue.
 Summary:
 
 | Category | Count |
-|----------|-------|
+|---|---|
 | PRs ready to merge (ours) | N |
 | Quick wins (external) | N |
 | Double coverage | N |

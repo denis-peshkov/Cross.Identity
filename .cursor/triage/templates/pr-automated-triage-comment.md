@@ -62,7 +62,7 @@ The agent fills JSON fields; `format-pr-comment.mjs` renders the layout (reposit
 After analysis, `post-pr-triage.mjs` syncs PR labels via `apply-pr-labels.mjs`:
 
 | Field | Label |
-|-------|--------|
+|---|---|
 | `category` | `feature` / `bug` / `enhancement` / `security` / `docs` / `chore` / `question` |
 | `priority` | `priority:critical` / `priority:high` / `priority:medium` / `priority:low` |
 

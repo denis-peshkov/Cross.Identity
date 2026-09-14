@@ -58,7 +58,7 @@ If `1_PreDeployment/` already has scripts **besides** `1_00_Predeployment.sql`, 
 ### Example (Confirmed → Verified)
 
 | Step | Script | Purpose |
-|------|--------|---------|
+|---|---|---|
 | (existing, untouched) | `1_02_*EmailConfirmedUnique` | original filtered unique index |
 | (existing, untouched) | `1_03_*PhoneNumberConfirmedUnique` | original filtered unique index |
 | new | `1_07_*RenameConfirmedToVerified` | rename columns |

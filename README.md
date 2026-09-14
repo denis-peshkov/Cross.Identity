@@ -43,7 +43,7 @@ Use when the host fills the bag **without** going through `collectForm` (or befo
 - **Namespace:** `Cross.Identity.Services.Crypto`
 
 | Method | Role |
-|--------|------|
+|---|---|
 | `IsValid` / `Require` | Check or enforce already-E.164 |
 | `Normalize` / `NormalizeOrThrow` / `Ensure` | Convert national / free-form input to E.164 |
 
@@ -153,7 +153,7 @@ Validation runs automatically on the **first** call to `IFlowExecutor.ExecuteAsy
 Behavior:
 
 | Scenario | Result |
-|----------|--------|
+|---|---|
 | Key not set | `LogCritical`, flow runs (dev/test) |
 | Invalid JWT | `LogError`, flow runs |
 | Expired / wrong product type | `LogError` + `LogCritical`, flow runs |

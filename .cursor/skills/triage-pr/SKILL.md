@@ -11,9 +11,9 @@ description: >-
 ## When to use
 
 | Scenario | Action |
-|----------|--------|
+|---|---|
 | "Triage PRs" / "pr triage" | Phase 1 audit (GitHub open PRs) |
-| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\|dev, no PR) |
+| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\ | dev, no PR) |
 | "Review branch X vs master" | Phase 1b + Phase 2 |
 | Orchestrator `triage local` / `triage branch …` | Same as Phase 1b (see `triage` skill) |
 | >5 open PRs without review | Suggest Phase 1 audit |
@@ -22,11 +22,11 @@ description: >-
 ## Modes
 
 | Mode | Args / trigger | Diff source | GitHub comment |
-|------|----------------|-------------|----------------|
+|---|---|---|---|
 | **PR audit** | `all` or default | `gh pr list` | No (draft only) |
 | **PR deep** | PR number(s) | `gh pr diff {n}` | AskQuestion + template |
-| **Branch** | `branch <name>` `[base master\|dev]` `[offline]` | `git diff base...branch` | No |
-| **Local** | `local` `[base master\|dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
+| **Branch** | `branch <name>` `[base master\ | dev]` `[offline]` | `git diff base...branch` | No |
+| **Local** | `local` `[base master\ | dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
 
 Default **base**: `master` if ambiguous; use `dev` when the user says so or the branch targets `dev`.
 

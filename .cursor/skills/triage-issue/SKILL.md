@@ -14,7 +14,7 @@ GitHub issue triage for the **current repository** (name/layout from `gh repo vi
 ## When to use
 
 | Scenario | Action |
-|----------|--------|
+|---|---|
 | "Triage issues" / "issue triage" | Run this skill |
 | >10 open issues without triage | Suggest audit |
 | Issue stale >30 days | Include in Stale table |
@@ -146,7 +146,7 @@ For bug reports request:
 ## Edge cases
 
 | Situation | Behavior |
-|-----------|----------|
+|---|---|
 | 0 issues | Report and exit |
 | >50 comments | Summarize 5 most recent |
 | Rate limit | Reduce `--limit`, notify |

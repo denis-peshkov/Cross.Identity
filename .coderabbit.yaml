@@ -11,10 +11,10 @@
 #
 # Full pass over the entire PR from scratch (not incremental).
 #
-# | Command                      | What it does              |
-# |------------------------------|---------------------------|
-# | @coderabbitai full review    | full review               |
-# | @coderabbitai review         | only new changes since last review |
+# | Command | What it does |
+# |---|---|
+# | @coderabbitai full review | full review |
+# | @coderabbitai review | only new changes since last review |
 #
 # Ack status: "Full review triggered" → "Full review finished".
 # Docs: https://docs.coderabbit.ai/reference/review-commands

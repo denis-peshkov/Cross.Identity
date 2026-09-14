@@ -30,7 +30,7 @@ Consumers register the package with `services.AddCrossIdentity(configuration)` a
 ## How you can help
 
 | Type | Examples |
-|------|----------|
+|---|---|
 | **Report** | Bug with repro steps, expected/actual behavior, package version and TFM |
 | **Fix** | Regression fix, OAuth state, refresh rotation, flow validation |
 | **Build** | New step/factory, flow JSON, integration tests, Sample.Api improvements |
@@ -107,7 +107,7 @@ chore/*   ──┘                              ▲
 ```
 
 | Branch | Purpose | Who |
-|--------|---------|-----|
+|---|---|---|
 | `dev` | Feature integration | **Default PR target** for all contributors |
 | `master` | Stable release; GitVersion, tag, NuGet push | **Owner only** — direct push and PRs |
 | `feature/*` | New functionality | Contributors |
@@ -133,7 +133,7 @@ Versioning: **GitVersion** (`GitVersion.yml`). `dev` is pre-release (`-dev.N`), 
 Prefix + kebab-case description:
 
 | Prefix | When |
-|--------|------|
+|---|---|
 | `feature/` | New functionality |
 | `fix/` | Bug fix |
 | `chore/` | CI, deps, docs-only, maintenance |
@@ -195,10 +195,10 @@ See [Testing](#testing).
 
 Must pass:
 
-- `dotnet build` + `dotnet test` (`.NET` workflow)
+- `.NET` workflow (`dotnet build` + `dotnet test`)
 - Branch policy (`.github/workflows/branch-policy.yml`) — contributors cannot PR to `master` or push `release/*` / `hotfix/*`
-- SonarCloud quality gate (on PR — `sonar.qualitygate.wait=true`)
-- If triage changed — `PR automated comment` job (must not fail on large diffs)
+- SonarCloud quality gate on PR (`sonar.qualitygate.wait=true`)
+- Triage PR comment job when enabled (`CURSOR_API_KEY`) — must not fail on large diffs
 
 ### 6. Review and merge
 

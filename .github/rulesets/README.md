@@ -29,7 +29,7 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 ## Files
 
 | File | Target | Purpose |
-|------|--------|---------|
+|---|---|---|
 | [`01-protect-master.json`](01-protect-master.json) | `master` | No force-push/delete; PR + CI required; admin bypass for releases |
 | [`02-protect-dev.json`](02-protect-dev.json) | `dev` | No force-push/delete; PR + required `build`; admin bypass. Back-merge CI pushes with `TAGTOKEN` |
 | [`03-protect-release-hotfix.json`](03-protect-release-hotfix.json) | `release/*`, `hotfix/*` | Create/update/delete only via admin bypass |
@@ -39,7 +39,7 @@ Until Pro is enabled, keep enforcing policy via `.github/workflows/branch-policy
 ## Bypass actors
 
 | Actor | ID | Used for |
-|-------|-----|----------|
+|---|---|---|
 | RepositoryRole **Admin** | `5` | Owner (`denis-peshkov`) and workflows using an **admin PAT** (`TAGTOKEN`) |
 
 **Do not** put Integration `15368` (GitHub Actions) in `bypass_actors` on this personal repo — import fails with:

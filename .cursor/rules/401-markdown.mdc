@@ -1,6 +1,8 @@
 ---
 description: Markdown table formatting — short separators, single spaces, pipe bookends
-globs: "**/*.md"
+globs:
+  - "**/*.md"
+  - "**/*.mdc"
 alwaysApply: false
 ---
 
@@ -8,7 +10,7 @@ alwaysApply: false
 
 ## Tables
 
-Apply when creating or editing GFM tables in any `.md` file.
+Apply when creating or editing GFM tables in any `.md` / `.mdc` file.
 
 ### Separator row — always short
 
@@ -19,7 +21,7 @@ Use minimal hyphens. Do **not** pad separators to match header width.
 | Step | kind | Details |
 |---|---|---|
 
-<!-- ❌ BAD -->
+<!-- ❌ BAD — padded separators -->
 | Step | kind | Details |
 |------|------|---------|
 ```

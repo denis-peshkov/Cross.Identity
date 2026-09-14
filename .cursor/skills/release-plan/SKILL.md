@@ -33,7 +33,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 ```
 
 | Section (заголовок в этом файле) | Типичный domain hint |
-|----------------------------------|----------------------|
+|---|---|
 | **Ensure current RELEASE-PLAN** | напр. CR findings → plan, не TO-DO |
 | **`docs/BREAKING.md`** | напр. имена скриптов / текст миграции |
 | **Close from TO-DO** | dismiss / won’t-fix |
@@ -47,7 +47,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 ## Два файла version plan
 
 | Файл | Содержимое |
-|------|------------|
+|---|---|
 | `docs/RELEASE-PLAN-X.Y.Z.md` | **Только** delta этого релиза относительно базы (`master`) |
 | `docs/TO-DO.md` | Кросс-версионный **открытый** backlog (C/H/M/L) + **Принято** (durable trade-offs); инкрементально |
 
@@ -98,7 +98,7 @@ Downstream triage **coderabbit** по-прежнему пишет только �
 **Нумерация open items** — **общий** namespace с [`docs/TO-DO.md`](../../../docs/TO-DO.md) (не локальный счётчик релиза):
 
 | Префикс | Секция |
-|---------|--------|
+|---|---|
 | `C` | Критично |
 | `H` | Высокий |
 | `M` | Средний |
@@ -116,7 +116,7 @@ Downstream triage **coderabbit** по-прежнему пишет только �
 Процесс/легенда/статусы **не** писать в сам файл — только здесь.
 
 | Правило | Деталь |
-|---------|--------|
+|---|---|
 | Содержимое | Open backlog вне дельты version plan; **Принято** — lasting contracts/trade-offs между релизами; планы = только дельта релиза |
 | Секции | Четыре open: Критично / Высокий / Средний / Низкий (пустые = заголовок + `---`) **и** **Принято** (список bullets; может быть пустым) |
 | Формат open | `### M13. Title` + описание **без** статус-маркеров (`⬜`/`✅`/…) |
@@ -154,7 +154,7 @@ bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --json
 Использовать `plan_path` / `target_version` из вывода (GitVersion `MajorMinorPatch`, либо `--version`). Exit **1** → починить GitVersion / теги, или передать `--version`.
 
 | Ситуация | Действие |
-|----------|----------|
+|---|---|
 | Текущий `docs/RELEASE-PLAN-X.Y.Z.md` **существует** | Использовать его (`test -f` / читать **только этот файл** + `docs/TO-DO.md` при необходимости); `plan_path` из вывода скрипта |
 | **Нет** текущего плана для целевой версии (файл отсутствует) | **Обязательно** прогнать этот skill **полностью** (собрать delta → записать план) в этой же сессии, **затем** продолжить |
 | Версия неизвестна | `resolve-target-version.sh` (GitVersion) или явный `--version X.Y.Z` |
@@ -210,7 +210,7 @@ bash .cursor/skills/release-plan/scripts/scaffold-breaking-section.sh \
 1. **Сначала** добавить строку в `## Закрыто` **текущего** `RELEASE-PLAN-X.Y.Z.md`:
 
 | # | Суть |
-|---|------|
+|---|---|
 | ✅ #H2 Scripts README MERGE SystemId scope | dismissed: README — пример lookup, не open work |
 
 2. Id **сохранить** (`✅ #H2 …` / `✅ #M13 …`); title короткий; в «Суть» — почему закрыто.
@@ -282,7 +282,7 @@ Cache попадает под `.cursor/skills/release-plan/.cache/` (скрип�
 3. Классифицировать изменения **дельты**:
 
 | Корзина | Куда класть |
-|---------|-------------|
+|---|---|
 | Критично / Высокий / Средний / Низкий | Open issues **только в этой дельте** |
 | Принято | Trade-offs **этого** релиза — **только** в version plan; в `TO-DO.md` «Принято» — **только при finalize** |
 | Закрыто | Fixes/features **в этой дельте** |
@@ -306,7 +306,7 @@ node .cursor/skills/release-plan/scripts/update-changelog.mjs --write
 ## Прочие release-документы (не version plans)
 
 | Файл | Роль |
-|------|------|
+|---|---|
 | `RELEASE-PLAN.md` (корень репо) | Аудит библиотеки / hardening backlog |
 | `docs/RELEASE-PLAN-to-master.md` | Исторические readiness-чеклисты → `master` |
 | `docs/BREAKING.md` | Breaking changes для NuGet-потребителей |
@@ -352,7 +352,7 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 ## Скрипты (`scripts/`)
 
 | Скрипт | Назначение |
-|--------|------------|
+|---|---|
 | [`resolve-target-version.sh`](scripts/resolve-target-version.sh) | `target_version` = GitVersion `MajorMinorPatch` (или `--version`); `plan_path`, `repository_link`, `breaking_from`/`breaking_to` |
 | [`scaffold-breaking-section.sh`](scripts/scaffold-breaking-section.sh) | Строка TOC + блок `From X to Y` (только cache; агент правит `docs/BREAKING.md`) |
 | [`collect-release-delta.sh`](scripts/collect-release-delta.sh) | Cache delta ветки для черновика плана; default focus `docs/BREAKING.md`; `--focus PATH` (repeatable) |

@@ -15,7 +15,7 @@ alwaysApply: false
 ## DbUp instead of Code First Migrations
 
 | Approach | Role here |
-|----------|-----------|
+|---|---|
 | EF Core | Mapping, queries, `SaveChanges`, optional greenfield model alignment |
 | DbUp SQL folders | Apply DDL/DML to existing and new databases in a fixed layer order |
 
@@ -44,7 +44,7 @@ For lookup tables, prefer loading desired rows into a table variable (or CTE) fr
 - **Script file naming** — `<FolderNumber>_<Layer>_<EntityName>[_<comment_if_required>]`
 
 | Part | Meaning |
-|------|---------|
+|---|---|
 | `FolderNumber` | DbUp folder id (`1` … `5` → `1_PreDeployment` … `5_PostDeployment`) |
 | `Layer` | **Dependency stage** within that folder (`00`, `01`, `02`, …). **Not** a per-file sequence. Several scripts may share the same `Layer` when they are **independent** (no ordering between them). Bump `Layer` only when a script **depends on** work that must already have run in a **previous** stage. |
 | `EntityName` / optional `_comment` | Short purpose / entity hint |
