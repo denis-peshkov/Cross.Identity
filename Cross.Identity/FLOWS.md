@@ -23,11 +23,11 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | Party | Responsibility |
 |-------|----------------|
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
-| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{supportEmail}}`) come from `Authentication:Notifications` (defaults match former hardcoded Peshkov values). Does not read `HttpContext` or `Accept-Language`. |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{supportEmail}}`) come from `Authentication:Notifications` (host config; no built-in library defaults). Does not read `HttpContext` or `Accept-Language`. |
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
 |-------|----------------|
@@ -84,8 +84,9 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `*.LogoutAll.json` | `LogoutAll` |
 | `*.CommunicationEndpointsGetAll.json` | `CommunicationEndpointsGetAll` |
 | `*.CommunicationEndpointSetPreferred.json` | `CommunicationEndpointSetPreferred` |
+| `*.ChangeAccountEmail.json` | `ChangeAccountEmail` |
 
-### All flow files (17)
+### All flow files (18)
 
 | Flow | Operation | File |
 |------|-----------|------|
@@ -158,12 +159,12 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.Register.json`
 
-**Purpose:** registration by email + password with confirmation code delivery.
+**Purpose:** registration by email with an optional password and confirmation code delivery.
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserId`. → `sendCode` |
+| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |
 
@@ -175,7 +176,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |------|------|---------|
-| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` / `UserName` (any), `Ttl` (TimeSpan, required); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code`, `ttlKey: collectForm.Ttl` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode = sendCode.LastCode`. `next: null` |
 
@@ -183,7 +184,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.ChangePassword.json`
 
-**Purpose:** change password by user id after validating the current password.
+**Purpose:** change password by `UserAccountId` after validating the current password.
 
 | Step | kind | Details |
 |------|------|---------|
@@ -379,12 +380,12 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `passwordAuth` | Verify identity + password; writes `UserAccountId` |
 | `resetPassword` | Set new password (identity from `Selector`); notify with `password-changed` templates |
 | `token` | Issue access/refresh tokens |
-| `refreshToken` | Refresh using refresh_token (host must wrap in an external DB transaction) |
+| `refreshToken` | Refresh using refresh-token `Jti` (`jtiKey`; host validates the client refresh JWT and extracts `jti`; wrap in an external DB transaction) |
 | `externalLoginInitiate` | OAuth redirect URL |
 | `externalLoginComplete` | OAuth callback, issue tokens |
 | `externalLoginUnlink` | Unlink OAuth provider from current user |
 | `externalLoginGetAll` | List OAuth providers + link status for current user |
-| `logout` | Revoke current refresh token (`USER_LOGOUT`) |
+| `logout` | Revoke current session by access-token `Jti` (`USER_LOGOUT`) |
 | `logoutAll` | Revoke all tokens for user (`USER_LOGOUT_ALL`) |
 | `verifyToken` | Validate access token; return `valid` (+ `user_account_id` / `jti` when valid) |
 | `communicationEndpointsGetAll` | List user communication endpoints |

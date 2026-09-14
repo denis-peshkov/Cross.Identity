@@ -59,7 +59,7 @@
 | ✅ #M53 anchor `BREAKING.md` в строке #M51 | ссылка `(BREAKING.md#from-220-to-230)` вместо fragment-only |
 | ✅ #M54 `TokenTestHelpers`: `CancellationToken` в `IsRefreshTokenActiveAsync` | параметр + проброс в `FirstOrDefaultAsync`; callers → `CancellationToken.None` |
 | ✅ #M55 `JwtTokenServiceTests`: `Helpers` → `GlobalUsings` | убран file-scoped using; `global using Cross.Identity.Tests.Helpers` уже был |
-| ✅ #M56 `release-plan-summary.mjs`: bullets только в §10 | active `##` heading; BULLET только при `/^10\b/` |
+| ✅ #M56 `release-plan-to-master.mjs`: bullets только в §10 | active `##` heading; BULLET только при `/^10\b/` |
 | ✅ #M57 `repository-link.sh`: `ssh://git@github.com/` | SSH SCP + `ssh://` → `https://github.com/org/repo` |
 | ✅ #M58 `scaffold-breaking-section.sh`: ANCHOR при `--from` | ANCHOR всегда из effective FROM/TO (`from-{from}-to-{to}`) |
 | ✅ #L12 triage orchestrator local/branch modes | `triage local` / `triage branch` vs `origin/master`; rule + README |

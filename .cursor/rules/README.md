@@ -13,7 +13,7 @@
 
 ### Cursor skills (project)
 
-- `.cursor/skills/release-plan/` - Version plans, `TO-DO.md`, `BREAKING.md`; scripts: `resolve-target-version.sh`, `scaffold-breaking-section.sh`, `collect-release-delta.sh`, `release-plan-summary.mjs`
+- `.cursor/skills/release-plan/` - Version plans, `TO-DO.md`, `BREAKING.md`; scripts: `resolve-target-version.sh`, `scaffold-breaking-section.sh`, `collect-release-delta.sh`, `release-plan-to-master.mjs`
 - `.cursor/skills/coderabbit/` - CodeRabbit CLI review → current version plan
 - `.cursor/skills/db-scripts/` - This repo’s DbUp paths (`Infrastructure/Scripts/` multi-provider, `auth`, BREAKING); conventions in `102-backend-efcore`
 - `.cursor/skills/triage/` - issue + PR triage orchestrator

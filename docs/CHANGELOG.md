@@ -7,6 +7,28 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.4.1 — 14 Sep 2026
+
+### Library
+
+- Stock `main.Register`: `Password` is optional; `CreateUserAsync` skips hashing blank/whitespace passwords (`PasswordPhc` may be null).
+
+### Tests
+
+- Registration flow / `UserService` coverage for register without password.
+
+### Documentation
+
+- `FLOWS.md` / README: optional Register password; `userAccountIdKey` / 18-flow sync; Notifications described as host config without library defaults.
+- Contributor docs: release checklist / Change summary script are maintainer-only (`release-plan` skill); removed from PR template and contributor checklists.
+
+### Repository tooling
+
+- `.cursor/rules/401-markdown.mdc` — GFM table formatting (short separators, one-space cells).
+- Release readiness checklist renamed to `docs/RELEASE-PLAN-to-master.md`; Change summary script → `release-plan-to-master.mjs`.
+
+---
+
 ## v2.4.0 — 14 Sep 2026
 
 ### Library

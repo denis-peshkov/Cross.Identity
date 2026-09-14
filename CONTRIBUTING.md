@@ -11,7 +11,6 @@ Thank you for your interest in the project.
 - [SonarCloud](https://sonarcloud.io/summary/new_code?id=Cross.Identity)
 - [NuGet](https://www.nuget.org/packages/Cross.Identity/)
 - Flow documentation: [`Cross.Identity/FLOWS.md`](Cross.Identity/FLOWS.md)
-- Release plan: [`docs/RELEASE-PLAN-dev-to-master.md`](docs/RELEASE-PLAN-dev-to-master.md)
 
 ---
 
@@ -161,7 +160,7 @@ Update FLOWS.md for ExternalLogin flows
 
 For breaking changes, explicitly include `BREAKING:` in the commit body or PR description.
 
-`CHANGELOG.md` is maintained manually before release (see `docs/RELEASE-PLAN-dev-to-master.md`).
+`CHANGELOG.md` is maintained by maintainers before release (not a contributor checklist item).
 
 ---
 
@@ -231,22 +230,20 @@ With coverage (as in CI) — see the OpenCover example in `300-testing-dotnet.md
 - [ ] For flows — integration test in `Cross.Identity.Tests/Identity/FlowTests/`
 - [ ] For OAuth/JWT/licensing — not only happy path
 - [ ] No secrets in code or test data
-- [ ] If editing `RELEASE-PLAN` — `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
 ---
 
 ## Documentation
 
 | What changed | Update |
-|--------------|--------|
+|---|---|
 | JSON flow / step | `Cross.Identity/FLOWS.md` |
 | Breaking change for consumers | `docs/BREAKING.md` only (`config.nuspec` `releaseNotes` = link, no duplicate list) |
 | New configuration option | `README.md`, XML on options class |
-| OAuth / multi-instance | `FLOWS.md` (briefly), release plan §B |
-| Release checklists | `docs/RELEASE-PLAN-dev-to-master.md` + `.cursor/skills/release-plan/scripts/release-plan-summary.mjs` |
+| OAuth / multi-instance | `FLOWS.md` (briefly) |
 | Package public API | `README.md` |
 
-Flow documentation covers **JSON and steps only**, not full appsettings (config is in README / release plan).
+Flow documentation covers **JSON and steps only**, not full appsettings (config is in README).
 
 ---
 
@@ -276,7 +273,7 @@ There is no separate CLA — merging a PR means agreement with the repository li
 
 - Triage: `.cursor/skills/`, `bash .cursor/triage/collect-data.sh`
 - GitHub CLI wrapper for triage: `.cursor/triage/gh-wrapper.sh`
-- Release gate: `docs/RELEASE-PLAN-dev-to-master.md`
+- Release gate / version plans: [`.cursor/skills/release-plan/SKILL.md`](.cursor/skills/release-plan/SKILL.md) (`docs/RELEASE-PLAN-*.md`, `TO-DO.md`, Change summary via `release-plan-to-master.mjs`)
 - Deploy key (`cross-identity-deploy-key*`) — Azure DevOps submodule only, **not** for license key
 
 ---

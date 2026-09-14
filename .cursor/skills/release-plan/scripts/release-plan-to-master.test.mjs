@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { applySummaryLine, formatSummaryLine } from './release-plan-summary.mjs';
+import { applySummaryLine, formatSummaryLine } from './release-plan-to-master.mjs';
 
 const sampleLine = formatSummaryLine(['✅', '⬜']);
 

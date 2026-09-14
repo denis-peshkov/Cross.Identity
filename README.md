@@ -209,11 +209,14 @@ dotnet test --filter "Category=Integration"
 
 ## Additional resources
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute: branches, PRs, tests, code style.
 - [Infrastructure/Scripts/README.md](Infrastructure/Scripts/README.md) — DbUp DDL for SQL Server, PostgreSQL, and MySQL (`auth` schema).
 - [RefreshToken.md](RefreshToken.md) — access/refresh token lifetimes and rotation recommendations.
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) — release history.
+- [docs/BREAKING.md](docs/BREAKING.md) — breaking changes for package consumers.
+- [docs/TO-DO.md](docs/TO-DO.md) — open backlog and accepted trade-offs.
+- [CONTRIBUTING.md](CONTRIBUTING.md) — how to contribute: branches, PRs, tests, code style.
 - [LICENSE.md](LICENSE.md) — license.
 
-## ToDo
+## Roadmap
 
 - ~~[x] Migrate from System.IdentityModel.Tokens.Jwt to Microsoft.IdentityModel.JsonWebTokens~~
