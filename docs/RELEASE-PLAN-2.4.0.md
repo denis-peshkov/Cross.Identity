@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 9H / 7M / 0L**.
 
-**CodeRabbit:** не запускался.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **9H + 7M открыты в плане** (#H19–#H27, #M82–#M88); merged by meaning.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -22,9 +22,57 @@
 
 ## Высокий (логика / auth model)
 
+### H19. OTP in HTML email preheader
+⬜ Stock `verify`/`reset` `*.html` hidden preview includes code placeholders; remove OTP from preheader (generic text only). CR Major × verify/reset en/ru/ro.
+
+### H20. Quadruple-brace placeholders vs `{{…}}` Replace
+⬜ Stock HTML uses `{{{{name}}}}`; `NotificationComposer` replaces `{{name}}` → leftover `{{value}}` (demo: `{{{{code}}}}` + `123456` → `{{123456}}`). Normalize to `{{…}}` across verify/reset/register/confirm-email/password-changed. `Contain("{{code}}")` tests false-pass on quads.
+
+### H21. HTML-encode dynamic values in `NotificationComposer`
+⬜ `Apply` inserts brand + caller placeholders into HtmlBody without HtmlEncode; keep TextBody raw.
+
+### H22. Sample.Api host templates quality
+⬜ register `*.txt`: missing `{{url}}`/`{{helpLink}}`; ru/ro txt still English; `verify.ro.html` hardcodes «3 hours» instead of `{{expires}}`.
+
+### H23. New 2.4.0 tests: `Given/When/Then` (+ `Async`)
+⬜ Rename NotificationOptions / Composer / EmbeddedTemplate / HostSuppliedLanguage / SecurityNotifier / ChangeAccountEmail tests per `.cursor/rules/300-testing-dotnet.mdc`.
+
+### H24. TO-DO «Принято»: ChangePassword still says `Id`
+⬜ Stale line — contract is `UserAccountId` (+ current password), not historical `Id` (2.3).
+
+### H25. B2 `{{support}}` → `{{supportEmail}}` as breaking
+⬜ `RELEASE-PLAN-dev-to-master` B2/D3: document host custom-template migration; add/confirm `BREAKING.md` § From 2.3.0 to 2.4.0 (no `supportEmail` § yet).
+
+### H26. `release-plan-summary` SUMMARY_RE case
+⬜ Match documented `Checklist Summary` vs `Checklist summary` so `--write` replaces instead of duplicating.
+
+### H27. `update-changelog.mjs` honor `--version` / `--from`
+⬜ When both flags set, return them directly (bypass tag-requiring resolver).
+
 ---
 
 ## Средний (противоречия / баги контрактов)
+
+### M82. CHANGELOG v2.4.0 dated before tag
+⬜ Mark Unreleased until GitHub release/tag exists (heading currently dated 14 Sep 2026).
+
+### M83. `RELEASE-PLAN-dev-to-master` maintenance script path
+⬜ Documented path should match real script (`.cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`).
+
+### M84. `triage.yml` `ready_for_review`
+⬜ Add `ready_for_review` to `pull_request` types (draft → ready).
+
+### M85. triage-issue Risk: drop CQRS-only qualifier
+⬜ Risk guidance should apply to any repo, not CQRS-only.
+
+### M86. triage deep-review shell path placeholders
+⬜ Fix invalid `<…>` path examples in deep-review `git diff` commands.
+
+### M87. `post-pr-triage` gh pagination `--slurp`
+⬜ Paginated comments/files fetch: add `--slurp` and flatten page arrays.
+
+### M88. `repository-link.sh` fail on empty origin
+⬜ Nonzero exit when origin missing / not GitHub URL (no empty prefix links).
 
 ---
 
@@ -80,6 +128,13 @@
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
+1. **H19** / **H20** — preheader OTP + `{{{{…}}}}` → `{{…}}` (stock templates + placeholder tests).
+2. **H21** — HtmlEncode in `NotificationComposer` HTML path.
+3. **H22** — Sample.Api template localization / placeholders / `{{expires}}`.
+4. **H23** — Given/When/Then rename for new 2.4.0 tests.
+5. **H24** / **H25** / **H26** / **H27** — docs/tooling contract fixes.
+6. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
 
-Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · (опц.) CodeRabbit · merge → tag `v2.4.0` + NuGet.
+Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
+
+Внерелизный backlog → [`TO-DO.md`](TO-DO.md).
