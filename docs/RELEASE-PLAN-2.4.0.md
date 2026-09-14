@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **69** коммита · **195** файлов · **+8 688 / −2 974**. Open: H1 M1.
+> Дельта: `origin/master...HEAD` — **69** коммита · **195** файлов · **+8 688 / −2 974**. Open: H1.
 
 **CodeRabbit:** не запускался.
 
@@ -29,9 +29,6 @@
 
 ## Средний (противоречия / баги контрактов)
 
-### M79. `NotificationOptions` defaults missing
-Класс без property initializers; `NotificationOptionsTests.Defaults_MatchLegacyHardcodedBrand` падает (`Brand`/`Site`/… = null). Accepted обещает defaults = прежние Peshkov values; `Sample.Api` задаёт `Authentication:Notifications` в `appsettings.json`, но `new NotificationOptions()` и bind без секции — без defaults. Восстановить initializers (или явно сменить контракт тестов).
-
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -44,7 +41,7 @@
 Смена primary email — зона `IUserService` (не `ICommunicationEndpointService`). Upsert email-endpoint остаётся side-effect для синхрона delivery/OTP; flow может отдавать `endpoint` DTO хосту без второго `GetAll`.
 
 ### Optional `LanguageCode` + `Authentication:Notifications`
-Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` с defaults = прежние hardcoded Peshkov values — additive config, не breaking. Stock templates: `{{supportEmail}}` (не `{{support}}`). См. open **M79** (defaults в классе ещё не совпадают с Accepted).
+Хост кладёт `collectForm.LanguageCode` (2 буквы) до `ExecuteAsync`; library не читает `Accept-Language` / `HttpContext`. Brand placeholders (`{{brand}}`, `{{site}}`, …) из `Authentication:Notifications` — **host config** (additive; класс без built-in defaults). Stock templates: `{{supportEmail}}` (не `{{support}}`). Sample: `Sample.Api` / `appsettings.json`.
 
 ---
 
@@ -70,6 +67,7 @@
 | ✅ #M76 register/verify templates committed | WIP закрыт: localize/standardize en/ru/ro в ветке; working tree clean |
 | ✅ #M80 Sample.Api `Notifications` config | `Authentication:Notifications` в `appsettings.json` |
 | ✅ #M81 Template polish pass | structure/placeholders/responsive en/ru/ro (post-M75 commits) |
+| ✅ #M79 `NotificationOptions` test contract | no library defaults; `NewInstance_HasNoBuiltInBrandDefaults`; brand via host `Authentication:Notifications` |
 
 ---
 
@@ -84,7 +82,6 @@
 ## Приоритет фиксов
 
 1. **H18** — back-merge `origin/master` (`v2.3.0`) в ветку.
-2. **M79** — defaults `NotificationOptions` (+ зелёный `Defaults_MatchLegacyHardcodedBrand`).
-3. `dotnet test` · PR → `master` · CI/Sonar · (опц.) CodeRabbit · tag `v2.4.0`.
+2. `dotnet test` · PR → `master` · CI/Sonar · (опц.) CodeRabbit · tag `v2.4.0`.
 
 Внерелизный backlog → [`TO-DO.md`](TO-DO.md).

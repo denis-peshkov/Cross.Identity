@@ -3,15 +3,19 @@
 [TestFixture]
 public class NotificationOptionsTests
 {
+    /// <summary>
+    /// Brand placeholders are host-configured via <c>Authentication:Notifications</c>
+    /// (see Sample.Api <c>appsettings.json</c>). The options type itself has no built-in defaults.
+    /// </summary>
     [Test]
     [Category(TestCategory.UNIT)]
-    public void Defaults_MatchLegacyHardcodedBrand()
+    public void NewInstance_HasNoBuiltInBrandDefaults()
     {
         var opt = new NotificationOptions();
-        opt.Brand.Should().Be("peshkov.biz");
-        opt.Site.Should().Be("peshkov.biz");
-        opt.Company.Should().Be("Peshkov");
-        opt.FullName.Should().Be("Denis Peshkov");
-        opt.SupportEmail.Should().Be("support@peshkov.biz");
+        opt.Brand.Should().BeNull();
+        opt.Site.Should().BeNull();
+        opt.Company.Should().BeNull();
+        opt.FullName.Should().BeNull();
+        opt.SupportEmail.Should().BeNull();
     }
 }
