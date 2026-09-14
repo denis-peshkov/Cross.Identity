@@ -9,21 +9,16 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ## v2.5.1 — 14 Sep 2026
 
-### CI / release process
+### Versioning / CI
 
-- CI / GitHub Actions paths updated: `.github/workflows/dotnet.yml`.
-
-### Versioning
-
-- Versioning config updated: `GitVersion.yml`.
+- Migrate `GitVersion.yml` to GitVersion **6.x**: root `increment: Patch`; `main` inherits from **release** (Minor) / **hotfix** (Patch) only (not `develop`); ignore digits in branch names; commit-message incrementing disabled.
+- CI: GitVersion actions **v4.7.0** / tool **6.8.2**; create/push git tags only for **stable** SemVer (no `-` prerelease); NuGet push limited to `master` / `release/*` / `hotfix/*` / `dev`.
+- SonarCloud `projectKey` → `Cross.Identity` (aligned with `projectName`).
 
 ### Documentation
 
-- Docs updated: `docs/RELEASE-PLAN-2.5.0.md`, `docs/RELEASE-PLAN-2.5.1.md`, `docs/RELEASE-PLAN-to-master.md`, `docs/TO-DO.md`.
-
-### Repository tooling
-
-- Repo tooling updated: `.cursor/skills/release-plan/SKILL.md`.
+- Align closed plan / CHANGELOG / checklist naming with published tag **`v2.5.0`** (was mistakenly labeled `2.4.1`).
+- `TO-DO` «Принято» bullets: drop SemVer / release numbers from trade-off text (`release-plan` skill rule).
 
 ---
 

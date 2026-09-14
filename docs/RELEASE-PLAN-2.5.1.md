@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.5.0.md`](RELEASE-PLAN-2.5.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · **0** файлов (ветка tip = `master` / `v2.5.0`). **WT:** **6** файлов · **+136 / −117**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **1** коммит · **7** файлов · **+268 / −163**. **WT:** **4** файла · **+18 / −20**. Open C/H/M/L пустые.
 
 **CodeRabbit:** не запускался.
 
@@ -51,19 +51,20 @@
 | ✅ #M95 Tag only stable SemVer | create/push tag если `semVer` без `-`; NuGet push только master/release/hotfix/dev |
 | ✅ #M96 Docs align tag `v2.5.0` | plan/CHANGELOG/to-master/TO-DO: `2.4.1` → `2.5.0` под фактический тег |
 | ✅ #L18 Sonar `projectKey` | `dCross.Identity` → `Cross.Identity` |
+| ✅ #L19 TO-DO Принято без SemVer | skill + strip version numbers from «Принято» bullets |
 
 ---
 
 ## Что в библиотеке уже нормально
 
 - Дельта **не** трогает library / flows / NuGet API — только versioning + CI + docs rename.
-- Предыдущий релиз `v2.5.0` (Register optional Password) уже на `master` / NuGet.
+- Предыдущий релиз `v2.5.0` (Register optional Password) уже на `master` (tag local); GitHub Release page может отставать.
 
 ---
 
 ## Приоритет фиксов
 
-1. Commit WT на `hotfix/gitversion-hotfix-patch-increment`.
+1. Добить WT (CHANGELOG / plan / to-master / skill) на `hotfix/gitversion-hotfix-patch-increment`.
 2. PR → `master` · CI · убедиться, что после merge GitVersion на master даёт **`2.5.1`** (Patch), не `2.6.0`.
 3. Tag `v2.5.1` + NuGet (CI).
 

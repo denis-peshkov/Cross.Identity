@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.5.1` → `master`
 
 > **Analysis date:** 2026-09-14
-> **Branch:** `hotfix/gitversion-hotfix-patch-increment` (tip = `master` / `v2.5.0`)
+> **Branch:** `hotfix/gitversion-hotfix-patch-increment` (`1662a73`)
 > **Comparison base:** `origin/master` (`v2.5.0` / `9d20000`) · merge-base `9d20000`
 > **Version plan:** [`docs/RELEASE-PLAN-2.5.1.md`](RELEASE-PLAN-2.5.1.md) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.5.1** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** committed delta vs `master` is **empty**; ship content is in the **working tree**. Previous release [`v2.5.0`](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.5.0) published (Register optional Password; docs were briefly labeled `2.4.1`).
+> **Note:** **1** commit vs `master` (GitVersion 6 + CI); remaining WT = plan/CHANGELOG/to-master/skill refresh. Previous release tag `v2.5.0` (Register optional Password; docs were briefly labeled `2.4.1`).
 > **Sources:** `git` / version plan / WT (verified 2026-09-14)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **46** items — ✅ **22** (48%) · 🟨 **2** (4%) · ⬜ **22** (48%) · ❌ **0** (0%)
+**Change summary:** **47** items — ✅ **23** (49%) · 🟨 **4** (9%) · ⬜ **20** (43%) · ❌ **0** (0%)
 
 ---
 
@@ -18,10 +18,10 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | 0 (branch tip = `master`) |
-| Files (committed three-dot) | 0 |
-| Working tree | **6** files · **+136 / −117** (approx.) |
-| Local vs `origin/hotfix/…` | **not pushed** |
+| Commits (`origin/master..HEAD`) | **1** (`1662a73`) |
+| Files (committed three-dot) | **7** · **+268 / −163** |
+| Working tree | **4** файла · **+18 / −20** (plan / CHANGELOG / to-master / skill) |
+| Local vs `origin/hotfix/…` | **not pushed** (check) |
 | Tests | n/a (CI / GitVersion config only) |
 | PR | — |
 | CodeRabbit | не запускался |
@@ -31,7 +31,8 @@
 |---|---|---|
 | GitVersion.yml | 1 | GV6: hotfix→Patch, release→Minor; ignore branch digits |
 | .github/workflows | 1 | GV actions 6.8.2; stable-only tags; NuGet push scope; Sonar key |
-| docs | 4 | PLAN 2.5.1; align PLAN/CHANGELOG/to-master/TO-DO with tag `v2.5.0` |
+| docs | 5 | PLAN 2.5.1; align PLAN/CHANGELOG/to-master/TO-DO with tag `v2.5.0` |
+| .cursor | 1 | release-plan skill: Принято without SemVer |
 
 ---
 
@@ -59,6 +60,7 @@
 | F3 | Stable-only tags | no tag when `semVer` contains `-`; NuGet push scoped (M95) | ✅ |
 | F4 | Docs = tag `v2.5.0` | rename/relabel former `2.4.1` docs (M96) | ✅ |
 | F5 | Sonar projectKey | `Cross.Identity` (L18) | ✅ |
+| F6 | TO-DO Принято без SemVer | skill + strip version numbers (L19) | ✅ |
 
 ---
 
@@ -76,9 +78,9 @@
 | # | Check | Status |
 |---|---|---|
 | CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.5.1.md`](RELEASE-PLAN-2.5.1.md) empty | ✅ |
-| CG2 | Closed M93 · M94 · M95 · M96 · L18 in plan | ✅ |
-| CG3 | WT contains `GitVersion.yml` + `dotnet.yml` + docs align | ✅ |
-| CG4 | Commit WT onto hotfix branch | ⬜ |
+| CG2 | Closed M93 · M94 · M95 · M96 · L18 · L19 in plan | ✅ |
+| CG3 | Commit contains `GitVersion.yml` + `dotnet.yml` + docs align | ✅ |
+| CG4 | Commit remaining WT (plan / CHANGELOG / to-master / skill) | ⬜ |
 
 ---
 
@@ -86,7 +88,7 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Commit working tree | ⬜ |
+| P1 | Commit remaining WT (4 files) | ⬜ |
 | P2 | Push `hotfix/gitversion-hotfix-patch-increment` | ⬜ |
 | P3 | Open PR → `master` | ⬜ |
 | P4 | CI green on PR | ⬜ |
@@ -148,8 +150,8 @@
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate content** — M93–M96 / L18 in WT; open C/H/M/L empty
-- ⬜ **2. Commit** WT on hotfix branch
+- ✅ **1. Code gate content** — M93–M96 / L18–L19; open C/H/M/L empty
+- 🟨 **2. Commit** — main delta committed; remaining WT (docs/skill)
 - ⬜ **3. Push** + PR → `master`
 - ⬜ **4. CI** on PR
 - ⬜ **5. Merge** — verify SemVer **`2.5.1`**
@@ -159,8 +161,8 @@
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty
-- ✅ Feature set in WT (GitVersion 6 + CI + docs align)
-- ⬜ WT committed
+- ✅ Feature set committed (GitVersion 6 + CI + docs align)
+- 🟨 Remaining WT (plan refresh)
 - ⬜ PR opened / CI green
 - ⬜ Post-merge SemVer = `2.5.1`
 - ⬜ Tag / NuGet
