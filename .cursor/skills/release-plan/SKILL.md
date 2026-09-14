@@ -58,6 +58,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 **Источник истины по структуре:**
 - Активный (открытая работа): [`templates/RELEASE-PLAN.md`](templates/RELEASE-PLAN.md)
 - Закрытый / finalized: [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md)
+- Ответ пользователю после finalize: [`templates/FINALIZE-REPLY.md`](templates/FINALIZE-REPLY.md)
 - Новый блок `docs/BREAKING.md` **From X → Y**: workflow в **`docs/BREAKING.md`** ниже; сниппет [`templates/BREAKING-SECTION.md`](templates/BREAKING-SECTION.md)
 
 Общий placeholder: **`{{REPOSITORY_LINK}}`** — базовый URL GitHub-репо из `git remote` (`resolve-target-version.sh` → `repository_link`; fallback в `scripts/lib/repository-link.sh`).
@@ -245,7 +246,7 @@ Id’шный backlog, который отклонили как trade-off → **
    - **Приоритет фиксов** — пустая отсылка к `TO-DO.md` (как в finalized template).
 6. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
 7. UTF-8 BOM на изменённых docs.
-8. В ответе пользователю: список **перенесённых в TO-DO** id, факт sync «Принято», новый high-water, подтверждение что план = finalized shape.
+8. **Ответ пользователю** — по [`templates/FINALIZE-REPLY.md`](templates/FINALIZE-REPLY.md).
 
 **Запрещено:** оставить ⬜ open в «закрытом» плане; удалить open без переноса в TO-DO; заново сканировать все historical plans без нужды.
 
@@ -366,7 +367,7 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 - [ ] Во время открытого релиза lasting trade-off’ы **только** в «Принято» version plan — **не** в `TO-DO.md`
 - [ ] «Закрыто» `#` вида `✅ #M13 …` / `✅ #H3 …` (или legacy `✅ #34 …`)
 - [ ] Каждая строка «Закрыто» опирается на evidence дельты **или** явную причину dismiss
-- [ ] Finalize: leftovers в open `TO-DO.md`; «Принято» плана → merge/dedupe в «Принято» `TO-DO.md`; **`Id high-water`** обновлён один раз (`≥` все id релиза); план = `RELEASE-PLAN-FINALIZED`
+- [ ] Finalize выполнен по секции **Finalize version plan** (план → [`RELEASE-PLAN-FINALIZED`](templates/RELEASE-PLAN-FINALIZED.md); ответ → [`FINALIZE-REPLY`](templates/FINALIZE-REPLY.md))
 - [ ] Новые id C/H/M/L = max(TO-DO HW, current plan ids) + 1; **без** mid-release правок HW в `TO-DO.md`
 - [ ] UTF-8 BOM на записанных plan / TO-DO, если новые
 - [ ] Новые секции `BREAKING.md` следуют [`templates/BREAKING-SECTION.md`](templates/BREAKING-SECTION.md) (layout не дублируется во intro для потребителей)
