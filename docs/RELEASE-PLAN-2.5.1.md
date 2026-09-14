@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.5.0.md`](RELEASE-PLAN-2.5.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **7** файлов · **+268 / −163**. **WT:** **4** файла · **+18 / −20**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **2** коммита · **8** файлов · **+271 / −168**. **WT:** **3** файла (этот refresh plan/CHANGELOG/to-master). Open C/H/M/L пустые.
 
 **CodeRabbit:** не запускался.
 
@@ -58,14 +58,14 @@
 ## Что в библиотеке уже нормально
 
 - Дельта **не** трогает library / flows / NuGet API — только versioning + CI + docs rename.
-- Предыдущий релиз `v2.5.0` (Register optional Password) уже на `master` (tag local); GitHub Release page может отставать.
+- Предыдущий ship Register optional Password на `master` под тегом `v2.5.0` (local); GitHub Release page может отставать.
 
 ---
 
 ## Приоритет фиксов
 
-1. Добить WT (CHANGELOG / plan / to-master / skill) на `hotfix/gitversion-hotfix-patch-increment`.
-2. PR → `master` · CI · убедиться, что после merge GitVersion на master даёт **`2.5.1`** (Patch), не `2.6.0`.
+1. Commit этот docs refresh · PR → `master` · CI.
+2. После merge: GitVersion на master = **`2.5.1`** (Patch), не `2.6.0`.
 3. Tag `v2.5.1` + NuGet (CI).
 
 Внерелизный backlog → [`TO-DO.md`](TO-DO.md).

@@ -17,7 +17,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Documentation
 
-- Align closed plan / CHANGELOG / checklist naming with published tag **`v2.5.0`** (was mistakenly labeled `2.4.1`).
+- Align closed plan / CHANGELOG / checklist naming with tag **`v2.5.0`** (was mistakenly labeled `2.4.1`).
 - `TO-DO` «Принято» bullets: drop SemVer / release numbers from trade-off text (`release-plan` skill rule).
 
 ---
