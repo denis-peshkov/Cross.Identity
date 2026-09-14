@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 1M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 0M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **1M открыт в плане** (#M88); #H23/#H24/#H26/#H27/#M83–#M87 закрыты; #H25/#H19/#H21/#M82 принято; #H20/#H22 закрыты.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **open C/H/M/L пусты**; #H23/#H24/#H26/#H27/#M83–#M87 закрыты; #H25/#H19/#H21/#M82/#M88 принято; #H20/#H22 закрыты.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -25,9 +25,6 @@
 ---
 
 ## Средний (противоречия / баги контрактов)
-
-### M88. `repository-link.sh` fail on empty origin
-⬜ Nonzero exit when origin missing / not GitHub URL (no empty prefix links).
 
 ---
 
@@ -54,6 +51,9 @@
 
 ### CHANGELOG `v2.4.0` dated pre-tag (CR #M82)
 Осознанно: секция `## v2.4.0 — 14 Sep 2026` до GitHub release/tag — ок для ship prep; Unreleased не заводим.
+
+### `repository-link` soft-empty (CR #M88)
+Не фиксим: при missing / non-GitHub `origin` — пустая строка и exit 0 (не hard-fail).
 
 ---
 
@@ -87,6 +87,7 @@
 | ✅ #M85 triage-issue Risk CQRS qualifier | drop «for CQRS library»; Risk = any repo |
 | ✅ #M86 triage deep-review path placeholders | `'path/' 'tests-path/'` + take paths from `--name-status` |
 | ✅ #M87 `post-pr-triage` `--slurp` | files/comments: `--paginate --slurp` + `flattenPaginated`; unit tests |
+| ✅ #M88 `repository-link` empty origin | принято: не фиксим — soft empty + exit 0 |
 | ✅ #H24 TO-DO ChangePassword `Id` | «Принято»: stale `Id` → `UserAccountId` (+ current password) |
 | ✅ #H25 B2 `{{support}}` → `{{supportEmail}}` | принято: не breaking — поле всегда `SupportEmail`; `{{support}}` = typo/alias; § BREAKING снят |
 | ✅ #H23 New 2.4.0 tests Given/When/Then | rename NotificationOptions/Composer/EmbeddedTemplate/HostSuppliedLanguage/SecurityNotifier/ChangeAccountEmail; no Async on tests |
@@ -110,7 +111,7 @@
 
 ## Приоритет фиксов
 
-1. **M88** — `repository-link.sh` fail on empty origin.
+Open C/H/M/L в этом плане пусты.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 
