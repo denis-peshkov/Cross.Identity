@@ -1,28 +1,28 @@
 {{company}}
 
-Hello, {{fullName}},
+Здравствуйте, {{fullName}}!
 
-We’re glad to have you on the {{company}} platform!
-To complete your account setup, please use the following verification code:
+Мы рады, что вы присоединились к платформе {{company}}.
+Чтобы завершить настройку вашего аккаунта, пожалуйста, используйте следующий код подтверждения:
 
 {{code}}
 
-👉 Use the code
+👉 Использовать код
 
-If the button doesn’t work, please copy and paste the following link into your browser:
+Если кнопка не работает, пожалуйста, скопируйте следующую ссылку и вставьте её в ваш браузер:
 {{verificationLink}}
 
-Best regards,
-The {{company}} Team
+С наилучшими пожеланиями,
+Команда {{company}}
 
-⚠️ Attention! The code is valid for {{expires}}. After that, you’ll need to restart the account confirmation process.
+⚠️ Внимание! Код действителен {{expires}}. После этого времени вам нужно будет заново инициировать процесс подтверждения аккаунта.
 
-If you didn’t register on the {{company}} platform, you can safely ignore this email.
+Если вы не регистрировались на платформе {{company}}, просто проигнорируйте это письмо.
 
-Having trouble confirming your account? Write to us at {{supportEmail}}.
+Возникли сложности с подтверждением аккаунта? Напишите нам на {{supportEmail}}.
 
-Do you have questions or need help using your account on {{site}}?
-Visit the My Account – Help section:
+Есть вопросы или неясности по работе вашего аккаунта на {{site}}?
+Посетите раздел «Мой аккаунт – Помощь»:
 {{helpLink}}
 
 Facebook | Instagram | YouTube

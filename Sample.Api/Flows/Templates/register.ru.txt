@@ -1,21 +1,22 @@
 {{company}}
 
-Hello, {{fullName}},
+Здравствуйте, {{fullName}}!
 
-From now on, you can enjoy all the benefits your {{company}} account offers:
+Теперь вы можете пользоваться всеми преимуществами, которые предоставляет ваш аккаунт {{company}}:
 
-1.	Schedule appointments online
-2.	Modify existing appointments
-3.	View your test results
-4.	Keep a history of all your performed analyses
+1.	Записывайтесь онлайн
+2.	Изменяйте существующие записи
+3.	Просматривайте результаты своих анализов
+4.	Ведите историю всех выполненных анализов
 
-👉 Log in to your account
+👉 Войти в аккаунт: {{url}}
 
-Best regards,
-The {{company}} Team
+С наилучшими пожеланиями,
+Команда {{company}}
 
-Do you have questions or need help using your account on {{site}}?
-Visit the My Account – Help section.
+Есть вопросы или неясности по работе вашего аккаунта на {{site}}?
+Посетите раздел «Мой аккаунт – Помощь»:
+{{helpLink}}
 
 Facebook | Instagram | YouTube
 {{site}}

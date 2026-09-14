@@ -9,13 +9,14 @@ From now on, you can enjoy all the benefits your {{company}} account offers:
 3.	View your test results
 4.	Keep a history of all your performed analyses
 
-👉 Log in to your account
+👉 Log in to your account: {{url}}
 
 Best regards,
 The {{company}} Team
 
 Do you have questions or need help using your account on {{site}}?
-Visit the My Account – Help section.
+Visit the My Account – Help section:
+{{helpLink}}
 
 Facebook | Instagram | YouTube
 {{site}}
