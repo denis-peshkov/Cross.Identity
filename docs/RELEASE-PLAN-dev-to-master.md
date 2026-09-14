@@ -10,7 +10,7 @@
 > **Sources:** `git` / `dotnet test` / version plan / [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (verified 2026-09-14)  
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
-**Checklist summary:** **56** items — ✅ **46** (82%) · 🟨 **0** (0%) · ⬜ **10** (18%) · ❌ **0** (0%)
+**Change summary:** **56** items — ✅ **46** (82%) · 🟨 **0** (0%) · ⬜ **10** (18%) · ❌ **0** (0%)
 
 ---
 

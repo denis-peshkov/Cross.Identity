@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 2H / 7M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 7M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **2H + 7M открыты в плане** (#H24, #H26, #M82–#M88); #H23/#H27 закрыты; #H25/#H19/#H21 принято; #H20/#H22 закрыты.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **7M открыты в плане** (#M82–#M88); #H23/#H24/#H26/#H27 закрыты; #H25/#H19/#H21 принято; #H20/#H22 закрыты.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -21,12 +21,6 @@
 ---
 
 ## Высокий (логика / auth model)
-
-### H24. TO-DO «Принято»: ChangePassword still says `Id`
-⬜ Stale line — contract is `UserAccountId` (+ current password), not historical `Id` (2.3).
-
-### H26. `release-plan-summary` SUMMARY_RE case
-⬜ Match documented `Checklist Summary` vs `Checklist summary` so `--write` replaces instead of duplicating.
 
 ---
 
@@ -101,6 +95,8 @@
 | ✅ #M77 License dotted product claim | `License` parse dotted JWT product names ↔ underscore enum; tests |
 | ✅ #M78 Package icons `icon.png`/`icon.svg` | rename from IdentityServer.*; `config.nuspec` / `.slnx` |
 | ✅ #H27 `update-changelog` `--version`/`--from` | both flags → return directly, skip tag resolver; unit test |
+| ✅ #H26 Change summary label | canonical `Change summary`; legacy Checklist* replaced; skill + tests |
+| ✅ #H24 TO-DO ChangePassword `Id` | «Принято»: stale `Id` → `UserAccountId` (+ current password) |
 | ✅ #H25 B2 `{{support}}` → `{{supportEmail}}` | принято: не breaking — поле всегда `SupportEmail`; `{{support}}` = typo/alias; § BREAKING снят |
 | ✅ #H23 New 2.4.0 tests Given/When/Then | rename NotificationOptions/Composer/EmbeddedTemplate/HostSuppliedLanguage/SecurityNotifier/ChangeAccountEmail; no Async on tests |
 | ✅ #L14 GitHub templates / rulesets | ISSUE/PR templates + rulesets README под Cross.Identity |
@@ -123,8 +119,7 @@
 
 ## Приоритет фиксов
 
-1. **H24** / **H26** — docs/tooling contract fixes.
-2. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
+1. **M82–M88** — CHANGELOG Unreleased, triage/CI/scripts polish.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Recalculate the "Checklist summary" line in docs/RELEASE-PLAN-dev-to-master.md.
+ * Recalculate the "Change summary" line in docs/RELEASE-PLAN-dev-to-master.md.
  *
  * Includes:
  * - table rows with IDs like P1, B1, Q1, N1, A1, G1 (status — last emoji in the table row);
@@ -19,7 +19,8 @@ const PLAN = join(ROOT, 'docs/RELEASE-PLAN-dev-to-master.md');
 
 const ID_ROW = /^\| ([A-Z]+[0-9]+) \|/;
 const BULLET = /^- (✅|🟨|⬜|❌) /;
-const SUMMARY_RE = /^\*\*Checklist summary:\*\*.*$/m;
+/** Canonical label + legacy "Checklist summary" / "Checklist Summary" (replace, do not duplicate). */
+const SUMMARY_RE = /^\*\*(?:Change summary|Checklist summary):\*\*.*$/im;
 
 function primaryStatus(cell) {
   return (cell.match(/^(✅|🟨|⬜|❌)/) ?? [])[1] ?? null;
@@ -79,7 +80,7 @@ export function formatSummaryLine(statuses) {
   const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
 
   return (
-    `**Checklist summary:** **${total}** items — ` +
+    `**Change summary:** **${total}** items — ` +
     `✅ **${counts['✅']}** (${pct(counts['✅'])}%) · ` +
     `🟨 **${counts['🟨']}** (${pct(counts['🟨'])}%) · ` +
     `⬜ **${counts['⬜']}** (${pct(counts['⬜'])}%) · ` +
@@ -131,12 +132,12 @@ function main() {
   if (process.argv.includes('--write')) {
     const { markdown: next, status } = applySummaryLine(markdown, line);
     if (status === 'up-to-date') {
-      console.log('Checklist summary is already up to date');
+      console.log('Change summary is already up to date');
     } else {
       writeFileSync(PLAN, next, 'utf8');
       console.log(
         status === 'inserted'
-          ? `Inserted checklist summary in ${PLAN}`
+          ? `Inserted Change summary in ${PLAN}`
           : `Updated ${PLAN}`
       );
     }

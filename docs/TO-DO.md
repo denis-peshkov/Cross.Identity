@@ -90,7 +90,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Apple в registry без реализации (`NotSupportedException`) — не включать в Providers до реализации.
 - `main.GetUserAccountId` existence oracle — продуктовое решение; reject-пути дают единый `Invalid credentials.`
 - `PasswordAlgoEnum.SHA256` obsolete; pepper ignored; default Argon2id/PBKDF2.
-- `ChangePassword` без library session proof — `Id` + current password; session proof опционально на хосте.
+- `ChangePassword` без library session proof — `UserAccountId` + current password; session proof опционально на хосте.
 - OAuth `ReturnUrl` — библиотека только хранит/отдаёт; allowlist open redirect — хост.
 - Refresh + `Empty` при `SessionBindingCheckIp=true` → `ValidationException`; при `false` — прежняя UA/FP логика.
 - Password max 32 в stock `collectForm` — контракт UX/JSON, не hasher/БД.

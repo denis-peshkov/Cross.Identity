@@ -322,9 +322,9 @@ Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выш
 2. Добавить/обновить строку в **Закрыто** с `✅ #N …`.
 3. Убрать пункт из открытых списков **Приоритет фиксов**.
 
-### `docs/RELEASE-PLAN-dev-to-master.md` — Checklist Summary
+### `docs/RELEASE-PLAN-dev-to-master.md` — Change summary
 
-**При любом изменении** `docs/RELEASE-PLAN-dev-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывать и обновлять строку **"Checklist Summary"** в шапке документа (сразу после легенды).
+**При любом изменении** `docs/RELEASE-PLAN-dev-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывать и обновлять строку **"Change summary"** в шапке документа (сразу после легенды).
 
 То же при правке `docs/BREAKING.md`, если меняется статус связанных пунктов плана (напр. DOC6, §10.8, P1 для `collectResult`).
 
@@ -354,7 +354,7 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 | [`scaffold-breaking-section.sh`](scripts/scaffold-breaking-section.sh) | Строка TOC + блок `From X to Y` (только cache; агент правит `docs/BREAKING.md`) |
 | [`collect-release-delta.sh`](scripts/collect-release-delta.sh) | Cache delta ветки для черновика плана; default focus `docs/BREAKING.md`; `--focus PATH` (repeatable) |
 | [`update-changelog.mjs`](scripts/update-changelog.mjs) | Upsert `docs/CHANGELOG.md` § `vX.Y.Z` из delta (`v{from}..HEAD` + WT); `--write` / `--dry-run` |
-| [`release-plan-summary.mjs`](scripts/release-plan-summary.mjs) | Строка Checklist Summary в `RELEASE-PLAN-dev-to-master.md` |
+| [`release-plan-summary.mjs`](scripts/release-plan-summary.mjs) | Строка Change summary в `RELEASE-PLAN-dev-to-master.md` |
 
 Другие skills: **Cross-skill references** (ссылка одной строкой; без дублирования скриптов или prose про layout).
 
