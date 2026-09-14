@@ -39,6 +39,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 | **Close from TO-DO** | dismiss / won’t-fix |
 | **Re-check** | закрыть open-пункт в version plan |
 | **Finalize version plan** | ship / leftovers → TO-DO |
+| **Previous plans published/closed** | `(closed)` → `(published / closed)` если есть tag |
 
 Из sibling skills — относительная ссылка: `[`release-plan`](../release-plan/SKILL.md)`.
 
@@ -85,7 +86,8 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 - **Обязательно (точечно):** перед любой **меняющей состояние** работой над ними — merge/open пунктов, close/dismiss, finalize, harvest leftovers, проверки renumber / dedupe. Всегда читать **текущий** план + `TO-DO.md` (только секции, которые правите).
 - **Также допустимо (точечно, в том же ходе):** при harvest leftovers, дедупликации или проверке, закрыт ли уже пункт — читать open severity-секции **предыдущего** плана и только релевантные строки «Закрыто» (по id / смыслу). **Не** загружать полную историю всех version plan.
 - **Опционально:** если **шаблон** неоднозначен/неясен (смысл секции, форма строки «Закрыто», …) — один точечный взгляд на version plan только за формой.
-- **Запрещено:** рутинно сканировать / перечитывать сгенерированные планы, когда нет смены состояния; считать сгенерированный план каноном skill или синхронизировать этот skill-файл с каждым выводом плана.
+- **Исключение:** при любом проходе по релиз плану (черновик / обновление / finalize) — **Previous plans published/closed** (цепочка «Предыдущий план», только шапка).
+- **Запрещено:** рутинно сканировать / перечитывать сгенерированные планы, когда нет смены состояния; считать сгенерированный план каноном skill или синхронизировать этот skill-файл с каждым выводом плана. **Не** `ls` / glob всех `docs/RELEASE-PLAN-*.md`, чтобы «найти предыдущие» — только цепочка ссылок **Предыдущий план**.
 
 Downstream triage **coderabbit** по-прежнему пишет только в **текущий** version plan (не в `TO-DO.md` для delta findings) и пропускает дубликаты, уже открытые в текущем плане, любом плане «Закрыто» или `TO-DO.md`.
 
@@ -132,7 +134,7 @@ Downstream triage **coderabbit** по-прежнему пишет только �
 ```markdown
 ## Критично (безопасность)
 ---
-## Высокий (логика / auth model)
+## Высокий (логика / licensing / auth model)
 ---
 ## Средний …
 ## Низкий …
@@ -141,6 +143,19 @@ Downstream triage **coderabbit** по-прежнему пишет только �
 
 - …
 ```
+
+## Previous plans `(published / closed)`
+
+При проходе по релиз плану — проверять предыдущие на предмет выставления `(published / closed)`.
+
+Каждый черновик / обновление / finalize version plan:
+
+1. Идти по цепочке **Предыдущий план** от текущего (пока не `—` / нет файла). **Не** glob всех `docs/RELEASE-PLAN-*.md`.
+2. Для каждого **уже finalized** плана: если метка шапки — `(closed)` (без `published`) **и** есть git tag и/или GitHub release `vX.Y.Z` — заменить только метку на **`(published / closed)`**. Тело / «Закрыто» / TO-DO не трогать.
+3. Уже `(published / closed)` — пропуск. Нет tag/release — оставить `(closed)`.
+4. **Текущий** план: `published / closed` только если tag/release `v{target}` уже есть; иначе при finalize — `(closed)`.
+
+Проверка tag: `git rev-parse --verify vX.Y.Z^{commit}` и/или `gh release view vX.Y.Z`.
 
 ## Ensure current RELEASE-PLAN
 
@@ -162,7 +177,7 @@ bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --json
 **Запрещено:**
 - `ls` / glob / read-all `docs/RELEASE-PLAN-*.md` (вкл. `to-master`), чтобы «найти текущий»
 - изобретать stub-план без workflow этого skill; пропускать создание плана, когда его нет
-- рутинно открывать исторические version plan (только текущий + TO-DO; ссылка на предыдущий план — только при черновике шапки **нового** плана)
+- рутинно открывать исторические version plan (только текущий + TO-DO; ссылка на предыдущий план — при черновике шапки **нового** плана **и** при **Previous plans published/closed**)
 
 **Правила версии** (скрипт зеркалит это; не копировать в другие skills):
 
@@ -240,15 +255,16 @@ Id’шный backlog, который отклонили как trade-off → **
 3. **Синхронизировать «Принято»** этого плана → «Принято» `TO-DO.md` (merge/dedupe **по смыслу**; **единственный** момент записи lasting trade-off’ов релиза в TO-DO).
 4. **Обновить `Id high-water`** в шапке `TO-DO.md` (**единственный** момент записи HW в этом релизе): для каждой группы `max(текущий high-water, все id релиза)` — leftovers + строки «Закрыто» вида `✅ #H9 …` / `✅ #M49 …` / ….
 5. **Привести план к завершённому шаблону** [`templates/RELEASE-PLAN-FINALIZED.md`](templates/RELEASE-PLAN-FINALIZED.md):
-   - header: версия **published / closed** (+ release URL если есть);
+   - header: **`(published / closed)`**, если есть git tag / GitHub release `vX.Y.Z`; иначе **`(closed)`** (`CLOSED_LABEL` в [`FINALIZE-REPLY`](templates/FINALIZE-REPLY.md));
    - C/H/M/L — **пустые** (только заголовок + `---`);
    - **Принято** / **Закрыто** / **Что в библиотеке уже нормально** — сохранить содержимое этого релиза;
    - **Приоритет фиксов** — пустая отсылка к `TO-DO.md` (как в finalized template).
-6. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
-7. UTF-8 BOM на изменённых docs.
-8. **Ответ пользователю** — по [`templates/FINALIZE-REPLY.md`](templates/FINALIZE-REPLY.md).
+6. **Previous plans published/closed** — см. выше (цепочка «Предыдущий план»).
+7. Обновить **Приоритет** в `TO-DO.md` при необходимости (новые leftovers).
+8. UTF-8 BOM на изменённых docs.
+9. **Ответ пользователю** — по [`templates/FINALIZE-REPLY.md`](templates/FINALIZE-REPLY.md).
 
-**Запрещено:** оставить ⬜ open в «закрытом» плане; удалить open без переноса в TO-DO; заново сканировать все historical plans без нужды.
+**Запрещено:** оставить ⬜ open в «закрытом» плане; удалить open без переноса в TO-DO; glob / read-all historical plans (кроме цепочки **Previous plans published/closed**).
 
 ## Workflow
 
@@ -279,7 +295,8 @@ Cache попадает под `.cursor/skills/release-plan/.cache/` (скрип�
 
 1. **Синхронизировать `TO-DO.md`** — harvest leftovers в C/H/M/L; убрать пункты, закрытые в этой дельте / любом version «Закрыто».
 2. **Записать** `docs/RELEASE-PLAN-X.Y.Z.md` по шаблону — **только delta** (UTF-8 **with BOM**).
-3. Классифицировать изменения **дельты**:
+3. **Previous plans published/closed** — см. выше.
+4. Классифицировать изменения **дельты**:
 
 | Корзина | Куда класть |
 |---|---|
@@ -374,3 +391,4 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 - [ ] UTF-8 BOM на записанных plan / TO-DO, если новые
 - [ ] Новые секции `BREAKING.md` следуют [`templates/BREAKING-SECTION.md`](templates/BREAKING-SECTION.md) (layout не дублируется во intro для потребителей)
 - [ ] `docs/CHANGELOG.md` имеет секцию целевой версии (`update-changelog.mjs --write`); UTF-8 BOM сохранён
+- [ ] Предыдущие finalized-планы с существующим tag/release `vX.Y.Z` имеют в шапке `(published / closed)` (цепочка **Предыдущий план**, не glob)
