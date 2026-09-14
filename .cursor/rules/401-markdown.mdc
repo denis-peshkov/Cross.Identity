@@ -3,6 +3,8 @@ description: Markdown table formatting — short separators, single spaces, pipe
 globs:
   - "**/*.md"
   - "**/*.mdc"
+  - "**/*.yaml"
+  - "**/*.yml"
 alwaysApply: false
 ---
 
@@ -10,7 +12,7 @@ alwaysApply: false
 
 ## Tables
 
-Apply when creating or editing GFM tables in any `.md` / `.mdc` file.
+Apply when creating or editing GFM tables in `.md` / `.mdc`, and in Markdown tables inside `.yaml` / `.yml` (including commented tables, e.g. `.coderabbit.yaml`).
 
 ### Separator row — always short
 
@@ -60,4 +62,14 @@ A | B |
 
 ### Empty cells
 
-Keep the single-space cell form: `| |` (pipe, space, pipe), not `||`.
+Exactly **one** space between pipes. Not empty `||`, not two spaces `|  |`.
+
+```markdown
+<!-- ✅ GOOD -->
+| | |
+| A | |
+
+<!-- ❌ BAD -->
+|  |  |
+|| ||
+```
