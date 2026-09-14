@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.4.0` → `master`
 
 > **Analysis date:** 2026-09-14  
-> **Branch:** `release/fix-missed-issues` (`ec24409`)  
+> **Branch:** `release/fix-missed-issues` (`08491d5`)  
 > **Comparison base:** `origin/master` (`v2.3.0` / `e3f7d34`) · merge-base `e3f7d34`  
 > **Version plan:** [`docs/RELEASE-PLAN-2.4.0.md`](RELEASE-PLAN-2.4.0.md) · backlog [`TO-DO.md`](TO-DO.md)  
 > **Goal:** verification checklist before merge of **2.4.0** into `master`  
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker  
 > **Note:** historical `dev`→`master` delta is **empty** (trees equal after v2.3.0 back-merges). This checklist tracks the **current** ship path.  
-> **Sources:** `git` / `dotnet test` / version plan / [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (verified 2026-09-14)  
+> **Sources:** `git` / version plan / [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (verified 2026-09-14)  
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-summary.mjs --write`
 
-**Change summary:** **56** items — ✅ **46** (82%) · 🟨 **0** (0%) · ⬜ **10** (18%) · ❌ **0** (0%)
+**Change summary:** **57** items — ✅ **54** (95%) · 🟨 **0** (0%) · ⬜ **3** (5%) · ❌ **0** (0%)
 
 ---
 
@@ -18,12 +18,12 @@
 
 | Metric | Value |
 |---------|----------|
-| Commits (`origin/master..HEAD`) | 73 |
-| Files (three-dot `origin/master...HEAD`) | 170 · +7 486 / −2 198 |
+| Commits (`origin/master..HEAD`) | 85 |
+| Files (three-dot `origin/master...HEAD`) | 173 · +7 754 / −2 207 |
 | Local vs `origin/release/fix-missed-issues` | **in sync** |
-| Tests | `NotificationOptionsTests` ✅ (no built-in defaults); full suite — on CI |
-| PR | [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) → `master` (OPEN) |
-| CodeRabbit | не запускался |
+| Tests | Given/When/Then 2.4 suite; `NotificationOptions` ✅ no built-in defaults |
+| PR | [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) → `master` (OPEN); **CI green** (build ×2 · Sonar · CodeQL · CodeRabbit) |
+| CodeRabbit | `2026-09-14` · 35 findings → open C/H/M/L empty |
 | Version-plan open C/H/M/L | **empty** |
 
 | Area | Files (≈) | Role in release |
@@ -96,8 +96,8 @@
 |---|------|--------|
 | P1 | Push to `origin/release/fix-missed-issues` | ✅ in sync |
 | P2 | Open PR → `master` | ✅ [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) |
-| P3 | CI + Sonar QG on PR | ⬜ |
-| P4 | CodeRabbit on branch (optional) | ⬜ |
+| P3 | CI + Sonar QG on PR | ✅ build ×2 · SonarCloud · CodeQL · CodeRabbit |
+| P4 | CodeRabbit on PR #21 | ✅ `2026-09-14` · 35 findings → plan empty |
 | P5 | Tag `v2.4.0` + NuGet after merge | ⬜ |
 
 ---
@@ -120,7 +120,7 @@
 |---|----------|--------|
 | T1 | Flow / step coverage for ChangeAccountEmail, SendCode, ResetPassword, placeholders | ✅ |
 | T2 | `NotificationOptionsTests` — no built-in brand defaults (**M79**) | ✅ |
-| T3 | Full suite green on PR CI after master merge | ⬜ |
+| T3 | Full suite green on PR CI after master merge | ✅ `.NET` build SUCCESS on PR #21 |
 
 ---
 
@@ -132,7 +132,7 @@
 | C2 | GitHub ISSUE/PR templates + rulesets (L14) | ✅ |
 | C3 | `config.nuspec` / icons aligned | ✅ |
 | C4 | Sonar exclude email templates (L15) | ✅ |
-| C5 | CI green on PR #21 | ⬜ |
+| C5 | CI green on PR #21 | ✅ |
 
 ---
 
@@ -164,9 +164,9 @@ Execute in order; proceed after closing the previous step (or an explicit skip i
 - ✅ **1. Blockers** — H18 / M76 / M79 closed
 - ✅ **2. Push** — branch in sync with origin
 - ✅ **3. PR** → `master` [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21)
-- ⬜ **4. CI / Sonar** on PR
+- ✅ **4. CI / Sonar** on PR #21 (build · SonarCloud · CodeQL · CodeRabbit)
 - ✅ **5. Docs** — no BREAKING 2.3→2.4 (B2/H25 Accepted: not breaking)
-- ⬜ **6. CodeRabbit** (optional)
+- ✅ **6. CodeRabbit** — 35 findings → open C/H/M/L empty
 - ⬜ **7. Merge + tag `v2.4.0` + NuGet**
 
 ### Minimum go/no-go checklist
@@ -176,5 +176,6 @@ Execute in order; proceed after closing the previous step (or an explicit skip i
 - ✅ `NotificationOptions` contract green (M79)
 - ✅ Closed feature set in version plan (open C/H/M/L empty)
 - ✅ PR opened (#21)
-- ⬜ PR CI green
+- ✅ CodeRabbit on PR
+- ✅ PR CI (`.NET` / Sonar / CodeQL) green
 - ⬜ Tag / NuGet after merge

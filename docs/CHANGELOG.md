@@ -12,25 +12,25 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - Host-supplied language context for notification templates (`HostSuppliedLanguageContext`); OTP / reset-password paths compose messages via `INotificationComposer` + `ISecurityNotifier`.
-- `Authentication:Notifications` (`NotificationOptions`) — host-supplied brand placeholders; no built-in library defaults; stock templates unified on `{{supportEmail}}` (config field was always `SupportEmail`; `{{support}}` was a template alias/typo).
+- `Authentication:Notifications` (`NotificationOptions`) — host-supplied brand placeholders; no built-in library defaults; template placeholder `{{supportEmail}}` (was `{{support}}` typo/alias).
 - Embedded register / verify / confirm-email / password-changed templates for `en` / `ru` / `ro` (txt + html); stock flows use `verify` / `reset` / `password-changed`.
 - `main.ChangeAccountEmail` flow / `IUserService.ChangeAccountEmailAsync` (host-authorized `UserAccountId`); audit `AccountEmailChanged`.
-- License JWT: dotted product-type claims (e.g. `Cross.Identity`) parsed against underscore enum names; license validation helpers simplified.
+- License JWT: dotted product-type claims (e.g. `Cross.Identity`) parsed against underscore enum names.
 - Package / solution icons renamed to `icon.png` / `icon.svg`.
 
 ### Tests
 
-- Coverage for send-code / reset-password factories and steps, embedded template placeholders, communication-endpoint and ChangeAccountEmail flows, license dotted product claim; `NotificationOptions` asserts no built-in brand defaults.
+- Coverage for send-code / reset-password / ChangeAccountEmail / placeholders / license; new 2.4 tests use Given/When/Then naming; `NotificationOptions` asserts no built-in brand defaults.
 
 ### Documentation
 
-- Version plan `2.4.0` / `TO-DO` backlog sync; `FLOWS.md` / README host-authorize notes for ChangeAccountEmail; CHANGELOG for published tags.
+- Version plan `2.4.0` / `TO-DO` backlog sync; `FLOWS.md` / README host-authorize notes for ChangeAccountEmail.
 
 ### CI / repo
 
-- SonarCloud project key + name aligned in `dotnet.yml`; email templates excluded from duplicate-code detection.
+- SonarCloud project key + name; email templates excluded from duplicate-code detection.
 - GitHub issue / PR templates and rulesets aligned to Cross.Identity.
-- Sample.Api: `Authentication:Notifications` section in `appsettings.json`.
+- Sample.Api: `Authentication:Notifications` in `appsettings.json`.
 
 ---
 

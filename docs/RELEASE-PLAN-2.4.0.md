@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 0M / 0L**.
+> Дельта: `origin/master...HEAD` — **85** коммита · **173** файлов · **+7 754 / −2 207**. Open C/H/M/L: **0C / 0H / 0M / 0L**.
 
 **CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **open C/H/M/L пусты**; #H23/#H24/#H26/#H27/#M83–#M87 закрыты; #H25/#H19/#H21/#M82/#M88 принято; #H20/#H22 закрыты.
 
@@ -96,8 +96,9 @@
 | ✅ #M80 Sample.Api `Notifications` config | `Authentication:Notifications` в `appsettings.json` |
 | ✅ #M81 Template polish pass | structure/placeholders/responsive en/ru/ro (post-M75) |
 | ✅ #M79 `NotificationOptions` no library defaults | host config only; `NewInstance_HasNoBuiltInBrandDefaults` |
-| ✅ #H18 back-merge `origin/master` | merge-base = `e3f7d34` (`v2.3.0`); tip master in `HEAD` (`ec24409`) |
+| ✅ #H18 back-merge `origin/master` | merge-base = `e3f7d34` (`v2.3.0`); tip master in `HEAD` (`08491d5`) |
 | ✅ #L15 Sonar exclude email templates | `dotnet.yml` — templates out of duplicate-code detection |
+| ✅ #M89 Template CSS consistency | `overflow-wrap` (не `word-break`); `text-align` вместо `align` attrs (en/ru/ro) |
 
 ---
 
@@ -113,6 +114,6 @@
 
 Open C/H/M/L в этом плане пусты.
 
-Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
+Ship: [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) — CI green (`.NET` build ×2 · SonarCloud · CodeQL · CodeRabbit) · merge → tag `v2.4.0` + NuGet.
 
 Внерелизный backlog → [`TO-DO.md`](TO-DO.md).
