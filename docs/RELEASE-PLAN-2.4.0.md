@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.3.0.md`](RELEASE-PLAN-2.3.0.md)
 >
-> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 5M / 0L**.
+> Дельта: `origin/master...HEAD` — **73** коммита · **170** файлов · **+7 486 / −2 198**. Open C/H/M/L: **0C / 0H / 1M / 0L**.
 
-**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **5M открыты в плане** (#M84–#M88); #H23/#H24/#H26/#H27/#M83 закрыты; #H25/#H19/#H21/#M82 принято; #H20/#H22 закрыты.
+**CodeRabbit:** `2026-09-14` · logs `.cursor/skills/coderabbit/.cache/cr-release-fix-missed-issues-vs-origin-master-*-20260914-*.jsonl` (dirs: Cross.Identity, Tests, Sample.Api, docs, .github, .cursor, rest-client, Infrastructure) · **35** findings (0 Critical, 26 Major, 9 Minor) → **1M открыт в плане** (#M88); #H23/#H24/#H26/#H27/#M83–#M87 закрыты; #H25/#H19/#H21/#M82 принято; #H20/#H22 закрыты.
 
 **PR:** [#21](https://github.com/denis-peshkov/Cross.Identity/pull/21) (`ChangeAccountEmail, notification composer/templates, LanguageCode`).
 
@@ -25,18 +25,6 @@
 ---
 
 ## Средний (противоречия / баги контрактов)
-
-### M84. `triage.yml` `ready_for_review`
-⬜ Add `ready_for_review` to `pull_request` types (draft → ready).
-
-### M85. triage-issue Risk: drop CQRS-only qualifier
-⬜ Risk guidance should apply to any repo, not CQRS-only.
-
-### M86. triage deep-review shell path placeholders
-⬜ Fix invalid `<…>` path examples in deep-review `git diff` commands.
-
-### M87. `post-pr-triage` gh pagination `--slurp`
-⬜ Paginated comments/files fetch: add `--slurp` and flatten page arrays.
 
 ### M88. `repository-link.sh` fail on empty origin
 ⬜ Nonzero exit when origin missing / not GitHub URL (no empty prefix links).
@@ -95,6 +83,10 @@
 | ✅ #H26 Change summary label | canonical `Change summary`; legacy Checklist* replaced; skill + tests |
 | ✅ #M82 CHANGELOG dated pre-tag | принято: `v2.4.0 — 14 Sep 2026` до tag ок; Unreleased не заводим |
 | ✅ #M83 Maintenance script path | already ok: `.cursor/skills/release-plan/scripts/release-plan-summary.mjs`; CR `docs/scripts/…` неверен |
+| ✅ #M84 `triage.yml` `ready_for_review` | `pull_request` + `pull_request_target` types; draft→ready triggers triage |
+| ✅ #M85 triage-issue Risk CQRS qualifier | drop «for CQRS library»; Risk = any repo |
+| ✅ #M86 triage deep-review path placeholders | `'path/' 'tests-path/'` + take paths from `--name-status` |
+| ✅ #M87 `post-pr-triage` `--slurp` | files/comments: `--paginate --slurp` + `flattenPaginated`; unit tests |
 | ✅ #H24 TO-DO ChangePassword `Id` | «Принято»: stale `Id` → `UserAccountId` (+ current password) |
 | ✅ #H25 B2 `{{support}}` → `{{supportEmail}}` | принято: не breaking — поле всегда `SupportEmail`; `{{support}}` = typo/alias; § BREAKING снят |
 | ✅ #H23 New 2.4.0 tests Given/When/Then | rename NotificationOptions/Composer/EmbeddedTemplate/HostSuppliedLanguage/SecurityNotifier/ChangeAccountEmail; no Async on tests |
@@ -118,7 +110,7 @@
 
 ## Приоритет фиксов
 
-1. **M84–M88** — triage/CI/scripts polish.
+1. **M88** — `repository-link.sh` fail on empty origin.
 
 Ship: CI/Sonar на [PR #21](https://github.com/denis-peshkov/Cross.Identity/pull/21) · merge → tag `v2.4.0` + NuGet.
 

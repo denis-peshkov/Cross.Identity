@@ -69,8 +69,9 @@ Resolve `BASE_REF` / `BRANCH_REF` per [`triage-pr` Phase 1b](../triage-pr/SKILL.
 git log --oneline "$BASE_REF..$BRANCH_REF" | head -40
 git diff --stat "$BASE_REF...$BRANCH_REF"
 git diff --name-status "$BASE_REF...$BRANCH_REF"
-# Prefer reading hotspots; full diff if needed for deep
-git diff "$BASE_REF...$BRANCH_REF" -- <path>/ <tests-path>/
+# Prefer reading hotspots; full diff if needed for deep.
+# Replace 'path/' / 'tests-path/' with real prefixes from --name-status above.
+git diff "$BASE_REF...$BRANCH_REF" -- 'path/' 'tests-path/'
 ```
 
 Size bands + hotspots: same as `triage-pr` Phase 1. CI / mergeable / reviews → **N/A (branch mode)**.

@@ -28,10 +28,10 @@ on:
     types: [opened]
   pull_request:
     # No `edited` — title/body edits would re-burn Cursor quota
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
   # Fork PRs: secrets available; must never checkout/run head (see job steps).
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read

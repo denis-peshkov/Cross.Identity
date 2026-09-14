@@ -89,7 +89,7 @@ REPO=$(.cursor/triage/gh-wrapper.sh repo view --json nameWithOwner -q .nameWithO
 - Overlap keywords in body >50% → stronger signal
 - Compare with 20 most recent closed
 
-**4. Risk** (for CQRS library — security priority):
+**4. Risk** (security priority):
 
 - **Red**: CVE, vulnerability, injection, auth bypass, security, exploit, token leak, credentials, RCE, XSS, jwt bypass, refresh token
 - **Yellow**: breaking change, migration, deprecation, API removal, incompatible

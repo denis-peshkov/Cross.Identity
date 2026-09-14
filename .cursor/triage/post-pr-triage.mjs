@@ -13,6 +13,7 @@ import { formatPrTriageComment, parseAgentJson, TRIAGE_MARKER } from './format-p
 import { applyPrTriageLabels, shouldApplyTriageLabels } from './apply-pr-labels.mjs';
 import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 import { formatPrScopeSection } from './pr-scope.mjs';
+import { flattenPaginated } from './flatten-paginated.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
@@ -61,10 +62,14 @@ function isPrDiffTooLarge({ stderr, message }) {
 }
 
 function fetchAllPrFiles(repo, prNumber) {
-  return gh(['api', `repos/${repo}/pulls/${prNumber}/files`, '--paginate'], {
-    json: true,
-    maxBuffer: 32 * 1024 * 1024,
-  });
+  const pages = gh(
+    ['api', `repos/${repo}/pulls/${prNumber}/files`, '--paginate', '--slurp'],
+    {
+      json: true,
+      maxBuffer: 32 * 1024 * 1024,
+    }
+  );
+  return flattenPaginated(pages);
 }
 
 function escapeRegExp(value) {
@@ -328,11 +333,11 @@ const TRIAGE_COMMENT_AUTHOR = 'github-actions[bot]';
  */
 function findExistingCommentId(repo, issueNumber) {
   try {
-    const comments = gh(
-      ['api', `repos/${repo}/issues/${issueNumber}/comments`, '--paginate'],
+    const pages = gh(
+      ['api', `repos/${repo}/issues/${issueNumber}/comments`, '--paginate', '--slurp'],
       { json: true }
     );
-    const list = Array.isArray(comments) ? comments : [];
+    const list = flattenPaginated(pages);
     const match = list.find(
       (c) =>
         typeof c?.body === 'string' &&
