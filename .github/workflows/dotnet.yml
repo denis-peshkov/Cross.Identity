@@ -25,6 +25,7 @@ jobs:
   build:
     permissions: # https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#defining-access-for-the-github_token-scopes
       contents: write
+      id-token: write
 
     env:
       BUILD_CONFIG: 'Release'
@@ -144,10 +145,21 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.TAGTOKEN }}@github.com/${{ github.repository }}
           git push origin v${{ env.semVer }}
 
+      - name: NuGet login (OIDC → temp API key)
+        if: >
+          github.ref == 'refs/heads/master' ||
+          startsWith(github.ref, 'refs/heads/release/') ||
+          startsWith(github.ref, 'refs/heads/hotfix/') ||
+          github.ref == 'refs/heads/dev'
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: peshkov
+
       - name: Nuget Push
         if: >
           github.ref == 'refs/heads/master' ||
           startsWith(github.ref, 'refs/heads/release/') ||
           startsWith(github.ref, 'refs/heads/hotfix/') ||
           github.ref == 'refs/heads/dev'
-        run: nuget push **/Cross.Identity.${{ env.semVer }}.symbols.nupkg -ApiKey ${{ secrets.NUGET_API_KEY }} -Source "https://api.nuget.org/v3/index.json" -SkipDuplicate
+        run: nuget push **/Cross.Identity.${{ env.semVer }}.symbols.nupkg -ApiKey ${{ steps.nuget-login.outputs.NUGET_API_KEY }} -Source "https://api.nuget.org/v3/index.json" -SkipDuplicate
