@@ -1,16 +1,16 @@
-﻿# Release readiness plan `2.5.1` → `master`
+﻿# Release readiness plan `2.5.5` → `master`
 
-> **Analysis date:** 2026-09-14
-> **Branch:** `hotfix/gitversion-hotfix-patch-increment` (`d283f7b`)
-> **Comparison base:** `origin/master` (`v2.5.0` / `9d20000`) · merge-base `9d20000`
-> **Version plan:** [`docs/RELEASE-PLAN-2.5.1.md`](RELEASE-PLAN-2.5.1.md) · backlog [`TO-DO.md`](TO-DO.md)
-> **Goal:** verification checklist before merge of **2.5.1** into `master`
+> **Analysis date:** 2026-09-19
+> **Branch:** `master` (`b394740` = tip / `v2.5.4`)
+> **Comparison base:** `origin/master` (`v2.5.4` / `b394740`) · merge-base `b394740`
+> **Version plan:** [`docs/RELEASE-PLAN-2.5.5.md`](RELEASE-PLAN-2.5.5.md) · backlog [`TO-DO.md`](TO-DO.md)
+> **Goal:** verification checklist before ship of **2.5.5**
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** **2** commits vs `master` (GitVersion 6 + CI + docs); tip pushed. Local WT = this docs refresh (3 files). Previous tag `v2.5.0` (Register optional Password; docs were briefly labeled `2.4.1`). GitHub Release for `v2.5.0` may lag.
-> **Sources:** `git` / version plan (verified 2026-09-14)
+> **Note:** committed delta vs tip empty; ship content in **WT** (NuGet OIDC + plans backfill 2.5.2–2.5.4).
+> **Sources:** `git` / version plan (verified 2026-09-19)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **46** items — ✅ **24** (52%) · 🟨 **6** (13%) · ⬜ **16** (35%) · ❌ **0** (0%)
+**Change summary:** **39** items — ✅ **20** (51%) · 🟨 **3** (8%) · ⬜ **16** (41%) · ❌ **0** (0%)
 
 ---
 
@@ -18,27 +18,25 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **2** (`1662a73` · `d283f7b`) |
-| Files (committed three-dot) | **8** · **+271 / −168** |
-| Working tree | **3** файла (plan / CHANGELOG / to-master refresh) |
-| Local vs `origin/hotfix/…` | tip pushed; **WT uncommitted** |
-| Tests | n/a (CI / GitVersion config only) |
-| PR | — |
+| Commits (`origin/master..HEAD`) | 0 (tip = `v2.5.4`) |
+| Files (committed three-dot) | 0 |
+| Working tree | **9** paths · **+271 / −67** (+ untracked `RELEASE-PLAN-2.5.5.md`) |
+| Local vs `origin/master` | tip equal; **WT uncommitted** |
+| Tests | n/a (CI + docs) |
+| PR | — (work on `master`) |
 | CodeRabbit | не запускался |
 | Version-plan open C/H/M/L | **empty** |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
-| GitVersion.yml | 1 | GV6: hotfix→Patch, release→Minor; ignore branch digits |
-| .github/workflows | 1 | GV actions 6.8.2; stable-only tags; NuGet push scope; Sonar key |
-| docs | 5 | PLAN 2.5.1; align PLAN/CHANGELOG/to-master/TO-DO with tag `v2.5.0` |
-| .cursor | 1 | release-plan skill: Принято without SemVer |
+| .github/workflows | 1 | NuGet OIDC login; `id-token: write` |
+| docs | 6+ | PLAN 2.5.5; backfill 2.5.2–2.5.4; CHANGELOG; TO-DO; 2.5.1 published |
 
 ---
 
 ## Table of contents
 
-1. [New functionality (2.5.1)](#1-new-functionality-251)
+1. [New functionality (2.5.5)](#1-new-functionality-255)
 2. [Breaking / consumer notes](#2-breaking--consumer-notes)
 3. [Code gate](#3-code-gate)
 4. [Practical ship steps](#4-practical-ship-steps)
@@ -51,16 +49,12 @@
 
 ---
 
-## 1. New functionality (2.5.1)
+## 1. New functionality (2.5.5)
 
 | # | Block | Key changes | Status |
 |---|---|---|---|
-| F1 | GitVersion 6 Patch/Minor | hotfix→Patch; release→Minor; root Patch; no branch-name SemVer (M93) | ✅ |
-| F2 | CI GitVersion 6.8.2 | actions v4.7.0 / tool 6.8.2 (M94) | ✅ |
-| F3 | Stable-only tags | no tag when `semVer` contains `-`; NuGet push scoped (M95) | ✅ |
-| F4 | Docs = tag `v2.5.0` | rename/relabel former `2.4.1` docs (M96) | ✅ |
-| F5 | Sonar projectKey | `Cross.Identity` (L18) | ✅ |
-| F6 | TO-DO Принято без SemVer | skill + strip version numbers (L19) | ✅ |
+| F1 | NuGet OIDC | `NuGet/login@v1` + temp API key; drop long-lived `NUGET_API_KEY` in push (M98) | ✅ |
+| F2 | Plans backfill | Finalized `2.5.2`–`2.5.4` + CHANGELOG; `2.5.1` published (M99) | ✅ |
 
 ---
 
@@ -69,7 +63,8 @@
 | # | Change | Action | Status |
 |---|---|---|---|
 | B1 | Library / NuGet API | No consumer API change | ✅ |
-| B2 | `docs/BREAKING.md` § From 2.5.0 to 2.5.1 | None expected | ✅ |
+| B2 | `docs/BREAKING.md` § From 2.5.4 to 2.5.5 | None expected | ✅ |
+| B3 | CI NuGet auth | Host/org must trust NuGet OIDC for `peshkov` | ✅ Принято |
 
 ---
 
@@ -77,10 +72,10 @@
 
 | # | Check | Status |
 |---|---|---|
-| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.5.1.md`](RELEASE-PLAN-2.5.1.md) empty | ✅ |
-| CG2 | Closed M93 · M94 · M95 · M96 · L18 · L19 in plan | ✅ |
-| CG3 | Commits contain `GitVersion.yml` + `dotnet.yml` + docs align | ✅ |
-| CG4 | Feature commits pushed; docs refresh still in WT | 🟨 |
+| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.5.5.md`](RELEASE-PLAN-2.5.5.md) empty | ✅ |
+| CG2 | Closed M98 · M99 in plan | ✅ |
+| CG3 | WT contains `dotnet.yml` OIDC + backfill docs | ✅ |
+| CG4 | Commit WT | ⬜ |
 
 ---
 
@@ -88,12 +83,10 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Feature commits pushed to origin | ✅ |
-| P1b | Commit docs refresh (3 files) | ⬜ |
-| P2 | Open PR → `master` | ⬜ |
-| P3 | CI green on PR | ⬜ |
-| P4 | After merge: SemVer on master is **`2.5.1`** (not `2.6.0`) | ⬜ |
-| P5 | Tag `v2.5.1` + NuGet | ⬜ |
+| P1 | Commit working tree | ⬜ |
+| P2 | Push `master` (or PR path if required) | ⬜ |
+| P3 | CI green (build + NuGet OIDC on master) | ⬜ |
+| P4 | Tag `v2.5.5` + NuGet | ⬜ |
 
 ---
 
@@ -101,11 +94,11 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.5.1.md`](RELEASE-PLAN-2.5.1.md) | ✅ refreshed 2026-09-14 |
-| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.5.1 | ✅ dated `14 Sep 2026` |
-| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.5.0 to 2.5.1 | ✅ none |
-| D4 | [`RELEASE-PLAN-2.5.0.md`](RELEASE-PLAN-2.5.0.md) aligned with tag | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW unchanged mid-release |
+| D1 | [`RELEASE-PLAN-2.5.5.md`](RELEASE-PLAN-2.5.5.md) | ✅ drafted 2026-09-19 |
+| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.5.5 | ✅ dated `19 Sep 2026` |
+| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.5.4 to 2.5.5 | ✅ none |
+| D4 | Plans `2.5.2`–`2.5.4` backfill | ✅ |
+| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW unchanged mid-release (`L21`) |
 | D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 
 ---
@@ -114,8 +107,8 @@
 
 | # | Check | Status |
 |---|---|---|
-| T1 | Library unit/integration suite | 🟨 n/a for this delta (no library code) |
-| T2 | PR CI green (build + existing tests) | ⬜ |
+| T1 | Library suite | 🟨 n/a (no library code) |
+| T2 | CI build green | ⬜ |
 
 ---
 
@@ -123,9 +116,9 @@
 
 | # | Check | Status |
 |---|---|---|
-| C1 | CI green on PR → `master` | ⬜ |
-| C2 | Post-merge GitVersion → `2.5.1` | ⬜ |
-| C3 | Tag `v2.5.1` + NuGet publish | ⬜ |
+| C1 | CI green on ship | ⬜ |
+| C2 | NuGet OIDC login succeeds | ⬜ |
+| C3 | Tag `v2.5.5` + NuGet publish | ⬜ |
 
 ---
 
@@ -133,8 +126,8 @@
 
 | # | Check | Status |
 |---|---|---|
-| M1 | New SQL / EF for 2.5.1 | ✅ none |
-| M2 | Scripts vs master | ✅ no delta |
+| M1 | New SQL / EF for 2.5.5 | ✅ none |
+| M2 | Scripts vs tip | ✅ no delta |
 
 ---
 
@@ -142,27 +135,24 @@
 
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
-| R1 | Wrong SemVer again (Minor) | Gate on P4 / C2 before trusting tag | ⬜ |
-| R2 | Sonar `projectKey` rename | Confirm SonarCloud project exists as `Cross.Identity` | 🟨 |
-| R3 | GitHub Release `v2.5.0` missing | Tag exists locally; publish Release optional | 🟨 |
+| R1 | Uncommitted WT | Commit before relying on CI | ⬜ |
+| R2 | NuGet OIDC misconfig | Verify trusted publishing / `user: peshkov` | 🟨 |
+| R3 | Working directly on `master` | Prefer short-lived branch if policy requires | 🟨 |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — M93–M96 / L18–L19 committed; open C/H/M/L empty
-- 🟨 **2. Push** — feature tip on origin; docs refresh still local
-- ⬜ **3. PR** → `master`
-- ⬜ **4. CI** on PR
-- ⬜ **5. Merge** — verify SemVer **`2.5.1`**
-- ✅ **6. Docs** — CHANGELOG § v2.5.1; no BREAKING 2.5.0→2.5.1
-- ⬜ **7. Tag `v2.5.1` + NuGet**
+- ✅ **1. Code gate content** — M98 / M99 in WT; open C/H/M/L empty
+- ⬜ **2. Commit** WT
+- ⬜ **3. Push** / CI
+- ✅ **4. Docs** — CHANGELOG § v2.5.5; no BREAKING
+- ⬜ **5. Tag `v2.5.5` + NuGet** (OIDC)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty
-- ✅ Feature set committed + tip pushed
-- 🟨 Docs refresh in WT
-- ⬜ PR opened / CI green
-- ⬜ Post-merge SemVer = `2.5.1`
+- ✅ Feature set in WT (OIDC + backfill)
+- ⬜ WT committed
+- ⬜ CI / NuGet OIDC green
 - ⬜ Tag / NuGet

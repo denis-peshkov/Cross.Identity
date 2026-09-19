@@ -7,6 +7,42 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.5.5 — 19 Sep 2026
+
+### CI / release process
+
+- NuGet push uses **OIDC** (`NuGet/login@v1`) instead of long-lived `NUGET_API_KEY` secret; job permission `id-token: write`.
+
+### Documentation
+
+- Backfill finalized plans / CHANGELOG for published tags `v2.5.2`–`v2.5.4`; mark `2.5.1` as `(published / closed)`; TO-DO Id high-water through `L21`.
+
+---
+
+## v2.5.4 — 14 Sep 2026
+
+### Repository tooling
+
+- `release-plan` skill / finalized template: `(published / closed)` vs `(closed)` via `CLOSED_LABEL`; walk «Предыдущий план» chain to upgrade finalized plans when `vX.Y.Z` tag/release exists.
+
+---
+
+## v2.5.3 — 14 Sep 2026
+
+### Repository tooling
+
+- `.cursor/rules/401-markdown.mdc`: apply GFM table rules to `.yaml` / `.yml` (including commented tables); clarify empty-cell guidance.
+
+---
+
+## v2.5.2 — 14 Sep 2026
+
+### Documentation / tooling
+
+- Standardize Markdown table syntax (short separators, one-space cells, pipe bookends) across docs, skills, FLOWS, BREAKING, triage reports, CONTRIBUTING, and README.
+
+---
+
 ## v2.5.1 — 14 Sep 2026
 
 ### Versioning / CI
