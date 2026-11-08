@@ -1041,12 +1041,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Apple", "/home", null, CancellationToken.None);
 
         url.Should().StartWith("https://appleid.apple.com/auth/authorize?");
-        url.Should().Contain("client_id=com.example.app");
-        url.Should().Contain("response_mode=form_post");
-        url.Should().Contain("scope=name");
-        url.Should().Contain("email");
-        url.Should().Contain("redirect_uri=");
-        url.Should().Contain("state=");
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        query["client_id"].Should().Be("com.example.app");
+        query["response_mode"].Should().Be("form_post");
+        query["scope"].Should().Be("name email");
+        query["redirect_uri"].Should().NotBeNullOrWhiteSpace();
+        query["state"].Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]

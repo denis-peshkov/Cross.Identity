@@ -8,9 +8,9 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.5.5.md`](RELEASE-PLAN-2.5.5.md)
 >
-> Дельта: `origin/master...HEAD` — **2** коммита · **20** файлов · **+268 / −29**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **4** коммита · **32** файла · **+745 / −59**. Open C/H/M/L пустые.
 
-**CodeRabbit:** `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-223736.jsonl` · 1 finding (0 Critical, 1 Major, 0 Minor) → все закрыты в этом плане.
+**CodeRabbit:** `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → все закрыты в этом плане.
 
 **PR:** —
 
@@ -23,7 +23,6 @@
 ## Высокий (логика / auth model)
 
 ---
-
 
 ## Средний (противоречия / баги контрактов)
 
@@ -44,6 +43,7 @@ Branch also carries CI/workflow and Cross package bumps alongside Facebook / App
 
 | # | Суть |
 |---|---|
+| ✅ #M99 Apple initiate exact scope | query parse; `scope` == `name email` |
 | ✅ #H28 Facebook EmailVerified false | Graph email kept; `EmailVerified = false` (no OIDC attestation); success test |
 | ✅ Facebook OAuth provider | `ExternalOAuthProviders` Graph v21; initiate/complete profile + avatar; tests |
 | ✅ Seed Facebook provider | `4_01` greenfield `ProviderId=5`; `5_01_auth_Providers_Facebook` PostDeployment ×3 |
@@ -56,7 +56,7 @@ Branch also carries CI/workflow and Cross package bumps alongside Facebook / App
 
 - Apple already seeded as `ProviderId=2` in `4_01` — no PostDeployment seed required.
 - Existing Google / Microsoft / GitHub paths untouched (token response now carries optional `id_token`).
-- Apple JWKS re-validation deferred → [`TO-DO.md`](TO-DO.md) **M98**.
+- Apple JWKS re-validation deferred → [`TO-DO.md`](TO-DO.md) **M98** (не дублировать в open дельты).
 
 ---
 
