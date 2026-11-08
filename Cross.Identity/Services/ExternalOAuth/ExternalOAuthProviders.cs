@@ -234,12 +234,12 @@ internal static class ExternalOAuthProviders
             avatarUrl = pictureUrl.GetString();
         }
 
-        // Graph returns email only when the user granted it and Facebook considers it confirmed.
+        // Graph may return email when granted, but has no OIDC email_verified attestation.
         return new ExternalOAuthProfile
         {
             ProviderUserId = root.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailVerified = !string.IsNullOrWhiteSpace(email),
+            EmailVerified = false,
             DisplayName = root.TryGetProperty("name", out var nameNode) && nameNode.ValueKind == JsonValueKind.String
                 ? nameNode.GetString()
                 : null,

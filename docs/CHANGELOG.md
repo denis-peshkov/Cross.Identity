@@ -7,6 +7,31 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.6.0 — 8 Nov 2026
+
+### Library
+
+- External OAuth: **Facebook** provider (Graph API v21 — `email` / `public_profile`); profile fetch with optional email attestation and avatar.
+- Package dependency bumps / pin `Cross.Messaging` (library + Sample.Api).
+
+### Tests
+
+- `ExternalLoginService` coverage for Facebook initiate, success, and missing-email paths.
+
+### Documentation / sample
+
+- README / CONTRIBUTING list Facebook; Sample.Api `ExternalLogin:Providers:Facebook` stub.
+
+### Database
+
+- Seed `auth.Providers` Facebook (`ProviderId=5`) in `4_01` (greenfield) + `5_01_auth_Providers_Facebook.sql` PostDeployment (existing DBs) for SqlServer / PostgreSQL / MySQL.
+
+### CI / tooling
+
+- Breaking-gate / `dotnet.yml` / triage workflow tweaks; release-plan-to-master script touch-ups.
+
+---
+
 ## v2.5.5 — 19 Sep 2026
 
 ### CI / release process

@@ -1122,7 +1122,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var user = await Context.UsersAccounts.SingleAsync();
         user.Email.Should().Be("fb.user@example.com");
-        user.EmailVerified.Should().BeTrue();
+        user.EmailVerified.Should().BeFalse();
 
         var login = await Context.UsersExternalLogins.SingleAsync();
         login.ProviderUserId.Should().Be("1029384756");
