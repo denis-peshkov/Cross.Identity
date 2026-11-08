@@ -1055,6 +1055,124 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
+    {
+        SeedProvider("Facebook");
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", "/home", null, CancellationToken.None);
+
+        url.Should().StartWith("https://www.facebook.com/v21.0/dialog/oauth?");
+        url.Should().Contain("client_id=fb-client");
+        url.Should().Contain("email");
+        url.Should().Contain("public_profile");
+        url.Should().Contain("redirect_uri=");
+        url.Should().Contain("state=");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
+    {
+        SeedProvider("Facebook");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
+            ["https://graph.facebook.com/v21.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "1029384756",
+                    name = "Facebook User",
+                    email = "fb.user@example.com",
+                    picture = new
+                    {
+                        data = new
+                        {
+                            url = "https://platform-lookaside.fbsbx.com/avatar.png",
+                        },
+                    },
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync();
+        user.Email.Should().Be("fb.user@example.com");
+        user.EmailVerified.Should().BeTrue();
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("1029384756");
+        login.ProviderEmail.Should().Be("fb.user@example.com");
+        login.DisplayName.Should().Be("Facebook User");
+        login.AvatarUrl.Should().Be("https://platform-lookaside.fbsbx.com/avatar.png");
+        completion.UserAccountId.Should().Be(user.Id);
+        completion.IsLinking.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookWithoutEmail_WhenCompleteAsync_ThenCreatesUnverifiedUserAsync()
+    {
+        SeedProvider("Facebook");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
+            ["https://graph.facebook.com/v21.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "5566778899",
+                    name = "No Email User",
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
+        user.EmailVerified.Should().BeFalse();
+        (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("5566778899");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenMalformedBase64State_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Google");

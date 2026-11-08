@@ -105,8 +105,9 @@ export function applySummaryLine(markdown, line) {
 
   const hr = markdown.match(/\n---\r?\n/);
   if (hr && hr.index != null) {
+    // Blank line before --- so CommonMark keeps HR (not setext H2 under the summary).
     return {
-      markdown: `${markdown.slice(0, hr.index)}\n${line}${markdown.slice(hr.index)}`,
+      markdown: `${markdown.slice(0, hr.index)}\n${line}\n${markdown.slice(hr.index)}`,
       status: 'inserted',
     };
   }

@@ -39,7 +39,8 @@ describe('applySummaryLine', () => {
     const md = `# Plan\n\n> meta\n\n---\n\n## 1. Preconditions\n`;
     const result = applySummaryLine(md, sampleLine);
     assert.equal(result.status, 'inserted');
-    assert.ok(result.markdown.includes(`${sampleLine}\n---`));
+    // Blank line before --- avoids setext H2 (summary + ---).
+    assert.ok(result.markdown.includes(`${sampleLine}\n\n---`));
     assert.ok(!result.markdown.includes('already up to date'));
   });
 });

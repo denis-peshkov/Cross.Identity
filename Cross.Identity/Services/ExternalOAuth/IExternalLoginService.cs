@@ -24,7 +24,7 @@ internal interface IExternalLoginService
     /// </summary>
     /// <param name="provider">
     /// Provider name as registered in options and <c>auth.Providers</c>
-    /// (for example, <c>Google</c>, <c>Microsoft</c>, <c>GitHub</c>, <c>Apple</c>).
+    /// (for example, <c>Google</c>, <c>Microsoft</c>, <c>GitHub</c>, <c>Apple</c>, <c>Facebook</c>).
     /// </param>
     /// <param name="returnUrl">
     /// Optional URL to return to after callback (stored in OAuth state).

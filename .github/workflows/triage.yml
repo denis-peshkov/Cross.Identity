@@ -39,7 +39,9 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: triage-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  # Include event_name so pull_request and pull_request_target on the same PR
+  # do not cancel each other (jobs are already mutually exclusive via `if`).
+  group: triage-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:

@@ -119,30 +119,45 @@ jobs:
       - name: Nuget Pack
         run: nuget pack Cross.Identity/config.nuspec -Symbols -Version ${{ env.semVer }}
 
-      # Git tags: only stable SemVer on master/release/hotfix.
+      # Git tags: only stable SemVer on master (release/hotfix without auto v* tag).
+      # Idempotent on rerun: accept existing tag only when it points at this commit; never overwrite.
       - name: Create git Tag
         if: >
           !contains(env.semVer, '-') &&
-          (
-            github.ref == 'refs/heads/master' ||
-            startsWith(github.ref, 'refs/heads/release/') ||
-            startsWith(github.ref, 'refs/heads/hotfix/')
-          )
+          github.ref == 'refs/heads/master'
         run: |
+          if git rev-parse -q --verify "refs/tags/v${{ env.semVer }}" >/dev/null; then
+            EXISTING="$(git rev-list -n 1 "refs/tags/v${{ env.semVer }}")"
+            if [ "${EXISTING}" = "${{ github.sha }}" ]; then
+              echo "Tag v${{ env.semVer }} already points at ${{ github.sha }}; skipping create."
+              exit 0
+            fi
+            echo "::error::Tag v${{ env.semVer }} already exists at ${EXISTING}, expected ${{ github.sha }}. Refusing to overwrite."
+            exit 1
+          fi
           git tag v${{ env.semVer }}
 
       - name: Push git Tag
         if: >
           !contains(env.semVer, '-') &&
-          (
-            github.ref == 'refs/heads/master' ||
-            startsWith(github.ref, 'refs/heads/release/') ||
-            startsWith(github.ref, 'refs/heads/hotfix/')
-          )
+          github.ref == 'refs/heads/master'
         run: |
           git config --global user.name 'Denis Peshkov'
           git config --global user.email 'denis.peshkov@outlook.com'
           git remote set-url origin https://x-access-token:${{ secrets.TAGTOKEN }}@github.com/${{ github.repository }}
+          # Prefer remote tip when present so a partial create+failed-push rerun stays safe.
+          LS_OUT="$(git ls-remote --tags origin "refs/tags/v${{ env.semVer }}" || true)"
+          if [ -n "${LS_OUT}" ]; then
+            # Annotated → peeled ^{} commit; lightweight → tag tip.
+            REMOTE="$(printf '%s\n' "${LS_OUT}" | awk '/\^\{\}$/ { print $1; exit }')"
+            [ -n "${REMOTE}" ] || REMOTE="$(printf '%s\n' "${LS_OUT}" | awk '{ print $1; exit }')"
+            if [ "${REMOTE}" = "${{ github.sha }}" ]; then
+              echo "Remote tag v${{ env.semVer }} already points at ${{ github.sha }}; skipping push."
+              exit 0
+            fi
+            echo "::error::Remote tag v${{ env.semVer }} already exists at ${REMOTE}, expected ${{ github.sha }}. Refusing to overwrite."
+            exit 1
+          fi
           git push origin v${{ env.semVer }}
 
       - name: NuGet login (OIDC → temp API key)

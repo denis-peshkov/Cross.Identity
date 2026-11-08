@@ -37,6 +37,14 @@ internal static class ExternalOAuthProviders
                 Scope = "name email",
                 FetchProfileAsync = FetchAppleProfileAsync,
             },
+            ["Facebook"] = new ExternalOAuthProviderDefinition
+            {
+                Scheme = "facebook",
+                AuthorizationEndpoint = "https://www.facebook.com/v21.0/dialog/oauth",
+                TokenEndpoint = "https://graph.facebook.com/v21.0/oauth/access_token",
+                Scope = "email public_profile",
+                FetchProfileAsync = FetchFacebookProfileAsync,
+            },
         };
 
     public static bool TryGet(string provider, out ExternalOAuthProviderDefinition definition)
@@ -192,4 +200,50 @@ internal static class ExternalOAuthProviders
         string accessToken,
         CancellationToken cancellationToken)
         => throw new NotSupportedException("Apple Sign In is not supported yet.");
+
+    private static async Task<ExternalOAuthProfile> FetchFacebookProfileAsync(
+        HttpClient httpClient,
+        string accessToken,
+        CancellationToken cancellationToken)
+    {
+        using var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            "https://graph.facebook.com/v21.0/me?fields=id,name,email,picture.type(large)");
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+
+        using var document = await JsonDocument.ParseAsync(
+            await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false),
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+        var root = document.RootElement;
+
+        var email = root.TryGetProperty("email", out var emailNode) && emailNode.ValueKind == JsonValueKind.String
+            ? emailNode.GetString()
+            : null;
+
+        string? avatarUrl = null;
+        if (root.TryGetProperty("picture", out var pictureNode)
+            && pictureNode.ValueKind == JsonValueKind.Object
+            && pictureNode.TryGetProperty("data", out var pictureData)
+            && pictureData.ValueKind == JsonValueKind.Object
+            && pictureData.TryGetProperty("url", out var pictureUrl)
+            && pictureUrl.ValueKind == JsonValueKind.String)
+        {
+            avatarUrl = pictureUrl.GetString();
+        }
+
+        // Graph returns email only when the user granted it and Facebook considers it confirmed.
+        return new ExternalOAuthProfile
+        {
+            ProviderUserId = root.GetProperty("id").GetString() ?? string.Empty,
+            Email = email,
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
+            DisplayName = root.TryGetProperty("name", out var nameNode) && nameNode.ValueKind == JsonValueKind.String
+                ? nameNode.GetString()
+                : null,
+            AvatarUrl = avatarUrl,
+        };
+    }
 }
