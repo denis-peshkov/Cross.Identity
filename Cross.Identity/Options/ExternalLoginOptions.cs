@@ -39,7 +39,10 @@ public sealed class ExternalLoginProviderOptions
     /// <summary>OAuth client id.</summary>
     public string ClientId { get; set; } = string.Empty;
 
-    /// <summary>OAuth client secret.</summary>
+    /// <summary>
+    /// OAuth client secret.
+    /// For Apple Sign In this is the generated client-secret JWT (ES256), not a static password.
+    /// </summary>
     public string ClientSecret { get; set; } = string.Empty;
 
     /// <summary>

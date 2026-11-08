@@ -1024,13 +1024,52 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenAppleProvider_WhenCompleteAsync_ThenThrowsNotSupportedExceptionAsync()
+    public async Task GivenAppleProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
     {
         SeedProvider("Apple");
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", "/home", null, CancellationToken.None);
+
+        url.Should().StartWith("https://appleid.apple.com/auth/authorize?");
+        url.Should().Contain("client_id=com.example.app");
+        url.Should().Contain("response_mode=form_post");
+        url.Should().Contain("scope=name");
+        url.Should().Contain("email");
+        url.Should().Contain("redirect_uri=");
+        url.Should().Contain("state=");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001234.abcdef0123456789",
+            email = "apple.user@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
         {
             ["https://appleid.apple.com/auth/token"] = _ =>
-                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "apple-token" }),
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
         });
 
         var sut = CreateService(
@@ -1039,8 +1078,138 @@ public class ExternalLoginServiceTests : EFTestsBase
             {
                 options.Providers["Apple"] = new ExternalLoginProviderOptions
                 {
-                    ClientId = "apple-client",
-                    ClientSecret = "apple-secret",
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var appleUserJson = """{"name":{"firstName":"Ada","lastName":"Lovelace"},"email":"apple.user@example.com"}""";
+        var completion = await sut.CompleteAsync(
+            "auth-code",
+            state,
+            null,
+            null,
+            CancellationToken.None,
+            appleUserJson);
+
+        var user = await Context.UsersAccounts.SingleAsync();
+        user.Email.Should().Be("apple.user@example.com");
+        user.EmailVerified.Should().BeTrue();
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("001234.abcdef0123456789");
+        login.ProviderEmail.Should().Be("apple.user@example.com");
+        login.DisplayName.Should().Be("Ada Lovelace");
+        completion.UserAccountId.Should().Be(user.Id);
+        completion.IsLinking.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleWithoutUserJson_WhenCompleteAsync_ThenDisplayNameRemainsNullAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001111.aaaaaaaaaaaaaaaa",
+            email = "relay@privaterelay.appleid.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleWithoutEmail_WhenCompleteAsync_ThenCreatesUnverifiedUserAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "009876.fedcba9876543210",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
+        user.EmailVerified.Should().BeFalse();
+        (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("009876.fedcba9876543210");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleMissingIdToken_WhenCompleteAsync_ThenThrowsInvalidOperationExceptionAsync()
+    {
+        SeedProvider("Apple");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "apple-access" }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
                 };
             });
 
@@ -1049,8 +1218,8 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("*Apple Sign In*");
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*id_token*");
     }
 
     [Test]
@@ -1507,6 +1676,16 @@ public class ExternalLoginServiceTests : EFTestsBase
                     picture = "https://example.com/avatar.png",
                 }),
         });
+
+    private static string CreateUnsignedJwt(object payload)
+    {
+        static string Base64Url(byte[] bytes)
+            => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        var header = Base64Url(Encoding.UTF8.GetBytes("""{"alg":"none","typ":"JWT"}"""));
+        var body = Base64Url(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));
+        return $"{header}.{body}.sig";
+    }
 
     private static string ExtractState(string authorizationUrl)
     {

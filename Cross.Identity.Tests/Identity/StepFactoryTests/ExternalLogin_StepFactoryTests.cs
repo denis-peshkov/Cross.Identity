@@ -57,6 +57,7 @@ public class ExternalLogin_StepFactoryTests
               "stateKey": "State",
               "errorKey": "Error",
               "errorDescriptionKey": "ErrorDescription",
+              "userKey": "User",
               "next": "done"
             }
             """);
@@ -69,6 +70,7 @@ public class ExternalLogin_StepFactoryTests
         step.StateKey.Should().Be("State");
         step.ErrorKey.Should().Be("Error");
         step.ErrorDescriptionKey.Should().Be("ErrorDescription");
+        step.UserKey.Should().Be("User");
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
         step.JwtTokenService.Should().NotBeNull();

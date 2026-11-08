@@ -19,6 +19,11 @@ internal sealed class ExternalLoginCompleteStep : IStep
 
     public string? ErrorDescriptionKey { get; init; }
 
+    /// <summary>
+    /// Optional bag key for Apple Sign In form_post <c>user</c> JSON (first authorization only).
+    /// </summary>
+    public string? UserKey { get; init; }
+
     public required IExternalLoginService ExternalLoginService { get; init; }
 
     public required IJwtTokenService JwtTokenService { get; init; }
@@ -37,8 +42,13 @@ internal sealed class ExternalLoginCompleteStep : IStep
         var errorDescription = !string.IsNullOrWhiteSpace(ErrorDescriptionKey)
             ? ctx.Get<string?>(BagKey.Qualify(Kind, ErrorDescriptionKey))
             : null;
+        var userJson = !string.IsNullOrWhiteSpace(UserKey)
+            ? ctx.Get<string?>(BagKey.Qualify(Kind, UserKey))
+            : null;
 
-        var completion = await ExternalLoginService.CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken).ConfigureAwait(false);
+        var completion = await ExternalLoginService
+            .CompleteAsync(code ?? string.Empty, state, error, errorDescription, cancellationToken, userJson)
+            .ConfigureAwait(false);
 
         ctx.Set(BagKey.Qualify(Kind, "UserAccountId"), completion.UserAccountId);
         ctx.Set(BagKey.Qualify(Kind, "IsLinking"), completion.IsLinking);

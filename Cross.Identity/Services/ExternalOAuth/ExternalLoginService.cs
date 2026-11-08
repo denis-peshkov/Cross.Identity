@@ -126,7 +126,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
         string state,
         string? error,
         string? errorDescription,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? userJson = null)
     {
         if (!string.IsNullOrWhiteSpace(error))
         {
@@ -158,8 +159,13 @@ internal sealed class ExternalLoginService : IExternalLoginService
             ?? throw new NotFoundException($"Provider '{payload.Provider}' is not enabled.");
 
         var httpClient = _httpClientFactory.CreateClient(nameof(ExternalLoginService));
-        var accessToken = await ExchangeCodeAsync(httpClient, definition, providerOptions, code, cancellationToken).ConfigureAwait(false);
-        var profile = await definition.FetchProfileAsync(httpClient, accessToken, cancellationToken).ConfigureAwait(false);
+        var tokenResponse = await ExchangeCodeAsync(httpClient, definition, providerOptions, code, cancellationToken).ConfigureAwait(false);
+        var profile = await definition.FetchProfileAsync(httpClient, tokenResponse, cancellationToken).ConfigureAwait(false);
+
+        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase))
+        {
+            profile = ApplyAppleUserJson(profile, userJson);
+        }
 
         if (string.IsNullOrWhiteSpace(profile.ProviderUserId))
         {
@@ -325,10 +331,16 @@ internal sealed class ExternalLoginService : IExternalLoginService
             query["response_mode"] = "query";
         }
 
+        // Apple requires form_post when requesting name/email scopes.
+        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase))
+        {
+            query["response_mode"] = "form_post";
+        }
+
         return $"{definition.AuthorizationEndpoint}?{query}";
     }
 
-    private async Task<string> ExchangeCodeAsync(
+    private async Task<ExternalOAuthTokenResponse> ExchangeCodeAsync(
         HttpClient httpClient,
         ExternalOAuthProviderDefinition definition,
         ExternalLoginProviderOptions providerOptions,
@@ -374,8 +386,21 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new InvalidOperationException("External provider did not return access_token.");
         }
 
-        return accessTokenNode.GetString()
+        var accessToken = accessTokenNode.GetString()
             ?? throw new InvalidOperationException("External provider returned an empty access_token.");
+
+        string? idToken = null;
+        if (document.RootElement.TryGetProperty("id_token", out var idTokenNode)
+            && idTokenNode.ValueKind == JsonValueKind.String)
+        {
+            idToken = idTokenNode.GetString();
+        }
+
+        return new ExternalOAuthTokenResponse
+        {
+            AccessToken = accessToken,
+            IdToken = idToken,
+        };
     }
 
     private async Task<ExternalLoginStatePayload> ResolveStateAsync(
@@ -641,6 +666,59 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Apple posts given/family name only once via form_post <c>user</c> JSON (not in <c>id_token</c>).
+    /// Malformed payloads are ignored so a bad client field cannot break login.
+    /// </summary>
+    private static ExternalOAuthProfile ApplyAppleUserJson(ExternalOAuthProfile profile, string? userJson)
+    {
+        if (string.IsNullOrWhiteSpace(userJson) || !string.IsNullOrWhiteSpace(profile.DisplayName))
+        {
+            return profile;
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(userJson);
+            var root = document.RootElement;
+            if (!root.TryGetProperty("name", out var nameNode) || nameNode.ValueKind != JsonValueKind.Object)
+            {
+                return profile;
+            }
+
+            var firstName = nameNode.TryGetProperty("firstName", out var firstNode)
+                && firstNode.ValueKind == JsonValueKind.String
+                    ? firstNode.GetString()
+                    : null;
+            var lastName = nameNode.TryGetProperty("lastName", out var lastNode)
+                && lastNode.ValueKind == JsonValueKind.String
+                    ? lastNode.GetString()
+                    : null;
+
+            var displayName = string.Join(
+                ' ',
+                new[] { firstName, lastName }.Where(static x => !string.IsNullOrWhiteSpace(x)));
+
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return profile;
+            }
+
+            return new ExternalOAuthProfile
+            {
+                ProviderUserId = profile.ProviderUserId,
+                Email = profile.Email,
+                EmailVerified = profile.EmailVerified,
+                DisplayName = displayName,
+                AvatarUrl = profile.AvatarUrl,
+            };
+        }
+        catch (JsonException)
+        {
+            return profile;
+        }
     }
 
     private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)

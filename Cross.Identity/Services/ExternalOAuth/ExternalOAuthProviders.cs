@@ -52,11 +52,11 @@ internal static class ExternalOAuthProviders
 
     private static async Task<ExternalOAuthProfile> FetchGoogleProfileAsync(
         HttpClient httpClient,
-        string accessToken,
+        ExternalOAuthTokenResponse tokenResponse,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://openidconnect.googleapis.com/v1/userinfo");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
@@ -76,11 +76,11 @@ internal static class ExternalOAuthProviders
 
     private static async Task<ExternalOAuthProfile> FetchMicrosoftProfileAsync(
         HttpClient httpClient,
-        string accessToken,
+        ExternalOAuthTokenResponse tokenResponse,
         CancellationToken cancellationToken)
     {
         using var meRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
-        meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
         using var meResponse = await httpClient.SendAsync(meRequest, cancellationToken).ConfigureAwait(false);
         meResponse.EnsureSuccessStatusCode();
@@ -101,7 +101,7 @@ internal static class ExternalOAuthProviders
         var oidcEmailVerified = false;
 
         using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/oidc/userinfo");
-        userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
         using var userInfoResponse = await httpClient.SendAsync(userInfoRequest, cancellationToken).ConfigureAwait(false);
         if (userInfoResponse.IsSuccessStatusCode)
@@ -136,11 +136,11 @@ internal static class ExternalOAuthProviders
 
     private static async Task<ExternalOAuthProfile> FetchGitHubProfileAsync(
         HttpClient httpClient,
-        string accessToken,
+        ExternalOAuthTokenResponse tokenResponse,
         CancellationToken cancellationToken)
     {
         using var userRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
-        userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
         userRequest.Headers.UserAgent.ParseAdd("peshkov.biz");
 
         using var userResponse = await httpClient.SendAsync(userRequest, cancellationToken).ConfigureAwait(false);
@@ -157,7 +157,7 @@ internal static class ExternalOAuthProviders
         string? email = null;
 
         using var emailsRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user/emails");
-        emailsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        emailsRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
         emailsRequest.Headers.UserAgent.ParseAdd("peshkov.biz");
 
         using var emailsResponse = await httpClient.SendAsync(emailsRequest, cancellationToken).ConfigureAwait(false);
@@ -197,19 +197,68 @@ internal static class ExternalOAuthProviders
 
     private static Task<ExternalOAuthProfile> FetchAppleProfileAsync(
         HttpClient httpClient,
-        string accessToken,
+        ExternalOAuthTokenResponse tokenResponse,
         CancellationToken cancellationToken)
-        => throw new NotSupportedException("Apple Sign In is not supported yet.");
+    {
+        _ = httpClient;
+        _ = cancellationToken;
+
+        if (string.IsNullOrWhiteSpace(tokenResponse.IdToken))
+        {
+            throw new InvalidOperationException("Apple did not return id_token.");
+        }
+
+        // Profile claims live in the OIDC id_token from Apple's token endpoint (no userinfo Graph).
+        // Token was just received over TLS from appleid.apple.com; payload is read without JWKS re-validation.
+        JsonWebToken jwt;
+        try
+        {
+            jwt = new JsonWebTokenHandler().ReadJsonWebToken(tokenResponse.IdToken);
+        }
+        catch (ArgumentException ex)
+        {
+            throw new InvalidOperationException("Apple id_token is invalid.", ex);
+        }
+        catch (SecurityTokenException ex)
+        {
+            throw new InvalidOperationException("Apple id_token is invalid.", ex);
+        }
+
+        var email = jwt.TryGetPayloadValue<string>("email", out var emailClaim)
+            ? emailClaim
+            : null;
+
+        // Apple may emit email_verified as boolean or string "true"/"false".
+        var emailVerified = false;
+        if (jwt.TryGetPayloadValue<bool>("email_verified", out var verifiedBool))
+        {
+            emailVerified = verifiedBool;
+        }
+        else if (jwt.TryGetPayloadValue<string>("email_verified", out var verifiedString))
+        {
+            emailVerified = string.Equals(verifiedString, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return Task.FromResult(new ExternalOAuthProfile
+        {
+            ProviderUserId = jwt.Subject ?? string.Empty,
+            Email = email,
+            EmailVerified = emailVerified && !string.IsNullOrWhiteSpace(email),
+            // Given/family name are only posted once via form_post `user` JSON — not in id_token.
+            DisplayName = null,
+            AvatarUrl = null,
+        });
+    }
 
     private static async Task<ExternalOAuthProfile> FetchFacebookProfileAsync(
         HttpClient httpClient,
-        string accessToken,
+        ExternalOAuthTokenResponse tokenResponse,
         CancellationToken cancellationToken)
     {
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
             "https://graph.facebook.com/v21.0/me?fields=id,name,email,picture.type(large)");
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();

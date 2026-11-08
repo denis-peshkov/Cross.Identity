@@ -24,7 +24,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
 - **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
-- **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple (Apple Sign In not implemented yet); OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
+- **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions.
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
 - **Licensing (JWT)** — Peshkov license key check on the first flow call; without a key in dev/test, execution continues with a warning in logs.
 

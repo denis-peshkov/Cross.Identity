@@ -21,7 +21,7 @@ public class ExternalLoginComplete_StepTests
     {
         var userAccountId = Guid.NewGuid();
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ReturnsAsync(new ExternalLoginCompletion(userAccountId, true));
 
         var step = CreateStep();
@@ -52,7 +52,7 @@ public class ExternalLoginComplete_StepTests
         };
 
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ReturnsAsync(new ExternalLoginCompletion(userAccountId, false));
         _userService
             .Setup(u => u.GetUserByAsync("Id", userAccountId.ToString(), It.IsAny<CancellationToken>()))
@@ -82,7 +82,7 @@ public class ExternalLoginComplete_StepTests
     public async Task GivenOAuthError_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
         var step = new ExternalLoginCompleteStep
@@ -112,7 +112,7 @@ public class ExternalLoginComplete_StepTests
     public async Task GivenOAuthErrorWithoutCode_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
-            .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
         var step = new ExternalLoginCompleteStep

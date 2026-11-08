@@ -76,6 +76,10 @@ internal interface IExternalLoginService
     /// Human-readable OAuth error description from the provider, if any.
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="userJson">
+    /// Optional provider user payload from the callback (Apple Sign In form_post <c>user</c> JSON on first authorization).
+    /// Used to populate <see cref="ExternalOAuthProfile.DisplayName"/> when the identity token has no name claim.
+    /// </param>
     /// <returns>
     /// Local user id and whether the flow was account linking
     /// (<see cref="ExternalLoginCompletion.IsLinking"/> — the step should skip issuing a new token pair).
@@ -95,7 +99,8 @@ internal interface IExternalLoginService
         string state,
         string? error,
         string? errorDescription,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? userJson = null);
 
     /// <summary>
     /// Unlink an external provider from the given user.

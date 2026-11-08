@@ -10,5 +10,5 @@ internal sealed class ExternalOAuthProviderDefinition
 
     public required string Scope { get; init; }
 
-    public required Func<HttpClient, string, CancellationToken, Task<ExternalOAuthProfile>> FetchProfileAsync { get; init; }
+    public required Func<HttpClient, ExternalOAuthTokenResponse, CancellationToken, Task<ExternalOAuthProfile>> FetchProfileAsync { get; init; }
 }

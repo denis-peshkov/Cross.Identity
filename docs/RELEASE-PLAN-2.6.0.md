@@ -36,7 +36,7 @@
 ## Принято (осознанный trade-off)
 
 ### Mixed release slice
-Branch also carries CI/workflow and Cross package bumps alongside Facebook OAuth — review/ship as one release or split PRs consciously.
+Branch also carries CI/workflow and Cross package bumps alongside Facebook / Apple OAuth — review/ship as one release or split PRs consciously.
 
 ---
 
@@ -47,19 +47,21 @@ Branch also carries CI/workflow and Cross package bumps alongside Facebook OAuth
 | ✅ #H28 Facebook EmailVerified false | Graph email kept; `EmailVerified = false` (no OIDC attestation); success test |
 | ✅ Facebook OAuth provider | `ExternalOAuthProviders` Graph v21; initiate/complete profile + avatar; tests |
 | ✅ Seed Facebook provider | `4_01` greenfield `ProviderId=5`; `5_01_auth_Providers_Facebook` PostDeployment ×3 |
-| ✅ Docs / sample stub | README, CONTRIBUTING, Sample.Api Providers.Facebook |
+| ✅ Apple Sign In provider | `id_token` profile; `response_mode=form_post`; form_post `user` → `DisplayName`; tests |
+| ✅ Docs / sample stub | README, CONTRIBUTING, Sample.Api Providers.Facebook + Apple |
 
 ---
 
 ## Что в библиотеке уже нормально
 
-- Apple remains stub (`NotSupportedException`) — unchanged.
-- Existing Google / Microsoft / GitHub paths untouched.
+- Apple already seeded as `ProviderId=2` in `4_01` — no PostDeployment seed required.
+- Existing Google / Microsoft / GitHub paths untouched (token response now carries optional `id_token`).
+- Apple JWKS re-validation deferred → [`TO-DO.md`](TO-DO.md) **M98**.
 
 ---
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md), вкл. **M98** Apple JWKS.)_
 
 Ship: PR → `master` · CI · operators `5_01_auth_Providers_Facebook` · tag `v2.6.0` + NuGet.

@@ -36,6 +36,10 @@ CodeRabbit **Major** (deferred): English throughout release-plan workflow docs.
 - Follow-on: generated `docs/RELEASE-PLAN-*.md` / this file if policy becomes EN.
 Сейчас в репо принят RU для планов/`TO-DO`; осознанный выбор (оставить RU или EN) — потом, не в текущем цикле.
 
+### M98. Apple Sign In: JWKS re-validation of `id_token`
+**Что:** после token exchange читать `id_token` не «как JSON payload», а с crypto-проверкой подписи по Apple JWKS (`https://appleid.apple.com/auth/keys`), плюс claims `iss` / `aud` (== ClientId) / `exp` (и при наличии — `nonce`).
+**Зачем:** сейчас токен доверяется потому что пришёл по TLS с `appleid.apple.com/auth/token` (как Graph/userinfo у других провайдеров). JWKS закрывает класс ошибок «поддельный `id_token` в ответе exchange» (compromised HTTP handler, proxy, ошибочный mock в prod) и выравнивает Apple с OIDC best practice. Не блокер текущего Sign In; hardening вне 2.6.0 ship slice.
+
 ---
 
 ## Низкий (техдолг / несогласованности)
@@ -75,7 +79,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Публичные half-validate API (`GetClaimValue` / JTI lookup) — для второго шага после crypto, не standalone auth (см. open M13/M14).
 - OTP plaintext в логах `CodeService.SendAsync` — хост не утекает verbose logs в SIEM.
 - Messenger preferred → SMS (`ToEmailOrSms`); нет messenger sender / remapping.
-- Apple в registry без реализации (`NotSupportedException`) — не включать в Providers до реализации.
 - `main.GetUserAccountId` existence oracle — продуктовое решение; reject-пути дают единый `Invalid credentials.`
 - `PasswordAlgoEnum.SHA256` obsolete; pepper ignored; default Argon2id/PBKDF2.
 - `ChangePassword` без library session proof — `UserAccountId` + current password; session proof опционально на хосте.
