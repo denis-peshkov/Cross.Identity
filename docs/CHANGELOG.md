@@ -12,7 +12,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - Stock `main.Register`: `Email` / `PhoneNumber` optional with `atLeastOneRequired` (OTP channel); `UserName` optional alias only (not enough alone).
-- Form validators: `atLeastOneRequired` / `exactlyOneRequired` now enforced in `UnifiedFormValidatorFactory` (empty = `null` / `""` / whitespace).
+- Form validators: `atLeastOneRequired` / `exactlyOneRequired` now enforced in `UnifiedFormValidatorFactory` (empty = `null` / `""` / whitespace); failures are form-level (`message` only, no input PropertyName).
 - `CollectFormStep` and `CreateUserAsync`: treat blank identity strings as absent (`null`).
 
 ### Tests

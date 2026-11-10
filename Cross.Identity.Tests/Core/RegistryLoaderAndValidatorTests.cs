@@ -190,7 +190,68 @@ public sealed class RegistryLoaderAndValidatorTests
         });
 
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("email or a phone"));
+        var error = result.Errors.Should().ContainSingle(e => e.ErrorMessage.Contains("email or a phone")).Subject;
+        error.PropertyName.Should().BeEmpty();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenAtLeastOneRequired_WhenFieldsEmpty_ThenInvalidWithoutThrowAsync()
+    {
+        var schema = new FormSchema(
+            "register",
+            new List<FieldDescriptor>
+            {
+                new("Email", FieldTypeEnum.Email, Required: false),
+            },
+            new List<IFormSchemaRule>
+            {
+                new AtLeastOneRequiredRule(Array.Empty<string>(), "Provide an email or a phone number."),
+            });
+
+        var validator = new UnifiedFormValidatorFactory().Create(schema);
+        var result = await validator.ValidateAsync(new Dictionary<string, object?>
+        {
+            ["Email"] = "a@b.com",
+        });
+
+        result.IsValid.Should().BeFalse();
+        var error = result.Errors.Should().ContainSingle().Subject;
+        error.ErrorMessage.Should().Contain("email or a phone");
+        error.PropertyName.Should().BeEmpty();
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenExactlyOneRequired_WhenNoneOrBoth_ThenInvalidWithoutPropertyAsync()
+    {
+        var schema = new FormSchema(
+            "pick",
+            new List<FieldDescriptor>
+            {
+                new("Email", FieldTypeEnum.Email, Required: false),
+                new("PhoneNumber", FieldTypeEnum.PhoneNumber, Required: false),
+            },
+            new List<IFormSchemaRule>
+            {
+                new ExactlyOneRequiredRule(
+                    new[] { "Email", "PhoneNumber" },
+                    "Provide exactly one of email or phone."),
+            });
+
+        var validator = new UnifiedFormValidatorFactory().Create(schema);
+
+        var none = await validator.ValidateAsync(new Dictionary<string, object?>());
+        none.IsValid.Should().BeFalse();
+        none.Errors.Should().ContainSingle(e => e.PropertyName == string.Empty);
+
+        var both = await validator.ValidateAsync(new Dictionary<string, object?>
+        {
+            ["Email"] = "a@b.com",
+            ["PhoneNumber"] = "+12125551234",
+        });
+        both.IsValid.Should().BeFalse();
+        both.Errors.Should().ContainSingle(e => e.PropertyName == string.Empty);
     }
 
     [Test]

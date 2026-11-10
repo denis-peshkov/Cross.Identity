@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.7.0` · **ветка:** `release/register-email-or-phone` · **база:** `origin/master` (`v2.6.0`) · **дата:** `2026-11-10`
+> **Версия:** `2.7.0` (closed) · **ветка:** `release/register-email-or-phone` · **база:** `origin/master` (`v2.6.0`) · **дата:** `2026-11-11`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.7.0
 >
@@ -8,10 +8,11 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.6.0.md`](RELEASE-PLAN-2.6.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · **0** файлов (tip = `v2.6.0`). **WT:** **10** файлов · **+296 / −10** (excl. this plan). Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **1** коммит · **13** файлов · **+454 / −82**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался.
+- `2026-11-10` · log `.cursor/skills/coderabbit/.cache/cr-release-register-email-or-phone-vs-origin-master-all-20261110-235129.jsonl` · 0 findings (0 Critical, 0 Major, 0 Minor) → Open C/H/M/L пустые.
+- `2026-11-10` · log `.cursor/skills/coderabbit/.cache/cr-release-register-email-or-phone-vs-origin-master-all-20261110-235216.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
 
 **PR:** —
 
@@ -44,6 +45,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M113 atLeast/exactlyOne form-level message | `AddFailure(message)` without PropertyName; empty `fields` no longer indexes `[0]` |
 | ✅ #M109 Form `atLeastOneRequired` / `exactlyOneRequired` | `UnifiedFormValidatorFactory` evaluates both kinds; empty = null/`""`/whitespace |
 | ✅ #M110 Stock `main.Register` Email\|Phone | `Email`/`PhoneNumber` optional + `atLeastOneRequired`; FLOWS updated |
 | ✅ #M111 `CollectFormStep` blank → null | Whitespace-only strings cleared before phone E.164 / bag write |
@@ -62,4 +64,4 @@
 
 ## Приоритет фиксов
 
-Открытых пунктов этой дельты нет. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.7.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

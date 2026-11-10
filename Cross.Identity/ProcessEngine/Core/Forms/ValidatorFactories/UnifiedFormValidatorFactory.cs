@@ -140,12 +140,11 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         ValidationContext<IDictionary<string, object?>> ctx)
     {
         // null / "" / whitespace count as missing for every listed field.
+        // Form-level rule: message only (no PropertyName / input binding).
         var anyPresent = rule.Fields.Any(field => map.TryGetValue(field, out var value) && !IsEmpty(value));
         if (!anyPresent)
         {
-            ctx.AddFailure(
-                rule.Fields[0],
-                rule.Message ?? "At least one of the fields is required.");
+            ctx.AddFailure(rule.Message ?? "At least one of the fields is required.");
         }
     }
 
@@ -154,12 +153,11 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
         ExactlyOneRequiredRule rule,
         ValidationContext<IDictionary<string, object?>> ctx)
     {
+        // Form-level rule: message only (no PropertyName / input binding).
         var presentCount = rule.Fields.Count(field => map.TryGetValue(field, out var value) && !IsEmpty(value));
         if (presentCount != 1)
         {
-            ctx.AddFailure(
-                rule.Fields[0],
-                rule.Message ?? "Exactly one of the fields is required.");
+            ctx.AddFailure(rule.Message ?? "Exactly one of the fields is required.");
         }
     }
 
