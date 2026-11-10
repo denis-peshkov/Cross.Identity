@@ -31,7 +31,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Database
 
-- Seed `auth.Providers` Facebook (`ProviderId=5`) in `4_01` (greenfield) + `5_01_auth_Providers_Facebook.sql` PostDeployment (existing DBs) for SqlServer / PostgreSQL / MySQL.
+- Seed `auth.Providers` Facebook (`ProviderId=5`) in `4_01` (greenfield) + `5_01_auth_Providers_Facebook.sql` PostDeployment (existing DBs) for SqlServer / PostgreSQL / MySQL; PostDeployment fails closed if `Scheme=facebook` is owned by a non-Facebook name (MySQL no longer `INSERT IGNORE` on that collision).
 
 ### CI / tooling
 

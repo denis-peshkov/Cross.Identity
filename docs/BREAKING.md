@@ -38,6 +38,14 @@ Release: [v2.6.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 
 **Action:** ensure OAuth scopes request email (`email` / Apple `name email`). Host UI should treat missing email as a failed provider login (prompt the user to share email or use another method). Private Relay addresses from Apple still count as email.
 
+### PostDeployment: `5_01_auth_Providers_Facebook`
+
+| Area | Was | Now (2.6.0+) |
+|---|---|---|
+| Existing DB seed | Insert Facebook (`ProviderId=5`) when id/name absent; MySQL used `INSERT IGNORE` | Same idempotent insert when Facebook already present; **fails** if `Scheme='facebook'` is already owned by a **different** `Name` (resolve manually, then re-run) |
+
+**Action:** operators applying `5_01_auth_Providers_Facebook.sql` (SqlServer / PostgreSQL / MySQL) — if the script errors on scheme collision, rename/remove the conflicting `auth.Providers` row (or align `Name` to `Facebook`) before retrying.
+
 ---
 
 ## From 2.2.0 to 2.3.0

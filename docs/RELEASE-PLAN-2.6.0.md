@@ -47,6 +47,7 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ #M105 Facebook Providers scheme collision | `5_01` ×3 fail if `Scheme=facebook` under other Name; MySQL drop INSERT IGNORE; idempotent for Facebook |
 | ✅ #H31 Facebook `appsecret_proof` on `/me` | HMAC-SHA256(access_token, ClientSecret); FetchProfile gets secret; secret not in URL; test |
 | ✅ #M104 Apple re-login keeps DisplayName | upsert skips DisplayName when profile name null; relogin test |
 | ✅ External OAuth email required | `CompleteAsync` → `ValidationException` if profile email empty; Apple/Facebook tests; BREAKING 2.5.6→2.6.0 |
