@@ -10,7 +10,8 @@
 >
 > Дельта: `origin/master...HEAD` — **4** коммита · **32** файла · **+745 / −59**. Open C/H/M/L пустые.
 
-**CodeRabbit:** `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → все закрыты в этом плане.
+**CodeRabbit:**
+- `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → все закрыты в этом плане.
 
 **PR:** —
 
@@ -37,12 +38,19 @@
 ### Mixed release slice
 Branch also carries CI/workflow and Cross package bumps alongside Facebook / Apple OAuth — review/ship as one release or split PRs consciously.
 
+### Setext headings out of scope (`release-plan-to-master`)
+Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never setext (`Title` + `---`). `applySummaryLine` need not preserve setext; CR **#M100** dismissed.
+
 ---
 
 ## Закрыто (проверено в коде)
 
 | # | Суть |
 |---|---|
+| ✅ #M102 Step User→CompleteAsync | `UserKey=collectForm.User`; Verify exact userJson (not It.IsAny) |
+| ✅ #M101 Breaking gate full fetch | no `--depth=1` on BASE/`pull/*/head` so `BASE...HEAD` finds merge-base |
+| ✅ #H29 Breaking gate fail-closed | missing BASE/HEAD or failed `git diff` → exit 1; BREAKING.md detect unchanged when diff OK |
+| ✅ #M100 setext summary insert | dismissed: setext not used; ATX + blank-line HR only |
 | ✅ #M99 Apple initiate exact scope | query parse; `scope` == `name email` |
 | ✅ #H28 Facebook EmailVerified false | Graph email kept; `EmailVerified = false` (no OIDC attestation); success test |
 | ✅ Facebook OAuth provider | `ExternalOAuthProviders` Graph v21; initiate/complete profile + avatar; tests |

@@ -32,6 +32,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### CI / tooling
 
 - Breaking-gate / `dotnet.yml` / triage workflow tweaks; release-plan-to-master script touch-ups.
+- `check-breaking-gate.sh` fail-closed when `BASE_SHA` / `HEAD_SHA` missing after fetch or `git diff` fails (no silent `doc_changed=0` pass); fetch BASE/`pull/*/head` without `--depth=1` so three-dot diff can resolve a merge-base.
 
 ---
 
