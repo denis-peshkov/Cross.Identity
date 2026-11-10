@@ -160,7 +160,9 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         var httpClient = _httpClientFactory.CreateClient(nameof(ExternalLoginService));
         var tokenResponse = await ExchangeCodeAsync(httpClient, definition, providerOptions, code, cancellationToken).ConfigureAwait(false);
-        var profile = await definition.FetchProfileAsync(httpClient, tokenResponse, cancellationToken).ConfigureAwait(false);
+        var profile = await definition
+            .FetchProfileAsync(httpClient, tokenResponse, providerOptions.ClientSecret, cancellationToken)
+            .ConfigureAwait(false);
 
         if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase))
         {

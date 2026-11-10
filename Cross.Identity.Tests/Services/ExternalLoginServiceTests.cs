@@ -1363,8 +1363,15 @@ public class ExternalLoginServiceTests : EFTestsBase
         {
             ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
                 OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
-            ["https://graph.facebook.com/v21.0/me"] = _ =>
-                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+            ["https://graph.facebook.com/v21.0/me"] = request =>
+            {
+                var query = System.Web.HttpUtility.ParseQueryString(request.RequestUri!.Query);
+                var proof = query["appsecret_proof"];
+                proof.Should().NotBeNullOrWhiteSpace();
+                proof.Should().Be(ComputeFacebookAppSecretProof("fb-token", "fb-secret"));
+                request.RequestUri!.AbsoluteUri.Should().NotContain("fb-secret");
+
+                return OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
                 {
                     id = "1029384756",
                     name = "Facebook User",
@@ -1376,7 +1383,8 @@ public class ExternalLoginServiceTests : EFTestsBase
                             url = "https://platform-lookaside.fbsbx.com/avatar.png",
                         },
                     },
-                }),
+                });
+            },
         });
 
         var sut = CreateService(
@@ -1792,6 +1800,14 @@ public class ExternalLoginServiceTests : EFTestsBase
         var header = Base64Url(Encoding.UTF8.GetBytes("""{"alg":"none","typ":"JWT"}"""));
         var body = Base64Url(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));
         return $"{header}.{body}.sig";
+    }
+
+    private static string ComputeFacebookAppSecretProof(string accessToken, string appSecret)
+    {
+        var hash = System.Security.Cryptography.HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(appSecret),
+            Encoding.UTF8.GetBytes(accessToken));
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     private static string ExtractState(string authorizationUrl)

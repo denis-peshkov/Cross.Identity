@@ -53,8 +53,10 @@ internal static class ExternalOAuthProviders
     private static async Task<ExternalOAuthProfile> FetchGoogleProfileAsync(
         HttpClient httpClient,
         ExternalOAuthTokenResponse tokenResponse,
+        string clientSecret,
         CancellationToken cancellationToken)
     {
+        _ = clientSecret;
         using var request = new HttpRequestMessage(HttpMethod.Get, "https://openidconnect.googleapis.com/v1/userinfo");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
@@ -77,8 +79,10 @@ internal static class ExternalOAuthProviders
     private static async Task<ExternalOAuthProfile> FetchMicrosoftProfileAsync(
         HttpClient httpClient,
         ExternalOAuthTokenResponse tokenResponse,
+        string clientSecret,
         CancellationToken cancellationToken)
     {
+        _ = clientSecret;
         using var meRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/v1.0/me");
         meRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
@@ -137,8 +141,10 @@ internal static class ExternalOAuthProviders
     private static async Task<ExternalOAuthProfile> FetchGitHubProfileAsync(
         HttpClient httpClient,
         ExternalOAuthTokenResponse tokenResponse,
+        string clientSecret,
         CancellationToken cancellationToken)
     {
+        _ = clientSecret;
         using var userRequest = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
         userRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
         userRequest.Headers.UserAgent.ParseAdd("peshkov.biz");
@@ -198,9 +204,11 @@ internal static class ExternalOAuthProviders
     private static Task<ExternalOAuthProfile> FetchAppleProfileAsync(
         HttpClient httpClient,
         ExternalOAuthTokenResponse tokenResponse,
+        string clientSecret,
         CancellationToken cancellationToken)
     {
         _ = httpClient;
+        _ = clientSecret;
         _ = cancellationToken;
 
         if (string.IsNullOrWhiteSpace(tokenResponse.IdToken))
@@ -253,11 +261,16 @@ internal static class ExternalOAuthProviders
     private static async Task<ExternalOAuthProfile> FetchFacebookProfileAsync(
         HttpClient httpClient,
         ExternalOAuthTokenResponse tokenResponse,
+        string clientSecret,
         CancellationToken cancellationToken)
     {
-        using var request = new HttpRequestMessage(
-            HttpMethod.Get,
-            "https://graph.facebook.com/v21.0/me?fields=id,name,email,picture.type(large)");
+        // Meta appsecret_proof = HMAC-SHA256(access_token, app_secret); proof only — never put the secret in the URL.
+        var appSecretProof = CreateFacebookAppSecretProof(tokenResponse.AccessToken, clientSecret);
+        var meUrl =
+            "https://graph.facebook.com/v21.0/me?fields=id,name,email,picture.type(large)"
+            + "&appsecret_proof="
+            + Uri.EscapeDataString(appSecretProof);
+        using var request = new HttpRequestMessage(HttpMethod.Get, meUrl);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
 
         using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -294,5 +307,16 @@ internal static class ExternalOAuthProviders
                 : null,
             AvatarUrl = avatarUrl,
         };
+    }
+
+    /// <summary>
+    /// Facebook Graph <c>appsecret_proof</c>: hex-encoded HMAC-SHA256 of the user access token keyed by the app secret.
+    /// </summary>
+    private static string CreateFacebookAppSecretProof(string accessToken, string appSecret)
+    {
+        var hash = HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(appSecret),
+            Encoding.UTF8.GetBytes(accessToken));
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 }

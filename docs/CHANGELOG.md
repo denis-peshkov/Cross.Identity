@@ -11,7 +11,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Library
 
-- External OAuth: **Facebook** provider (Graph API v21 — `email` / `public_profile`); profile fetch without email attestation (`EmailVerified = false`).
+- External OAuth: **Facebook** provider (Graph API v21 — `email` / `public_profile`); profile fetch without email attestation (`EmailVerified = false`); Graph `/me` sends `appsecret_proof` (HMAC-SHA256 of access token with app secret).
 - External OAuth: **Apple Sign In** — authorize with `response_mode=form_post`; profile from token-endpoint `id_token` (`sub` / `email` / `email_verified`); first-auth form_post `user` JSON → `DisplayName`; `ClientSecret` is the Apple client-secret JWT.
 - Token exchange now captures optional `id_token` for OIDC providers (`ExternalOAuthTokenResponse`).
 - `ExternalLoginCallback` accepts optional `User` (Apple form_post); `externalLoginComplete.userKey` wires it into `CompleteAsync`.
