@@ -117,6 +117,49 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
                     ValidateRequiredIf(map, reqIf, ctx);
                 });
                 break;
+
+            case AtLeastOneRequiredRule atLeast:
+                validator.RuleFor(d => d).Custom((map, ctx) =>
+                {
+                    ValidateAtLeastOneRequired(map, atLeast, ctx);
+                });
+                break;
+
+            case ExactlyOneRequiredRule exactly:
+                validator.RuleFor(d => d).Custom((map, ctx) =>
+                {
+                    ValidateExactlyOneRequired(map, exactly, ctx);
+                });
+                break;
+        }
+    }
+
+    private static void ValidateAtLeastOneRequired(
+        IDictionary<string, object?> map,
+        AtLeastOneRequiredRule rule,
+        ValidationContext<IDictionary<string, object?>> ctx)
+    {
+        // null / "" / whitespace count as missing for every listed field.
+        var anyPresent = rule.Fields.Any(field => map.TryGetValue(field, out var value) && !IsEmpty(value));
+        if (!anyPresent)
+        {
+            ctx.AddFailure(
+                rule.Fields[0],
+                rule.Message ?? "At least one of the fields is required.");
+        }
+    }
+
+    private static void ValidateExactlyOneRequired(
+        IDictionary<string, object?> map,
+        ExactlyOneRequiredRule rule,
+        ValidationContext<IDictionary<string, object?>> ctx)
+    {
+        var presentCount = rule.Fields.Count(field => map.TryGetValue(field, out var value) && !IsEmpty(value));
+        if (presentCount != 1)
+        {
+            ctx.AddFailure(
+                rule.Fields[0],
+                rule.Message ?? "Exactly one of the fields is required.");
         }
     }
 

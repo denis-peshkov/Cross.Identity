@@ -162,6 +162,67 @@ public sealed class RegistryLoaderAndValidatorTests
         result.Errors.Should().Contain(e => e.PropertyName == "A");
     }
 
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenAtLeastOneRequired_WhenOnlyWhitespaceIdentities_ThenInvalidAsync()
+    {
+        var schema = new FormSchema(
+            "register",
+            new List<FieldDescriptor>
+            {
+                new("Email", FieldTypeEnum.Email, Required: false),
+                new("PhoneNumber", FieldTypeEnum.PhoneNumber, Required: false),
+                new("UserName", FieldTypeEnum.String, Required: false, Min: 3, Max: 64),
+            },
+            new List<IFormSchemaRule>
+            {
+                new AtLeastOneRequiredRule(
+                    new[] { "Email", "PhoneNumber" },
+                    "Provide an email or a phone number."),
+            });
+
+        var validator = new UnifiedFormValidatorFactory().Create(schema);
+        var result = await validator.ValidateAsync(new Dictionary<string, object?>
+        {
+            ["Email"] = "   ",
+            ["PhoneNumber"] = "",
+            ["UserName"] = null,
+        });
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e => e.ErrorMessage.Contains("email or a phone"));
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenAtLeastOneRequired_WhenPhonePresentAndEmailBlank_ThenValidAsync()
+    {
+        var schema = new FormSchema(
+            "register",
+            new List<FieldDescriptor>
+            {
+                new("Email", FieldTypeEnum.Email, Required: false),
+                new("PhoneNumber", FieldTypeEnum.PhoneNumber, Required: false),
+                new("UserName", FieldTypeEnum.String, Required: false, Min: 3, Max: 64),
+            },
+            new List<IFormSchemaRule>
+            {
+                new AtLeastOneRequiredRule(
+                    new[] { "Email", "PhoneNumber" },
+                    "Provide an email or a phone number."),
+            });
+
+        var validator = new UnifiedFormValidatorFactory().Create(schema);
+        var result = await validator.ValidateAsync(new Dictionary<string, object?>
+        {
+            ["Email"] = "   ",
+            ["PhoneNumber"] = "+12125551234",
+            ["UserName"] = "",
+        });
+
+        result.IsValid.Should().BeTrue();
+    }
+
     private sealed class FakeFactory : IStepFactory
     {
         public FakeFactory(string kind) => Kind = kind;

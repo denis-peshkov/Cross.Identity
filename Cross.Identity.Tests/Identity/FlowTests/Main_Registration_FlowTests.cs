@@ -91,6 +91,148 @@ internal class Main_Registration_FlowTests : RunFlowCommandHandlerTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenPhoneNumberOnly_WhenExecuteRegisterFlow_ThenSucceedsAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = "+12125551234",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var userAccountId = Guid.Parse((string)payload["UserAccountId"]!);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.PhoneNumber.Should().Be("+12125551234");
+        user.Email.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUserNameOnly_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["UserName"] = "onlyuser",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        // UserName is an optional alias; stock Register requires Email or Phone for OTP.
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*email or a phone*");
+
+        (await Context.UsersAccounts.CountAsync(u => u.UserName == "onlyuser")).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUserNameAndEmail_WhenExecuteRegisterFlow_ThenSucceedsAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = "alias@example.com",
+            ["UserName"] = "aliasuser",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var userAccountId = Guid.Parse((string)payload["UserAccountId"]!);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.Email.Should().Be("alias@example.com");
+        user.UserName.Should().Be("aliasuser");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUserNameAndPhone_WhenExecuteRegisterFlow_ThenSucceedsAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = "+12125554321",
+            ["UserName"] = "phonealias",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var userAccountId = Guid.Parse((string)payload["UserAccountId"]!);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.PhoneNumber.Should().Be("+12125554321");
+        user.UserName.Should().Be("phonealias");
+        user.Email.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenNoIdentityFields_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*email or a phone*");
+    }
+
+    [TestCase(null, null, null)]
+    [TestCase("", "", "")]
+    [TestCase("   ", "  ", "\t")]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenBlankIdentityFields_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync(
+        string? email,
+        string? phone,
+        string? userName)
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = email,
+            ["PhoneNumber"] = phone,
+            ["UserName"] = userName,
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        await FluentActions.Invoking(() =>
+                _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*email or a phone*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenBlankEmailAndPhonePresent_WhenExecuteRegisterFlow_ThenStoresNullEmailAsync()
+    {
+        var input = new Dictionary<string, object?>
+        {
+            ["Email"] = "   ",
+            ["PhoneNumber"] = "+12125559876",
+            ["UserName"] = "",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var result = await _flowExecutor.ExecuteAsync(input, FLOW, FlowOperationEnum.Register, CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var userAccountId = Guid.Parse((string)payload["UserAccountId"]!);
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.Email.Should().BeNull();
+        user.UserName.Should().BeNull();
+        user.PhoneNumber.Should().Be("+12125559876");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenInvalidRegistrationInput_WhenExecuteRegisterFlow_ThenThrowsValidationExceptionAsync()
     {
         // Arrange
