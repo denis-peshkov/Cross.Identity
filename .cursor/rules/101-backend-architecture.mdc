@@ -1,4 +1,17 @@
+---
+description: Product-host CQRS/MediatR module layout (Web.Api); skip for pure libraries
+globs:
+  - "**/Web.Api/**"
+  - "**/Modules/**"
+  - "**/*Handler*.cs"
+  - "**/*Command*.cs"
+  - "**/*Query*.cs"
+alwaysApply: false
+---
+
 # Backend architecture
+
+Applies to **product API hosts** that use `Web.Api/Modules` + MediatR. Pure libraries without that layout keep their existing structure (do not introduce Modules/CQRS solely because of this rule).
 
 ## Modular structure
 

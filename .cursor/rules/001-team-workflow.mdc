@@ -1,4 +1,9 @@
-# Team workflow — Cross.Identity
+---
+description: Branches/PR targets, minimal diff, chat vs GitHub language
+alwaysApply: true
+---
+
+# Team workflow
 
 ## Branches and pull requests
 

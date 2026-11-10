@@ -19,6 +19,7 @@
 - `.cursor/skills/triage/` - issue + PR triage orchestrator
 - `.cursor/skills/triage-issue/` - GitHub issues
 - `.cursor/skills/triage-pr/` - GitHub PRs
+- `.cursor/skills/pr-message/` - Draft PR title/body from `.github/PULL_REQUEST_TEMPLATE.md` (no create unless asked)
 
 ### 100-199: Backend (.NET)
 - `100-backend-dotnet-general.mdc` - General .NET backend rules

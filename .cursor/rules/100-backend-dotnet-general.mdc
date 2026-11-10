@@ -1,4 +1,18 @@
+---
+description: .NET general — GlobalUsings, naming, logging; host CQRS when Web.Api exists
+globs:
+  - "**/*.cs"
+  - "**/*.csproj"
+alwaysApply: false
+---
+
 # General .NET backend rules
+
+## Scope
+
+- **Always (any .NET project in the tree):** GlobalUsings, naming/async suffix, logging, validation, `CancellationToken`.
+- **Product API hosts** with `Web.Api/Modules/` + MediatR: follow Architecture / Controllers below.
+- **Library / process-engine packages** (no `Web.Api`): keep existing library patterns (services, steps, flows) — do not invent MediatR modules.
 
 ## Global usings
 

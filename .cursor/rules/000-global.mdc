@@ -1,8 +1,13 @@
+---
+description: Global coding conventions (comments EN, typing, formatting)
+alwaysApply: true
+---
+
 # Global project rules
 
 ## General principles
 
-- **Always respond in English** - all comments, documentation, and communication should be in English.
+- **Code comments and GitHub-facing text in English** — comments, commit/PR/issue text. Chat with the user follows project/user language rules (see `001-team-workflow.mdc`).
 - **Strict typing** - use strict typing everywhere possible. Avoid `any`, use `unknown` when necessary.
 - **Explicit access modifiers** - always specify access modifiers (`private`, `protected`, `public`). Do not use implicit modifiers.
 - **Readonly for injected services** - all constructor dependencies must be marked `readonly`.
@@ -10,13 +15,11 @@
 
 ## Formatting
 
-- **Indent**: 2 spaces for all files
-- **Quotes**: single quotes for TypeScript/JavaScript
-- **End of file**: always add a blank line at the end of the file
-- **Whitespace**: remove trailing whitespace
+- **Indent / charset / line endings / trailing whitespace / final newline** — always follow the repository [`.editorconfig`](../../.editorconfig) for the file type being edited (do not hardcode indent sizes in rules).
+- **Quotes**: single quotes for TypeScript/JavaScript (when not overridden by EditorConfig / project formatter)
 
 ## File structure
 
-- One class/interface/type per file
-- File name must match the exported class/interface name (kebab-case)
-- Use `index.ts` for re-exports from directories
+- One class/interface/type per file when practical
+- TypeScript: file name matches exported symbol (kebab-case); use `index.ts` for re-exports
+- C#: follow existing project naming (PascalCase types / files)
