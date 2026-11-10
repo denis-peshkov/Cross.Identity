@@ -44,7 +44,7 @@ Release: [v2.6.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 |---|---|---|
 | Existing DB seed | Insert Facebook (`ProviderId=5`) when id/name absent; MySQL used `INSERT IGNORE` | Same idempotent insert when Facebook already present; **fails** if `Scheme='facebook'` is already owned by a **different** `Name` (resolve manually, then re-run) |
 
-**Action:** operators applying `5_01_auth_Providers_Facebook.sql` (SqlServer / PostgreSQL / MySQL) — if the script errors on scheme collision, rename/remove the conflicting `auth.Providers` row (or align `Name` to `Facebook`) before retrying.
+**Action:** operators applying `5_01_auth_Providers_Facebook.sql` (SqlServer / PostgreSQL / MySQL) — if the script errors on scheme collision, rename/remove the conflicting `auth.Providers` row (or align `Name` to `Facebook`) before retrying. On **PostgreSQL**, the same script also consolidates case-variant Facebook names (`facebook` / `FACEBOOK` / …) into one canonical row and remaps `UsersExternalLogins` (duplicate provider-user links under the losing id are dropped).
 
 ---
 

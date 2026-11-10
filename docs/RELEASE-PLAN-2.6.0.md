@@ -38,6 +38,9 @@
 ### Mixed release slice
 Branch also carries CI/workflow and Cross package bumps alongside Facebook / Apple OAuth — review/ship as one release or split PRs consciously.
 
+### Facebook `ProviderId=5` occupied (`#M107`)
+If id `5` is already used by a non-Facebook row, `5_01` may skip insert without error. Accepted: do not fail or reassign ids; hosts with custom provider ids handle seed manually.
+
 ### Apple DisplayName column length (`#M106`)
 Oversized Apple form_post names are not truncated or specially ignored in app code — dismissed. Rely on normal provider payloads / SQL constraints if needed.
 
@@ -50,6 +53,8 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ #M108 Facebook Name CI reconcile (PostgreSQL) | `5_01` PG only: LOWER(Name)=facebook → one row, remap logins, canonical Name/Scheme; SS/MySQL unchanged |
+| ✅ #M107 Facebook ProviderId=5 occupied skip | dismissed: leave silent skip when id 5 taken without Facebook; no alt-id / fail |
 | ✅ #M106 Apple DisplayName max length | dismissed: no truncate/cap; leave DB length to provider/SQL |
 | ✅ #M105 Facebook Providers scheme collision | `5_01` ×3 fail if `Scheme=facebook` under other Name; MySQL drop INSERT IGNORE; idempotent for Facebook |
 | ✅ #H31 Facebook `appsecret_proof` on `/me` | HMAC-SHA256(access_token, ClientSecret); FetchProfile gets secret; secret not in URL; test |
