@@ -24,6 +24,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Documentation / sample
 
 - README / CONTRIBUTING list Facebook and Apple; Sample.Api `ExternalLogin:Providers` stubs.
+- Sample.Api `GET|POST /oauth/callback` bridge → `main.ExternalLoginCallback` (Apple `form_post` + query providers); FLOWS / `CallbackUrl` docs.
 
 ### Database
 

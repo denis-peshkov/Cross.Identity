@@ -14,7 +14,11 @@ public sealed class ExternalLoginOptions
     public const string SectionName = "Authentication:ExternalLogin";
 
     /// <summary>
-    /// Full SPA callback URL registered with the OAuth provider.
+    /// Full redirect_uri registered with the OAuth provider.
+    /// Must accept the provider callback: <b>GET</b> query (most providers) and, for Apple Sign In
+    /// (<c>response_mode=form_post</c>), <b>POST</b> form fields <c>code</c> / <c>state</c> / <c>user</c>.
+    /// Point at a host bridge that forwards into <c>ExternalLoginCallback</c> (see Sample.Api <c>/oauth/callback</c>
+    /// and <c>FLOWS.md</c>) — not a SPA-only route that cannot receive POST.
     /// Env: <c>AUTH_EXTERNAL_LOGIN_CALLBACK_URL</c> → <c>Authentication__ExternalLogin__CallbackUrl</c>.
     /// </summary>
     public string CallbackUrl { get; set; } = string.Empty;

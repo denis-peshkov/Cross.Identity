@@ -11,7 +11,7 @@
 > Дельта: `origin/master...HEAD` — **4** коммита · **32** файла · **+745 / −59**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → все закрыты в этом плане.
+- `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
 
 **PR:** —
 
@@ -47,6 +47,7 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ #H30 Apple form_post callback bridge | Sample.Api `GET\|POST /oauth/callback` → `main.ExternalLoginCallback`; FLOWS / CallbackUrl / README; `response_mode=form_post` kept |
 | ✅ #M102 Step User→CompleteAsync | `UserKey=collectForm.User`; Verify exact userJson (not It.IsAny) |
 | ✅ #M101 Breaking gate full fetch | no `--depth=1` on BASE/`pull/*/head` so `BASE...HEAD` finds merge-base |
 | ✅ #H29 Breaking gate fail-closed | missing BASE/HEAD or failed `git diff` → exit 1; BREAKING.md detect unchanged when diff OK |
@@ -70,6 +71,6 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 ## Приоритет фиксов
 
-_(пусто — открытых пунктов дельты нет; внерелизный backlog → [`TO-DO.md`](TO-DO.md), вкл. **M98** Apple JWKS.)_
+1. Ship: PR → `master` · CI · operators `5_01_auth_Providers_Facebook` · tag `v2.6.0` + NuGet.
 
-Ship: PR → `master` · CI · operators `5_01_auth_Providers_Facebook` · tag `v2.6.0` + NuGet.
+Внерелизный backlog → [`TO-DO.md`](TO-DO.md) (вкл. **M98** Apple JWKS).

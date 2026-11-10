@@ -45,4 +45,56 @@ app.MapPost(
     .WithName("RunIdentityFlow")
     .WithOpenApi();
 
+// OAuth redirect_uri bridge (Authentication:ExternalLogin:CallbackUrl).
+// GET — query providers (Google / Microsoft / GitHub / Facebook).
+// POST — Apple Sign In form_post (code, state, user). Forwards into main.ExternalLoginCallback.
+async Task<IResult> OAuthCallbackBridgeAsync(
+    HttpRequest request,
+    IFlowExecutor flowExecutor,
+    CancellationToken cancellation)
+{
+    string? Read(string name)
+    {
+        if (HttpMethods.IsPost(request.Method))
+        {
+            return NullIfWhiteSpace(request.Form[name].ToString());
+        }
+
+        return NullIfWhiteSpace(request.Query[name].ToString());
+    }
+
+    if (HttpMethods.IsPost(request.Method))
+    {
+        _ = await request.ReadFormAsync(cancellation).ConfigureAwait(false);
+    }
+
+    var input = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Code"] = Read("code"),
+        ["State"] = Read("state") ?? string.Empty,
+        ["Error"] = Read("error"),
+        ["ErrorDescription"] = Read("error_description"),
+        ["User"] = Read("user"),
+    };
+
+    var result = await flowExecutor
+        .ExecuteAsync(input, "main", FlowOperationEnum.ExternalLoginCallback, cancellation)
+        .ConfigureAwait(false);
+    return Results.Ok(result.Data);
+}
+
+static string? NullIfWhiteSpace(string? value)
+    => string.IsNullOrWhiteSpace(value) ? null : value;
+
+app.MapGet("/oauth/callback", OAuthCallbackBridgeAsync)
+    .AllowAnonymous()
+    .WithName("OAuthCallbackBridgeGet")
+    .WithOpenApi();
+
+app.MapPost("/oauth/callback", OAuthCallbackBridgeAsync)
+    .AllowAnonymous()
+    .DisableAntiforgery()
+    .WithName("OAuthCallbackBridgePost")
+    .WithOpenApi();
+
 app.Run();
