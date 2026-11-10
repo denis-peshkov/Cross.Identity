@@ -38,6 +38,9 @@
 ### Mixed release slice
 Branch also carries CI/workflow and Cross package bumps alongside Facebook / Apple OAuth — review/ship as one release or split PRs consciously.
 
+### Apple DisplayName column length (`#M106`)
+Oversized Apple form_post names are not truncated or specially ignored in app code — dismissed. Rely on normal provider payloads / SQL constraints if needed.
+
 ### Setext headings out of scope (`release-plan-to-master`)
 Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never setext (`Title` + `---`). `applySummaryLine` need not preserve setext; CR **#M100** dismissed.
 
@@ -47,6 +50,7 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ #M106 Apple DisplayName max length | dismissed: no truncate/cap; leave DB length to provider/SQL |
 | ✅ #M105 Facebook Providers scheme collision | `5_01` ×3 fail if `Scheme=facebook` under other Name; MySQL drop INSERT IGNORE; idempotent for Facebook |
 | ✅ #H31 Facebook `appsecret_proof` on `/me` | HMAC-SHA256(access_token, ClientSecret); FetchProfile gets secret; secret not in URL; test |
 | ✅ #M104 Apple re-login keeps DisplayName | upsert skips DisplayName when profile name null; relogin test |
