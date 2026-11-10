@@ -47,6 +47,8 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ External OAuth email required | `CompleteAsync` → `ValidationException` if profile email empty; Apple/Facebook tests; BREAKING 2.5.6→2.6.0 |
+| ✅ #M103 Apple user JSON root Object guard | `ApplyAppleUserJson`: `ValueKind == Object` before `TryGetProperty`; non-object (`[]`) ignored; test |
 | ✅ #H30 Apple form_post callback bridge | Sample.Api `GET\|POST /oauth/callback` → `main.ExternalLoginCallback`; FLOWS / CallbackUrl / README; `response_mode=form_post` kept |
 | ✅ #M102 Step User→CompleteAsync | `UserKey=collectForm.User`; Verify exact userJson (not It.IsAny) |
 | ✅ #M101 Breaking gate full fetch | no `--depth=1` on BASE/`pull/*/head` so `BASE...HEAD` finds merge-base |

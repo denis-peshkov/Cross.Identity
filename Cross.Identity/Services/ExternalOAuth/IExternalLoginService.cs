@@ -86,7 +86,8 @@ internal interface IExternalLoginService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Provider returned an error; state is invalid, expired, or already used; provider is misconfigured;
-    /// the external account is already linked to another user; or the same provider is already linked to this user.
+    /// the provider profile has no email; the external account is already linked to another user;
+    /// or the same provider is already linked to this user.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Provider is not supported or not enabled.

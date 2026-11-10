@@ -172,6 +172,13 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new InvalidOperationException("External provider user id was not returned.");
         }
 
+        // Email is required for sign-in / link / registration. ProviderUserId alone is not enough.
+        if (string.IsNullOrWhiteSpace(profile.Email))
+        {
+            throw new ValidationException(
+                "External provider did not return an email address. Sign-in cannot continue.");
+        }
+
         var userAccountId = await ResolveOrCreateUserAsync(
             providerEntity,
             profile,
@@ -683,7 +690,10 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             using var document = JsonDocument.Parse(userJson);
             var root = document.RootElement;
-            if (!root.TryGetProperty("name", out var nameNode) || nameNode.ValueKind != JsonValueKind.Object)
+            // TryGetProperty throws InvalidOperationException when root is not an object (e.g. []).
+            if (root.ValueKind != JsonValueKind.Object
+                || !root.TryGetProperty("name", out var nameNode)
+                || nameNode.ValueKind != JsonValueKind.Object)
             {
                 return profile;
             }

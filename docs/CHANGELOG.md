@@ -15,11 +15,13 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 - External OAuth: **Apple Sign In** — authorize with `response_mode=form_post`; profile from token-endpoint `id_token` (`sub` / `email` / `email_verified`); first-auth form_post `user` JSON → `DisplayName`; `ClientSecret` is the Apple client-secret JWT.
 - Token exchange now captures optional `id_token` for OIDC providers (`ExternalOAuthTokenResponse`).
 - `ExternalLoginCallback` accepts optional `User` (Apple form_post); `externalLoginComplete.userKey` wires it into `CompleteAsync`.
+- Apple form_post `user`: ignore valid non-object JSON roots (e.g. `[]`) instead of throwing on `TryGetProperty`.
+- External OAuth: missing provider email fails `CompleteAsync` (`ValidationException`) — no account create/link on `ProviderUserId` alone.
 - Package dependency bumps / pin `Cross.Messaging` (library + Sample.Api).
 
 ### Tests
 
-- `ExternalLoginService` coverage for Facebook and Apple (initiate, success, missing-email / missing-`id_token`).
+- `ExternalLoginService` coverage for Facebook and Apple (initiate, success, missing-email reject / missing-`id_token` / non-object `user` JSON).
 
 ### Documentation / sample
 

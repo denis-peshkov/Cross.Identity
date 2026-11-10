@@ -1151,7 +1151,59 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenAppleWithoutEmail_WhenCompleteAsync_ThenCreatesUnverifiedUserAsync()
+    public async Task GivenAppleNonObjectUserJson_WhenCompleteAsync_ThenIgnoresPayloadAndCompletesAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001222.bbbbbbbbbbbbbbbb",
+            email = "array-user@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        // Valid JSON array must not throw via TryGetProperty on a non-object root.
+        var completion = await sut.CompleteAsync(
+            "auth-code",
+            state,
+            null,
+            null,
+            CancellationToken.None,
+            "[]");
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("001222.bbbbbbbbbbbbbbbb");
+        login.DisplayName.Should().BeNull();
+        completion.UserAccountId.Should().Be(login.UserAccountId);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleWithoutEmail_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Apple");
         var idToken = CreateUnsignedJwt(new
@@ -1184,11 +1236,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+        var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
-        user.EmailVerified.Should().BeFalse();
-        (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("009876.fedcba9876543210");
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email*");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(0);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
     }
 
     [Test]
@@ -1304,7 +1357,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenFacebookWithoutEmail_WhenCompleteAsync_ThenCreatesUnverifiedUserAsync()
+    public async Task GivenFacebookWithoutEmail_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
     {
         SeedProvider("Facebook");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -1333,11 +1386,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+        var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        var user = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
-        user.EmailVerified.Should().BeFalse();
-        (await Context.UsersExternalLogins.SingleAsync()).ProviderUserId.Should().Be("5566778899");
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email*");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(0);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
     }
 
     [Test]
