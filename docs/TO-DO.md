@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H27` `M97` `L21`
+**Id high-water (не переиспользовать ≤):** `C1` `H31` `M108` `L21`
 
 ---
 
@@ -103,3 +103,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Register `Password` optional: blank/whitespace → `PasswordPhc` null; OTP / set-password на хосте; клиенты с паролем не ломаются.
 - GitVersion: squash `hotfix/*` → Patch, `release/*` → Minor (`main.source-branches` = release+hotfix only; root Patch; commit-message incrementing off; branch digits ignored).
 - GitVersion `next-version: 1.0.0` — низкий ConfiguredNextVersion fallback; при тегах побеждает `TaggedCommit`; не поднимать под каждый ship.
+- Mixed release slice: OAuth providers + CI/workflow / package bumps в одном ship — осознанно, не дробить без нужды.
+- Facebook seed `ProviderId=5`: если id занят не-Facebook строкой — silent skip; хост с кастомными provider ids чинит seed вручную.
+- Apple DisplayName: без truncate/cap в app code; oversized form_post names → provider/SQL constraints.
+- Release-plan / to-master: только ATX headings + blank line before `---`; setext out of scope для Change summary script.

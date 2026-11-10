@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.6.0` · **ветка:** `release/facebook-oauth` · **база:** `origin/master` (`v2.5.6`) · **дата:** `2026-11-08`
+> **Версия:** `2.6.0` (closed) · **ветка:** `release/facebook-oauth` · **база:** `origin/master` (`v2.5.6`) · **дата:** `2026-11-10`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.6.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.5.5.md`](RELEASE-PLAN-2.5.5.md)
 >
-> Дельта: `origin/master...HEAD` — **4** коммита · **32** файла · **+745 / −59**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **18** коммитов · **75** файлов · **+2 134 / −669**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - `2026-11-08` · log `.cursor/skills/coderabbit/.cache/cr-release-facebook-oauth-vs-origin-master-all-20261108-225534.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
 
-**PR:** —
+**PR:** [#24](https://github.com/denis-peshkov/Cross.Identity/pull/24) (`Add Facebook and Apple external OAuth providers`).
 
 ---
 
@@ -21,7 +21,7 @@
 
 ---
 
-## Высокий (логика / auth model)
+## Высокий (логика / licensing / auth model)
 
 ---
 
@@ -85,6 +85,4 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 ## Приоритет фиксов
 
-1. Ship: PR → `master` · CI · operators `5_01_auth_Providers_Facebook` · tag `v2.6.0` + NuGet.
-
-Внерелизный backlog → [`TO-DO.md`](TO-DO.md) (вкл. **M98** Apple JWKS).
+_(пусто — релиз `2.6.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
