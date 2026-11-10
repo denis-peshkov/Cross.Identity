@@ -84,7 +84,7 @@
 
   <ItemGroup>
     <PackageReference Include="Cross.ErrorHandlers" Version="$(CrossErrorHandlersVersion)" />
-    <PackageReference Include="Cross.Messaging" Version="$(CrossMessagingVersion)" />
+    <PackageReference Include="Cross.Messaging" Version="2.3.0" />
     <PackageReference Include="Cross.PepperVault" Version="$(CrossPepperVaultVersion)" />
 
     <PackageReference Include="Konscious.Security.Cryptography.Argon2" Version="$(KonsciousSecurityCryptographyArgon2Version)" />

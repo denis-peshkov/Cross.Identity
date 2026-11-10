@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.5.6` → `2.6.0+` | [From 2.5.6 to 2.6.0](#from-256-to-260) |
 | `2.2.0` → `2.3.0+` | [From 2.2.0 to 2.3.0](#from-220-to-230) |
 | `2.1.1` → `2.2.0+` | [From 2.1.1 to 2.2.0](#from-211-to-220) |
 | `2.0.x` → `2.1.1+` | [From 2.0.x to 2.1.1](#from-20x-to-211) |
@@ -21,6 +22,29 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.5.6 to 2.6.0
+
+Release: [v2.6.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.6.0).
+
+### External OAuth: email required
+
+| Area | Was (≤2.5.6) | Now (2.6.0+) |
+|---|---|---|
+| Provider profile without email | `CompleteAsync` could create / resolve a local account from `ProviderUserId` alone (e.g. Apple / Facebook without email) | **`ValidationException`** — sign-in / link / registration stops if the provider profile has no email |
+| Identity key | `(Provider, ProviderUserId)` still stored on success | unchanged — email is an additional hard requirement before resolve/create |
+
+**Action:** ensure OAuth scopes request email (`email` / Apple `name email`). Host UI should treat missing email as a failed provider login (prompt the user to share email or use another method). Private Relay addresses from Apple still count as email.
+
+### PostDeployment: `5_01_auth_Providers_Facebook`
+
+| Area | Was | Now (2.6.0+) |
+|---|---|---|
+| Existing DB seed | Insert Facebook (`ProviderId=5`) when id/name absent; MySQL used `INSERT IGNORE` | Same idempotent insert when Facebook already present; **fails** if `Scheme='facebook'` is already owned by a **different** `Name` (resolve manually, then re-run) |
+
+**Action:** operators applying `5_01_auth_Providers_Facebook.sql` (SqlServer / PostgreSQL / MySQL) — if the script errors on scheme collision, rename/remove the conflicting `auth.Providers` row (or align `Name` to `Facebook`) before retrying. On **PostgreSQL**, the same script also consolidates case-variant Facebook names (`facebook` / `FACEBOOK` / …) into one canonical row and remaps `UsersExternalLogins` (duplicate provider-user links under the losing id are dropped).
 
 ---
 

@@ -7,6 +7,41 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.6.0 — 10 Nov 2026
+
+### Library
+
+- External OAuth: **Facebook** provider (Graph API v21 — `email` / `public_profile`); profile fetch without email attestation (`EmailVerified = false`); Graph `/me` sends `appsecret_proof` (HMAC-SHA256 of access token with app secret).
+- External OAuth: **Apple Sign In** — authorize with `response_mode=form_post`; profile from token-endpoint `id_token` (`sub` / `email` / `email_verified`); first-auth form_post `user` JSON → `DisplayName`; `ClientSecret` is the Apple client-secret JWT.
+- Token exchange now captures optional `id_token` for OIDC providers (`ExternalOAuthTokenResponse`).
+- `ExternalLoginCallback` accepts optional `User` (Apple form_post); `externalLoginComplete.userKey` wires it into `CompleteAsync`.
+- Apple form_post `user`: ignore valid non-object JSON roots (e.g. `[]`) instead of throwing on `TryGetProperty`.
+- External login upsert: do not clear saved `DisplayName` when the provider omits name on a later sign-in (Apple).
+- External OAuth: missing provider email fails `CompleteAsync` (`ValidationException`) — no account create/link on `ProviderUserId` alone.
+- Package dependency bumps / pin `Cross.Messaging` (library + Sample.Api).
+
+### Tests
+
+- `ExternalLoginService` coverage for Facebook and Apple (initiate, success, missing-email reject / missing-`id_token` / non-object `user` JSON).
+
+### Documentation / sample
+
+- README / CONTRIBUTING list Facebook and Apple; Sample.Api `ExternalLogin:Providers` stubs.
+- Sample.Api `GET|POST /oauth/callback` bridge → `main.ExternalLoginCallback` (Apple `form_post` + query providers); FLOWS / `CallbackUrl` docs.
+
+### Database
+
+- Seed `auth.Providers` Facebook (`ProviderId=5`) in `4_01` (greenfield) + `5_01_auth_Providers_Facebook.sql` PostDeployment (existing DBs) for SqlServer / PostgreSQL / MySQL; PostDeployment fails closed if `Scheme=facebook` is owned by a non-Facebook name (MySQL no longer `INSERT IGNORE` on that collision).
+- PostgreSQL `5_01_auth_Providers_Facebook`: case-insensitive Facebook `Name` reconcile (merge duplicates, keep `UsersExternalLogins`) before insert.
+
+### CI / tooling
+
+- Breaking-gate / `dotnet.yml` / triage workflow tweaks; release-plan-to-master script touch-ups.
+- `check-breaking-gate.sh` fail-closed when `BASE_SHA` / `HEAD_SHA` missing after fetch or `git diff` fails (no silent `doc_changed=0` pass); fetch BASE/`pull/*/head` without `--depth=1` so three-dot diff can resolve a merge-base.
+- Cursor rules / triage / `pr-message` skill and label docs refresh on the same branch (mixed release slice).
+
+---
+
 ## v2.5.5 — 19 Sep 2026
 
 ### CI / release process

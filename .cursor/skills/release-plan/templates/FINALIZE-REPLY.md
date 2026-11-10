@@ -1,6 +1,6 @@
 # Finalize reply (agent → user)
 
-Fill placeholders after **Finalize version plan** steps 1–7. Do **not** restate the full workflow here.
+Fill placeholders after **Finalize version plan** steps 1–9. Do **not** restate the full workflow here.
 
 Language: same as the skill body (RU). Keep the reply short.
 

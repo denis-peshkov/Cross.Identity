@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Post wshm-style automated triage comment on a pull request.
+ * Post automated PR triage comment (category, priority, confidence).
  * Env: CURSOR_API_KEY, GH_TOKEN, PR_NUMBER
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs';
+import { writeFileSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -14,13 +14,12 @@ import { applyPrTriageLabels, shouldApplyTriageLabels } from './apply-pr-labels.
 import { createLocalAgentOptions } from './cursor-agent-local.mjs';
 import { formatPrScopeSection } from './pr-scope.mjs';
 import { flattenPaginated } from './flatten-paginated.mjs';
+import { loadMatchedRules } from './load-review-rules.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '../..');
 const GH = join(ROOT, '.cursor/triage/gh-wrapper.sh');
-const CHECKLISTS_DIR = join(ROOT, '.cursor/skills/triage-pr/references');
-const DOTNET_CHECKLIST = join(CHECKLISTS_DIR, 'dotnet-checklist.md');
-const ANGULAR_CHECKLIST = join(CHECKLISTS_DIR, 'angular-checklist.md');
+const RULES_DIR = join(ROOT, '.cursor/rules');
 
 const prNumber = process.env.PR_NUMBER || process.argv[2];
 const apiKey = process.env.CURSOR_API_KEY;
@@ -219,59 +218,16 @@ function fetchPrDiff(repo, prNumber, pr) {
   return { diff, files };
 }
 
-function loadReviewChecklists(files) {
+function reviewGuidanceFromRules(files) {
   const paths = (files || []).map((f) => f.path ?? f.filename ?? '');
-  const hasDotnet = paths.some((p) => /\.(cs|csproj)$/i.test(p));
-  const hasFrontend = paths.some((p) => /\.(ts|tsx|html|scss|css)$/i.test(p));
-
-  const sections = [];
-  const wantDotnet =
-    existsSync(DOTNET_CHECKLIST) &&
-    (paths.length === 0 || hasDotnet || !hasFrontend);
-  const wantAngular =
-    existsSync(ANGULAR_CHECKLIST) &&
-    (paths.length === 0 || hasFrontend || !hasDotnet);
-
-  if (wantDotnet) {
-    sections.push(readFileSync(DOTNET_CHECKLIST, 'utf8'));
-  }
-  if (wantAngular) {
-    sections.push(readFileSync(ANGULAR_CHECKLIST, 'utf8'));
-  }
-
-  if (sections.length > 0) {
-    return sections.join('\n\n---\n\n');
-  }
-
-  // Neither signal matched, but files may exist — include whatever is present.
-  if (existsSync(DOTNET_CHECKLIST)) {
-    sections.push(readFileSync(DOTNET_CHECKLIST, 'utf8'));
-  }
-  if (existsSync(ANGULAR_CHECKLIST)) {
-    sections.push(readFileSync(ANGULAR_CHECKLIST, 'utf8'));
-  }
-  if (sections.length > 0) {
-    return sections.join('\n\n---\n\n');
-  }
-
-  if (!existsSync(CHECKLISTS_DIR)) {
-    return '';
-  }
-
-  try {
-    const names = readdirSync(CHECKLISTS_DIR)
-      .filter((name) => name.endsWith('.md'))
-      .sort();
-    return names
-      .map((name) => readFileSync(join(CHECKLISTS_DIR, name), 'utf8'))
-      .join('\n\n---\n\n');
-  } catch {
-    return '';
-  }
+  const { text } = loadMatchedRules({ rulesDir: RULES_DIR, paths });
+  return text.trim()
+    ? text
+    : '(no matching .cursor/rules/*.mdc for these paths)';
 }
 
 function buildPrompt(pr, diff, files) {
-  const checklist = loadReviewChecklists(files);
+  const rules = reviewGuidanceFromRules(files);
   const fileList = formatFileList(files);
   const scope = formatPrScopeSection(pr);
 
@@ -295,12 +251,12 @@ ${fileList}
 ## Diff (full PR base...head; may be truncated for size — still classify whole PR)
 ${diff}
 
-## Review checklist
-${checklist}
+## Review guidance (matched .cursor/rules/*.mdc by alwaysApply / globs)
+${rules}
 
 Return ONLY a single JSON object (no markdown prose) with this schema:
 {
-  "category": "feature|bug|enhancement|security|docs|chore|question",
+  "category": "feature|bug|enhancement|security|docs|chore",
   "priority": "critical|high|medium|low",
   "confidence": <integer 0-100>,
   "summary": "<2-4 sentences English: what the PR does and triage takeaway>",

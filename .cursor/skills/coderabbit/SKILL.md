@@ -11,7 +11,8 @@ description: >-
   or quotes a CodeRabbit finding / agent review (incl. «объясни», footer nudge
   «After applying the fix…», docs.coderabbit.ai/cli, utm_source=ghpr): read this
   skill immediately; Phase 3 open C/H/M/L in the SAME turn as any explanation —
-  never explain-only without a plan row; fix = Phase 4 same turn (no silent code-only).
+  never explain-only without a plan row; Phase 4 (code fix) only on explicit fix /
+  dismiss / close — paste / utm_source=ghpr alone does not start a fix.
 ---
 
 # CodeRabbit vs master
@@ -25,8 +26,9 @@ description: >-
   (`After applying the fix, consider running \`coderabbit review --agent\``,
   `docs.coderabbit.ai/cli`, `utm_source=ghpr`) — **read this skill immediately**
 - **Same turn:** Phase **3** (open C/H/M/L in RELEASE-PLAN) **before or with** any
-  explanation; Phase **4** when fixing. **Forbidden:** explain-only / chat-only
-  without writing the finding into the current plan
+  explanation. Phase **4** only when the user **explicitly** asks to fix / dismiss /
+  close — **not** on paste / footer / `utm_source=ghpr` alone. **Forbidden:**
+  explain-only / chat-only without writing the finding into the current plan
 
 ## Defaults
 
@@ -109,7 +111,7 @@ finding (even if they only ask «объясни»). Target = the current plan fr
 step **1** (created via `release-plan` if it was missing).
 
 **Order for pasted findings:**
-1. Verify against current code (still-valid? skip with reason if not).
+1. Verify against current code (still-valid? skip with reason if not). Skip-list (ниже) — **не** писать open C/H/M/L.
 2. **Write** open `### L…` / `### M…` / … into the plan (**Phase 3**) — **before** or
    in the same edit burst as the chat explanation.
 3. Then explain in chat (may cite `#Id`).
@@ -121,15 +123,26 @@ step **1** (created via `release-plan` if it was missing).
 Immediately merge findings into that plan’s open severity sections **only as C/H/M/L** (no separate CR section).
 **Do not** write CR findings into [`docs/TO-DO.md`](../../../docs/TO-DO.md).
 
-**Also update the plan header** (Skill [`release-plan`](../release-plan/SKILL.md) → шапка / хвост):
+**Also update the plan header** (Skill [`release-plan`](../release-plan/SKILL.md) → шапка / хвост).
+
+**Local CLI run** (has a real log from `run-coderabbit-review.sh`):
 
 ```markdown
-**CodeRabbit:** `YYYY-MM-DD` · log `.cursor/skills/coderabbit/.cache/cr-….jsonl` · N findings (C Critical, M Major, m Minor) → STATUS.
+**CodeRabbit:**
+- `YYYY-MM-DD` · log `.cursor/skills/coderabbit/.cache/cr-….jsonl` · N findings (C Critical, M Major, m Minor) → CURRENT.
 ```
 
-- Date = review day; log = path printed by `run-coderabbit-review.sh`.
-- Counts from this run (Critical/Major/Minor; Trivial/Info fold into Minor count **or** note separately if non-zero).
-- `STATUS`: `все закрыты в этом плане.` / `K открыты в плане (#H…, #M…).` after merge.
+- Date = review day; log = path printed by the script (never invent a path).
+- Counts from **this** run (Critical/Major/Minor; Trivial/Info fold into Minor count **or** note separately if non-zero).
+- **Формат сообщения — один `→`:**
+  - **До `→` (снимок прогона, не переписывать):** только дата · log(s) · dirs (если split) · `N findings (C Critical, M Major, m Minor)`. **Без** «открыты в плане», skipped, id — это в чат / C/H/M/L, не в bullet.
+  - **После `→` (текущее):** `все закрыты в этом плане.` / `Open: Cx Hy Mz Lw` / `K открыты (#…)`. При каждом новом прогоне (и если в том же ходе Phase 3/4 меняет open) — **обновить текст после `→` у всех** bullets.
+- **Append, never overwrite:** один заголовок `**CodeRabbit:**`; каждый **local** прогон = **новый** bullet `- …` сразу после последнего bullet (перед `**PR:**`). **Не** удалять предыдущие bullets и **не** менять их снимок (текст до `→`).
+- Placeholder `- не запускался.` / `- —` — **только при первом** реальном local прогоне заменить на первый dated bullet; дальше только append.
+- Один логический прогон с несколькими `--dir` (один день / одна сессия) = **один** bullet (logs glob + dirs), как раньше.
+
+**Pasted finding** (no CLI log): **do not** append a dated log bullet and **do not** invent a `.jsonl` path. Still write open C/H/M/L (Phase 3) and **only** refresh текст после `→` on existing CodeRabbit bullets (plus **Дельта:** Open counts). If there is no CodeRabbit section yet, leave placeholder `- не запускался.` / `- —` until a real local run.
+
 - Keep **`**PR:**`** line as-is unless the user/PR context changed.
 - Refresh the blockquote **Дельта:** line (`{{BASE}}...HEAD` counts + `Open C/H/M/L …`) when open C/H/M/L change in the same turn.
 
@@ -146,6 +159,7 @@ Rules:
 - Merge by meaning; next id = **max(`Id high-water` in TO-DO, open+«Закрыто» ids of the current plan) + 1** per group (`C`/`H`/`M`/`L`). **Do not** bump high-water in `TO-DO.md` until **Finalize version plan** ([`release-plan`](../release-plan/SKILL.md))
 - Skip duplicates already open in the current plan or already in any plan’s «Закрыто»
 - Skip duplicates already open in `TO-DO.md` (same meaning) — **do not** copy them into the plan’s open C/H/M/L, **do not** include them in **Приоритет фиксов**, **do not** count them as release work unless the user asks
+- **Не заносить** в version plan finding, что `docs/CHANGELOG.md` § `## vX.Y.Z` «выглядит published» (дата в заголовке, нет `Unreleased`) до git tag / GitHub Release. Канон: notes целевой версии писать как dated `vX.Y.Z` **до** tag; **не** предлагать `Unreleased` / pending. В чате: `skipped (CHANGELOG dated-by-design)`
 - In the chat reply: a short note like “skipped (already in TO-DO: H1, M44)” is enough; no plan edits for those
 - Leave empty severity sections as heading + `---`; UTF-8 BOM
 - Update **Приоритет фиксов** of the current plan only for **newly opened** items added to this plan
@@ -154,7 +168,11 @@ Rules:
 ### Phase 4 — Close / dismiss / fix (same turn — never code-only)
 
 **This skill owns quiet-fix prevention for CR findings** — not `release-plan`.  
-When the user closes, rejects, dismisses, **or asks to fix** («фикси», «fix», pasted CR finding / `utm_source=ghpr`):
+Triggers: user **closes / rejects / dismisses**, **or explicitly asks to fix**
+(«фикси», «исправь», «fix»).  
+**Not** a Phase 4 trigger by itself: pasted CR finding, footer nudge,
+`docs.coderabbit.ai/cli`, or `utm_source=ghpr` — those stay Phase **3** (open +
+explain) until the user asks to fix or dismiss.
 
 1. Skill [`release-plan`](../release-plan/SKILL.md) → **Ensure current RELEASE-PLAN** / **Re-check** (plan file + id rules only).
 2. **First** allocate/reuse id (open ⬜ optional if fixed immediately).
@@ -182,6 +200,9 @@ When the user closes, rejects, dismisses, **or asks to fix** («фикси», «
 - [ ] **Did not** glob/`ls` all `docs/RELEASE-PLAN-*.md`; only the current plan (+ TO-DO when needed)
 - [ ] If no current plan existed → skill `release-plan` ran and created `docs/RELEASE-PLAN-X.Y.Z.md` before triage
 - [ ] **Current** `docs/RELEASE-PLAN-X.Y.Z.md` updated in the same turn (open C/H/M/L); **not** `TO-DO.md` for CR findings
+- [ ] Header `**CodeRabbit:**` — **local run:** append dated log bullet; **paste:** no new/invented log bullet, only sync текст после `→` on existing bullets; до `→` только дата/log/counts
+- [ ] **Did not** open a C/H/M/L row for CHANGELOG «looks published before tag» (dated `## vX.Y.Z` is by design)
 - [ ] Pasted finding + «объясни» → open C/H/M/L row written **before/with** the explanation (not explain-only)
+- [ ] Paste / footer / `utm_source=ghpr` alone → **no** code fix (Phase 3 only) until explicit fix/dismiss/close
 - [ ] Any dismissed/closed/**fixed** item → `✅ #Id …` in this plan’s «Закрыто» **in the same turn as the code change** (no quiet fixes)
 - [ ] Any dismissed/closed item → `✅ #Id …` in this plan’s «Закрыто» before removal from open sections

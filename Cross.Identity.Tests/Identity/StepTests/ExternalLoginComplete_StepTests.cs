@@ -21,7 +21,7 @@ public class ExternalLoginComplete_StepTests
     {
         var userAccountId = Guid.NewGuid();
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ReturnsAsync(new ExternalLoginCompletion(userAccountId, true));
 
         var step = CreateStep();
@@ -50,9 +50,10 @@ public class ExternalLoginComplete_StepTests
             UserName = "user",
             NormalizedUserName = "user",
         };
+        const string appleUserJson = """{"name":{"firstName":"Ada","lastName":"Lovelace"}}""";
 
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>(), appleUserJson))
             .ReturnsAsync(new ExternalLoginCompletion(userAccountId, false));
         _userService
             .Setup(u => u.GetUserByAsync("Id", userAccountId.ToString(), It.IsAny<CancellationToken>()))
@@ -65,8 +66,9 @@ public class ExternalLoginComplete_StepTests
             .Setup(j => j.GenerateRefreshTokenAsync(userAccountId, It.IsAny<Guid>(), It.IsAny<List<Claim>>(), HostSuppliedClientContext.Empty, It.IsAny<CancellationToken>()))
             .ReturnsAsync("refresh-token");
 
-        var step = CreateStep();
+        var step = CreateStep(userKey: "collectForm.User");
         var bag = CreateBag();
+        bag.Set("collectForm.User", appleUserJson);
 
         var result = await step.ExecuteAsync(bag, CancellationToken.None);
 
@@ -75,6 +77,9 @@ public class ExternalLoginComplete_StepTests
         bag.Get<string>("externalLoginComplete.RefreshToken").Should().Be("refresh-token");
         bag.Get<string>("externalLoginComplete.TokenType").Should().Be("Bearer");
         bag.Get<int>("externalLoginComplete.ExpiresIn").Should().Be(3600);
+        _externalLoginService.Verify(
+            s => s.CompleteAsync("code", "state", null, null, It.IsAny<CancellationToken>(), appleUserJson),
+            Times.Once);
     }
 
     [Test]
@@ -82,7 +87,7 @@ public class ExternalLoginComplete_StepTests
     public async Task GivenOAuthError_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
-            .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync("code", "state", "access_denied", "Denied", It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
         var step = new ExternalLoginCompleteStep
@@ -112,7 +117,7 @@ public class ExternalLoginComplete_StepTests
     public async Task GivenOAuthErrorWithoutCode_WhenExecuteAsync_ThenForwardsValidationExceptionAsync()
     {
         _externalLoginService
-            .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>()))
+            .Setup(s => s.CompleteAsync(string.Empty, "state", "access_denied", "Denied", It.IsAny<CancellationToken>(), It.IsAny<string?>()))
             .ThrowsAsync(new ValidationException("Denied"));
 
         var step = new ExternalLoginCompleteStep
@@ -137,12 +142,13 @@ public class ExternalLoginComplete_StepTests
             .Should().ThrowAsync<ValidationException>().WithMessage("Denied");
     }
 
-    private ExternalLoginCompleteStep CreateStep()
+    private ExternalLoginCompleteStep CreateStep(string? userKey = null)
         => new()
         {
             Kind = "externalLoginComplete",
             CodeKey = "Code",
             StateKey = "State",
+            UserKey = userKey,
             ExternalLoginService = _externalLoginService.Object,
             JwtTokenService = _jwtTokenService.Object,
             UserService = _userService.Object,

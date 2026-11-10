@@ -24,7 +24,7 @@ internal interface IExternalLoginService
     /// </summary>
     /// <param name="provider">
     /// Provider name as registered in options and <c>auth.Providers</c>
-    /// (for example, <c>Google</c>, <c>Microsoft</c>, <c>GitHub</c>, <c>Apple</c>).
+    /// (for example, <c>Google</c>, <c>Microsoft</c>, <c>GitHub</c>, <c>Apple</c>, <c>Facebook</c>).
     /// </param>
     /// <param name="returnUrl">
     /// Optional URL to return to after callback (stored in OAuth state).
@@ -76,13 +76,18 @@ internal interface IExternalLoginService
     /// Human-readable OAuth error description from the provider, if any.
     /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <param name="userJson">
+    /// Optional provider user payload from the callback (Apple Sign In form_post <c>user</c> JSON on first authorization).
+    /// Used to populate <see cref="ExternalOAuthProfile.DisplayName"/> when the identity token has no name claim.
+    /// </param>
     /// <returns>
     /// Local user id and whether the flow was account linking
     /// (<see cref="ExternalLoginCompletion.IsLinking"/> — the step should skip issuing a new token pair).
     /// </returns>
     /// <exception cref="ValidationException">
     /// Provider returned an error; state is invalid, expired, or already used; provider is misconfigured;
-    /// the external account is already linked to another user; or the same provider is already linked to this user.
+    /// the provider profile has no email; the external account is already linked to another user;
+    /// or the same provider is already linked to this user.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Provider is not supported or not enabled.
@@ -95,7 +100,8 @@ internal interface IExternalLoginService
         string state,
         string? error,
         string? errorDescription,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? userJson = null);
 
     /// <summary>
     /// Unlink an external provider from the given user.

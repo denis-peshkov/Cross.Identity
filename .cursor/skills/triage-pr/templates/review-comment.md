@@ -43,10 +43,11 @@ Comments in **English**. Resolve `{repository_name}` / `{repository_url}` from `
 
 ## Checks (mention when relevant)
 
-- No logging of secrets / license keys (see `references/dotnet-checklist.md`)
-- Auth/licensing / pipeline security
-- `docs/BREAKING.md` / README updated for public API changes
+- No logging of secrets / license keys (see `.cursor/rules/*.mdc`)
+- Auth/licensing/pipeline security (core and EF extension slots as designed)
+- EF registration, transaction pipeline, and DbContext integration contracts
+- `docs/BREAKING.md` / README / `config.nuspec` updated for public API or pack changes
 - `*Tests*/` coverage for new behavior
-- `Nullable enable`, `Async` suffix, `.editorconfig`
+- Multi-target `.csproj` ↔ nuspec alignment; `Nullable` / `Async` suffix / `.editorconfig` / BOM conventions
 
 **Tone**: professional, constructive. 200–400 words.

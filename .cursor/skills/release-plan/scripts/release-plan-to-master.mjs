@@ -18,7 +18,15 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const PLAN = join(ROOT, 'docs/RELEASE-PLAN-to-master.md');
 
 const ID_ROW = /^\| ([A-Z]+[0-9]+) \|/;
+/** Numbered checklist tables in §4 / §6-style docs (`| 1 | … | ✅ … |`). */
+const NUMBERED_ROW = /^\| \d+ \|/;
 const BULLET = /^- (✅|🟨|⬜|❌) /;
+/**
+ * Readiness checklist sections that feed Change summary for peshkov.biz
+ * RELEASE-PLAN-to-master.md (historical ~143 ≈ §4 + §6 + §10).
+ * ID-prefixed rows (P1/B1/…) count in any section.
+ */
+const SUMMARY_SECTIONS = /^(4\.|6\.|10\b)/;
 /** Canonical label + legacy "Checklist summary" / "Checklist Summary" (replace, do not duplicate). */
 const SUMMARY_RE = /^\*\*(?:Change summary|Checklist summary):\*\*.*$/im;
 
@@ -38,15 +46,25 @@ function statusFromTableRow(line) {
   return null;
 }
 
+function statusFromNumberedRow(line) {
+  const parts = line.split('|').map((c) => c.trim()).slice(1, -1);
+  if (parts.length === 0) {
+    return null;
+  }
+  return primaryStatus(parts[parts.length - 1] || '');
+}
+
 export function collectChecklistStatuses(markdown) {
   const statuses = [];
   /** @type {string | null} */
   let sectionHeading = null;
+  let inSummarySection = false;
 
   for (const line of markdown.split('\n')) {
     const heading = line.match(/^##\s+(.+)/);
     if (heading) {
       sectionHeading = heading[1].trim();
+      inSummarySection = SUMMARY_SECTIONS.test(sectionHeading);
       continue;
     }
 
@@ -59,9 +77,19 @@ export function collectChecklistStatuses(markdown) {
       continue;
     }
 
-    // §10 markers only (release gate + go/no-go) — ignore status bullets elsewhere
-    const inSection10 = sectionHeading != null && /^10\b/.test(sectionHeading);
-    const bullet = inSection10 ? line.match(BULLET) : null;
+    if (!inSummarySection) {
+      continue;
+    }
+
+    if (NUMBERED_ROW.test(line)) {
+      const status = statusFromNumberedRow(line);
+      if (status) {
+        statuses.push(status);
+      }
+      continue;
+    }
+
+    const bullet = line.match(BULLET);
     if (bullet) {
       statuses.push(bullet[1]);
     }
@@ -105,8 +133,9 @@ export function applySummaryLine(markdown, line) {
 
   const hr = markdown.match(/\n---\r?\n/);
   if (hr && hr.index != null) {
+    // Blank line before --- so CommonMark keeps HR (not setext H2 under the summary).
     return {
-      markdown: `${markdown.slice(0, hr.index)}\n${line}${markdown.slice(hr.index)}`,
+      markdown: `${markdown.slice(0, hr.index)}\n${line}\n${markdown.slice(hr.index)}`,
       status: 'inserted',
     };
   }

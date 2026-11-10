@@ -1,3 +1,9 @@
+---
+description: Backend observability — logging, metrics, tracing
+globs:
+  - "**/*.cs"
+alwaysApply: false
+---
 # Backend observability
 
 ## Logging

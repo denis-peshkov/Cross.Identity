@@ -1,25 +1,41 @@
+---
+description: Multi-repo / client+server path conventions (portable; applies when those trees exist)
+globs:
+  - "client/**"
+  - "client/apps/**"
+  - "client/libs/**"
+  - "apps/**"
+  - "libs/**"
+  - "server/**"
+alwaysApply: false
+---
+
 # Multi-repository workflow rules
 
-## Project structure
+## When this applies
 
-The project consists of two main repositories:
+Use when the product spans **more than one repository**, or a tree with clear frontend/backend folders. Pure library repos (e.g. NuGet `Cross.*` without `client/` / `server/`) usually skip these path conventions unless those folders exist.
 
-- **gurusolutions.co** - frontend (Angular) in the `client/` directory
-- **gurusolutions.co.api** - backend (.NET) in the `server/` directory
+## Typical layout
+
+- Frontend — Angular (or similar) under `client/`, `client/apps/` + `client/libs/`, or `apps/` + `libs/`
+- Backend — .NET under `server/` (or a dedicated API repository)
+
+Example product split (not required for every repo): **gurusolutions.co** (`client/`) + **gurusolutions.co.api** (`server/`).
 
 ## Working with paths
 
-- When working on the frontend, use paths relative to `client/`
-- When working on the backend, use paths relative to `server/`
-- Specify full paths when necessary
+- Frontend work — paths relative to `client/` (or `client/apps/` / `client/libs/` / `apps/` / `libs/`)
+- Backend work — paths relative to `server/` when that tree exists
+- Use full paths when ambiguous
 
 ## API consistency
 
 - When changing the API on the backend, update corresponding interfaces and services on the frontend
-- Use constants from `API_ENDPOINTS` for all API requests
-- Follow API versioning (`api/v{version:apiVersion}`)
+- Prefer endpoint constants (`API_ENDPOINTS` or host equivalent), not raw URL string literals
+- Follow API versioning in the path (`api/v{version:apiVersion}`) when the host uses it
 
 ## Shared resources
 
-- Translations are in `client/src/assets/i18n/`
-- Shared types and interfaces must be consistent between frontend and backend
+- Translations — are in `**/assets/i18n/`
+- Shared types and contracts must stay consistent between frontend and backend

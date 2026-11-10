@@ -1024,13 +1024,52 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenAppleProvider_WhenCompleteAsync_ThenThrowsNotSupportedExceptionAsync()
+    public async Task GivenAppleProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
     {
         SeedProvider("Apple");
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", "/home", null, CancellationToken.None);
+
+        url.Should().StartWith("https://appleid.apple.com/auth/authorize?");
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        query["client_id"].Should().Be("com.example.app");
+        query["response_mode"].Should().Be("form_post");
+        query["scope"].Should().Be("name email");
+        query["redirect_uri"].Should().NotBeNullOrWhiteSpace();
+        query["state"].Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001234.abcdef0123456789",
+            email = "apple.user@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
         {
             ["https://appleid.apple.com/auth/token"] = _ =>
-                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "apple-token" }),
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
         });
 
         var sut = CreateService(
@@ -1039,8 +1078,211 @@ public class ExternalLoginServiceTests : EFTestsBase
             {
                 options.Providers["Apple"] = new ExternalLoginProviderOptions
                 {
-                    ClientId = "apple-client",
-                    ClientSecret = "apple-secret",
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var appleUserJson = """{"name":{"firstName":"Ada","lastName":"Lovelace"},"email":"apple.user@example.com"}""";
+        var completion = await sut.CompleteAsync(
+            "auth-code",
+            state,
+            null,
+            null,
+            CancellationToken.None,
+            appleUserJson);
+
+        var user = await Context.UsersAccounts.SingleAsync();
+        user.Email.Should().Be("apple.user@example.com");
+        user.EmailVerified.Should().BeTrue();
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("001234.abcdef0123456789");
+        login.ProviderEmail.Should().Be("apple.user@example.com");
+        login.DisplayName.Should().Be("Ada Lovelace");
+        completion.UserAccountId.Should().Be(user.Id);
+        completion.IsLinking.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleReloginWithoutUserJson_WhenCompleteAsync_ThenKeepsSavedDisplayNameAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001333.cccccccccccccccc",
+            email = "relogin@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var firstUrl = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        await sut.CompleteAsync(
+            "auth-code",
+            ExtractState(firstUrl),
+            null,
+            null,
+            CancellationToken.None,
+            """{"name":{"firstName":"Ada","lastName":"Lovelace"},"email":"relogin@example.com"}""");
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().Be("Ada Lovelace");
+
+        // Subsequent Apple callbacks omit form_post `user` — profile.DisplayName is null.
+        var secondUrl = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        await sut.CompleteAsync("auth-code", ExtractState(secondUrl), null, null, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().Be("Ada Lovelace");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleWithoutUserJson_WhenCompleteAsync_ThenDisplayNameRemainsNullAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001111.aaaaaaaaaaaaaaaa",
+            email = "relay@privaterelay.appleid.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleNonObjectUserJson_WhenCompleteAsync_ThenIgnoresPayloadAndCompletesAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001222.bbbbbbbbbbbbbbbb",
+            email = "array-user@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        // Valid JSON array must not throw via TryGetProperty on a non-object root.
+        var completion = await sut.CompleteAsync(
+            "auth-code",
+            state,
+            null,
+            null,
+            CancellationToken.None,
+            "[]");
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("001222.bbbbbbbbbbbbbbbb");
+        login.DisplayName.Should().BeNull();
+        completion.UserAccountId.Should().Be(login.UserAccountId);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleWithoutEmail_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "009876.fedcba9876543210",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
                 };
             });
 
@@ -1049,8 +1291,168 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        await act.Should().ThrowAsync<NotSupportedException>()
-            .WithMessage("*Apple Sign In*");
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email*");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(0);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleMissingIdToken_WhenCompleteAsync_ThenThrowsInvalidOperationExceptionAsync()
+    {
+        SeedProvider("Apple");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "apple-access" }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*id_token*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
+    {
+        SeedProvider("Facebook");
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", "/home", null, CancellationToken.None);
+
+        url.Should().StartWith("https://www.facebook.com/v21.0/dialog/oauth?");
+        url.Should().Contain("client_id=fb-client");
+        url.Should().Contain("email");
+        url.Should().Contain("public_profile");
+        url.Should().Contain("redirect_uri=");
+        url.Should().Contain("state=");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
+    {
+        SeedProvider("Facebook");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
+            ["https://graph.facebook.com/v21.0/me"] = request =>
+            {
+                var query = System.Web.HttpUtility.ParseQueryString(request.RequestUri!.Query);
+                var proof = query["appsecret_proof"];
+                proof.Should().NotBeNullOrWhiteSpace();
+                proof.Should().Be(ComputeFacebookAppSecretProof("fb-token", "fb-secret"));
+                request.RequestUri!.AbsoluteUri.Should().NotContain("fb-secret");
+
+                return OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "1029384756",
+                    name = "Facebook User",
+                    email = "fb.user@example.com",
+                    picture = new
+                    {
+                        data = new
+                        {
+                            url = "https://platform-lookaside.fbsbx.com/avatar.png",
+                        },
+                    },
+                });
+            },
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync();
+        user.Email.Should().Be("fb.user@example.com");
+        user.EmailVerified.Should().BeFalse();
+
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.ProviderUserId.Should().Be("1029384756");
+        login.ProviderEmail.Should().Be("fb.user@example.com");
+        login.DisplayName.Should().Be("Facebook User");
+        login.AvatarUrl.Should().Be("https://platform-lookaside.fbsbx.com/avatar.png");
+        completion.UserAccountId.Should().Be(user.Id);
+        completion.IsLinking.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookWithoutEmail_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
+    {
+        SeedProvider("Facebook");
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
+            ["https://graph.facebook.com/v21.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "5566778899",
+                    name = "No Email User",
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email*");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(0);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
     }
 
     [Test]
@@ -1389,6 +1791,24 @@ public class ExternalLoginServiceTests : EFTestsBase
                     picture = "https://example.com/avatar.png",
                 }),
         });
+
+    private static string CreateUnsignedJwt(object payload)
+    {
+        static string Base64Url(byte[] bytes)
+            => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+        var header = Base64Url(Encoding.UTF8.GetBytes("""{"alg":"none","typ":"JWT"}"""));
+        var body = Base64Url(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));
+        return $"{header}.{body}.sig";
+    }
+
+    private static string ComputeFacebookAppSecretProof(string accessToken, string appSecret)
+    {
+        var hash = System.Security.Cryptography.HMACSHA256.HashData(
+            Encoding.UTF8.GetBytes(appSecret),
+            Encoding.UTF8.GetBytes(accessToken));
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
 
     private static string ExtractState(string authorizationUrl)
     {
