@@ -40,7 +40,7 @@ The agent fills JSON fields; `format-pr-comment.mjs` renders the layout (reposit
 
 ```json
 {
-  "category": "feature|bug|enhancement|security|docs|chore|question",
+  "category": "feature|bug|enhancement|security|docs|chore",
   "priority": "critical|high|medium|low",
   "confidence": 85,
   "summary": "2-4 sentences in English.",
@@ -54,8 +54,8 @@ The agent fills JSON fields; `format-pr-comment.mjs` renders the layout (reposit
 
 - **security** + **critical/high** for secret leaks, auth/licensing bypass, token misuse, PII exposure, payment issues
 - **bug** for regressions and failing tests
-- **feature** for new functionality
-- **enhancement** for refactors/perf without behavior change
+- **feature** for new API or behavior
+- **enhancement** for polish/perf/DX without new public contract
 
 ## GitHub labels (CI)
 
@@ -63,7 +63,9 @@ After analysis, `post-pr-triage.mjs` syncs PR labels via `apply-pr-labels.mjs`:
 
 | Field | Label |
 |---|---|
-| `category` | `feature` / `bug` / `enhancement` / `security` / `docs` / `chore` / `question` |
+| `category` | `feature` / `bug` / `enhancement` / `security` / `docs` / `chore` |
 | `priority` | `priority:critical` / `priority:high` / `priority:medium` / `priority:low` |
 
 Only these managed labels are added/removed; other PR labels are kept. Missing labels are created with `--force`.
+
+Sticky on re-triage: category labels **accumulate** (a PR may have several, e.g. `security` + `enhancement`); priority is a single label that only moves up (`critical > high > medium > low`), canceling the previous lower `priority:*`.

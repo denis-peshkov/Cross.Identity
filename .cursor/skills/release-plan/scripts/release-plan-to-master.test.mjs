@@ -1,12 +1,64 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { applySummaryLine, formatSummaryLine } from './release-plan-to-master.mjs';
+import {
+  applySummaryLine,
+  collectChecklistStatuses,
+  formatSummaryLine,
+} from './release-plan-to-master.mjs';
 
 const sampleLine = formatSummaryLine(['✅', '⬜']);
 
 describe('formatSummaryLine', () => {
   it('uses canonical Change summary label', () => {
     assert.match(sampleLine, /^\*\*Change summary:\*\*/);
+  });
+});
+
+describe('collectChecklistStatuses', () => {
+  it('counts §4 numbered rows, §6 bullets, and ID rows', () => {
+    const md = `# Plan
+
+## 3. Config
+
+- ✅ ignored outside summary sections
+
+## 4. Checklists
+
+| # | Scenario | Status |
+|---|----------|--------|
+| 1 | Login | ✅ done |
+| 2 | OTP | ⬜ open |
+
+- ✅ Extra bullet in §4
+
+## 5. Blockers
+
+| # | Issue | Severity |
+|---|-------|----------|
+| 1 | Something | High |
+
+## 6. Go / No-Go
+
+- ✅ Merge gate soft
+- ⬜ Prod traffic
+
+## 10. Manual
+
+- 🟨 Partial
+
+## Other
+
+| P1 | Title | ✅ done |
+`;
+    assert.deepEqual(collectChecklistStatuses(md), [
+      '✅',
+      '⬜',
+      '✅',
+      '✅',
+      '⬜',
+      '🟨',
+      '✅',
+    ]);
   });
 });
 

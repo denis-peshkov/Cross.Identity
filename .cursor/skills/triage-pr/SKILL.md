@@ -13,7 +13,7 @@ description: >-
 | Scenario | Action |
 |---|---|
 | "Triage PRs" / "pr triage" | Phase 1 audit (GitHub open PRs) |
-| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\ | dev, no PR) |
+| "Triage this branch" / "local triage" / "triage local" | Phase 1b (git diff vs master\|dev, no PR) |
 | "Review branch X vs master" | Phase 1b + Phase 2 |
 | Orchestrator `triage local` / `triage branch …` | Same as Phase 1b (see `triage` skill) |
 | >5 open PRs without review | Suggest Phase 1 audit |
@@ -25,8 +25,8 @@ description: >-
 |---|---|---|---|
 | **PR audit** | `all` or default | `gh pr list` | No (draft only) |
 | **PR deep** | PR number(s) | `gh pr diff {n}` | AskQuestion + template |
-| **Branch** | `branch <name>` `[base master\ | dev]` `[offline]` | `git diff base...branch` | No |
-| **Local** | `local` `[base master\ | dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
+| **Branch** | `branch <name>` `[base master\|dev]` `[offline]` | `git diff base...branch` | No |
+| **Local** | `local` `[base master\|dev]` `[offline]` | `git diff base...HEAD` (+ uncommitted if asked) | No |
 
 Default **base**: `master` if ambiguous; use `dev` when the user says so or the branch targets `dev`.
 
@@ -208,7 +208,12 @@ git diff "$BASE_REF...$BRANCH_REF"
 # or uncommitted: git diff && git diff --cached
 ```
 
-Checklist: `references/dotnet-checklist.md` (and `docs/BREAKING.md` when public API changes).
+Repository context for the agent (from README / tree, not hard-coded paths):
+
+- Library / `src/` — public API, DI, pipeline
+- `*Tests*/` — automated tests
+- Documentation: `README.md`, `docs/BREAKING.md`, `docs/CHANGELOG.md` (when present)
+- Rules: `.cursor/triage/post-pr-triage.mjs` (`loadMatchedRules` → `.cursor/rules/*.mdc` by `alwaysApply` / `globs`)
 
 Response structure: Critical 🔴 / Important 🟠 / Suggestions 🟡 / What's Good ✅.
 
@@ -220,7 +225,7 @@ Branch/local: report in chat and/or save file — **never** `gh pr comment` unle
 
 ### Automated PR comment (CI)
 
-On `pull_request` opened/synchronize CI posts a **wshm-style** comment:
+On `pull_request` opened/synchronize CI posts an automated triage comment (category, priority, confidence, summary, files):
 
 - Script: `.cursor/triage/post-pr-triage.mjs`
 - Template: `.cursor/triage/templates/pr-automated-triage-comment.md`

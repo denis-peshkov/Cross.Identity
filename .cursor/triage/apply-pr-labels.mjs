@@ -5,6 +5,12 @@
  * Labels sync by default when confidence ≥ `TRIAGE_LABEL_MIN_CONFIDENCE`
  * (default 70). Set `TRIAGE_APPLY_LABELS=false` to disable. Category/priority
  * stay allowlisted. Comment suggestions are independent of this gate.
+ *
+ * Sticky rules across synchronize re-runs:
+ * - **category**: accumulate (union) — a PR may carry several category labels;
+ *   new runs add the proposed category, never drop ones already on the PR
+ * - **priority**: single label via {@link PRIORITY_RANK} — only raise or keep;
+ *   previous lower `priority:*` labels are removed
  */
 
 export const CATEGORY_LABELS = Object.freeze([
@@ -14,10 +20,17 @@ export const CATEGORY_LABELS = Object.freeze([
   'security',
   'docs',
   'chore',
-  'question',
 ]);
 
 export const PRIORITY_VALUES = Object.freeze(['critical', 'high', 'medium', 'low']);
+
+/** Higher number = more severe. Used so priority never decreases on re-triage. */
+export const PRIORITY_RANK = Object.freeze({
+  critical: 4,
+  high: 3,
+  medium: 2,
+  low: 1,
+});
 
 /** @type {ReadonlyArray<string>} */
 export const MANAGED_TRIAGE_LABELS = Object.freeze([
@@ -28,17 +41,19 @@ export const MANAGED_TRIAGE_LABELS = Object.freeze([
 export const DEFAULT_LABEL_MIN_CONFIDENCE = 70;
 
 const LABEL_META = Object.freeze({
-  feature: { color: '0e8a16', description: 'New capability or flow' },
-  bug: { color: 'd73a4a', description: 'Something is broken' },
-  enhancement: { color: 'a2eeef', description: 'Improvement without major behavior change' },
-  security: { color: 'b60205', description: 'Auth/JWT/OAuth, secrets, licensing, PII, payment, or token security' },
-  docs: { color: '0075ca', description: 'Documentation only' },
-  chore: { color: 'fef2c0', description: 'Build, CI, tooling, deps' },
-  question: { color: 'd876e3', description: 'Question / clarification' },
+  feature: { color: '0e8a16', description: 'New API or behavior' },
+  bug: { color: 'e8372a', description: 'Something is broken' },
+  enhancement: { color: 'a2eeef', description: 'Polish, perf, or DX without new public contract' },
+  security: {
+    color: '5319e7',
+    description: '🔒 Auth/JWT/OAuth, secrets, licensing, PII, payment, or token security',
+  },
+  docs: { color: '006b75', description: 'Improvements or additions to documentation' },
+  chore: { color: '1d76db', description: 'Build, CI, tooling, deps' },
   'priority:critical': { color: 'b60205', description: 'Triage priority: critical' },
   'priority:high': { color: 'd93f0b', description: 'Triage priority: high' },
-  'priority:medium': { color: 'fbca04', description: 'Triage priority: medium' },
-  'priority:low': { color: '0e8a16', description: 'Triage priority: low' },
+  'priority:medium': { color: 'fb8500', description: 'Triage priority: medium' },
+  'priority:low': { color: 'fbca04', description: 'Triage priority: low' },
 });
 
 /**
@@ -71,6 +86,50 @@ export function normalizePriorityLabel(value) {
 }
 
 /**
+ * @param {string | null | undefined} priorityLabel
+ * @returns {number}
+ */
+export function priorityRank(priorityLabel) {
+  if (!priorityLabel) {
+    return 0;
+  }
+  const raw = String(priorityLabel)
+    .trim()
+    .toLowerCase()
+    .replace(/^priority:/, '');
+  return PRIORITY_RANK[raw] || 0;
+}
+
+/**
+ * @param {string | null | undefined} a
+ * @param {string | null | undefined} b
+ * @returns {string | null}
+ */
+export function maxPriorityLabel(a, b) {
+  const left = normalizePriorityLabel(a);
+  const right = normalizePriorityLabel(b);
+  if (!left) {
+    return right;
+  }
+  if (!right) {
+    return left;
+  }
+  return priorityRank(left) >= priorityRank(right) ? left : right;
+}
+
+/**
+ * Stable order for accumulated category labels (same order as {@link CATEGORY_LABELS}).
+ * @param {Iterable<string>} categories
+ * @returns {string[]}
+ */
+export function sortCategoryLabels(categories) {
+  const set = new Set(
+    [...categories].map((c) => normalizeCategoryLabel(c)).filter(Boolean)
+  );
+  return CATEGORY_LABELS.filter((c) => set.has(c));
+}
+
+/**
  * @param {{ category?: unknown; priority?: unknown }} data
  * @returns {{ toAdd: string[]; managed: readonly string[] }}
  */
@@ -80,6 +139,39 @@ export function labelsFromTriage(data) {
   return {
     toAdd: [category, priority].filter(Boolean),
     managed: MANAGED_TRIAGE_LABELS,
+  };
+}
+
+/**
+ * Merge agent proposal with labels already on the PR.
+ * Categories accumulate (union). Priority is a single sticky max; lower
+ * `priority:*` labels are dropped when applying.
+ *
+ * @param {{ category?: unknown; priority?: unknown }} data
+ * @param {string[]} currentNames
+ * @returns {{ toAdd: string[]; managed: readonly string[] }}
+ */
+export function resolveStickyTriageLabels(data, currentNames = []) {
+  const { toAdd: proposed, managed } = labelsFromTriage(data);
+  const names = Array.isArray(currentNames) ? currentNames : [];
+
+  const currentCategories = names.filter((n) => CATEGORY_LABELS.includes(n));
+  const currentPriority =
+    names.find((n) => typeof n === 'string' && n.startsWith('priority:') && managed.includes(n)) ||
+    null;
+
+  const proposedCategory = proposed.find((n) => CATEGORY_LABELS.includes(n)) || null;
+  const proposedPriority = proposed.find((n) => n.startsWith('priority:')) || null;
+
+  const categories = sortCategoryLabels([
+    ...currentCategories,
+    ...(proposedCategory ? [proposedCategory] : []),
+  ]);
+  const priority = maxPriorityLabel(currentPriority, proposedPriority);
+
+  return {
+    toAdd: [...categories, priority].filter(Boolean),
+    managed,
   };
 }
 
@@ -153,7 +245,8 @@ function ensureLabel(gh, name) {
 }
 
 /**
- * Sync triage labels on a PR: drop previous managed triage labels, set current ones.
+ * Sync triage labels on a PR: set sticky-resolved labels, drop other managed ones
+ * (including superseded lower `priority:*`).
  * Caller must gate with {@link shouldApplyTriageLabels} before invoking.
  *
  * @param {(args: string[], opts?: { json?: boolean }) => unknown} gh
@@ -162,18 +255,19 @@ function ensureLabel(gh, name) {
  * @returns {{ added: string[]; removed: string[] }}
  */
 export function applyPrTriageLabels(gh, prNumber, data) {
-  const { toAdd, managed } = labelsFromTriage(data);
   const pr = String(prNumber);
-
-  if (toAdd.length === 0) {
-    console.warn('No valid triage category/priority — skipping label sync');
-    return { added: [], removed: [] };
-  }
 
   const view = /** @type {{ labels?: { name: string }[] }} */ (
     gh(['pr', 'view', pr, '--json', 'labels'], { json: true })
   );
   const currentNames = (view.labels ?? []).map((l) => l.name);
+
+  const { toAdd, managed } = resolveStickyTriageLabels(data, currentNames);
+
+  if (toAdd.length === 0) {
+    console.warn('No valid triage category/priority — skipping label sync');
+    return { added: [], removed: [] };
+  }
 
   const toRemove = currentNames.filter(
     (name) => managed.includes(name) && !toAdd.includes(name)

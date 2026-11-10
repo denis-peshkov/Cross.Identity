@@ -40,6 +40,7 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 | **Re-check** | закрыть open-пункт в version plan |
 | **Finalize version plan** | ship / leftovers → TO-DO |
 | **Previous plans published/closed** | `(closed)` → `(published / closed)` если есть tag |
+| **Локальный `dotnet test`** | локальный прогон тестов |
 
 Из sibling skills — относительная ссылка: `[`release-plan`](../release-plan/SKILL.md)`.
 
@@ -53,6 +54,8 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
 | `docs/TO-DO.md` | Кросс-версионный **открытый** backlog (C/H/M/L) + **Принято** (durable trade-offs); инкрементально |
 
 В шапке плана: **Предыдущий план** — ссылка **только на непосредственно предыдущий** `docs/RELEASE-PLAN-A.B.C.md` (последний по версии ниже текущего). **Не** перечислять всю цепочку. Если предыдущего нет — `—`.
+
+**Запрещено** в теле version plan ссылаться на **более новую** версию / `RELEASE-PLAN` с большим SemVer (закрытие «в следующем релизе», «см. 10.0.0», …). Факт закрытия позже — только в плане той версии, где закрыли, или в `TO-DO.md`.
 
 ## Каноническая форма (version plan)
 
@@ -74,11 +77,16 @@ Skill [`release-plan`](SKILL.md) → **Section** · domain hint
    `Дельта: \`{{BASE}}...HEAD\` — **{{N}}** коммита · **{{F}}** файлов · **{{+X}} / {{−Y}}**. {{OPEN_CHML_STATUS}}`
    - Считать: `git rev-list --count {{BASE}}...HEAD`, `git diff --shortstat {{BASE}}...HEAD`.
    - `{{OPEN_CHML_STATUS}}`: `Open C/H/M/L пустые.` **или** `Open: Cx Hy Mz Lw`.
-2. **CodeRabbit** (вне blockquote; если не гоняли — `не запускался.` / `—`):
+2. **CodeRabbit** (вне blockquote; список bullets под одним заголовком; если не гоняли — один bullet `не запускался.` / `—`):
 
 ```markdown
-**CodeRabbit:** `YYYY-MM-DD` · log `.cursor/skills/coderabbit/.cache/cr-….jsonl` · N findings (C Critical, M Major, m Minor) → все закрыты в этом плане.
+**CodeRabbit:**
+- `YYYY-MM-DD` · log `.cursor/skills/coderabbit/.cache/cr-….jsonl` · N findings (C Critical, M Major, m Minor) → CURRENT.
 ```
+
+   - **Формат сообщения — один `→`:** до `→` = снимок (дата · log · counts; **без** open/skipped/id); после `→` = текущее open C/H/M/L. Снимок не переписывать; правую часть синхронизировать на всех bullets при новом прогоне / смене open. Детали — skill [`coderabbit`](../coderabbit/SKILL.md).
+   - Каждый последующий прогон — **новый** bullet `- …` (append; не удалять предыдущие).
+   - Placeholder `- не запускался.` / `- —` заменять только первым реальным прогоном.
 
 3. **PR** (вне blockquote): `**PR:** [#N]({{REPOSITORY_LINK}}/pull/N) (\`BREAKING:\` …).` — нет PR → `**PR:** —`.
 
@@ -183,7 +191,7 @@ bash .cursor/skills/release-plan/scripts/resolve-target-version.sh --json
 
 `target_version` = **GitVersion** `MajorMinorPatch` на **текущей** ветке (`GitVersion.yml` + история). Любая ветка.
 
-Ручной override: `--version X.Y.Z`. Скрипт: `dotnet-gitversion` (`PATH` / `~/.dotnet/tools`). `from_version` — последний стабильный `vX.Y.Z` tag. Поля BREAKING: `breaking_from`, `breaking_to`.
+Ручной override: `--version X.Y.Z`. Скрипт: `dotnet-gitversion /nofetch /showvariable MajorMinorPatch` (`PATH` / `~/.dotnet/tools`; без `/nofetch` возможен hang на remote fetch). `from_version` — последний стабильный `vX.Y.Z` tag. Поля BREAKING: `breaking_from`, `breaking_to`.
 
 **Текущий** `docs/RELEASE-PLAN-X.Y.Z.md` = план **целевой** версии (`target_version` / user / `**Версия:**` в файле). Писать закрытия только в **текущий** plan — не в shipped historical plans. Не использовать `RELEASE-PLAN-to-master.md`.
 
@@ -346,6 +354,8 @@ Version plans (`docs/RELEASE-PLAN-X.Y.Z.md`) и `docs/TO-DO.md` — см. выш
 
 **При любом изменении** `docs/RELEASE-PLAN-to-master.md` (статусы ⬜/✅/🟨/❌, новые пункты, §8 DB migration, DOC6, breaking changes, release gate, go/no-go) **всегда** пересчитывать и обновлять строку **"Change summary"** в шапке документа (сразу после легенды).
 
+Скрипт считает: ID-строки (`P1`/`B1`/…) в любом §; в **§4 / §6 / §10** — нумерованные таблицы `| N | … | статус |` и bullets `- ✅|🟨|⬜|❌`.
+
 То же при правке `docs/BREAKING.md`, если меняется статус связанных пунктов плана (напр. DOC6, §10.8, P1 для `collectResult`).
 
 ```bash
@@ -378,9 +388,20 @@ Workflow новых секций: **`docs/BREAKING.md`** (этот skill).
 
 Другие skills: **Cross-skill references** (ссылка одной строкой; без дублирования скриптов или prose про layout).
 
+## Локальный `dotnet test`
+
+Если в test `.csproj` есть свойство `SkipNetCoreApp31Tests` — к `dotnet test` добавлять `-p:SkipNetCoreApp31Tests=true` (без x64 3.1 host VSTest зависает на Darwin Arm64). Иначе не добавлять.
+
+Целевой csproj: из PR template / discovery (`**/*Tests*.csproj`), **не** хардкодить имя продукта.
+
+```bash
+dotnet test <TestProject>/<TestProject>.csproj -p:SkipNetCoreApp31Tests=true
+```
+
 ## Quality bar
 
 - [ ] Version plan **без** backlog чужих релизов (он живёт в `TO-DO.md`)
+- [ ] Version plan **без** ссылок на более новый SemVer / более новый `RELEASE-PLAN-*`
 - [ ] `TO-DO.md` — open C/H/M/L + **Принято** (без «Закрыто» / без review-tool секции); закрытые open-пункты из C/H/M/L удалены
 - [ ] Каждое удаление из open `TO-DO.md` имеет парную строку `✅ #Id …` в «Закрыто» **текущего** плана
 - [ ] Во время открытого релиза lasting trade-off’ы **только** в «Принято» version plan — **не** в `TO-DO.md`

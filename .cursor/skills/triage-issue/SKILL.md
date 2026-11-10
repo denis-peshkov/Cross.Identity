@@ -122,7 +122,7 @@ Repository context for the agent (from README / tree, not hard-coded paths):
 - Library / `src/` — public API, DI, pipeline
 - `*Tests*/` — automated tests
 - Documentation: `README.md`, `docs/BREAKING.md`, `docs/CHANGELOG.md` (when present)
-- Checklist: `.cursor/skills/triage-pr/references/dotnet-checklist.md`
+- Rules: `.cursor/triage/post-pr-triage.mjs` (`loadMatchedRules` → `.cursor/rules/*.mdc` by `alwaysApply` / `globs`)
 
 Comment template: `templates/issue-comment.md`.
 

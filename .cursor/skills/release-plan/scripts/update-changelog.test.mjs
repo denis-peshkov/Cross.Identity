@@ -54,7 +54,7 @@ describe('categorizePath', () => {
     assert.equal(categorizePath('Acme.Lib/Acme.Lib.csproj'), 'Library');
     assert.equal(categorizePath('Acme.Lib.Tests/Bar.cs'), 'Tests');
     assert.equal(categorizePath('tests/unit/x.cs'), 'Tests');
-    assert.equal(categorizePath('SampleWebApp/Program.cs'), 'Repository tooling');
+    assert.equal(categorizePath('samples/Host/Program.cs'), 'Repository tooling');
     assert.equal(categorizePath('.github/workflows/ci.yml'), 'CI / release process');
     assert.equal(categorizePath('GitVersion.yml'), 'Versioning');
     assert.equal(categorizePath('docs/BREAKING.md'), 'Documentation');
