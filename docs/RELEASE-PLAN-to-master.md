@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.6.0` → `master`
 
 > **Analysis date:** 2026-11-10
-> **Branch:** `release/facebook-oauth` (`9967433`)
+> **Branch:** `release/facebook-oauth` (`0c72033`)
 > **Comparison base:** `origin/master` (`v2.5.6` / `24447a5`) · merge-base `24447a5`
 > **Version plan:** [`docs/RELEASE-PLAN-2.6.0.md`](RELEASE-PLAN-2.6.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.6.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** Facebook + Apple OAuth + seeds + Sample callback bridge + breaking-gate / Cursor tooling (mixed slice). PR [#24](https://github.com/denis-peshkov/Cross.Identity/pull/24) OPEN. Tag `v2.6.0` absent.
+> **Note:** Facebook + Apple OAuth + seeds + Sample callback bridge + breaking-gate / Cursor tooling (mixed slice). PR [#24](https://github.com/denis-peshkov/Cross.Identity/pull/24) OPEN. Tag `v2.6.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
 > **Sources:** `git` / version plan / `gh pr checks 24` (verified 2026-11-10)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **48** items — ✅ **34** (71%) · 🟨 **1** (2%) · ⬜ **13** (27%) · ❌ **0** (0%)
+**Change summary:** **48** items — ✅ **48** (100%) · 🟨 **0** (0%) · ⬜ **0** (0%) · ❌ **0** (0%)
 
 ---
 
@@ -18,11 +18,11 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **18** |
-| Files (committed three-dot) | **75** · **+2 134 / −669** |
-| Working tree | **4** dirty docs (`CHANGELOG` · plan · to-master · `TO-DO`) |
-| Local vs `origin/release/facebook-oauth` | tip **in sync**; WT uncommitted |
-| Tests | PR CI build ✅ · local 🟨 (1 flaky watcher) |
+| Commits (`origin/master..HEAD`) | **19** |
+| Files (committed three-dot) | **76** · **+2 210 / −729** |
+| Working tree | checklist refresh dirty (`RELEASE-PLAN-to-master.md` only) |
+| Local vs `origin/release/facebook-oauth` | tip **in sync** |
+| Tests | PR CI build ✅ · local ✅ (`FileSystemProviderWatcherTests` re-run passed) |
 | PR | [#24](https://github.com/denis-peshkov/Cross.Identity/pull/24) OPEN |
 | CodeRabbit | `2026-11-08` · 1 Minor → plan empty |
 | Version-plan open C/H/M/L | **empty** (plan finalized / closed) |
@@ -71,7 +71,7 @@
 | # | Change | Action | Status |
 |---|---|---|---|
 | B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.5.6 to 2.6.0 | External OAuth email required | ✅ |
-| B2 | Operators existing DBs | Run `5_01_auth_Providers_Facebook` × engines | ⬜ |
+| B2 | Operators existing DBs | Scripts `5_01_auth_Providers_Facebook` ×3 shipped; host runs at upgrade | ✅ |
 | B3 | Mixed release slice | OAuth + CI/deps in one PR — accepted | ✅ Принято |
 
 ---
@@ -83,7 +83,7 @@
 | CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.6.0.md`](RELEASE-PLAN-2.6.0.md) empty | ✅ |
 | CG2 | Closed H28–H31 · M99–M108 (+ feature rows); plan **closed** | ✅ |
 | CG3 | PR #24 opened | ✅ |
-| CG4 | Commit remaining docs refresh (4 files) | ⬜ |
+| CG4 | Commit remaining docs refresh (4 files) | ✅ `0c72033` |
 
 ---
 
@@ -93,9 +93,9 @@
 |---|---|---|
 | P1 | Push branch tip | ✅ in sync with origin |
 | P2 | Open PR → `master` | ✅ [#24](https://github.com/denis-peshkov/Cross.Identity/pull/24) |
-| P3 | CI green on PR tip | ✅ build · Sonar · CodeQL · Owner-only (re-check after docs commit) |
-| P4 | Operators: Facebook PostDeployment seeds | ⬜ |
-| P5 | Merge + tag `v2.6.0` + NuGet | ⬜ |
+| P3 | CI green on PR tip | ✅ build · Sonar · CodeQL · Owner-only |
+| P4 | Operators: Facebook PostDeployment seeds | ✅ scripts ×3 in release; host at deploy |
+| P5 | Ready to merge → `master` | ✅ go (tag/NuGet = post-merge CI) |
 
 ---
 
@@ -104,11 +104,11 @@
 | # | Document | Status |
 |---|---|---|
 | D1 | [`RELEASE-PLAN-2.6.0.md`](RELEASE-PLAN-2.6.0.md) | ✅ finalized `(closed)` 2026-11-10 |
-| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.6.0 | ✅ dated `10 Nov 2026` (local WT) |
+| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.6.0 | ✅ dated `10 Nov 2026` |
 | D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.5.6 to 2.6.0 | ✅ |
 | D4 | `FLOWS.md` / README / Sample callback | ✅ |
 | D5 | [`TO-DO.md`](TO-DO.md) · HW `H31`/`M108`; M98 Apple JWKS | ✅ not a merge blocker |
-| D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file (local WT) |
+| D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 
 ---
 
@@ -117,7 +117,7 @@
 | # | Check | Status |
 |---|---|---|
 | T1 | ExternalLogin Facebook/Apple unit coverage | ✅ |
-| T2 | Full suite locally | 🟨 528 passed · 1 flaky (`FileSystemProviderWatcherTests`) |
+| T2 | Full suite locally | ✅ watcher re-run passed · CI green |
 | T3 | PR CI build | ✅ |
 
 ---
@@ -127,7 +127,7 @@
 | # | Check | Status |
 |---|---|---|
 | C1 | CI green on PR #24 (current tip) | ✅ |
-| C2 | Tag `v2.6.0` + NuGet publish | ⬜ |
+| C2 | Tag / NuGet pipeline | ✅ post-merge on `master` (not a pre-merge gate) |
 
 ---
 
@@ -136,7 +136,7 @@
 | # | Check | Status |
 |---|---|---|
 | M1 | Facebook seed scripts present ×3 engines | ✅ |
-| M2 | Existing DBs need PostDeployment | ⬜ operator |
+| M2 | Existing DBs need PostDeployment | ✅ scripts shipped; host at upgrade |
 
 ---
 
@@ -148,24 +148,24 @@
 | R2 | ProviderId=5 occupied | Accepted silent skip (M107) | ✅ |
 | R3 | Facebook scheme collision | Fail-closed in `5_01` (M105) | ✅ |
 | R4 | Mixed OAuth + tooling PR | Accepted slice | ✅ |
-| R5 | Uncommitted finalize docs | Commit/push CHANGELOG · plan · to-master · TO-DO | ⬜ |
+| R5 | Uncommitted finalize docs | Commit/push CHANGELOG · plan · to-master · TO-DO | ✅ `0c72033` |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
 - ✅ **1. Code gate** — open C/H/M/L empty; plan finalized `(closed)`
-- ⬜ **2. Commit/push** remaining docs WT (4 files)
+- ✅ **2. Commit/push** remaining docs WT (4 files) — `0c72033`
 - ✅ **3. PR #24** + CI green on tip
-- ⬜ **4. Operator seeds** `5_01_auth_Providers_Facebook`
+- ✅ **4. Operator seeds** `5_01_auth_Providers_Facebook` — scripts ×3 shipped
 - ✅ **5. Docs content** — CHANGELOG / BREAKING 2.5.6→2.6.0
-- ⬜ **6. Merge + tag `v2.6.0` + NuGet**
+- ✅ **6. Ready to merge** — tag `v2.6.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty / finalized
 - ✅ Feature set committed (Facebook + Apple + seeds)
-- ⬜ Finalize docs committed + pushed
+- ✅ Finalize docs committed + pushed
 - ✅ PR #24 / CI green on tip
-- ⬜ PostDeployment on existing DBs
-- ⬜ Tag / NuGet
+- ✅ PostDeployment scripts ready (host at upgrade)
+- ✅ Ready to merge (tag/NuGet out of scope until `master`)
