@@ -24,7 +24,8 @@ alwaysApply: true
 - **Preserve existing structure** — match architecture and patterns in the touched area.
 - **Minimal diff** — no unrelated refactors or drive-by formatting.
 
-## Communication
+## Communication / language
 
-- **Respond in Russian** when talking to the user (project user rule).
+- **Chat with the user** — Russian (project user rule).
+- **Code comments** — English; explain "why", not "what".
 - **GitHub-facing text** (issues, PRs, commit messages) — **English** per `CONTRIBUTING.md`.

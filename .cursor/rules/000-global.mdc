@@ -1,5 +1,5 @@
 ---
-description: Global coding conventions (comments EN, typing, formatting)
+description: Global coding conventions (typing, formatting, file structure)
 alwaysApply: true
 ---
 
@@ -7,11 +7,10 @@ alwaysApply: true
 
 ## General principles
 
-- **Code comments and GitHub-facing text in English** — comments, commit/PR/issue text. Chat with the user follows project/user language rules (see `001-team-workflow.mdc`).
 - **Strict typing** - use strict typing everywhere possible. Avoid `any`, use `unknown` when necessary.
 - **Explicit access modifiers** - always specify access modifiers (`private`, `protected`, `public`). Do not use implicit modifiers.
 - **Readonly for injected services** - all constructor dependencies must be marked `readonly`.
-- **Comments in English** - all code comments should be in English and explain "why", not "what".
+- **Comments explain "why"** - not the obvious "what".
 
 ## Formatting
 
