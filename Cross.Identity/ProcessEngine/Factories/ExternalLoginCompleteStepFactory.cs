@@ -22,6 +22,7 @@ internal sealed class ExternalLoginCompleteStepFactory : IStepFactory
             StateKey             = cfg.Str("stateKey"),
             ErrorKey             = cfg.StrOpt("errorKey"),
             ErrorDescriptionKey  = cfg.StrOpt("errorDescriptionKey"),
+            UserKey              = cfg.StrOpt("userKey"),
             Next                 = cfg.StrOpt("next"),
         };
     }

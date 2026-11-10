@@ -51,7 +51,7 @@ Workflow `.github/workflows/triage.yml`:
 - **Schedule**: Monday 06:00 UTC
 - **workflow_dispatch**: manual run
 - **issues opened**: data collection
-- **pull_request** opened/synchronize/reopened: AI comment on the PR (wshm-style; same-repo, non-draft; needs `CURSOR_API_KEY`)
+- **pull_request** opened/synchronize/reopened: AI comment on the PR (category, priority, confidence; same-repo, non-draft; needs `CURSOR_API_KEY`)
 
 ### Secrets
 
@@ -69,8 +69,10 @@ Workflow `triage.yml` → job **PR automated comment**:
 - Cursor Agent analyzes the **full PR** (`base...head`: **all** commits + files). Diff is `gh pr diff` / API patches for the whole PR — **not** tip-commit-only / last synchronize patch
 - Prompt always lists every commit in the PR; category/priority/labels must reflect the cumulative delta
 - Checkout uses `fetch-depth: 0` so local agent tools are not limited to a shallow tip
-- Posts a wshm-style comment (category, priority, confidence, summary, files)
+- Posts an automated triage comment (category, priority, confidence, summary, files)
+- Review guidance: matched `.cursor/rules/*.mdc` via `alwaysApply` / `globs` (`load-review-rules.mjs`) — see [`.cursor/README.md`](../../README.md)
 - Syncs GitHub labels `{category}` / `priority:{priority}` by default when confidence ≥ `TRIAGE_LABEL_MIN_CONFIDENCE` (default `70`); set `TRIAGE_APPLY_LABELS=false` to disable. Allowlisted values only
+- Sticky on re-triage: **categories accumulate** (union — several category labels allowed); **priority** never lowers (`critical > high > medium > low`, previous lower `priority:*` removed)
 - On a new push **updates** the same comment (marker `<!-- triage -->` + author `github-actions[bot]`) and re-evaluates labels on the **same full** base...head scope
 
 Manual test: **Actions → Triage → Run workflow** → `pr_number` field.

@@ -1,22 +1,24 @@
+---
+description: Global coding conventions (typing, formatting, file structure)
+alwaysApply: true
+---
+
 # Global project rules
 
 ## General principles
 
-- **Always respond in English** - all comments, documentation, and communication should be in English.
 - **Strict typing** - use strict typing everywhere possible. Avoid `any`, use `unknown` when necessary.
 - **Explicit access modifiers** - always specify access modifiers (`private`, `protected`, `public`). Do not use implicit modifiers.
 - **Readonly for injected services** - all constructor dependencies must be marked `readonly`.
-- **Comments in English** - all code comments should be in English and explain "why", not "what".
+- **Comments explain "why"** - not the obvious "what".
 
 ## Formatting
 
-- **Indent**: 2 spaces for all files
-- **Quotes**: single quotes for TypeScript/JavaScript
-- **End of file**: always add a blank line at the end of the file
-- **Whitespace**: remove trailing whitespace
+- **Indent / charset / line endings / trailing whitespace / final newline** — always follow the repository [`.editorconfig`](../../.editorconfig) for the file type being edited (do not hardcode indent sizes in rules).
+- **Quotes**: single quotes for TypeScript/JavaScript (when not overridden by EditorConfig / project formatter)
 
 ## File structure
 
-- One class/interface/type per file
-- File name must match the exported class/interface name (kebab-case)
-- Use `index.ts` for re-exports from directories
+- One class/interface/type per file when practical
+- TypeScript: file name matches exported symbol (kebab-case); use `index.ts` for re-exports
+- C#: follow existing project naming (PascalCase types / files)

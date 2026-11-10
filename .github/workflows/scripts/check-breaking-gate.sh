@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Gate consumer-breaking PRs: label breaking-changes, require owner-applied breaking-approved.
+# Intended for pull_request_target with workspace = PR base only (never execute PR head).
 # Usage: check-breaking-gate.sh
 # Required env: GH_TOKEN, GITHUB_REPOSITORY, PR_NUMBER, PR_TITLE, BASE_SHA, HEAD_SHA, REPO_OWNER
 set -euo pipefail
@@ -88,11 +89,33 @@ if printf '%s' "$PR_TITLE" | grep -qiE '^BREAKING:'; then
   title_is_breaking=1
 fi
 
-# Ensure both ends of the PR diff are present (forks / shallow edge cases).
-git fetch --no-tags --depth=1 origin "$BASE_SHA" "$HEAD_SHA" >/dev/null 2>&1 || true
+# Ensure both ends of the PR diff are present. Fork heads are not on origin as
+# branch tips — use pull/*/head. Do not checkout/run that tree; objects only.
+# Fail closed: missing commits or a failed git diff must not leave doc_changed=0
+# and silently pass the gate.
+# Full history (no --depth): three-dot diff needs a merge-base with BASE.
+git fetch --no-tags origin "$BASE_SHA" >/dev/null 2>&1 || true
+if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+  git fetch --no-tags origin "pull/${PR_NUMBER}/head" >/dev/null 2>&1 || true
+fi
+
+if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null; then
+  echo "::error::BASE_SHA (${BASE_SHA}) is not available after fetch; cannot evaluate breaking gate."
+  exit 1
+fi
+if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+  echo "::error::HEAD_SHA (${HEAD_SHA}) is not available after fetch; cannot evaluate breaking gate."
+  exit 1
+fi
+
+diff_names=
+if ! diff_names="$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- "$BREAKING_DOC")"; then
+  echo "::error::git diff ${BASE_SHA}...${HEAD_SHA} failed; cannot evaluate breaking gate."
+  exit 1
+fi
 
 doc_changed=0
-if git diff --name-only "${BASE_SHA}...${HEAD_SHA}" -- "$BREAKING_DOC" | grep -qx "$BREAKING_DOC"; then
+if printf '%s\n' "$diff_names" | grep -qx "$BREAKING_DOC"; then
   doc_changed=1
 fi
 

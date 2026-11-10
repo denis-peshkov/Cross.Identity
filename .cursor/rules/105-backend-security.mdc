@@ -1,3 +1,9 @@
+---
+description: Backend security — validation, sanitization, CORS, HTTPS
+globs:
+  - "**/*.cs"
+alwaysApply: false
+---
 # Backend security
 
 ## Input validation

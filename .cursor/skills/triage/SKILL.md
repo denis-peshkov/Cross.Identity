@@ -33,7 +33,7 @@ Cross-ref skills: [`triage-issue`](../triage-issue/SKILL.md), [`triage-pr`](../t
 | _(none)_ | GitHub mode |
 | `local` | Current `HEAD` vs base (default `origin/master`) |
 | `branch <name>` | Named ref vs base (resolves local or `origin/<name>`) |
-| `base master\ | dev` | Diff base (default **master**) |
+| `base master\|dev` | Diff base (default **master**) |
 | `offline` | Skip `git fetch` (stale base warning) — Phase 1b only |
 | `deep` | After Phase 1b, run `triage-pr` Phase 2 (deep review) |
 | `ru` / `en` | Table language (default **en**) |
@@ -78,7 +78,7 @@ Size bands + hotspots: same as `triage-pr` Phase 1. CI / mergeable / reviews →
 
 ### Phase L3 — Optional deep (`deep` or user asks)
 
-`triage-pr` Phase 2 checklist (licensing / pipeline / registration). Optional `Task` bugbot.
+`triage-pr` Phase 2 via `.cursor/rules/*.mdc` (`post-pr-triage.mjs` → `loadMatchedRules`). Optional `Task` bugbot.
 
 ### Phase L4 — Output + save
 
@@ -86,7 +86,7 @@ Chat: short summary (commits, size, hotspots, risks, priority actions) + offer d
 
 Save (unless `no save`):
 
-- `.cursor/triage/docs/branch-<safe-name>-YYYY-MM-DD.md`  
+- `.cursor/triage/docs/branch-<safe-name>-YYYY-MM-DD.md`
   (`/` → `-` in branch name; for `local` use current branch name)
 
 Suggested file structure:

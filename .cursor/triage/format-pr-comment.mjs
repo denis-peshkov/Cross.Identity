@@ -1,5 +1,5 @@
 /**
- * Renders wshm-style automated PR triage comment from agent JSON.
+ * Renders automated PR triage comment from agent JSON (category, priority, confidence).
  */
 
 import { execFileSync } from 'node:child_process';

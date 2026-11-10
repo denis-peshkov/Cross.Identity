@@ -10,7 +10,8 @@
 >
 > Дельта: `{{BASE}}...HEAD` — **{{DELTA_COMMITS}}** коммита · **{{DELTA_FILES}}** файлов · **{{DELTA_PLUS}} / {{DELTA_MINUS}}**. {{OPEN_CHML_STATUS}}
 
-**CodeRabbit:** `{{CR_DATE}}` · log `{{CR_LOG_PATH}}` · {{CR_FINDINGS_COUNT}} findings ({{CR_CRITICAL}} Critical, {{CR_MAJOR}} Major, {{CR_MINOR}} Minor) → {{CR_PLAN_STATUS}}.
+**CodeRabbit:**
+- `{{CR_DATE}}` · log `{{CR_LOG_PATH}}` · {{CR_FINDINGS_COUNT}} findings ({{CR_CRITICAL}} Critical, {{CR_MAJOR}} Major, {{CR_MINOR}} Minor) → {{CR_CURRENT_STATUS}}.
 
 **PR:** {{PR_LINE_OR_DASH}}
 

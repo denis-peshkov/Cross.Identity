@@ -1,3 +1,9 @@
+---
+description: API style — envelopes, versioning, HTTP conventions
+globs:
+  - "**/*.cs"
+alwaysApply: false
+---
 # API style
 
 ## Versioning

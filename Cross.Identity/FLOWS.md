@@ -242,15 +242,21 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 | Step | kind | Details |
 |---|---|---|
-| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either); `ErrorDescription` (opt.); optional client context. → `externalLoginComplete` |
-| `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey` from `collectForm.*`. → `collectResult` |
+| `collectForm` | collectForm | `State` (required); `Code` / `Error` (either); `ErrorDescription` (opt.); optional `User` (Apple first-auth form_post JSON, max 4096); optional client context. → `externalLoginComplete` |
+| `externalLoginComplete` | externalLoginComplete | `codeKey`, `stateKey`, `errorKey`, `errorDescriptionKey`, `userKey` from `collectForm.*`. → `collectResult` |
 | `collectResult` | collectResult | `access_token`, `refresh_token`, `token_type`, `expires_in`, `user_account_id`, `is_linking`. `next: null` |
 
-> OAuth callback resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: a provider with attested verified email can create a new local account alongside any unverified rows. Without a verified provider email, merge onto an existing verified local email is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
+> OAuth callback **requires** a non-empty provider email after profile fetch (Apple `id_token`, Graph/userinfo, etc.). Missing email → `ValidationException` (failed login; no local account / link). Then resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: a provider with attested verified email can create a new local account alongside any unverified rows. Without a verified provider email, merge onto an existing verified local email is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
 >
-> **New registration (no existing external login / no email merge):** `CreateUserAsync` sets `UsersAccounts.EmailVerified = true` when the provider returns a non-empty email **and** `ExternalOAuthProfile.EmailVerified` is true; otherwise the account is created with `EmailVerified = false`. The synced email communication endpoint uses the same attestation (`IsVerified`). Subsequent logins / link refresh update `ProviderEmail` and the endpoint — they do **not** flip `UsersAccounts.EmailVerified`.
+> **New registration (no existing external login / no email merge):** email is always present (see above). `CreateUserAsync` sets `UsersAccounts.EmailVerified = true` when `ExternalOAuthProfile.EmailVerified` is true; otherwise `EmailVerified = false` (e.g. Facebook). The synced email communication endpoint uses the same attestation (`IsVerified`). Subsequent logins / link refresh update `ProviderEmail` and the endpoint — they do **not** flip `UsersAccounts.EmailVerified`.
 >
-> Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`, see release plan §B.
+> **Apple:** authorize uses `response_mode=form_post`. Profile comes from token-endpoint `id_token` (`sub` / `email` / `email_verified`). Optional form_post `user` (first authorization only) maps to `DisplayName` via `userKey`.
+>
+> **Apple `CallbackUrl` / form_post:** Apple POSTs `code`, `state`, and (first auth) `user` to `Authentication:ExternalLogin:CallbackUrl`. That URL must be a **server** endpoint that accepts POST (and typically GET for other providers on the same path), then forwards into this flow (`Code` / `State` / `User` / `Error` / `ErrorDescription`). A SPA-only route cannot receive Apple’s form_post. Sample: `Sample.Api` `GET|POST /oauth/callback` → `main` / `ExternalLoginCallback`.
+>
+> **Facebook:** Graph email may be present with `EmailVerified = false` (no OIDC attestation).
+>
+> Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`.
 
 ---
 
