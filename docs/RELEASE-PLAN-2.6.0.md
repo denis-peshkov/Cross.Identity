@@ -47,6 +47,7 @@ Plans / to-master use ATX (`##`) + HR with a blank line before `---`, never sete
 
 | # | Суть |
 |---|---|
+| ✅ #M104 Apple re-login keeps DisplayName | upsert skips DisplayName when profile name null; relogin test |
 | ✅ External OAuth email required | `CompleteAsync` → `ValidationException` if profile email empty; Apple/Facebook tests; BREAKING 2.5.6→2.6.0 |
 | ✅ #M103 Apple user JSON root Object guard | `ApplyAppleUserJson`: `ValueKind == Object` before `TryGetProperty`; non-object (`[]`) ignored; test |
 | ✅ #H30 Apple form_post callback bridge | Sample.Api `GET\|POST /oauth/callback` → `main.ExternalLoginCallback`; FLOWS / CallbackUrl / README; `response_mode=form_post` kept |

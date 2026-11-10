@@ -599,7 +599,12 @@ internal sealed class ExternalLoginService : IExternalLoginService
             }
 
             existing.ProviderEmail = profile.Email;
-            existing.DisplayName = profile.DisplayName;
+            // Apple (and similar) omit name on subsequent sign-ins — do not wipe a previously saved value.
+            if (!string.IsNullOrWhiteSpace(profile.DisplayName))
+            {
+                existing.DisplayName = profile.DisplayName;
+            }
+
             existing.AvatarUrl = profile.AvatarUrl;
             existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

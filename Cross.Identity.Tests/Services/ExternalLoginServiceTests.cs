@@ -1109,6 +1109,59 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleReloginWithoutUserJson_WhenCompleteAsync_ThenKeepsSavedDisplayNameAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001333.cccccccccccccccc",
+            email = "relogin@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var firstUrl = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        await sut.CompleteAsync(
+            "auth-code",
+            ExtractState(firstUrl),
+            null,
+            null,
+            CancellationToken.None,
+            """{"name":{"firstName":"Ada","lastName":"Lovelace"},"email":"relogin@example.com"}""");
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().Be("Ada Lovelace");
+
+        // Subsequent Apple callbacks omit form_post `user` — profile.DisplayName is null.
+        var secondUrl = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        await sut.CompleteAsync("auth-code", ExtractState(secondUrl), null, null, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().Be("Ada Lovelace");
+        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAppleWithoutUserJson_WhenCompleteAsync_ThenDisplayNameRemainsNullAsync()
     {
         SeedProvider("Apple");

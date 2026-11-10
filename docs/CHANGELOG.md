@@ -16,6 +16,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 - Token exchange now captures optional `id_token` for OIDC providers (`ExternalOAuthTokenResponse`).
 - `ExternalLoginCallback` accepts optional `User` (Apple form_post); `externalLoginComplete.userKey` wires it into `CompleteAsync`.
 - Apple form_post `user`: ignore valid non-object JSON roots (e.g. `[]`) instead of throwing on `TryGetProperty`.
+- External login upsert: do not clear saved `DisplayName` when the provider omits name on a later sign-in (Apple).
 - External OAuth: missing provider email fails `CompleteAsync` (`ValidationException`) — no account create/link on `ProviderUserId` alone.
 - Package dependency bumps / pin `Cross.Messaging` (library + Sample.Api).
 
