@@ -87,13 +87,11 @@ internal sealed class UserService : IUserService
         map.TryGetValue("PhoneNumber", out var phoneRaw);
         map.TryGetValue("Password", out var passwordRaw);
 
-        // 2) Normalization
-        var userName = userNameRaw?.ToString()?.Trim();
+        // 2) Normalization — null / "" / whitespace → null for all identity fields.
+        var userName = NullIfWhiteSpace(userNameRaw?.ToString()?.Trim());
         var normalizedUserName = userName?.ToLowerInvariant();
-        var normalizedEmail = emailRaw?.ToString()?.Trim().ToLowerInvariant();
-        var normalizedPhone = phoneRaw?.ToString()?.Trim();
-        if (string.IsNullOrWhiteSpace(normalizedPhone))
-            normalizedPhone = null;
+        var normalizedEmail = NullIfWhiteSpace(emailRaw?.ToString()?.Trim().ToLowerInvariant());
+        var normalizedPhone = NullIfWhiteSpace(phoneRaw?.ToString()?.Trim());
 
         // 3) Uniqueness
         if (normalizedUserName is not null
@@ -515,6 +513,9 @@ internal sealed class UserService : IUserService
             _ => query,
         };
     }
+
+    private static string? NullIfWhiteSpace(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value;
 
     private string? NormalizeSelectorValue(string field, string selectorValue)
     {

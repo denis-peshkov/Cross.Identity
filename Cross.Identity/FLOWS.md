@@ -159,11 +159,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 ## `main.Register.json`
 
-**Purpose:** registration by email with an optional password and confirmation code delivery.
+**Purpose:** registration with optional password and confirmation code delivery. `Email` / `PhoneNumber` are optional fields with **`atLeastOneRequired`** (OTP channel). `UserName` is an optional login alias (not sufficient alone).
 
 | Step | kind | Details |
 |---|---|---|
-| `collectForm` | collectForm | `Email` (required), optional `PhoneNumber`, `UserName`, `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
+| `collectForm` | collectForm | `Email` / `PhoneNumber` (`atLeastOneRequired`), optional `UserName` alias, optional `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
 | `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |

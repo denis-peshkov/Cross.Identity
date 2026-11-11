@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H31` `M108` `L21`
+**Id high-water (не переиспользовать ≤):** `C1` `H32` `M114` `L21`
 
 ---
 
@@ -107,3 +107,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Facebook seed `ProviderId=5`: если id занят не-Facebook строкой — silent skip; хост с кастомными provider ids чинит seed вручную.
 - Apple DisplayName: без truncate/cap в app code; oversized form_post names → provider/SQL constraints.
 - Release-plan / to-master: только ATX headings + blank line before `---`; setext out of scope для Change summary script.
+- Stock `main.Register`: хотя бы один OTP-канал (`Email` или `PhoneNumber`); `UserName` — optional alias, сам по себе регистрации не даёт.
+- Identity blank (`null` / `""` / whitespace) = отсутствие в `collectForm` → bag → `CreateUserAsync`.
+- `LockChannelAsEmail=true` + phone-only Register: fail at `sendCode` (`Invalid credentials.`) accepted; host with lock must supply email for OTP (no pre-create form reject).

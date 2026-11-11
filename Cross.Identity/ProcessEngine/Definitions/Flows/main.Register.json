@@ -5,7 +5,7 @@
       "kind": "collectForm",
       "schemaDef": {
         "fields": [
-          { "key": "Email", "type": "Email", "required": true },
+          { "key": "Email", "type": "Email", "required": false },
           { "key": "PhoneNumber", "type": "PhoneNumber", "required": false, "max": 16 },
           { "key": "UserName", "type": "String", "required": false, "min": 3, "max": 64 },
           { "key": "Password", "type": "Password", "required": false, "min": 8, "max": 32 },
@@ -14,7 +14,9 @@
           { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
           { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
         ],
-        "validators": []
+        "validators": [
+          { "kind": "atLeastOneRequired", "fields": ["Email", "PhoneNumber"], "message": "Provide an email or a phone number." }
+        ]
       },
       "selector": {
         "candidates": ["Email", "PhoneNumber", "UserName"]
