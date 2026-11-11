@@ -96,6 +96,27 @@ public class UserServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenWhitespaceIdentityFields_WhenCreateUserAsync_ThenStoresNullsAsync()
+    {
+        var map = new Dictionary<string, object?>
+        {
+            ["Email"] = "   ",
+            ["PhoneNumber"] = "\t",
+            ["UserName"] = "",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.Email.Should().BeNull();
+        user.PhoneNumber.Should().BeNull();
+        user.UserName.Should().BeNull();
+        user.NormalizedUserName.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmailWithoutPassword_WhenCreateUserAsync_ThenPasswordPhcIsNull()
     {
         var map = new Dictionary<string, object?>

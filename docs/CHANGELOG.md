@@ -7,6 +7,24 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.7.0 — 10 Nov 2026
+
+### Library
+
+- Stock `main.Register`: `Email` / `PhoneNumber` optional with `atLeastOneRequired` (OTP channel); `UserName` optional alias only (not enough alone).
+- Form validators: `atLeastOneRequired` / `exactlyOneRequired` now enforced in `UnifiedFormValidatorFactory` (empty = `null` / `""` / whitespace); failures are form-level (`message` only, no input PropertyName).
+- `CollectFormStep` and `CreateUserAsync`: treat blank identity strings as absent (`null`).
+
+### Tests
+
+- Coverage for phone-only / blank-identity register paths (`Main_Registration_FlowTests`, validator factory, `UserService`).
+
+### Documentation
+
+- `docs/BREAKING.md` From 2.6.0 → 2.7.0; FLOWS `main.Register` identity rules.
+
+---
+
 ## v2.6.0 — 10 Nov 2026
 
 ### Library

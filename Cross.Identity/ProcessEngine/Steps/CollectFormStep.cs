@@ -54,7 +54,12 @@ internal sealed class CollectFormStep : IStep
         foreach (var field in Schema.Fields)
         {
             data.TryGetValue(field.Key, out var value);
-            if (phoneNumberKeys.Contains(field.Key) && value is string phoneNumber && !string.IsNullOrWhiteSpace(phoneNumber))
+            // Treat "" / whitespace like absent so optional Email/PhoneNumber/UserName stay null in the bag.
+            if (value is string blank && string.IsNullOrWhiteSpace(blank))
+            {
+                value = null;
+            }
+            else if (phoneNumberKeys.Contains(field.Key) && value is string phoneNumber)
             {
                 value = PhoneE164.Require(phoneNumber);
             }

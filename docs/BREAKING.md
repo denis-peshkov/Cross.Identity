@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.6.0` → `2.7.0+` | [From 2.6.0 to 2.7.0](#from-260-to-270) |
 | `2.5.6` → `2.6.0+` | [From 2.5.6 to 2.6.0](#from-256-to-260) |
 | `2.2.0` → `2.3.0+` | [From 2.2.0 to 2.3.0](#from-220-to-230) |
 | `2.1.1` → `2.2.0+` | [From 2.1.1 to 2.2.0](#from-211-to-220) |
@@ -22,6 +23,30 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.6.0 to 2.7.0
+
+Release: [v2.7.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.7.0).
+
+### `main.Register`: Email no longer required alone
+
+| Area | Was (≤2.6.0) | Now (2.7.0+) |
+|---|---|---|
+| `collectForm` identity | `Email` **required**; `PhoneNumber` / `UserName` optional | `Email` / `PhoneNumber` optional with **`atLeastOneRequired`**; `UserName` optional alias (not enough alone) |
+| OTP after register | email-centric | stock `sendCode` always has a channel (email or phone required on the form) |
+| Blank identity strings | `""` / whitespace could remain in the bag / create path | treated as **absent** (`null`) in `collectForm` + `CreateUserAsync` |
+
+**Action:** hosts/FE may register with phone alone or email alone (plus optional `UserName`); stop assuming bag always has `Email`. Username-only registration is rejected at `collectForm`.
+
+### Form validators: `atLeastOneRequired` / `exactlyOneRequired` enforced
+
+| Area | Was (≤2.6.0) | Now (2.7.0+) |
+|---|---|---|
+| Cross-field kinds in `collectForm` schema | Parsed into rules, but `UnifiedFormValidatorFactory` did not evaluate them | Both kinds validate; empty = `null` / `""` / whitespace |
+
+**Action:** custom flows that already declared these validators start failing closed when the rule is not satisfied (previously silent).
 
 ---
 
