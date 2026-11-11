@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.7.0` → `master`
 
-> **Analysis date:** 2026-11-10
-> **Branch:** `release/register-email-or-phone` (`de35167`)
+> **Analysis date:** 2026-11-11
+> **Branch:** `release/register-email-or-phone` (`d92e393`)
 > **Comparison base:** `origin/master` (`v2.6.0` / `677b16b`) · merge-base `677b16b`
 > **Version plan:** [`docs/RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.7.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** Stock `main.Register` Email|Phone `atLeastOneRequired` + form cross-field validators enforced. Feature committed locally (`de35167`); **not pushed** · **no PR**. Tag `v2.7.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
-> **Sources:** `git` / version plan / local `dotnet test` filter (re-verified 2026-11-10)
+> **Note:** Stock `main.Register` Email|Phone `atLeastOneRequired` + form cross-field validators. Tip in sync with origin · PR [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) OPEN · CI on tip green (`breaking-approved`). Local WT: M114 dismissed + plan/TO-DO/to-master refresh (not in tip). Tag `v2.7.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
+> **Sources:** `git` / version plan / `gh pr checks 25` / local filter (re-verified 2026-11-11)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **38** items — ✅ **25** (66%) · 🟨 **0** (0%) · ⬜ **13** (34%) · ❌ **0** (0%)
+**Change summary:** **40** items — ✅ **30** (75%) · 🟨 **8** (20%) · ⬜ **2** (5%) · ❌ **0** (0%)
 
 ---
 
@@ -18,22 +18,22 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **1** (`de35167`) |
-| Files (committed three-dot) | **13** · **+454 / −82** |
-| Working tree | dirty — this checklist only (after audit) |
-| Remote branch | **absent** (`origin/release/register-email-or-phone` not created) |
-| Tests | local ✅ filter Register/validator/UserService — **73** passed |
-| PR | — |
-| CodeRabbit | не запускался |
-| Version-plan open C/H/M/L | **empty** (plan finalized / closed; HW `C1` `H32` `M113` `L21`) |
+| Commits (`origin/master..HEAD`) | **2** (`de35167` · `d92e393`) |
+| Files (committed three-dot) | **14** · **+518 / −83** |
+| Working tree | dirty — plan / TO-DO / this checklist (M114 dismiss + header sync) |
+| Local vs `origin/release/register-email-or-phone` | tip **in sync**; docs WT ahead |
+| Tests | local ✅ filter — **75** passed · PR CI build ✅ |
+| PR | [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) OPEN · labels `breaking-changes` + `breaking-approved` |
+| CodeRabbit | `2026-11-10` · PR check SUCCESS · M114 dismissed locally |
+| Version-plan open C/H/M/L | **empty** (plan `(closed)`; HW `C1` `H32` `M114` `L21`) |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
-| Form validators | 1 | Enforce `atLeastOneRequired` / `exactlyOneRequired` |
+| Form validators | 1 | Enforce `atLeastOneRequired` / `exactlyOneRequired` + form-level failures |
 | Register flow | 2 | `main.Register.json` + FLOWS |
 | Collect / UserService | 2 | Blank identity → null |
 | Tests | 3 | Flow / factory / UserService |
-| docs | 4 | PLAN 2.7.0, CHANGELOG, BREAKING 2.6.0→2.7.0, 2.6.0 published |
+| docs | 4 | PLAN 2.7.0, CHANGELOG, BREAKING 2.6.0→2.7.0, TO-DO |
 
 ---
 
@@ -56,9 +56,9 @@
 
 | # | Block | Key changes | Status |
 |---|---|---|---|
-| F1 | Register identity | Email\|Phone `atLeastOneRequired`; UserName alias only | ✅ in `main.Register.json` + FLOWS |
-| F2 | Form cross-field | `atLeastOneRequired` / `exactlyOneRequired` runtime | ✅ `UnifiedFormValidatorFactory` |
-| F3 | Blank normalization | collectForm bag + `CreateUserAsync` | ✅ blank → null |
+| F1 | Register identity | Email\|Phone `atLeastOneRequired`; UserName alias only | ✅ |
+| F2 | Form cross-field | `atLeastOneRequired` / `exactlyOneRequired` runtime + form-level `AddFailure` | ✅ |
+| F3 | Blank normalization | collectForm bag + `CreateUserAsync` | ✅ |
 
 ---
 
@@ -66,7 +66,7 @@
 
 | # | Change | Action | Status |
 |---|---|---|---|
-| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.6.0 to 2.7.0 | Register email-or-phone; validators enforced | ✅ in `de35167` |
+| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.6.0 to 2.7.0 | Register email-or-phone; validators enforced | ✅ |
 | B2 | Hosts / FE | Stop assuming bag always has `Email` | ✅ documented |
 
 ---
@@ -75,10 +75,10 @@
 
 | # | Check | Status |
 |---|---|---|
-| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) empty | ✅ |
-| CG2 | Closed H32 · M109–M113 (+ tests); plan **closed** | ✅ |
-| CG3 | PR opened | ⬜ |
-| CG4 | Commit feature + docs | ✅ `de35167` (to-master audit may dirty again) |
+| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) empty | ✅ tip + local |
+| CG2 | Closed H32 · M109–M114 (+ tests); plan **closed** | ✅ M114 dismissed (local WT) |
+| CG3 | PR opened | ✅ [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) |
+| CG4 | Commit feature + docs | 🟨 tip `de35167`+`d92e393`; plan/TO-DO/to-master WT dirty |
 
 ---
 
@@ -86,10 +86,10 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Push branch tip | ⬜ remote branch absent |
-| P2 | Open PR → `master` | ⬜ |
-| P3 | CI green on PR tip | ⬜ |
-| P4 | Ready to merge → `master` | ⬜ after push + PR + CI (tag/NuGet = post-merge CI) |
+| P1 | Push branch tip | ✅ in sync with origin |
+| P2 | Open PR → `master` | ✅ [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) |
+| P3 | CI green on PR tip | ✅ build · breaking-gate · Sonar · CodeQL · Owner-only · CodeRabbit |
+| P4 | Ready to merge → `master` | 🟨 CI go; GitHub `mergeStateStatus=BLOCKED` — tag/NuGet post-merge |
 
 ---
 
@@ -97,12 +97,12 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) | ✅ finalized `(closed)` 2026-11-11 |
+| D1 | [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) | 🟨 `(closed)` · open empty · M114/Принято/delta/PR refreshed locally (uncommitted) |
 | D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.7.0 | ✅ |
 | D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.6.0 to 2.7.0 | ✅ |
 | D4 | FLOWS `main.Register` | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | ✅ no new leftovers · HW unchanged mid-release |
-| D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file (WT after audit) |
+| D5 | [`TO-DO.md`](TO-DO.md) | 🟨 HW → `M114` + LockChannel Принято locally (uncommitted) |
+| D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 
 ---
 
@@ -110,9 +110,9 @@
 
 | # | Check | Status |
 |---|---|---|
-| T1 | Register / validator / UserService coverage | ✅ in `de35167` |
-| T2 | Related local filter | ✅ 73 passed (re-run 2026-11-10) |
-| T3 | PR CI build | ⬜ |
+| T1 | Register / validator / UserService coverage | ✅ |
+| T2 | Related local filter | ✅ 75 passed (re-run 2026-11-11) |
+| T3 | PR CI build | ✅ |
 
 ---
 
@@ -120,7 +120,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| C1 | CI green on PR tip | ⬜ |
+| C1 | CI green on PR #25 (current tip) | ✅ |
 | C2 | Tag / NuGet pipeline | ✅ post-merge on `master` (not a pre-merge gate) |
 
 ---
@@ -138,23 +138,25 @@
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
 | R1 | Custom flows with unused `exactlyOneRequired` / `atLeastOneRequired` | Now fail closed — documented in BREAKING | ✅ |
-| R2 | Not pushed / no PR | Push branch, open PR, wait CI | ⬜ |
+| R2 | Merge UI BLOCKED despite tip CI green | Owner merge / ruleset bypass if needed | 🟨 |
+| R3 | Uncommitted docs (M114 dismiss + checklist) | Commit before next push / merge | ⬜ |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — open C/H/M/L empty; plan finalized `(closed)`; feature committed `de35167`
-- ⬜ **2. Push** branch tip (`origin/release/register-email-or-phone` absent)
-- ⬜ **3. PR → `master`** + CI green
-- ✅ **4. Docs content** — CHANGELOG / BREAKING 2.6.0→2.7.0 / FLOWS (in commit)
-- ⬜ **5. Ready to merge** — tag `v2.7.0` / NuGet only after merge to `master` (CI)
+- ✅ **1. Code gate** — open C/H/M/L empty; plan `(closed)`; M114 dismissed
+- ✅ **2. Push** branch tip — in sync with origin
+- ✅ **3. PR #25** + CI green on tip (`breaking-approved`)
+- 🟨 **4. Docs content** — BREAKING/CHANGELOG/FLOWS on tip; M114/HW/to-master local WT
+- 🟨 **5. Ready to merge** — CI go; GitHub merge still BLOCKED; commit docs WT first; tag/NuGet only after `master`
 
 ### Minimum go/no-go checklist
 
-- ✅ Version-plan open C/H/M/L empty / finalized
-- ✅ Feature set committed (`de35167`)
-- ⬜ Branch pushed
-- ⬜ PR / CI green
+- ✅ Version-plan open C/H/M/L empty / finalized `(closed)`
+- ✅ Feature set committed + pushed
+- ⬜ Docs WT (M114 dismiss / HW / to-master) committed
+- ✅ PR #25 / CI green on tip
 - ✅ PostDeployment N/A
-- ✅ Ready-to-merge gate defined (tag/NuGet out of scope until `master`)
+- 🟨 Merge UI not clean (`BLOCKED`) — owner action
+- ✅ Tag/NuGet out of scope until `master`

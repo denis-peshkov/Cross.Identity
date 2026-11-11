@@ -8,13 +8,13 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.6.0.md`](RELEASE-PLAN-2.6.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **13** файлов · **+454 / −82**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **2** коммита · **14** файлов · **+518 / −83**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - `2026-11-10` · log `.cursor/skills/coderabbit/.cache/cr-release-register-email-or-phone-vs-origin-master-all-20261110-235129.jsonl` · 0 findings (0 Critical, 0 Major, 0 Minor) → Open C/H/M/L пустые.
 - `2026-11-10` · log `.cursor/skills/coderabbit/.cache/cr-release-register-email-or-phone-vs-origin-master-all-20261110-235216.jsonl` · 1 finding (0 Critical, 0 Major, 1 Minor) → Open C/H/M/L пустые.
 
-**PR:** —
+**PR:** [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) (`BREAKING: allow Register with email or phone and enforce cross-field form validators`).
 
 ---
 
@@ -38,6 +38,7 @@
 
 - Stock `main.Register` требует **хотя бы один** OTP-канал (`Email` **или** `PhoneNumber`); `UserName` — только optional alias, сам по себе регистрации не даёт.
 - `null` / `""` / whitespace по identity-полям считаются отсутствием везде в цепочке `collectForm` → bag → `CreateUserAsync`.
+- `LockChannelAsEmail=true` + phone-only Register: create → `sendCode` fails (`Invalid credentials.`) — accepted; host with lock must supply email for OTP. No pre-create reject of phone-only.
 
 ---
 
@@ -45,6 +46,7 @@
 
 | # | Суть |
 |---|---|
+| ✅ #M114 phone-only vs LockChannelAsEmail | dismissed: lock=true + phone-only fail at sendCode is accepted; no form reject |
 | ✅ #M113 atLeast/exactlyOne form-level message | `AddFailure(message)` without PropertyName; empty `fields` no longer indexes `[0]` |
 | ✅ #M109 Form `atLeastOneRequired` / `exactlyOneRequired` | `UnifiedFormValidatorFactory` evaluates both kinds; empty = null/`""`/whitespace |
 | ✅ #M110 Stock `main.Register` Email\|Phone | `Email`/`PhoneNumber` optional + `atLeastOneRequired`; FLOWS updated |
@@ -64,4 +66,4 @@
 
 ## Приоритет фиксов
 
-_(пусто — релиз `2.7.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто — релиз `2.7.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
