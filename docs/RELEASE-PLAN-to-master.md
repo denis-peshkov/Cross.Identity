@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.8.0` → `master`
 
 > **Analysis date:** 2026-11-13
-> **Branch:** `release/sms-otp-templates` (`676d8b5`+)
+> **Branch:** `release/sms-otp-templates` (`c1f2474`)
 > **Comparison base:** `origin/master` (`v2.7.0` / `4fd1703`) · merge-base `4fd1703`
 > **Version plan:** [`docs/RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.8.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** SMS `{Template}-sms` + DE/PL/UA + `uk`→`ua` + LicenseKey docs. PR [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · CI green on remote tip `668bc62` (`breaking-approved`). Local **ahead** of origin + WT (`FLOWS` L22 fix · plan · TO-DO · this file). Tag/NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
+> **Note:** SMS `{Template}-sms` + DE/PL/UA + `uk`→`ua` + LicenseKey docs + FLOWS L22. PR [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · tip **in sync** · CI green (`breaking-approved`). GitHub `mergeStateStatus=BLOCKED` — owner/ruleset (not a pre-merge code gate). Tag `v2.8.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
 > **Sources:** `git` / version plan / `gh pr checks 26` (re-verified 2026-11-13)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **44** items — ✅ **33** (75%) · 🟨 **8** (18%) · ⬜ **3** (7%) · ❌ **0** (0%)
+**Change summary:** **44** items — ✅ **44** (100%) · 🟨 **0** (0%) · ⬜ **0** (0%) · ❌ **0** (0%)
 
 ---
 
@@ -18,14 +18,14 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **≥7** (local ahead of `origin/release/sms-otp-templates`) |
-| Files (committed three-dot vs master) | **76** · **+2 382 / −693** (plus local WT: FLOWS L22) |
-| Working tree | dirty — `FLOWS.md` · plan · TO-DO · this checklist |
-| Local vs `origin/release/sms-otp-templates` | **ahead** (remote PR head `668bc62`) |
-| Tests | PR CI build ✅ on remote tip · local `dotnet` unavailable (AdvSimd/LSE) |
-| PR | [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · `breaking-approved` |
-| CodeRabbit | PR tip checks include skip/pass history |
-| Version-plan open C/H/M/L | **empty** · HW `C1` `H34` `M121` `L23` · **L22 closed** in plan |
+| Commits (`origin/master..HEAD`) | **9** |
+| Files (committed three-dot) | **76** · **+2 386 / −693** |
+| Working tree | clean |
+| Local vs `origin/release/sms-otp-templates` | tip **in sync** (`c1f2474`) |
+| Tests | PR CI `build` ✅ (local suite via CI) |
+| PR | [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · head `c1f2474` · `breaking-approved` |
+| CodeRabbit | tip checks pass / skip |
+| Version-plan open C/H/M/L | **empty** · HW `C1` `H34` `M121` `L23` · L22 closed |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
@@ -80,7 +80,7 @@
 | CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) empty | ✅ |
 | CG2 | Closed H33–H34 · M115–M121 · L22–L23 (+ tests) | ✅ |
 | CG3 | PR opened | ✅ [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) |
-| CG4 | Commit / push tip + docs WT | 🟨 local ahead + WT (`FLOWS`/plan/TO-DO/to-master) not on PR |
+| CG4 | Commit / push tip + docs | ✅ tip `c1f2474` in sync with origin |
 
 ---
 
@@ -88,10 +88,10 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Push branch tip | 🟨 remote PR head behind local tip / WT |
+| P1 | Push branch tip | ✅ in sync with origin |
 | P2 | Open PR → `master` | ✅ [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) |
-| P3 | CI green on PR tip | ✅ on remote tip `668bc62` (re-check after push) |
-| P4 | Ready to merge → `master` | 🟨 after push+CI; GitHub `mergeStateStatus=BLOCKED` (owner) — tag/NuGet post-merge |
+| P3 | CI green on PR tip | ✅ build · breaking-gate · Sonar · CodeQL · Owner-only |
+| P4 | Ready to merge → `master` | ✅ go (CI + tip); merge UI BLOCKED = owner/ruleset — tag/NuGet post-merge |
 
 ---
 
@@ -99,12 +99,12 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) | ✅ `(closed)` · L22 in Закрыто (local WT) |
+| D1 | [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) | ✅ finalized `(closed)` |
 | D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.8.0 | ✅ |
 | D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.7.0 to 2.8.0 | ✅ |
 | D4 | `docs/SMS-OTP-TEMPLATES.md` / README | ✅ |
-| D5 | [`FLOWS.md`](../Cross.Identity/FLOWS.md) `sendCode` `-sms` | ✅ fixed (local WT) |
-| D6 | [`TO-DO.md`](TO-DO.md) | ✅ L22 removed · HW `C1` `H34` `M121` `L23` |
+| D5 | [`FLOWS.md`](../Cross.Identity/FLOWS.md) `sendCode` `-sms` | ✅ |
+| D6 | [`TO-DO.md`](TO-DO.md) | ✅ HW `C1` `H34` `M121` `L23` · L22 closed |
 | D7 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 
 ---
@@ -114,7 +114,7 @@
 | # | Check | Status |
 |---|---|---|
 | T1 | `SendCode` SMS unit coverage | ✅ |
-| T2 | Full suite evidence | ✅ PR CI `build` green on remote tip (local host AdvSimd/LSE abort) |
+| T2 | Suite evidence | ✅ via PR CI `build` |
 | T3 | PR CI build | ✅ |
 
 ---
@@ -123,7 +123,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| C1 | CI green on PR #26 (remote tip) | ✅ |
+| C1 | CI green on PR #26 (current tip) | ✅ |
 | C2 | Tag / NuGet pipeline | ✅ post-merge on `master` (not a pre-merge gate) |
 
 ---
@@ -141,26 +141,26 @@
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
 | R1 | Custom template hosts missing `-sms` | BREAKING + SMS-OTP-TEMPLATES | ✅ |
-| R2 | FLOWS.md `sendCode` `-sms` | Fixed in `FLOWS.md` · ✅ #L22 | ✅ |
-| R3 | Local tip / WT not on PR #26 | Commit WT · push · re-check CI | ⬜ |
-| R4 | Merge UI BLOCKED | Owner merge / ruleset bypass after tip sync | 🟨 |
+| R2 | FLOWS.md `sendCode` `-sms` | ✅ #L22 | ✅ |
+| R3 | Tip / docs on PR | Synced `c1f2474` | ✅ |
+| R4 | Merge UI BLOCKED | Owner merge when ready (not a code gate) | ✅ accepted |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — plan `(closed)`; L22 closed in FLOWS/plan/TO-DO
-- ⬜ **2. Commit/push** WT + ahead tip onto PR #26
-- 🟨 **3. PR #26** — CI green on remote tip; re-run after push
+- ✅ **1. Code gate** — plan `(closed)`; L22 closed
+- ✅ **2. Commit/push** tip in sync with origin
+- ✅ **3. PR #26** + CI green on tip
 - ✅ **4. Docs content** — BREAKING / CHANGELOG / SMS-OTP / FLOWS `-sms`
-- 🟨 **5. Ready to merge** — after tip sync + CI; merge UI may stay BLOCKED; tag/NuGet only after `master`
+- ✅ **5. Ready to merge** — code/CI go; tag `v2.8.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty / finalized `(closed)`
-- ✅ Feature set + FLOWS `-sms` (local)
-- ⬜ Commit WT + push onto PR #26
-- 🟨 PR #26 / CI green on **remote** tip (stale vs local HEAD)
+- ✅ Feature set committed + pushed
+- ✅ Docs / FLOWS `-sms` on tip
+- ✅ PR #26 / CI green on tip
 - ✅ PostDeployment N/A
-- 🟨 Merge UI `BLOCKED` — owner action after tip sync
+- ✅ Ready to merge (GitHub merge UI may show BLOCKED — owner/ruleset)
 - ✅ Tag/NuGet out of scope until `master`
