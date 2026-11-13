@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.7.0` → `2.8.0+` | [From 2.7.0 to 2.8.0](#from-270-to-280) |
 | `2.6.0` → `2.7.0+` | [From 2.6.0 to 2.7.0](#from-260-to-270) |
 | `2.5.6` → `2.6.0+` | [From 2.5.6 to 2.6.0](#from-256-to-260) |
 | `2.2.0` → `2.3.0+` | [From 2.2.0 to 2.3.0](#from-220-to-230) |
@@ -23,6 +24,22 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.7.0 to 2.8.0
+
+Release: [v2.8.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.8.0).
+
+### SMS OTP: `SendCodeStep` loads `{Template}-sms`
+
+| Area | Was (≤2.7.0) | Now (2.8.0+) |
+|---|---|---|
+| OTP template for `ChannelEnum.Sms` | Same name as email (`verify` / `reset`, …) | Loads **`{Template}-sms`** (e.g. `verify-sms`); already-`-sms` names unchanged |
+| Stock package | Long email bodies reused for SMS | Short single-segment `verify-sms` / `reset-sms` (+ locales) embedded |
+| Action deep-link path | Based on `Template` (`reset` → `/reset-password`) | Still based on **base** name (strips trailing `-sms`) |
+
+**Action:** hosts with custom template providers / filesystem overrides must ship short `-sms` variants for every `sendCode` template used on SMS, or compose will miss the template. See [`docs/SMS-OTP-TEMPLATES.md`](SMS-OTP-TEMPLATES.md).
 
 ---
 

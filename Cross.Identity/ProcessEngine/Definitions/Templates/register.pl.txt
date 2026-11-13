@@ -1,0 +1,19 @@
+Witaj, {{fullName}},
+
+Witamy w {{company}}. Twoje konto dla {{email}} jest gotowe.
+
+👉 Zaloguj się na konto:
+{{url}}
+
+Pozdrawiamy,
+Zespół {{company}}
+
+Masz pytania dotyczące konta na {{site}}?
+Odwiedź sekcję Moje konto – Pomoc.
+
+Pytania? {{supportEmail}}
+
+Facebook | Instagram | YouTube
+{{site}}
+
+© {{year}} {{brand}}

@@ -1,0 +1,23 @@
+Hallo, {{fullName}}!
+
+Bitte bestätigen Sie {{email}} für {{company}}.
+
+Ihr Bestätigungscode:
+{{code}}
+
+👉 E-Mail bestätigen:
+{{url}}
+
+⚠️ Achtung! Der Code ist {{expires}} gültig.
+
+Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail.
+
+Brauchen Sie Hilfe? Schreiben Sie uns an {{supportEmail}}.
+
+Fragen zu Ihrem Konto auf {{site}}?
+Besuchen Sie den Bereich Mein Konto – Hilfe.
+
+Facebook | Instagram | YouTube
+{{site}}
+
+© {{year}} {{brand}}

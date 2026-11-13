@@ -1,0 +1,1 @@
+Kod resetu hasła: {{code}}
