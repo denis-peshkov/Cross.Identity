@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H32` `M114` `L21`
+**Id high-water (не переиспользовать ≤):** `C1` `H34` `M118` `L22`
 
 ---
 
@@ -68,6 +68,9 @@ XML для public properties.
 ### L10. triage skill: убрать опцию `ru`
 CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
 
+### L22. FLOWS.md: `sendCode` SMS `-sms` template resolution
+`SendCodeStep` для SMS грузит `{Template}-sms`, но `FLOWS.md` step table / Register·ResetPassword still describe only `template: verify|reset` without the SMS suffix rule. `docs/SMS-OTP-TEMPLATES.md` есть; синхронизировать FLOWS одной строкой в описании `sendCode`.
+
 ---
 
 ## Принято (осознанный trade-off)
@@ -110,3 +113,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Stock `main.Register`: хотя бы один OTP-канал (`Email` или `PhoneNumber`); `UserName` — optional alias, сам по себе регистрации не даёт.
 - Identity blank (`null` / `""` / whitespace) = отсутствие в `collectForm` → bag → `CreateUserAsync`.
 - `LockChannelAsEmail=true` + phone-only Register: fail at `sendCode` (`Invalid credentials.`) accepted; host with lock must supply email for OTP (no pre-create form reject).
+- SMS OTP bodies — short single-segment (`verify-sms` / `reset-sms`); email keeps long HTML/txt.
+- `SendCodeStep` appends `-sms` automatically when channel is SMS (idempotent if already `-sms`).
+- Sample.Api drops Romanian `register`/`verify` overrides; stock library still ships `register.ro` / `verify.ro`.

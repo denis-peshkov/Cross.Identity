@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.7.0` (closed) · **ветка:** `release/register-email-or-phone` · **база:** `origin/master` (`v2.6.0`) · **дата:** `2026-11-11`
+> **Версия:** `2.7.0` (published / closed) · **ветка:** `release/register-email-or-phone` · **база:** `origin/master` (`v2.6.0`) · **дата:** `2026-11-11`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.7.0
 >
