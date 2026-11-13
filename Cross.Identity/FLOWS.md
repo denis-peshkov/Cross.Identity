@@ -11,7 +11,7 @@ This document matches JSON in `Cross.Identity/ProcessEngine/Definitions/Flows/`.
 - Within one flow, each step `kind` must be **unique** (two `collectForm` steps in one JSON will not load).
 - Form data is stored in `Bag` with the prefix `collectForm.{field}` (see `CollectFormStep`).
 - Relative keys (`Email`, `passwordKey`) are qualified as `{kind}.{key}`; absolute keys include a dot (`collectForm.Email`).
-- **Client context (all flows):** optional `LanguageCode` (exactly 2 letters, e.g. `en` / `ru` / `ro`), `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets client metadata from server-side sources before `ExecuteAsync`; on refresh the library compares IP/UA/fingerprint with `Created*` on the token family (see [Client context (host)](#client-context-host)). `LanguageCode` selects notification templates (`SendCodeStep` / `ResetPasswordStep`); missing/invalid code or missing template file → fallback `en`.
+- **Client context (all flows):** optional `LanguageCode` (exactly 2 letters, e.g. `en` / `ru` / `ro` / `ua`), `IpAddress` (max 64), `UserAgent` (max 512), `DeviceFingerprint` (max 128) on `collectForm`. The **host** sets client metadata from server-side sources before `ExecuteAsync`; on refresh the library compares IP/UA/fingerprint with `Created*` on the token family (see [Client context (host)](#client-context-host)). `LanguageCode` selects notification templates (`SendCodeStep` / `ResetPasswordStep`); stock Ukrainian templates use the `ua` file key — ISO `uk` is accepted as an alias for `ua`; missing/invalid code or missing template file → fallback `en`.
 - **Identity (`Email` / `PhoneNumber` / `UserName`):** on `collectForm`, `selector.candidates` picks the first non-empty field into `collectForm.Field` / `collectForm.Value`. Later steps call `Selector.Resolve` (no per-step `selectorKey` / `resolveBy`). OTP send/verify by `UserName` uses the user's **preferred verified** communication endpoint (email or phone address); Email/PhoneNumber use the submitted value directly.
 
 ### Client context (host)
@@ -38,7 +38,7 @@ Token lifecycle: `Token` still issues refresh tokens. `RefreshToken` takes refre
 
 | Field | Set from (trusted) | Do not use |
 |---|---|---|
-| `collectForm.LanguageCode` | Product locale / negotiated culture (2 letters) for notification templates | Omit → library uses `en`; missing template file for that language → `en` |
+| `collectForm.LanguageCode` | Product locale / negotiated culture (2 letters) for notification templates | Omit → library uses `en`; `uk` → template key `ua`; missing template file for that language → `en` |
 | `collectForm.IpAddress` | `HttpContext.Connection.RemoteIpAddress` after `UseForwardedHeaders` on known proxies | Client JSON/body, raw `X-Forwarded-For` without proxy config |
 | `collectForm.UserAgent` | `HttpContext.Request.Headers.User-Agent` | Client-supplied form field |
 | `collectForm.DeviceFingerprint` | Host-computed value (cookie, validated SDK id, server session) if the product uses binding | Arbitrary unvalidated client input |
@@ -380,7 +380,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `collectForm` | Collect and validate form fields; optional `selector.candidates` |
 | `collectResult` | Map `Bag` fields to API response |
 | `createUser` | Create user |
-| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). Action link: `verify` → `/verify?code=…`; `reset` → `/reset-password?code=…`; when selector is Email / PhoneNumber, append `email` / `phone` (identity for deep links; OTP channel is still resolved on verify). Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
+| `sendCode` | Send OTP; required `template` / `subject`. Channel/address from `ResolveOtpTargetAsync` (`LockChannelAsEmail` → preferred verified → account email → account phone; unverified contacts allowed for confirmation). For **SMS**, the step loads `{template}-sms` (short body; already-`-sms` names unchanged); email keeps `{template}`. Action link path uses the **base** template name (`verify` → `/verify?code=…`; `reset` → `/reset-password?code=…`); when selector is Email / PhoneNumber, append `email` / `phone` (identity for deep links; OTP channel is still resolved on verify). Unknown identity / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `verifyCode` | Verify OTP and write `UserAccountId` to the bag. Unknown identity / invalid code / no OTP channel → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `getUserAccountId` | Resolve user id into the bag. Unknown identity → `NotAuthorizedException` (`Invalid credentials.`); real reason logged at Information. |
 | `passwordAuth` | Verify identity + password; writes `UserAccountId` |

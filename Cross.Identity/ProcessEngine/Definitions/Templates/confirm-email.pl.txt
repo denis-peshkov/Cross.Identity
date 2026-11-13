@@ -1,0 +1,23 @@
+Witaj, {{fullName}}!
+
+Potwierdź {{email}} dla {{company}}.
+
+Twój kod weryfikacyjny:
+{{code}}
+
+👉 Potwierdź e-mail:
+{{url}}
+
+⚠️ Uwaga! Kod jest ważny przez {{expires}}.
+
+Jeśli tego nie prosiłeś, zignoruj tę wiadomość.
+
+Potrzebujesz pomocy? Napisz do nas: {{supportEmail}}.
+
+Masz pytania dotyczące konta na {{site}}?
+Odwiedź sekcję Moje konto – Pomoc.
+
+Facebook | Instagram | YouTube
+{{site}}
+
+© {{year}} {{brand}}

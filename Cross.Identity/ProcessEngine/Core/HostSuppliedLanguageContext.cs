@@ -4,7 +4,8 @@
 /// Preferred notification template language supplied by the host, carried through flows.
 /// </summary>
 /// <param name="LanguageCode">
-/// Optional ISO 639-1 code (exactly two letters), e.g. <c>en</c>, <c>ru</c>, <c>ro</c>.
+/// Optional two-letter language code, e.g. <c>en</c>, <c>ru</c>, <c>ro</c>, <c>ua</c>.
+/// ISO 639-1 <c>uk</c> is accepted as an alias for template key <c>ua</c>.
 /// </param>
 /// <remarks>
 /// <para>
@@ -47,7 +48,8 @@ public sealed record HostSuppliedLanguageContext(string? LanguageCode)
     }
 
     /// <summary>
-    /// Normalized two-letter language code, or <see cref="DefaultLanguageCode"/> when missing/invalid.
+    /// Normalized two-letter language code for template lookup, or <see cref="DefaultLanguageCode"/> when missing/invalid.
+    /// Maps ISO 639-1 <c>uk</c> to stock template key <c>ua</c>.
     /// </summary>
     public string ResolveLanguageCode()
     {
@@ -62,7 +64,9 @@ public sealed record HostSuppliedLanguageContext(string? LanguageCode)
             return DefaultLanguageCode;
         }
 
-        return code.ToLowerInvariant();
+        code = code.ToLowerInvariant();
+        // Stock templates use .ua.*; accept ISO/BCP-47 "uk" from host cultures.
+        return code == "uk" ? "ua" : code;
     }
 
     /// <summary>

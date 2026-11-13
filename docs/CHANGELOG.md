@@ -7,6 +7,24 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.8.0 — 13 Nov 2026
+
+### Library
+
+- `SendCodeStep`: SMS channel loads `{Template}-sms` (short OTP body); email keeps `{Template}`; action URL still uses the base template name.
+- Stock templates: short `verify-sms` / `reset-sms` (en/ru/de/pl/ua/ro); email locales DE/PL/UA for register / verify / reset / confirm-email / password-changed.
+
+### Tests
+
+- `SendCode_StepTests`: SMS path asserts `verify-sms` compose and never loads email `verify`.
+
+### Documentation / sample
+
+- `docs/SMS-OTP-TEMPLATES.md`; README SMS OTP note; README / CONTRIBUTING clarify required `CrossIdentity:LicenseKey` + PepperVault host wiring.
+- Sample.Api: drop `register.ro` / `verify.ro`; add `verify-sms` en/ru stubs.
+
+---
+
 ## v2.7.0 — 10 Nov 2026
 
 ### Library

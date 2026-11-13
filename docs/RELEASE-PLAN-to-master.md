@@ -1,16 +1,16 @@
-﻿# Release readiness plan `2.7.0` → `master`
+﻿# Release readiness plan `2.8.0` → `master`
 
-> **Analysis date:** 2026-11-11
-> **Branch:** `release/register-email-or-phone` (`d92e393`)
-> **Comparison base:** `origin/master` (`v2.6.0` / `677b16b`) · merge-base `677b16b`
-> **Version plan:** [`docs/RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
-> **Goal:** verification checklist before merge of **2.7.0** into `master`
+> **Analysis date:** 2026-11-13
+> **Branch:** `release/sms-otp-templates` (`c1f2474`)
+> **Comparison base:** `origin/master` (`v2.7.0` / `4fd1703`) · merge-base `4fd1703`
+> **Version plan:** [`docs/RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
+> **Goal:** verification checklist before merge of **2.8.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** Stock `main.Register` Email|Phone `atLeastOneRequired` + form cross-field validators. Tip in sync with origin · PR [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) OPEN · CI on tip green (`breaking-approved`). Local WT: M114 dismissed + plan/TO-DO/to-master refresh (not in tip). Tag `v2.7.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
-> **Sources:** `git` / version plan / `gh pr checks 25` / local filter (re-verified 2026-11-11)
+> **Note:** SMS `{Template}-sms` + DE/PL/UA + `uk`→`ua` + LicenseKey docs + FLOWS L22. PR [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · tip **in sync** · CI green (`breaking-approved`). GitHub `mergeStateStatus=BLOCKED` — owner/ruleset (not a pre-merge code gate). Tag `v2.8.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
+> **Sources:** `git` / version plan / `gh pr checks 26` (re-verified 2026-11-13)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **40** items — ✅ **30** (75%) · 🟨 **8** (20%) · ⬜ **2** (5%) · ❌ **0** (0%)
+**Change summary:** **44** items — ✅ **44** (100%) · 🟨 **0** (0%) · ⬜ **0** (0%) · ❌ **0** (0%)
 
 ---
 
@@ -18,28 +18,28 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **2** (`de35167` · `d92e393`) |
-| Files (committed three-dot) | **14** · **+518 / −83** |
-| Working tree | dirty — plan / TO-DO / this checklist (M114 dismiss + header sync) |
-| Local vs `origin/release/register-email-or-phone` | tip **in sync**; docs WT ahead |
-| Tests | local ✅ filter — **75** passed · PR CI build ✅ |
-| PR | [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) OPEN · labels `breaking-changes` + `breaking-approved` |
-| CodeRabbit | `2026-11-10` · PR check SUCCESS · M114 dismissed locally |
-| Version-plan open C/H/M/L | **empty** (plan `(closed)`; HW `C1` `H32` `M114` `L21`) |
+| Commits (`origin/master..HEAD`) | **9** |
+| Files (committed three-dot) | **76** · **+2 386 / −693** |
+| Working tree | clean |
+| Local vs `origin/release/sms-otp-templates` | tip **in sync** (`c1f2474`) |
+| Tests | PR CI `build` ✅ (local suite via CI) |
+| PR | [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) OPEN · head `c1f2474` · `breaking-approved` |
+| CodeRabbit | tip checks pass / skip |
+| Version-plan open C/H/M/L | **empty** · HW `C1` `H34` `M121` `L23` · L22 closed |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
-| Form validators | 1 | Enforce `atLeastOneRequired` / `exactlyOneRequired` + form-level failures |
-| Register flow | 2 | `main.Register.json` + FLOWS |
-| Collect / UserService | 2 | Blank identity → null |
-| Tests | 3 | Flow / factory / UserService |
-| docs | 4 | PLAN 2.7.0, CHANGELOG, BREAKING 2.6.0→2.7.0, TO-DO |
+| SendCodeStep | 1 | SMS `{Template}-sms` resolve |
+| Templates | ~60 | SMS short + DE/PL/UA email |
+| Language | 1+ | ISO `uk` → template key `ua` |
+| Tests | 1+ | SendCode SMS path |
+| docs / sample | ~8 | SMS-OTP-TEMPLATES, BREAKING/CHANGELOG, README, FLOWS `-sms` |
 
 ---
 
 ## Table of contents
 
-1. [New functionality (2.7.0)](#1-new-functionality-270)
+1. [New functionality (2.8.0)](#1-new-functionality-280)
 2. [Breaking / consumer notes](#2-breaking--consumer-notes)
 3. [Code gate](#3-code-gate)
 4. [Practical ship steps](#4-practical-ship-steps)
@@ -52,13 +52,15 @@
 
 ---
 
-## 1. New functionality (2.7.0)
+## 1. New functionality (2.8.0)
 
 | # | Block | Key changes | Status |
 |---|---|---|---|
-| F1 | Register identity | Email\|Phone `atLeastOneRequired`; UserName alias only | ✅ |
-| F2 | Form cross-field | `atLeastOneRequired` / `exactlyOneRequired` runtime + form-level `AddFailure` | ✅ |
-| F3 | Blank normalization | collectForm bag + `CreateUserAsync` | ✅ |
+| F1 | SMS OTP templates | `{Template}-sms` resolve + stock short bodies | ✅ |
+| F2 | Email locales | DE/PL/UA register/verify/reset/confirm/password-changed | ✅ |
+| F3 | Sample cleanup | Drop RO register/verify; `verify-sms` stubs | ✅ |
+| F4 | Language `uk`→`ua` | ISO alias; `.ua.*` files unchanged | ✅ |
+| F5 | LicenseKey docs | prod/dev + log levels in README/CONTRIBUTING | ✅ |
 
 ---
 
@@ -66,8 +68,8 @@
 
 | # | Change | Action | Status |
 |---|---|---|---|
-| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.6.0 to 2.7.0 | Register email-or-phone; validators enforced | ✅ |
-| B2 | Hosts / FE | Stop assuming bag always has `Email` | ✅ documented |
+| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.7.0 to 2.8.0 | Custom SMS template hosts must ship `-sms` | ✅ |
+| B2 | Hosts / custom providers | Add short `-sms` variants | ✅ |
 
 ---
 
@@ -75,10 +77,10 @@
 
 | # | Check | Status |
 |---|---|---|
-| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) empty | ✅ tip + local |
-| CG2 | Closed H32 · M109–M114 (+ tests); plan **closed** | ✅ M114 dismissed (local WT) |
-| CG3 | PR opened | ✅ [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) |
-| CG4 | Commit feature + docs | 🟨 tip `de35167`+`d92e393`; plan/TO-DO/to-master WT dirty |
+| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) empty | ✅ |
+| CG2 | Closed H33–H34 · M115–M121 · L22–L23 (+ tests) | ✅ |
+| CG3 | PR opened | ✅ [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) |
+| CG4 | Commit / push tip + docs | ✅ tip `c1f2474` in sync with origin |
 
 ---
 
@@ -87,9 +89,9 @@
 | # | Step | Status |
 |---|---|---|
 | P1 | Push branch tip | ✅ in sync with origin |
-| P2 | Open PR → `master` | ✅ [#25](https://github.com/denis-peshkov/Cross.Identity/pull/25) |
-| P3 | CI green on PR tip | ✅ build · breaking-gate · Sonar · CodeQL · Owner-only · CodeRabbit |
-| P4 | Ready to merge → `master` | 🟨 CI go; GitHub `mergeStateStatus=BLOCKED` — tag/NuGet post-merge |
+| P2 | Open PR → `master` | ✅ [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) |
+| P3 | CI green on PR tip | ✅ build · breaking-gate · Sonar · CodeQL · Owner-only |
+| P4 | Ready to merge → `master` | ✅ go (CI + tip); merge UI BLOCKED = owner/ruleset — tag/NuGet post-merge |
 
 ---
 
@@ -97,12 +99,13 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md) | 🟨 `(closed)` · open empty · M114/Принято/delta/PR refreshed locally (uncommitted) |
-| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.7.0 | ✅ |
-| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.6.0 to 2.7.0 | ✅ |
-| D4 | FLOWS `main.Register` | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | 🟨 HW → `M114` + LockChannel Принято locally (uncommitted) |
-| D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
+| D1 | [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) | ✅ finalized `(closed)` |
+| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.8.0 | ✅ |
+| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.7.0 to 2.8.0 | ✅ |
+| D4 | `docs/SMS-OTP-TEMPLATES.md` / README | ✅ |
+| D5 | [`FLOWS.md`](../Cross.Identity/FLOWS.md) `sendCode` `-sms` | ✅ |
+| D6 | [`TO-DO.md`](TO-DO.md) | ✅ HW `C1` `H34` `M121` `L23` · L22 closed |
+| D7 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 
 ---
 
@@ -110,8 +113,8 @@
 
 | # | Check | Status |
 |---|---|---|
-| T1 | Register / validator / UserService coverage | ✅ |
-| T2 | Related local filter | ✅ 75 passed (re-run 2026-11-11) |
+| T1 | `SendCode` SMS unit coverage | ✅ |
+| T2 | Suite evidence | ✅ via PR CI `build` |
 | T3 | PR CI build | ✅ |
 
 ---
@@ -120,7 +123,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| C1 | CI green on PR #25 (current tip) | ✅ |
+| C1 | CI green on PR #26 (current tip) | ✅ |
 | C2 | Tag / NuGet pipeline | ✅ post-merge on `master` (not a pre-merge gate) |
 
 ---
@@ -129,7 +132,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| M1 | Schema / seed scripts | ✅ N/A (no DDL in `origin/master...HEAD`) |
+| M1 | Schema / seed scripts | ✅ N/A (no DDL) |
 
 ---
 
@@ -137,26 +140,27 @@
 
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
-| R1 | Custom flows with unused `exactlyOneRequired` / `atLeastOneRequired` | Now fail closed — documented in BREAKING | ✅ |
-| R2 | Merge UI BLOCKED despite tip CI green | Owner merge / ruleset bypass if needed | 🟨 |
-| R3 | Uncommitted docs (M114 dismiss + checklist) | Commit before next push / merge | ⬜ |
+| R1 | Custom template hosts missing `-sms` | BREAKING + SMS-OTP-TEMPLATES | ✅ |
+| R2 | FLOWS.md `sendCode` `-sms` | ✅ #L22 | ✅ |
+| R3 | Tip / docs on PR | Synced `c1f2474` | ✅ |
+| R4 | Merge UI BLOCKED | Owner merge when ready (not a code gate) | ✅ accepted |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — open C/H/M/L empty; plan `(closed)`; M114 dismissed
-- ✅ **2. Push** branch tip — in sync with origin
-- ✅ **3. PR #25** + CI green on tip (`breaking-approved`)
-- 🟨 **4. Docs content** — BREAKING/CHANGELOG/FLOWS on tip; M114/HW/to-master local WT
-- 🟨 **5. Ready to merge** — CI go; GitHub merge still BLOCKED; commit docs WT first; tag/NuGet only after `master`
+- ✅ **1. Code gate** — plan `(closed)`; L22 closed
+- ✅ **2. Commit/push** tip in sync with origin
+- ✅ **3. PR #26** + CI green on tip
+- ✅ **4. Docs content** — BREAKING / CHANGELOG / SMS-OTP / FLOWS `-sms`
+- ✅ **5. Ready to merge** — code/CI go; tag `v2.8.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty / finalized `(closed)`
 - ✅ Feature set committed + pushed
-- ⬜ Docs WT (M114 dismiss / HW / to-master) committed
-- ✅ PR #25 / CI green on tip
+- ✅ Docs / FLOWS `-sms` on tip
+- ✅ PR #26 / CI green on tip
 - ✅ PostDeployment N/A
-- 🟨 Merge UI not clean (`BLOCKED`) — owner action
+- ✅ Ready to merge (GitHub merge UI may show BLOCKED — owner/ruleset)
 - ✅ Tag/NuGet out of scope until `master`

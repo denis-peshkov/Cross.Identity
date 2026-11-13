@@ -12,6 +12,9 @@ on:
       - feature/*
       - fix/*
       - chore/*
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
@@ -19,6 +22,9 @@ on:
       - release/*
       - hotfix/*
       - dev
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
   workflow_dispatch: # allows manual runs from the Actions tab
 
 jobs:
