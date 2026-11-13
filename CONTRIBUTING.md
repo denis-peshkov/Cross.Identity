@@ -22,10 +22,10 @@ Thank you for your interest in the project.
 - process engine with JSON flows (`main/*`, …);
 - JWT access/refresh, Argon2, OTP (email/SMS);
 - external OAuth (Google, Microsoft, GitHub, Facebook, Apple Sign In);
-- **`CrossIdentity:LicenseKey`** — required (Peshkov JWT; section + non-empty key);
-- **Pepper** (`Pepper` config + host-registered `IPepperVaultProvider`) — **required** for password hash/verify (`AddCrossIdentity` does not register the pepper provider).
+- **`CrossIdentity:LicenseKey`** — **required in production** (Peshkov JWT; non-empty key). Missing/invalid key is allowed in development/testing (`LogCritical`, soft-fail — flows still run);
+- **Pepper** (`Pepper` config + host-registered `IPepperVaultProvider`) — **always required** for password hash/verify (`AddCrossIdentity` does not register the pepper provider).
 
-Consumers configure both sections, register PepperVault, then `services.AddCrossIdentity(configuration)`, and call `IFlowExecutor.ExecuteAsync`.
+Consumers configure Pepper (always) and LicenseKey (production), register PepperVault, then `services.AddCrossIdentity(configuration)`, and call `IFlowExecutor.ExecuteAsync`.
 
 ---
 

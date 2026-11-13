@@ -53,6 +53,7 @@
 | ✅ #H34 BREAKING SMS template contract | `docs/BREAKING.md` From 2.7.0→2.8.0 + CHANGELOG `v2.8.0` |
 | ✅ Tests `SendCode` SMS path | Asserts `verify-sms` load / body; never email `verify` |
 | ✅ #M119 README LicenseKey log levels | Table: null → Critical; empty/invalid JWT → Error + Critical |
+| ✅ #M120 README/CONTRIBUTING LicenseKey prod vs dev | Production requires key; dev/test soft-fail; Pepper always required |
 
 ---
 

@@ -27,7 +27,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
 - **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. Apple uses `form_post` — `CallbackUrl` must be a POST-capable host bridge (see Sample.Api `/oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
-- **Licensing (JWT)** — host must set `CrossIdentity:LicenseKey` (Peshkov JWT); validated on `IFlowExecutor.ExecuteAsync` (see table below).
+- **Licensing (JWT)** — production hosts must set `CrossIdentity:LicenseKey` (Peshkov JWT); missing key is allowed in development/testing (logged, flows not blocked). Validated on `IFlowExecutor.ExecuteAsync` (see table below).
 
 ## Phone numbers (E.164)
 
@@ -141,7 +141,9 @@ services.AddCrossIdentity(configuration);
 // LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
 ```
 
-**Required host config:** both sections are mandatory — `CrossIdentity` (with a non-empty `LicenseKey`) and `Pepper` (real pepper values). Do **not** omit Pepper: password flows (Register / Token / ChangePassword / ResetPassword) need it for hash/verify. Obtain a license key at [peshkov.biz](https://peshkov.biz) (or `CrossIdentity__LicenseKey` env).
+**Required host config:**
+- **`Pepper`** (real pepper values + host-registered `IPepperVaultProvider`) — **always required** for password hash/verify (Register / Token / ChangePassword / ResetPassword). Do **not** omit it.
+- **`CrossIdentity:LicenseKey`** — **required in production** (Peshkov JWT; non-empty key). Missing/invalid key is allowed in development and testing: `LicenseValidator` logs `LogCritical` and does **not** block the flow. Obtain a key at [peshkov.biz](https://peshkov.biz) (or `CrossIdentity__LicenseKey` env).
 
 ```json
 {
