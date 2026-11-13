@@ -1,8 +1,8 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.8.0` (closed) · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
+> **Версия:** `2.8.0` · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
 >
-> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.8.0
+> **Релиз (если есть):** —
 >
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
@@ -11,9 +11,9 @@
 > Дельта: `origin/master...HEAD` — **2** коммита · **67** файлов · **+2 171 / −626**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался.
+- не запускался. → все закрыты в этом плане.
 
-**PR:** —
+**PR:** https://github.com/denis-peshkov/Cross.Identity/pull/26
 
 ---
 
@@ -52,6 +52,7 @@
 | ✅ #H33 README/CONTRIBUTING LicenseKey+Pepper | Required host LicenseKey + PepperVault wiring documented |
 | ✅ #H34 BREAKING SMS template contract | `docs/BREAKING.md` From 2.7.0→2.8.0 + CHANGELOG `v2.8.0` |
 | ✅ Tests `SendCode` SMS path | Asserts `verify-sms` load / body; never email `verify` |
+| ✅ #M119 README LicenseKey log levels | Table: null → Critical; empty/invalid JWT → Error + Critical |
 
 ---
 
@@ -64,4 +65,4 @@
 
 ## Приоритет фиксов
 
-_(пусто — релиз `2.8.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
+_(пусто.)_

@@ -27,7 +27,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
 - **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. Apple uses `form_post` — `CallbackUrl` must be a POST-capable host bridge (see Sample.Api `/oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
-- **Licensing (JWT)** — host must set `CrossIdentity:LicenseKey` (Peshkov JWT); checked on the first flow call.
+- **Licensing (JWT)** — host must set `CrossIdentity:LicenseKey` (Peshkov JWT); validated on `IFlowExecutor.ExecuteAsync` (see table below).
 
 ## Phone numbers (E.164)
 
@@ -161,13 +161,13 @@ services.AddCrossIdentity(configuration);
 }
 ```
 
-License validation runs on the **first** call to `IFlowExecutor.ExecuteAsync`:
+License validation runs on calls to `IFlowExecutor.ExecuteAsync` (`LicenseAccessor` parse + `LicenseValidator` policy). Soft-fail: flows still run; production hosts must configure a valid key.
 
 | Scenario | Result |
 |---|---|
-| Key not set / empty | `LogCritical` (unsupported — configure `LicenseKey`) |
-| Invalid JWT | `LogError` |
-| Expired / wrong product type | `LogError` + `LogCritical` |
+| Key not set (`null`) | `LogCritical` (`LicenseValidator` — unconfigured) |
+| Empty / malformed / invalid JWT | `LogError` (`LicenseAccessor.ValidateKey`) then `LogCritical` (`LicenseValidator` — unconfigured) |
+| Expired / wrong product type | `LogError` + `LogCritical` (`LicenseValidator`) |
 | Valid key | `LogInformation` with edition and expiration date |
 
 3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
