@@ -1,0 +1,27 @@
+Hallo, {{fullName}}!
+
+Schön, dass Sie auf der Plattform {{company}} dabei sind!
+Um die Einrichtung Ihres Kontos abzuschließen, verwenden Sie bitte den folgenden Bestätigungscode:
+
+{{code}}
+
+👉 Code verwenden
+
+Wenn die Schaltfläche nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:
+{{verificationLink}}
+
+Mit freundlichen Grüßen
+Ihr Team von {{company}}
+
+⚠️ Achtung! Der Code ist {{expires}} gültig. Danach müssen Sie die Bestätigung neu starten.
+
+Wenn Sie sich nicht auf der Plattform {{company}} registriert haben, ignorieren Sie diese E-Mail einfach.
+
+Probleme bei der Kontobestätigung? Schreiben Sie uns an {{supportEmail}}.
+
+Fragen zu Ihrem Konto auf {{site}}?
+Besuchen Sie den Bereich Mein Konto – Hilfe:
+{{helpLink}}
+
+Facebook | Instagram | YouTube
+{{site}}

@@ -1,0 +1,27 @@
+Witaj, {{fullName}}!
+
+Cieszymy się, że dołączasz do platformy {{company}}!
+Aby dokończyć konfigurację konta, użyj poniższego kodu weryfikacyjnego:
+
+{{code}}
+
+👉 Użyj kodu
+
+Jeśli przycisk nie działa, skopiuj i wklej ten link w przeglądarce:
+{{verificationLink}}
+
+Pozdrawiamy,
+Zespół {{company}}
+
+⚠️ Uwaga! Kod jest ważny przez {{expires}}. Potem trzeba będzie ponownie rozpocząć potwierdzenie konta.
+
+Jeśli nie rejestrowałeś się na platformie {{company}}, zignoruj tę wiadomość.
+
+Problemy z potwierdzeniem konta? Napisz do nas: {{supportEmail}}.
+
+Masz pytania dotyczące konta na {{site}}?
+Odwiedź sekcję Moje konto – Pomoc:
+{{helpLink}}
+
+Facebook | Instagram | YouTube
+{{site}}

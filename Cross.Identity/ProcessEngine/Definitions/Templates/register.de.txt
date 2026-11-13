@@ -1,0 +1,19 @@
+Hallo, {{fullName}},
+
+Willkommen bei {{company}}. Ihr Konto für {{email}} ist bereit.
+
+👉 Zum Konto anmelden:
+{{url}}
+
+Mit freundlichen Grüßen
+Ihr Team von {{company}}
+
+Fragen zu Ihrem Konto auf {{site}}?
+Besuchen Sie den Bereich Mein Konto – Hilfe.
+
+Fragen? {{supportEmail}}
+
+Facebook | Instagram | YouTube
+{{site}}
+
+© {{year}} {{brand}}
