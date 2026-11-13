@@ -56,6 +56,7 @@
 | ✅ #M119 README LicenseKey log levels | Table: null → Critical; empty/invalid JWT → Error + Critical |
 | ✅ #M120 README/CONTRIBUTING LicenseKey prod vs dev | Production requires key; dev/test soft-fail; Pepper always required |
 | ✅ #M121 Map ISO `uk` → template key `ua` | `ResolveLanguageCode` alias; FLOWS + unit tests; `.ua.*` unchanged |
+| ✅ #L23 SMS-OTP-TEMPLATES segment encoding | Columns GSM-7 / Unicode; note extension chars ×2 |
 
 ---
 

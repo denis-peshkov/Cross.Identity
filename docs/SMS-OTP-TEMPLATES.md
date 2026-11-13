@@ -13,7 +13,9 @@ SMS uses short single-segment templates:
 
 ## Segment limits (SMSClub)
 
-| Parts | Latin | Cyrillic |
+Limits depend on **message encoding**, not script: GSM-7 (basic Latin alphabet) vs Unicode (any non–GSM-7 character, including Cyrillic). GSM-7 **extension** characters (`|`, `^`, `{`, `}`, `[`, `]`, `~`, `\`, Euro) consume **two** septets each.
+
+| Parts | GSM-7 | Unicode |
 | --- | ---: | ---: |
 | 1 | 160 | 70 |
 | 2 | 306 | 134 |
@@ -22,4 +24,4 @@ SMS uses short single-segment templates:
 
 Max **4 parts**; prefer **≤ 3**. OTP should stay in **1 segment**.
 
-Current SMS bodies (after `{{code}}` substitution, ~6 digits) stay well under one segment even with Cyrillic.
+Current SMS bodies (after `{{code}}` substitution, ~6 digits) stay well under one segment even when encoded as Unicode.
