@@ -36,6 +36,7 @@ internal sealed class SendCodeStep : IStep
     /// <summary>Template name under Definitions/Templates. Defaults to <c>verify</c>.</summary>
     /// <remarks>
     /// Action link path: <c>reset</c> → <c>/reset-password</c>; other templates (e.g. <c>verify</c>) → <c>/verify</c>.
+    /// For <see cref="ChannelEnum.Sms"/> the step loads <c>{Template}-sms</c> (short single-segment body); email keeps <c>{Template}</c>.
     /// When selector is Email / PhoneNumber, <c>email</c> / <c>phone</c> query params are appended (deep-link identity; channel is still resolved server-side on verify).
     /// </remarks>
     public required string Template { get; init; }
@@ -94,9 +95,10 @@ internal sealed class SendCodeStep : IStep
             ?? throw new InvalidOperationException("Authentication:ClientUrl is not configured.");
 
         var actionUrl = BuildActionUrl(clientUrl, code, selector);
+        var templateName = ResolveTemplateName(target.Channel);
         var bodies = NotificationComposer.Compose(
             ctx,
-            Template,
+            templateName,
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["{{email}}"] = selector.Value,
@@ -132,11 +134,29 @@ internal sealed class SendCodeStep : IStep
         }
     }
 
+    private string ResolveTemplateName(ChannelEnum channel)
+    {
+        if (channel != ChannelEnum.Sms)
+        {
+            return Template;
+        }
+
+        if (Template.EndsWith("-sms", StringComparison.OrdinalIgnoreCase))
+        {
+            return Template;
+        }
+
+        return Template + "-sms";
+    }
+
     private string BuildActionUrl(string clientUrl, string code, (string Field, string Value) selector)
     {
         var baseUrl = clientUrl.TrimEnd('/');
         var encodedCode = Uri.EscapeDataString(code);
-        var path = Template.Equals("reset", StringComparison.OrdinalIgnoreCase)
+        var baseTemplate = Template.EndsWith("-sms", StringComparison.OrdinalIgnoreCase)
+            ? Template[..^4]
+            : Template;
+        var path = baseTemplate.Equals("reset", StringComparison.OrdinalIgnoreCase)
             ? "reset-password"
             : "verify";
         var url = $"{baseUrl}/{path}?code={encodedCode}";

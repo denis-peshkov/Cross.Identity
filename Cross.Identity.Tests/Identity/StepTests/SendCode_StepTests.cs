@@ -426,10 +426,20 @@ public class SendCode_StepTests
         SetupOtpTarget(ChannelEnum.Sms, phone);
 
         _environment.Setup(e => e.EnvironmentName).Returns(Environments.Development);
-        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "txt"))
-            .Returns("Code: {{code}}");
-        _processDefinitionProvider.Setup(p => p.GetTemplate("verify", "en", "html"))
-            .Returns("<html>Code: {{code}}</html>");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify-sms", "en", "txt"))
+            .Returns("Your code: {{code}}");
+        _processDefinitionProvider.Setup(p => p.GetTemplate("verify-sms", "en", "html"))
+            .Returns("Your code: {{code}}");
+
+        NotificationMessage? captured = null;
+        _codeService.Setup(c => c.SendAsync(
+                It.IsAny<NotificationMessage>(),
+                It.IsAny<string>(),
+                It.IsAny<Guid>(),
+                It.IsAny<TimeSpan>(),
+                It.IsAny<CancellationToken>()))
+            .Callback<NotificationMessage, string, Guid, TimeSpan, CancellationToken>((m, _, _, _, _) => captured = m)
+            .Returns(Task.CompletedTask);
 
         var step = new SendCodeStep
         {
@@ -459,6 +469,10 @@ public class SendCode_StepTests
         var code = bag.Get<string>("sendCode.LastCode");
         code.Should().NotBeNullOrEmpty();
         code.Should().MatchRegex("^[0-9]+$");
+        captured.Should().NotBeNull();
+        captured!.TextBody.Should().Be($"Your code: {code}");
+        _processDefinitionProvider.Verify(p => p.GetTemplate("verify-sms", "en", "txt"), Times.AtLeastOnce);
+        _processDefinitionProvider.Verify(p => p.GetTemplate("verify", "en", "txt"), Times.Never);
     }
 
     [Test]

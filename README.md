@@ -24,9 +24,10 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
 - **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
+- **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
 - **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. Apple uses `form_post` — `CallbackUrl` must be a POST-capable host bridge (see Sample.Api `/oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
-- **Licensing (JWT)** — Peshkov license key check on the first flow call; without a key in dev/test, execution continues with a warning in logs.
+- **Licensing (JWT)** — host must set `CrossIdentity:LicenseKey` (Peshkov JWT); checked on the first flow call.
 
 ## Phone numbers (E.164)
 
@@ -128,38 +129,50 @@ services.AddDbContext<IdentityContext>(options =>
 
    Note: bulk `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic `ConcurrencyStamp` rotation. Prefer tracked `SaveChanges`. If you must use bulk APIs: filter by the **original** stamp, treat **0 affected rows** as a concurrency conflict, and assign a **new** stamp only in `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` has no SET — put the stamp only in the WHERE.
 
-2. **Register Cross.Identity** services:
+2. **Register Cross.Identity** services **and Pepper** (password hashing). `AddCrossIdentity` does **not** register the pepper provider — the host must wire Cross.PepperVault (see Sample.Api):
 
 ```csharp
+// Required for password hash/verify — do not skip.
+services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
+services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();
+
 services.AddCrossIdentity(configuration);
 // Registers: IFlowExecutor, StepRegistry, all IStepFactory, UserService, CodeService, JwtTokenService,
 // LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
 ```
 
-3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
-
-License key (optional) — `CrossIdentity` section in configuration or the `CrossIdentity__LicenseKey` environment variable:
+**Required host config:** both sections are mandatory — `CrossIdentity` (with a non-empty `LicenseKey`) and `Pepper` (real pepper values). Do **not** omit Pepper: password flows (Register / Token / ChangePassword / ResetPassword) need it for hash/verify. Obtain a license key at [peshkov.biz](https://peshkov.biz) (or `CrossIdentity__LicenseKey` env).
 
 ```json
 {
   "CrossIdentity": {
     "LicenseKey": "<license key here>"
+  },
+  "Pepper": {
+    "Provider": "Env",
+    "Ttl": "00:10:00",
+    "ProviderOptions": {
+      "Current": 1,
+      "Peppers": {
+        "1": "<pepper value here>"
+      }
+    }
   }
 }
 ```
 
-Validation runs automatically on the **first** call to `IFlowExecutor.ExecuteAsync` — no extra code required. Keys: [peshkov.biz](https://peshkov.biz).
-
-Behavior:
+License validation runs on the **first** call to `IFlowExecutor.ExecuteAsync`:
 
 | Scenario | Result |
 |---|---|
-| Key not set | `LogCritical`, flow runs (dev/test) |
-| Invalid JWT | `LogError`, flow runs |
-| Expired / wrong product type | `LogError` + `LogCritical`, flow runs |
+| Key not set / empty | `LogCritical` (unsupported — configure `LicenseKey`) |
+| Invalid JWT | `LogError` |
+| Expired / wrong product type | `LogError` + `LogCritical` |
 | Valid key | `LogInformation` with edition and expiration date |
 
-3. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
+3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
+
+4. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
 
 ```csharp
 var result = await _flowExecutor.ExecuteAsync(
@@ -170,7 +183,7 @@ var result = await _flowExecutor.ExecuteAsync(
 // result.Data — dictionary of fields from the collectResult step (e.g. access_token, refresh_token, LastCode).
 ```
 
-4. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
+5. **Flow definitions** — JSON in `ProcessEngine/Definitions/Flows/` (and optionally from the file system). File names: `{flow}.{Operation}.json` (e.g. `main.Token.json`, `main.Register.json`). See [FLOWS.md](Cross.Identity/FLOWS.md) for detailed flow and step documentation.
 
 ## Dependencies (NuGet)
 
