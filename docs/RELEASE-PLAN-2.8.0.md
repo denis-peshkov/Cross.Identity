@@ -1,19 +1,19 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.8.0` · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
+> **Версия:** `2.8.0` (closed) · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
 >
-> **Релиз (если есть):** —
+> **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.8.0
 >
 > **Легенда:** ⬜ open · ✅ done · 🟨 partial / принято · ❌ blocker
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.7.0.md`](RELEASE-PLAN-2.7.0.md)
 >
-> Дельта: `origin/master...HEAD` — **2** коммита · **67** файлов · **+2 171 / −626**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **7** коммитов · **76** файлов · **+2 382 / −693**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → все закрыты в этом плане.
+- не запускался.
 
-**PR:** https://github.com/denis-peshkov/Cross.Identity/pull/26
+**PR:** [#26](https://github.com/denis-peshkov/Cross.Identity/pull/26) (`Add short SMS OTP templates and DE/PL/UA email locales`).
 
 ---
 
@@ -69,4 +69,4 @@
 
 ## Приоритет фиксов
 
-_(пусто.)_
+_(пусто — релиз `2.8.0` закрыт; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

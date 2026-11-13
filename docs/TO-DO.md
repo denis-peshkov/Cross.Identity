@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H34` `M118` `L22`
+**Id high-water (не переиспользовать ≤):** `C1` `H34` `M121` `L23`
 
 ---
 
@@ -116,3 +116,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - SMS OTP bodies — short single-segment (`verify-sms` / `reset-sms`); email keeps long HTML/txt.
 - `SendCodeStep` appends `-sms` automatically when channel is SMS (idempotent if already `-sms`).
 - Sample.Api drops Romanian `register`/`verify` overrides; stock library still ships `register.ro` / `verify.ro`.
+- Ukrainian template files stay `*.ua.*`; ISO `uk` maps to `ua` (HTML `lang="uk"` unchanged).

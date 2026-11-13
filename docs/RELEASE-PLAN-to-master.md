@@ -1,7 +1,7 @@
 ﻿# Release readiness plan `2.8.0` → `master`
 
 > **Analysis date:** 2026-11-13
-> **Branch:** `release/sms-otp-templates` (`18c329b`)
+> **Branch:** `release/sms-otp-templates` (`11b7129`)
 > **Comparison base:** `origin/master` (`v2.7.0` / `4fd1703`) · merge-base `4fd1703`
 > **Version plan:** [`docs/RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md) (**closed**) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.8.0** into `master`
@@ -18,8 +18,8 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **2** (`612c5aa` · `18c329b`) |
-| Files (committed three-dot) | **67** · **+2 171 / −626** |
+| Commits (`origin/master..HEAD`) | **7** |
+| Files (committed three-dot) | **76** · **+2 382 / −693** |
 | Working tree | dirty — plan / BREAKING / CHANGELOG / to-master (+ 2.7.0 published label) |
 | Local vs `origin/release/sms-otp-templates` | tip **in sync**; docs WT ahead |
 | Tests | local ⬜ (`dotnet` AdvSimd/LSE abort in this env) |
