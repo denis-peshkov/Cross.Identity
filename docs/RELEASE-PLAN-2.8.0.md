@@ -38,6 +38,7 @@
 - SMS OTP bodies — short single-segment (`verify-sms` / `reset-sms`); email keeps long HTML/txt.
 - `SendCodeStep` appends `-sms` automatically when channel is SMS (idempotent if already `-sms`).
 - Sample.Api drops Romanian `register`/`verify` overrides; stock library still ships `register.ro` / `verify.ro`.
+- Ukrainian template files stay `*.ua.*`; ISO `uk` maps to `ua` (HTML `lang="uk"` unchanged).
 
 ---
 
@@ -54,6 +55,7 @@
 | ✅ Tests `SendCode` SMS path | Asserts `verify-sms` load / body; never email `verify` |
 | ✅ #M119 README LicenseKey log levels | Table: null → Critical; empty/invalid JWT → Error + Critical |
 | ✅ #M120 README/CONTRIBUTING LicenseKey prod vs dev | Production requires key; dev/test soft-fail; Pepper always required |
+| ✅ #M121 Map ISO `uk` → template key `ua` | `ResolveLanguageCode` alias; FLOWS + unit tests; `.ua.*` unchanged |
 
 ---
 

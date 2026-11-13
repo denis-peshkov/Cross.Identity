@@ -33,6 +33,30 @@ public class HostSuppliedLanguageContextTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenLanguageCodeUk_WhenResolveLanguageCode_ThenMapsToUa()
+    {
+        new HostSuppliedLanguageContext("uk").ResolveLanguageCode().Should().Be("ua");
+        new HostSuppliedLanguageContext("UK").ResolveLanguageCode().Should().Be("ua");
+        new HostSuppliedLanguageContext("ua").ResolveLanguageCode().Should().Be("ua");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenLanguageCodeUk_WhenResolveTemplate_ThenUsesUaTemplates()
+    {
+        var provider = new Mock<IProcessDefinitionProvider>();
+        provider.Setup(p => p.GetTemplate("verify-sms", "ua", "txt")).Returns("UA sms");
+
+        var body = new HostSuppliedLanguageContext("uk")
+            .ResolveTemplate(provider.Object, "verify-sms", "txt");
+
+        body.Should().Be("UA sms");
+        provider.Verify(p => p.GetTemplate("verify-sms", "ua", "txt"), Times.Once);
+        provider.Verify(p => p.GetTemplate("verify-sms", "uk", "txt"), Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingLanguageTemplate_WhenResolveTemplate_ThenFallsBackToEn()
     {
         var provider = new Mock<IProcessDefinitionProvider>();
