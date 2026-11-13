@@ -57,6 +57,7 @@
 | ✅ #M120 README/CONTRIBUTING LicenseKey prod vs dev | Production requires key; dev/test soft-fail; Pepper always required |
 | ✅ #M121 Map ISO `uk` → template key `ua` | `ResolveLanguageCode` alias; FLOWS + unit tests; `.ua.*` unchanged |
 | ✅ #L23 SMS-OTP-TEMPLATES segment encoding | Columns GSM-7 / Unicode; note extension chars ×2 |
+| ✅ #L22 FLOWS.md `sendCode` `-sms` | kind reference documents SMS `{template}-sms` resolve + base-name action URL |
 
 ---
 

@@ -68,9 +68,6 @@ XML для public properties.
 ### L10. triage skill: убрать опцию `ru`
 CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) оставить English как единственный язык output; убрать documented `ru`.
 
-### L22. FLOWS.md: `sendCode` SMS `-sms` template resolution
-`SendCodeStep` для SMS грузит `{Template}-sms`, но `FLOWS.md` step table / Register·ResetPassword still describe only `template: verify|reset` without the SMS suffix rule. `docs/SMS-OTP-TEMPLATES.md` есть; синхронизировать FLOWS одной строкой в описании `sendCode`.
-
 ---
 
 ## Принято (осознанный trade-off)
