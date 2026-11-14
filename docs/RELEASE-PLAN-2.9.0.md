@@ -47,7 +47,7 @@
 | ✅ #H35 PhoneNumbersCore → libphonenumber-csharp | Library `9.0.43` on net8/9/10; MSBuild prop rename |
 | ✅ #M122 config.nuspec + README deps | Consumer dependency list / nuspec groups updated |
 | ✅ #M123 Sample.Api drop PhoneNumbersCore | Unused direct PackageReference removed (comes via library) |
-| ✅ #M124 PhoneE164Tests RO mobile | `+40799619936` asserts valid under new metadata |
+| ✅ #M124 PhoneE164Tests RO mobile | RO Digi `+40 799…` asserts valid under new metadata |
 | ✅ #H36 BREAKING phone metadata package | `docs/BREAKING.md` From 2.8.0→2.9.0 + CHANGELOG `v2.9.0` |
 | ✅ #H37 Cross.Messaging + Microsoft.* bumps | Messaging `2.4.1`; EF/Http/JWT TFM-aligned latest stables; Sample/Tests net8 refs |
 | ✅ #M125 README Supported TFMs | Badge, section, intro line (`net8.0` / `net9.0` / `net10.0`) |

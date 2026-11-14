@@ -61,7 +61,7 @@ internal sealed class UnifiedFormValidatorFactory : IFormValidatorFactory
 
             case FieldTypeEnum.PhoneNumber:
                 if (!PhoneE164.IsValid(stringValue))
-                    ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid E.164 phone number (e.g. +79161234567).");
+                    ctx.AddFailure(field.Key, $"Field '{field.Key}' must be a valid E.164 phone number (e.g. +15551234567).");
                 break;
 
             case FieldTypeEnum.Int:

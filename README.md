@@ -26,7 +26,7 @@ Supported TFMs: `net8.0`, `net9.0`, `net10.0`.
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
 - **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
-- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
+- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+15551234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
 - **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. Apple uses `form_post` — `CallbackUrl` must be a POST-capable host bridge (see Sample.Api `/oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
@@ -35,7 +35,7 @@ Supported TFMs: `net8.0`, `net9.0`, `net10.0`.
 
 ## Phone numbers (E.164)
 
-Cross.Identity accepts **only** E.164 phone numbers, for example `+79161234567`.
+Cross.Identity accepts **only** E.164 phone numbers, for example `+15551234567`.
 
 - Gate: `collectForm` fields with `"type": "PhoneNumber"` — validated via `PhoneE164.IsValid` and stored with `PhoneE164.Require`.
 - Downstream (`UserService`, lookups, OTP) **trust** the bag value and do not re-validate/normalize.

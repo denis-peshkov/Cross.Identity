@@ -37,7 +37,7 @@ Release: [v2.9.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v
 | Area | Was (≤2.8.0) | Now (2.9.0+) |
 |---|---|---|
 | NuGet dependency | `PhoneNumbersCore` 1.1.1 (stale metadata) | `libphonenumber-csharp` 9.0.43 |
-| `PhoneE164` / `PhoneNumber` form gate | Rejected some real mobiles (e.g. RO `+40799…`) | Current Google libphonenumber metadata |
+| `PhoneE164` / `PhoneNumber` form gate | Rejected some real mobiles (e.g. RO `+40 799…`) | Current Google libphonenumber metadata |
 
 **Action:** restore/upgrade so transitive `PhoneNumbersCore` is replaced. Hosts that referenced `PhoneNumbersCore` directly should switch to `libphonenumber-csharp` (same `PhoneNumbers` namespace). Public `PhoneE164` API unchanged.
 
@@ -326,7 +326,7 @@ Cross.Identity no longer depends on `Cross.Headers`.
 
 ### Phone numbers: E.164 only
 
-Phone number inputs must be E.164, e.g. `+79161234567`. **`collectForm`** (`type: PhoneNumber`) is the library gate (`PhoneE164`); `UserService` and other steps trust the normalized bag value.
+Phone number inputs must be E.164, e.g. `+15551234567`. **`collectForm`** (`type: PhoneNumber`) is the library gate (`PhoneE164`); `UserService` and other steps trust the normalized bag value.
 
 - Accepted: `+` + digits only, no spaces/punctuation; number must be a valid E.164 subscriber number.
 - Rejected: national formats (`8916…`), missing `+`, spaces, dashes, parentheses (`+7 (912) …`), and any value that is not already E.164.
