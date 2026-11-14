@@ -57,7 +57,7 @@
 | # | Block | Key changes | Status |
 |---|---|---|---|
 | F1 | Phone metadata package | `PhoneNumbersCore` → `libphonenumber-csharp` 9.0.43 | ✅ WT |
-| F2 | Coverage | RO `+40799618836` in `PhoneE164Tests` | ✅ WT |
+| F2 | Coverage | RO `+40799619936` in `PhoneE164Tests` | ✅ WT |
 
 ---
 
