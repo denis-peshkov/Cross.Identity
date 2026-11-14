@@ -43,7 +43,7 @@
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
-    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossMessagingVersion>2.4.1</CrossMessagingVersion>
     <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
     <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
     <LibPhoneNumberCsharpVersion>9.0.43</LibPhoneNumberCsharpVersion>
@@ -55,7 +55,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
-    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossMessagingVersion>2.4.1</CrossMessagingVersion>
     <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
     <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
     <LibPhoneNumberCsharpVersion>9.0.43</LibPhoneNumberCsharpVersion>
@@ -67,7 +67,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <CrossErrorHandlersVersion>7.6.0</CrossErrorHandlersVersion>
-    <CrossMessagingVersion>2.1.0</CrossMessagingVersion>
+    <CrossMessagingVersion>2.4.1</CrossMessagingVersion>
     <CrossPepperVaultVersion>1.2.0</CrossPepperVaultVersion>
     <KonsciousSecurityCryptographyArgon2Version>1.3.1</KonsciousSecurityCryptographyArgon2Version>
     <LibPhoneNumberCsharpVersion>9.0.43</LibPhoneNumberCsharpVersion>
