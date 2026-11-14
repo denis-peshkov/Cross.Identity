@@ -12,7 +12,7 @@
     "@cursor/sdk": "^1.0.22"
   },
   "resolutions": {
-    "undici": "6.28.0"
+    "undici": "6.29.1"
   },
   "engines": {
     "node": "20.19.4"

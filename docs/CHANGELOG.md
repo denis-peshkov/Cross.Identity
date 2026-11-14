@@ -7,6 +7,22 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.9.0 — 14 Nov 2026
+
+### Library
+
+- Phone validation: replace `PhoneNumbersCore` 1.1.1 with `libphonenumber-csharp` 9.0.43 (current metadata; e.g. RO `+40799618836` now accepted).
+
+### Tests
+
+- `PhoneE164Tests`: assert RO mobile `+40799618836` is valid.
+
+### Documentation / sample
+
+- `docs/BREAKING.md` From 2.8.0→2.9.0; README dependency list; Sample.Api drops unused `PhoneNumbersCore` reference.
+
+---
+
 ## v2.8.0 — 13 Nov 2026
 
 ### Library

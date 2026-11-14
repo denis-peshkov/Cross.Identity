@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.8.0` → `2.9.0+` | [From 2.8.0 to 2.9.0](#from-280-to-290) |
 | `2.7.0` → `2.8.0+` | [From 2.7.0 to 2.8.0](#from-270-to-280) |
 | `2.6.0` → `2.7.0+` | [From 2.6.0 to 2.7.0](#from-260-to-270) |
 | `2.5.6` → `2.6.0+` | [From 2.5.6 to 2.6.0](#from-256-to-260) |
@@ -24,6 +25,21 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.8.0 to 2.9.0
+
+Release: [v2.9.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.9.0).
+
+### Phone metadata: `PhoneNumbersCore` → `libphonenumber-csharp`
+
+| Area | Was (≤2.8.0) | Now (2.9.0+) |
+|---|---|---|
+| NuGet dependency | `PhoneNumbersCore` 1.1.1 (stale metadata) | `libphonenumber-csharp` 9.0.43 |
+| `PhoneE164` / `PhoneNumber` form gate | Rejected some real mobiles (e.g. RO `+40799…`) | Current Google libphonenumber metadata |
+
+**Action:** restore/upgrade so transitive `PhoneNumbersCore` is replaced. Hosts that referenced `PhoneNumbersCore` directly should switch to `libphonenumber-csharp` (same `PhoneNumbers` namespace). Public `PhoneE164` API unchanged.
 
 ---
 

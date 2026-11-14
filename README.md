@@ -197,7 +197,7 @@ var result = await _flowExecutor.ExecuteAsync(
 - Microsoft.EntityFrameworkCore (+ InMemory, Relational)
 - Microsoft.Extensions.Http
 - Microsoft.IdentityModel.JsonWebTokens
-- PhoneNumbersCore
+- libphonenumber-csharp
 
 ## Build and tests
 
