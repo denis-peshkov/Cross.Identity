@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H37` `M125` `L23`
+**Id high-water (не переиспользовать ≤):** `C1` `H39` `M129` `L24`
 
 ---
 
@@ -123,3 +123,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Ukrainian template files stay `*.ua.*`; ISO `uk` maps to `ua` (HTML `lang="uk"` unchanged).
 - Keep public `PhoneE164` API / `PhoneNumbers` namespace; swap underlying NuGet metadata package only (`PhoneNumbersCore` → `libphonenumber-csharp`).
 - Triage Cursor skill `undici` resolution bump may ride with a phone/docs ship WT — tooling noise, not part of the library ship slice.
+- Welcome notify files renamed `register` → `registered` only; stock `main.Register` still sends OTP via `verify`.
+- Stock `confirm-email.*` removed from package — unused by stock flows; hosts that relied on them ship their own.
+- Sample.Api no longer ships host overrides for `registered.*` (use stock embedded templates).
+- README TFMs: badge only; prose Supported TFMs section dropped as duplicate of the badge.

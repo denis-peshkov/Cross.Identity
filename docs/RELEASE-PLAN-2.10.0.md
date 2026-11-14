@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.10.0` · **ветка:** `release/registered-template` · **база:** `origin/master` (`v2.9.0`) · **дата:** `2026-11-14`
+> **Версия:** `2.10.0` (closed) · **ветка:** `release/registered-template` · **база:** `origin/master` (`v2.9.0`) · **дата:** `2026-11-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.10.0
 >
@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.9.0.md`](RELEASE-PLAN-2.9.0.md)
 >
-> Дельта: `origin/master...HEAD` — **6** коммитов · **38** файлов · **+202 / −1 541**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **8** коммитов · **38** файлов · **+205 / −1 541**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
@@ -65,4 +65,4 @@
 
 ## Приоритет фиксов
 
-1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md) (`M126` send `registered` after verify).
+_(пусто — релиз `2.10.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
