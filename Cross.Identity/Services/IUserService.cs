@@ -20,7 +20,7 @@ internal interface IUserService
     /// Does not throw when the user is missing — returns <c>null</c> (anti user-enumeration in lookup steps).
     /// Allowed <paramref name="selectorField"/> values depend on the implementation
     /// (at minimum <c>"Id"</c>, <c>"UserAccountId"</c> (alias <c>"UserId"</c>), <c>"Email"</c>, <c>"UserName"</c>, and <c>"PhoneNumber"</c> are supported).
-    /// For <c>PhoneNumber</c>, pass an already-valid E.164 value (e.g. <c>+79161234567</c>) as produced by <c>collectForm</c>.
+    /// For <c>PhoneNumber</c>, pass an already-valid E.164 value (e.g. <c>+15551234567</c>) as produced by <c>collectForm</c>.
     /// When several accounts share the same email or phone, the verified contact is preferred.
     /// </summary>
     /// <param name="selectorField">Field name to search by (e.g. <c>"Email"</c>).</param>
@@ -56,7 +56,7 @@ internal interface IUserService
     /// Create a new user from a flat value map.
     /// Map keys are logical field names (e.g. <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>, <c>"Password"</c>).
     /// Optional keys may be omitted. <c>PhoneNumber</c>, when provided, must already be valid E.164
-    /// (e.g. <c>+79161234567</c>) as produced by <c>collectForm</c>.
+    /// (e.g. <c>+15551234567</c>) as produced by <c>collectForm</c>.
     /// </summary>
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

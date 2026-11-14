@@ -7,6 +7,24 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.9.0 — 14 Nov 2026
+
+### Library
+
+- Phone validation: replace `PhoneNumbersCore` 1.1.1 with `libphonenumber-csharp` 9.0.43 (current metadata; e.g. RO Digi `+40 799…` now accepted).
+- Dependencies: `Cross.Messaging` 2.4.1; Microsoft packages TFM-aligned (EF Core / InMemory / Relational 8.0.34 · 9.0.23 · 10.0.15; `Microsoft.Extensions.Http` 8.0.1 / 9.0.23 / 10.0.15; `Microsoft.IdentityModel.JsonWebTokens` 8.23.0).
+
+### Tests
+
+- `PhoneE164Tests`: assert RO Digi mobile `+40 799…` is valid under the new metadata.
+- Test project Microsoft package refs aligned to net8.0 latest stables.
+
+### Documentation / sample
+
+- `docs/BREAKING.md` From 2.8.0→2.9.0; README Supported TFMs (`net8.0` / `net9.0` / `net10.0`); Sample.Api drops unused `PhoneNumbersCore` and bumps net8 Microsoft refs.
+
+---
+
 ## v2.8.0 — 13 Nov 2026
 
 ### Library

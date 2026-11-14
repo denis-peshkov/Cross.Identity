@@ -13,16 +13,20 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/denis-peshkov/Cross.Identity)
 ![Activity](https://img.shields.io/github/commit-activity/y/denis-peshkov/Cross.Identity)
 
+[![TFM](https://img.shields.io/badge/TFM-net8.0%20%7C%20net9.0%20%7C%20net10.0-512BD4)](#supported-tfms)
+
 # Cross.Identity
 
 A .NET identity and authentication library: configurable scenarios (registration, sign-in, password recovery, token issuance and refresh), JWT, Argon2, email/SMS verification, and a process engine with JSON-defined flows.
+
+Supported TFMs: `net8.0`, `net9.0`, `net10.0`.
 
 ## Features
 
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
 - **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
-- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+79161234567`).
+- **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+15551234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
 - **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. Apple uses `form_post` — `CallbackUrl` must be a POST-capable host bridge (see Sample.Api `/oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
@@ -31,7 +35,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 
 ## Phone numbers (E.164)
 
-Cross.Identity accepts **only** E.164 phone numbers, for example `+79161234567`.
+Cross.Identity accepts **only** E.164 phone numbers, for example `+15551234567`.
 
 - Gate: `collectForm` fields with `"type": "PhoneNumber"` — validated via `PhoneE164.IsValid` and stored with `PhoneE164.Require`.
 - Downstream (`UserService`, lookups, OTP) **trust** the bag value and do not re-validate/normalize.
@@ -73,9 +77,17 @@ bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
 await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
 ```
 
-## Requirements
+## Supported TFMs
 
-- .NET 8.0
+NuGet package `Cross.Identity` multi-targets:
+
+| TFM | .NET |
+|---|---|
+| `net8.0` | .NET 8 |
+| `net9.0` | .NET 9 |
+| `net10.0` | .NET 10 |
+
+Sample.Api and Cross.Identity.Tests use `net8.0`.
 
 ## Repository structure
 
@@ -197,7 +209,7 @@ var result = await _flowExecutor.ExecuteAsync(
 - Microsoft.EntityFrameworkCore (+ InMemory, Relational)
 - Microsoft.Extensions.Http
 - Microsoft.IdentityModel.JsonWebTokens
-- PhoneNumbersCore
+- libphonenumber-csharp
 
 ## Build and tests
 

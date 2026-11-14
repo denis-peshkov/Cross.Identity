@@ -43,6 +43,7 @@ public class PhoneE164Tests
     {
         PhoneE164.IsValid("+79161234567").Should().BeTrue();
         PhoneE164.IsValid("+40722123456").Should().BeTrue();
+        PhoneE164.IsValid("+40799123456").Should().BeTrue();
         PhoneE164.IsValid("+12125551234").Should().BeTrue();
     }
 

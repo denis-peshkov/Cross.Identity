@@ -183,7 +183,7 @@ describe('applyPrTriageLabels', () => {
     );
     assert.ok(addCallIndex >= 0);
     assert.ok(removeCallIndex >= 0);
-    assert.ok(addCallIndex < removeCallIndex, 'add labels before remove');
+    assert.ok(removeCallIndex < addCallIndex, 'remove lower priority before add');
 
     const addCall = calls[addCallIndex];
     assert.ok(addCall.includes('enhancement'));
