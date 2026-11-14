@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.9.0` · **ветка:** `release/libphonenumber-csharp` · **база:** `origin/master` (`v2.8.0`) · **дата:** `2026-11-14`
+> **Версия:** `2.9.0` (closed) · **ветка:** `release/libphonenumber-csharp` · **база:** `origin/master` (`v2.8.0`) · **дата:** `2026-11-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.9.0
 >
@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.8.0.md`](RELEASE-PLAN-2.8.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов (tip = `v2.8.0`). **WT:** **10** файлов · **+47 / −15** (phone metadata + docs; excl. triage undici noise). Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **4** коммита · **13** файлов · **+225 / −122**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
@@ -49,6 +49,8 @@
 | ✅ #M123 Sample.Api drop PhoneNumbersCore | Unused direct PackageReference removed (comes via library) |
 | ✅ #M124 PhoneE164Tests RO mobile | `+40799618836` asserts valid under new metadata |
 | ✅ #H36 BREAKING phone metadata package | `docs/BREAKING.md` From 2.8.0→2.9.0 + CHANGELOG `v2.9.0` |
+| ✅ #H37 Cross.Messaging + Microsoft.* bumps | Messaging `2.4.1`; EF/Http/JWT TFM-aligned latest stables; Sample/Tests net8 refs |
+| ✅ #M125 README Supported TFMs | Badge, section, intro line (`net8.0` / `net9.0` / `net10.0`) |
 
 ---
 
@@ -61,4 +63,4 @@
 
 ## Приоритет фиксов
 
-Открытых пунктов этой дельты нет. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.9.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
