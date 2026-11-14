@@ -2,7 +2,7 @@
 
 /// <summary>
 /// E.164 phone helpers. Cross.Identity accepts only already-normalized numbers
-/// such as <c>+79161234567</c>; national formats, spaces, and punctuation are rejected
+/// such as <c>+15551234567</c>; national formats, spaces, and punctuation are rejected
 /// by <see cref="IsValid"/> / <see cref="Require"/>. Hosts may use <see cref="Normalize"/> /
 /// <see cref="Ensure"/> before calling Identity.
 /// </summary>
@@ -50,13 +50,13 @@ public static class PhoneE164
         ArgumentException.ThrowIfNullOrWhiteSpace(phone);
         if (!IsValid(phone))
             throw new ArgumentException(
-                "Phone must already be E.164 (e.g. +79161234567). Other formats are not accepted.",
+                "Phone must already be E.164 (e.g. +15551234567). Other formats are not accepted.",
                 nameof(phone));
         return phone;
     }
 
     /// <summary>
-    /// Host helper: normalizes a free-form phone string to E.164 (e.g. <c>+40722123456</c>).
+    /// Host helper: normalizes a free-form phone string to E.164 (e.g. <c>+15551234567</c>).
     /// </summary>
     /// <param name="raw">Raw input (may include spaces, parentheses, etc.).</param>
     /// <param name="defaultRegion">Two-letter ISO region code (e.g. <c>RO</c>, <c>UA</c>, <c>RU</c>).</param>

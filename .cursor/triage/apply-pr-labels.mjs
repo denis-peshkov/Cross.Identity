@@ -277,11 +277,12 @@ export function applyPrTriageLabels(gh, prNumber, data) {
     ensureLabel(gh, name);
   }
 
-  gh(['pr', 'edit', pr, ...toAdd.flatMap((name) => ['--add-label', name])]);
-
+  // Remove superseded managed labels first (lower priority:*), then add winners.
   if (toRemove.length > 0) {
     gh(['pr', 'edit', pr, ...toRemove.flatMap((name) => ['--remove-label', name])]);
   }
+
+  gh(['pr', 'edit', pr, ...toAdd.flatMap((name) => ['--add-label', name])]);
 
   return { added: toAdd, removed: toRemove };
 }

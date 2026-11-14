@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.8.0` (closed) · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
+> **Версия:** `2.8.0` (published / closed) · **ветка:** `release/sms-otp-templates` · **база:** `origin/master` (`v2.7.0`) · **дата:** `2026-11-13`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.8.0
 >
