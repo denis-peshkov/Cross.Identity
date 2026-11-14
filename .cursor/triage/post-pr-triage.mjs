@@ -36,12 +36,11 @@ if (!apiKey) {
 
 const MAX_DIFF_CHARS = 48_000;
 
-function gh(args, { json = false, maxBuffer = 8 * 1024 * 1024, input } = {}) {
+function gh(args, { json = false, maxBuffer = 8 * 1024 * 1024 } = {}) {
   const out = execFileSync(GH, args, {
     cwd: ROOT,
     encoding: 'utf8',
     maxBuffer,
-    ...(input !== undefined ? { input } : {}),
   });
   return json ? JSON.parse(out) : out;
 }

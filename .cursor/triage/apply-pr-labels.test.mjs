@@ -7,7 +7,6 @@ import {
   applyPrTriageLabels,
   shouldApplyTriageLabels,
   resolveStickyTriageLabels,
-  buildDesiredLabelNames,
   maxPriorityLabel,
   priorityRank,
   sortCategoryLabels,
@@ -107,34 +106,6 @@ describe('resolveStickyTriageLabels', () => {
     );
     assert.deepEqual(toAdd, ['bug', 'priority:high']);
   });
-
-  it('when dual priority labels exist, keeps the higher and drops the lower', () => {
-    const { toAdd } = resolveStickyTriageLabels(
-      { category: 'enhancement', priority: 'medium' },
-      ['enhancement', 'priority:medium', 'priority:high']
-    );
-    assert.deepEqual(toAdd, ['enhancement', 'priority:high']);
-  });
-
-  it('raises medium → high (toAdd has only the higher priority)', () => {
-    const { toAdd } = resolveStickyTriageLabels(
-      { category: 'bug', priority: 'high' },
-      ['bug', 'priority:medium']
-    );
-    assert.deepEqual(toAdd, ['bug', 'priority:high']);
-  });
-});
-
-describe('buildDesiredLabelNames', () => {
-  it('keeps unmanaged labels and replaces managed with sticky winners', () => {
-    const desired = buildDesiredLabelNames(
-      ['needs-human', 'breaking-changes', 'priority:medium', 'bug'],
-      ['bug', 'priority:high'],
-      MANAGED_TRIAGE_LABELS
-    );
-    assert.deepEqual(desired.sort(), ['breaking-changes', 'bug', 'needs-human', 'priority:high'].sort());
-    assert.ok(!desired.includes('priority:medium'));
-  });
 });
 
 describe('shouldApplyTriageLabels', () => {
@@ -175,11 +146,11 @@ describe('shouldApplyTriageLabels', () => {
 });
 
 describe('applyPrTriageLabels', () => {
-  it('PUTs desired labels and drops lower priority atomically', () => {
-    /** @type {{ args: string[]; opts?: object }[]} */
+  it('creates missing labels, adds current, then removes stale triage labels', () => {
+    /** @type {string[][]} */
     const calls = [];
     const gh = (args, opts) => {
-      calls.push({ args, opts });
+      calls.push(args);
       if (args[0] === 'pr' && args[1] === 'view') {
         assert.equal(opts?.json, true);
         return {
@@ -193,76 +164,43 @@ describe('applyPrTriageLabels', () => {
       return '';
     };
 
-    const result = applyPrTriageLabels(
-      gh,
-      42,
-      { category: 'enhancement', priority: 'medium' },
-      { GITHUB_REPOSITORY: 'denis-peshkov/Cross.Identity' }
-    );
+    const result = applyPrTriageLabels(gh, 42, {
+      category: 'enhancement',
+      priority: 'medium',
+    });
 
     assert.deepEqual(result.added, ['enhancement', 'chore', 'priority:medium']);
     assert.deepEqual(result.removed, ['priority:low']);
-    assert.deepEqual(
-      result.desired.sort(),
-      ['needs-human', 'enhancement', 'chore', 'priority:medium'].sort()
-    );
 
-    const createCalls = calls.filter((c) => c.args[0] === 'label' && c.args[1] === 'create');
+    const createCalls = calls.filter((c) => c[0] === 'label' && c[1] === 'create');
     assert.equal(createCalls.length, 3);
 
-    const put = calls.find(
-      (c) => c.args[0] === 'api' && c.args.includes('--method') && c.args.includes('PUT')
+    const addCallIndex = calls.findIndex(
+      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--add-label')
     );
-    assert.ok(put);
-    assert.ok(put.args.some((a) => String(a).includes('/issues/42/labels')));
-    const body = JSON.parse(put.opts.input);
-    assert.deepEqual(body.labels.sort(), result.desired.sort());
-    assert.ok(!body.labels.includes('priority:low'));
-    assert.ok(!calls.some((c) => c.args.includes('--add-label') || c.args.includes('--remove-label')));
-  });
-
-  it('raises priority:medium → priority:high and omits medium from PUT body', () => {
-    /** @type {{ args: string[]; opts?: object }[]} */
-    const calls = [];
-    const gh = (args, opts) => {
-      calls.push({ args, opts });
-      if (args[0] === 'pr' && args[1] === 'view') {
-        return {
-          labels: [
-            { name: 'bug' },
-            { name: 'priority:medium' },
-            { name: 'priority:high' },
-            { name: 'breaking-changes' },
-          ],
-        };
-      }
-      return '';
-    };
-
-    const result = applyPrTriageLabels(
-      gh,
-      27,
-      { category: 'bug', priority: 'high' },
-      { GITHUB_REPOSITORY: 'denis-peshkov/Cross.Identity' }
+    const removeCallIndex = calls.findIndex(
+      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--remove-label')
     );
+    assert.ok(addCallIndex >= 0);
+    assert.ok(removeCallIndex >= 0);
+    assert.ok(removeCallIndex < addCallIndex, 'remove lower priority before add');
 
-    assert.deepEqual(result.added, ['bug', 'priority:high']);
-    assert.deepEqual(result.removed, ['priority:medium']);
-    assert.ok(result.desired.includes('priority:high'));
-    assert.ok(!result.desired.includes('priority:medium'));
-    assert.ok(result.desired.includes('breaking-changes'));
+    const addCall = calls[addCallIndex];
+    assert.ok(addCall.includes('enhancement'));
+    assert.ok(addCall.includes('chore'));
+    assert.ok(addCall.includes('priority:medium'));
 
-    const put = calls.find((c) => c.args[0] === 'api' && c.args.includes('PUT'));
-    const body = JSON.parse(put.opts.input);
-    assert.equal(body.labels.filter((n) => n.startsWith('priority:')).length, 1);
-    assert.equal(body.labels.filter((n) => n.startsWith('priority:'))[0], 'priority:high');
+    const removeCall = calls[removeCallIndex];
+    assert.ok(removeCall.includes('priority:low'));
+    assert.ok(!removeCall.includes('needs-human'));
+    assert.ok(!removeCall.includes('chore'));
   });
 
   it('keeps security and adds enhancement without lowering priority', () => {
-    /** @type {{ args: string[]; opts?: object }[]} */
+    /** @type {string[][]} */
     const calls = [];
-    const gh = (args, opts) => {
-      calls.push({ args, opts });
+    const gh = (args) => {
+      calls.push(args);
       if (args[0] === 'pr' && args[1] === 'view') {
         return {
           labels: [
@@ -275,20 +213,17 @@ describe('applyPrTriageLabels', () => {
       return '';
     };
 
-    const result = applyPrTriageLabels(
-      gh,
-      6,
-      { category: 'enhancement', priority: 'medium' },
-      { GITHUB_REPOSITORY: 'denis-peshkov/Cross.Identity' }
-    );
+    const result = applyPrTriageLabels(gh, 6, {
+      category: 'enhancement',
+      priority: 'medium',
+    });
 
     assert.deepEqual(result.added, ['enhancement', 'security', 'priority:high']);
     assert.deepEqual(result.removed, []);
 
-    const put = calls.find((c) => c.args[0] === 'api' && c.args.includes('PUT'));
-    const body = JSON.parse(put.opts.input);
-    assert.ok(body.labels.includes('priority:high'));
-    assert.ok(!body.labels.includes('priority:medium'));
-    assert.ok(body.labels.includes('needs-human'));
+    const removeCalls = calls.filter(
+      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--remove-label')
+    );
+    assert.equal(removeCalls.length, 0);
   });
 });

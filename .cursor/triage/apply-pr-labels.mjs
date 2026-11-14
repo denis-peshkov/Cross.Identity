@@ -9,9 +9,8 @@
  * Sticky rules across synchronize re-runs:
  * - **category**: accumulate (union) — a PR may carry several category labels;
  *   new runs add the proposed category, never drop ones already on the PR
- * - **priority**: exactly one label via {@link PRIORITY_RANK} — only raise or keep;
- *   final set is written with Issues Labels **PUT** (atomic replace) so lower
- *   `priority:*` cannot remain beside the winner
+ * - **priority**: single label via {@link PRIORITY_RANK} — only raise or keep;
+ *   previous lower `priority:*` labels are removed
  */
 
 export const CATEGORY_LABELS = Object.freeze([
@@ -157,10 +156,9 @@ export function resolveStickyTriageLabels(data, currentNames = []) {
   const names = Array.isArray(currentNames) ? currentNames : [];
 
   const currentCategories = names.filter((n) => CATEGORY_LABELS.includes(n));
-  // Max across *all* current priority:* — never pick .find() first (dual labels / race).
-  const currentPriority = names
-    .filter((n) => typeof n === 'string' && n.startsWith('priority:') && managed.includes(n))
-    .reduce((best, name) => maxPriorityLabel(best, name), null);
+  const currentPriority =
+    names.find((n) => typeof n === 'string' && n.startsWith('priority:') && managed.includes(n)) ||
+    null;
 
   const proposedCategory = proposed.find((n) => CATEGORY_LABELS.includes(n)) || null;
   const proposedPriority = proposed.find((n) => n.startsWith('priority:')) || null;
@@ -247,48 +245,16 @@ function ensureLabel(gh, name) {
 }
 
 /**
- * Final label names after sticky triage: keep unmanaged labels, replace managed set
- * with {@link resolveStickyTriageLabels} winners (exactly one `priority:*`).
+ * Sync triage labels on a PR: set sticky-resolved labels, drop other managed ones
+ * (including superseded lower `priority:*`).
+ * Caller must gate with {@link shouldApplyTriageLabels} before invoking.
  *
- * @param {string[]} currentNames
- * @param {string[]} toAdd managed winners
- * @param {readonly string[]} managed
- * @returns {string[]}
- */
-export function buildDesiredLabelNames(currentNames, toAdd, managed = MANAGED_TRIAGE_LABELS) {
-  const unmanaged = (Array.isArray(currentNames) ? currentNames : []).filter(
-    (name) => typeof name === 'string' && !managed.includes(name)
-  );
-  return [...new Set([...unmanaged, ...toAdd])];
-}
-
-/**
- * @param {(args: string[], opts?: { json?: boolean; input?: string }) => unknown} gh
- * @param {NodeJS.ProcessEnv} [env]
- * @returns {string} owner/repo
- */
-function resolveRepository(gh, env = process.env) {
-  const fromEnv = String(env.GITHUB_REPOSITORY || '').trim();
-  if (fromEnv.includes('/')) {
-    return fromEnv;
-  }
-  return String(
-    gh(['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner']) || ''
-  ).trim();
-}
-
-/**
- * Sync triage labels on a PR: sticky-resolved managed labels via Issues Labels PUT
- * (atomic replace of the full label set). Lower `priority:*` cannot survive beside
- * the sticky max. Caller must gate with {@link shouldApplyTriageLabels} first.
- *
- * @param {(args: string[], opts?: { json?: boolean; input?: string }) => unknown} gh
+ * @param {(args: string[], opts?: { json?: boolean }) => unknown} gh
  * @param {number|string} prNumber
  * @param {{ category?: unknown; priority?: unknown }} data
- * @param {NodeJS.ProcessEnv} [env]
- * @returns {{ added: string[]; removed: string[]; desired: string[] }}
+ * @returns {{ added: string[]; removed: string[] }}
  */
-export function applyPrTriageLabels(gh, prNumber, data, env = process.env) {
+export function applyPrTriageLabels(gh, prNumber, data) {
   const pr = String(prNumber);
 
   const view = /** @type {{ labels?: { name: string }[] }} */ (
@@ -300,29 +266,23 @@ export function applyPrTriageLabels(gh, prNumber, data, env = process.env) {
 
   if (toAdd.length === 0) {
     console.warn('No valid triage category/priority — skipping label sync');
-    return { added: [], removed: [], desired: currentNames };
+    return { added: [], removed: [] };
   }
 
-  // Every managed label not in the sticky winners — including all lower priority:*.
   const toRemove = currentNames.filter(
     (name) => managed.includes(name) && !toAdd.includes(name)
   );
-  const desired = buildDesiredLabelNames(currentNames, toAdd, managed);
 
   for (const name of toAdd) {
     ensureLabel(gh, name);
   }
 
-  const repo = resolveRepository(gh, env);
-  if (!repo.includes('/')) {
-    throw new Error('Cannot resolve repository for triage label PUT');
+  // Remove superseded managed labels first (lower priority:*), then add winners.
+  if (toRemove.length > 0) {
+    gh(['pr', 'edit', pr, ...toRemove.flatMap((name) => ['--remove-label', name])]);
   }
 
-  // Atomic replace — do not use `gh pr edit --add/--remove` (dual priority window / races).
-  gh(
-    ['api', `repos/${repo}/issues/${pr}/labels`, '--method', 'PUT', '--input', '-'],
-    { input: JSON.stringify({ labels: desired }) }
-  );
+  gh(['pr', 'edit', pr, ...toAdd.flatMap((name) => ['--add-label', name])]);
 
-  return { added: toAdd, removed: toRemove, desired };
+  return { added: toAdd, removed: toRemove };
 }
