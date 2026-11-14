@@ -113,6 +113,7 @@ jobs:
             -Dsonar.cs.opencover.reportsPaths=TestResults/**/coverage.opencover.xml
             -Dsonar.sources=Cross.Identity/
             -Dsonar.tests=Cross.Identity.Tests/
+            -Dsonar.exclusions=**/ProcessEngine/Definitions/Templates/**
             -Dsonar.cpd.exclusions=**/ProcessEngine/Definitions/Templates/**
             -Dsonar.qualitygate.wait=${{ env.QUALITY_GATE_WAIT }}
             -Dsonar.verbose=true
