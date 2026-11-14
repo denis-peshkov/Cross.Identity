@@ -106,6 +106,22 @@ describe('resolveStickyTriageLabels', () => {
     );
     assert.deepEqual(toAdd, ['bug', 'priority:high']);
   });
+
+  it('when dual priority labels exist, keeps the higher and drops the lower', () => {
+    const { toAdd } = resolveStickyTriageLabels(
+      { category: 'enhancement', priority: 'medium' },
+      ['enhancement', 'priority:medium', 'priority:high']
+    );
+    assert.deepEqual(toAdd, ['enhancement', 'priority:high']);
+  });
+
+  it('raises medium → high (toAdd has only the higher priority)', () => {
+    const { toAdd } = resolveStickyTriageLabels(
+      { category: 'bug', priority: 'high' },
+      ['bug', 'priority:medium']
+    );
+    assert.deepEqual(toAdd, ['bug', 'priority:high']);
+  });
 });
 
 describe('shouldApplyTriageLabels', () => {
@@ -146,7 +162,7 @@ describe('shouldApplyTriageLabels', () => {
 });
 
 describe('applyPrTriageLabels', () => {
-  it('creates missing labels, adds current, then removes stale triage labels', () => {
+  it('creates missing labels, then one pr edit adds winners and removes stale priority', () => {
     /** @type {string[][]} */
     const calls = [];
     const gh = (args, opts) => {
@@ -175,25 +191,44 @@ describe('applyPrTriageLabels', () => {
     const createCalls = calls.filter((c) => c[0] === 'label' && c[1] === 'create');
     assert.equal(createCalls.length, 3);
 
-    const addCallIndex = calls.findIndex(
-      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--add-label')
-    );
-    const removeCallIndex = calls.findIndex(
-      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--remove-label')
-    );
-    assert.ok(addCallIndex >= 0);
-    assert.ok(removeCallIndex >= 0);
-    assert.ok(addCallIndex < removeCallIndex, 'add labels before remove');
+    const editCalls = calls.filter((c) => c[0] === 'pr' && c[1] === 'edit');
+    assert.equal(editCalls.length, 1);
+    const editCall = editCalls[0];
+    assert.ok(editCall.includes('--add-label'));
+    assert.ok(editCall.includes('enhancement'));
+    assert.ok(editCall.includes('chore'));
+    assert.ok(editCall.includes('priority:medium'));
+    assert.ok(editCall.includes('--remove-label'));
+    assert.ok(editCall.includes('priority:low'));
+    assert.ok(!editCall.includes('needs-human'));
+  });
 
-    const addCall = calls[addCallIndex];
-    assert.ok(addCall.includes('enhancement'));
-    assert.ok(addCall.includes('chore'));
-    assert.ok(addCall.includes('priority:medium'));
+  it('raises priority:medium → priority:high and removes the lower in the same edit', () => {
+    /** @type {string[][]} */
+    const calls = [];
+    const gh = (args) => {
+      calls.push(args);
+      if (args[0] === 'pr' && args[1] === 'view') {
+        return {
+          labels: [{ name: 'bug' }, { name: 'priority:medium' }],
+        };
+      }
+      return '';
+    };
 
-    const removeCall = calls[removeCallIndex];
-    assert.ok(removeCall.includes('priority:low'));
-    assert.ok(!removeCall.includes('needs-human'));
-    assert.ok(!removeCall.includes('chore'));
+    const result = applyPrTriageLabels(gh, 27, {
+      category: 'bug',
+      priority: 'high',
+    });
+
+    assert.deepEqual(result.added, ['bug', 'priority:high']);
+    assert.deepEqual(result.removed, ['priority:medium']);
+
+    const editCall = calls.find((c) => c[0] === 'pr' && c[1] === 'edit');
+    assert.ok(editCall);
+    assert.ok(editCall.includes('priority:high'));
+    assert.ok(editCall.includes('--remove-label'));
+    assert.ok(editCall.includes('priority:medium'));
   });
 
   it('keeps security and adds enhancement without lowering priority', () => {
@@ -221,9 +256,9 @@ describe('applyPrTriageLabels', () => {
     assert.deepEqual(result.added, ['enhancement', 'security', 'priority:high']);
     assert.deepEqual(result.removed, []);
 
-    const removeCalls = calls.filter(
-      (c) => c[0] === 'pr' && c[1] === 'edit' && c.includes('--remove-label')
-    );
-    assert.equal(removeCalls.length, 0);
+    const editCall = calls.find((c) => c[0] === 'pr' && c[1] === 'edit');
+    assert.ok(editCall);
+    assert.ok(editCall.includes('--add-label'));
+    assert.ok(!editCall.includes('--remove-label'));
   });
 });

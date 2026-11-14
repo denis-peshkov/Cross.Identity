@@ -9,8 +9,8 @@
  * Sticky rules across synchronize re-runs:
  * - **category**: accumulate (union) — a PR may carry several category labels;
  *   new runs add the proposed category, never drop ones already on the PR
- * - **priority**: single label via {@link PRIORITY_RANK} — only raise or keep;
- *   previous lower `priority:*` labels are removed
+ * - **priority**: exactly one label via {@link PRIORITY_RANK} — only raise or keep;
+ *   every other `priority:*` is removed in the same `gh pr edit` as the add
  */
 
 export const CATEGORY_LABELS = Object.freeze([
@@ -156,9 +156,10 @@ export function resolveStickyTriageLabels(data, currentNames = []) {
   const names = Array.isArray(currentNames) ? currentNames : [];
 
   const currentCategories = names.filter((n) => CATEGORY_LABELS.includes(n));
-  const currentPriority =
-    names.find((n) => typeof n === 'string' && n.startsWith('priority:') && managed.includes(n)) ||
-    null;
+  // Max across *all* current priority:* — never pick .find() first (dual labels / race).
+  const currentPriority = names
+    .filter((n) => typeof n === 'string' && n.startsWith('priority:') && managed.includes(n))
+    .reduce((best, name) => maxPriorityLabel(best, name), null);
 
   const proposedCategory = proposed.find((n) => CATEGORY_LABELS.includes(n)) || null;
   const proposedPriority = proposed.find((n) => n.startsWith('priority:')) || null;
@@ -269,6 +270,7 @@ export function applyPrTriageLabels(gh, prNumber, data) {
     return { added: [], removed: [] };
   }
 
+  // Drop every managed label not in the sticky set — including all lower priority:*.
   const toRemove = currentNames.filter(
     (name) => managed.includes(name) && !toAdd.includes(name)
   );
@@ -277,11 +279,15 @@ export function applyPrTriageLabels(gh, prNumber, data) {
     ensureLabel(gh, name);
   }
 
-  gh(['pr', 'edit', pr, ...toAdd.flatMap((name) => ['--add-label', name])]);
-
-  if (toRemove.length > 0) {
-    gh(['pr', 'edit', pr, ...toRemove.flatMap((name) => ['--remove-label', name])]);
-  }
+  // One `pr edit`: add winners and remove losers together (avoids a dual-priority window).
+  const editArgs = [
+    'pr',
+    'edit',
+    pr,
+    ...toAdd.flatMap((name) => ['--add-label', name]),
+    ...toRemove.flatMap((name) => ['--remove-label', name]),
+  ];
+  gh(editArgs);
 
   return { added: toAdd, removed: toRemove };
 }
