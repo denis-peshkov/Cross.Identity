@@ -68,4 +68,4 @@ After analysis, `post-pr-triage.mjs` syncs PR labels via `apply-pr-labels.mjs`:
 
 Only these managed labels are added/removed; other PR labels are kept. Missing labels are created with `--force`.
 
-Sticky on re-triage: category labels **accumulate** (a PR may have several, e.g. `security` + `enhancement`); priority is a single label that only moves up (`critical > high > medium > low`), canceling the previous lower `priority:*`.
+Sticky on re-triage: category labels **accumulate** (a PR may have several, e.g. `security` + `enhancement`); priority is a single label that only moves up (`critical > high > medium > low`). Label sync uses Issues Labels **PUT** (atomic replace) so a lower `priority:*` cannot remain beside the winner.

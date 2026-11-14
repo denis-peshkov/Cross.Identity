@@ -72,7 +72,7 @@ Workflow `triage.yml` → job **PR automated comment**:
 - Posts an automated triage comment (category, priority, confidence, summary, files)
 - Review guidance: matched `.cursor/rules/*.mdc` via `alwaysApply` / `globs` (`load-review-rules.mjs`) — see [`.cursor/README.md`](../../README.md)
 - Syncs GitHub labels `{category}` / `priority:{priority}` by default when confidence ≥ `TRIAGE_LABEL_MIN_CONFIDENCE` (default `70`); set `TRIAGE_APPLY_LABELS=false` to disable. Allowlisted values only
-- Sticky on re-triage: **categories accumulate** (union — several category labels allowed); **priority** never lowers (`critical > high > medium > low`, previous lower `priority:*` removed)
+- Sticky on re-triage: **categories accumulate** (union — several category labels allowed); **priority** is exactly one label that never lowers (`critical > high > medium > low`); applied via Issues Labels **PUT** (atomic) so lower `priority:*` cannot remain
 - On a new push **updates** the same comment (marker `<!-- triage -->` + author `github-actions[bot]`) and re-evaluates labels on the **same full** base...head scope
 
 Manual test: **Actions → Triage → Run workflow** → `pr_number` field.

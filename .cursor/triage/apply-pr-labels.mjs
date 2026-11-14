@@ -10,7 +10,8 @@
  * - **category**: accumulate (union) — a PR may carry several category labels;
  *   new runs add the proposed category, never drop ones already on the PR
  * - **priority**: exactly one label via {@link PRIORITY_RANK} — only raise or keep;
- *   every other `priority:*` is removed in the same `gh pr edit` as the add
+ *   final set is written with Issues Labels **PUT** (atomic replace) so lower
+ *   `priority:*` cannot remain beside the winner
  */
 
 export const CATEGORY_LABELS = Object.freeze([
@@ -246,16 +247,48 @@ function ensureLabel(gh, name) {
 }
 
 /**
- * Sync triage labels on a PR: set sticky-resolved labels, drop other managed ones
- * (including superseded lower `priority:*`).
- * Caller must gate with {@link shouldApplyTriageLabels} before invoking.
+ * Final label names after sticky triage: keep unmanaged labels, replace managed set
+ * with {@link resolveStickyTriageLabels} winners (exactly one `priority:*`).
  *
- * @param {(args: string[], opts?: { json?: boolean }) => unknown} gh
+ * @param {string[]} currentNames
+ * @param {string[]} toAdd managed winners
+ * @param {readonly string[]} managed
+ * @returns {string[]}
+ */
+export function buildDesiredLabelNames(currentNames, toAdd, managed = MANAGED_TRIAGE_LABELS) {
+  const unmanaged = (Array.isArray(currentNames) ? currentNames : []).filter(
+    (name) => typeof name === 'string' && !managed.includes(name)
+  );
+  return [...new Set([...unmanaged, ...toAdd])];
+}
+
+/**
+ * @param {(args: string[], opts?: { json?: boolean; input?: string }) => unknown} gh
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {string} owner/repo
+ */
+function resolveRepository(gh, env = process.env) {
+  const fromEnv = String(env.GITHUB_REPOSITORY || '').trim();
+  if (fromEnv.includes('/')) {
+    return fromEnv;
+  }
+  return String(
+    gh(['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner']) || ''
+  ).trim();
+}
+
+/**
+ * Sync triage labels on a PR: sticky-resolved managed labels via Issues Labels PUT
+ * (atomic replace of the full label set). Lower `priority:*` cannot survive beside
+ * the sticky max. Caller must gate with {@link shouldApplyTriageLabels} first.
+ *
+ * @param {(args: string[], opts?: { json?: boolean; input?: string }) => unknown} gh
  * @param {number|string} prNumber
  * @param {{ category?: unknown; priority?: unknown }} data
- * @returns {{ added: string[]; removed: string[] }}
+ * @param {NodeJS.ProcessEnv} [env]
+ * @returns {{ added: string[]; removed: string[]; desired: string[] }}
  */
-export function applyPrTriageLabels(gh, prNumber, data) {
+export function applyPrTriageLabels(gh, prNumber, data, env = process.env) {
   const pr = String(prNumber);
 
   const view = /** @type {{ labels?: { name: string }[] }} */ (
@@ -267,27 +300,29 @@ export function applyPrTriageLabels(gh, prNumber, data) {
 
   if (toAdd.length === 0) {
     console.warn('No valid triage category/priority — skipping label sync');
-    return { added: [], removed: [] };
+    return { added: [], removed: [], desired: currentNames };
   }
 
-  // Drop every managed label not in the sticky set — including all lower priority:*.
+  // Every managed label not in the sticky winners — including all lower priority:*.
   const toRemove = currentNames.filter(
     (name) => managed.includes(name) && !toAdd.includes(name)
   );
+  const desired = buildDesiredLabelNames(currentNames, toAdd, managed);
 
   for (const name of toAdd) {
     ensureLabel(gh, name);
   }
 
-  // One `pr edit`: add winners and remove losers together (avoids a dual-priority window).
-  const editArgs = [
-    'pr',
-    'edit',
-    pr,
-    ...toAdd.flatMap((name) => ['--add-label', name]),
-    ...toRemove.flatMap((name) => ['--remove-label', name]),
-  ];
-  gh(editArgs);
+  const repo = resolveRepository(gh, env);
+  if (!repo.includes('/')) {
+    throw new Error('Cannot resolve repository for triage label PUT');
+  }
 
-  return { added: toAdd, removed: toRemove };
+  // Atomic replace — do not use `gh pr edit --add/--remove` (dual priority window / races).
+  gh(
+    ['api', `repos/${repo}/issues/${pr}/labels`, '--method', 'PUT', '--input', '-'],
+    { input: JSON.stringify({ labels: desired }) }
+  );
+
+  return { added: toAdd, removed: toRemove, desired };
 }
