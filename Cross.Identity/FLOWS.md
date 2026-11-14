@@ -23,7 +23,43 @@ Cross.Identity **2.0+** does not use `IHttpContextAccessor` or ambient `HttpCont
 | Party | Responsibility |
 |---|---|
 | **Host (Web API)** | Before `IFlowExecutor.ExecuteAsync`, set `collectForm.*` from **server-side** sources. Same sources on login and every refresh. For templates, set `LanguageCode` from product locale / negotiated culture (not raw untrusted body unless you accept that). |
-| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Template brand placeholders (`{{brand}}`, `{{site}}`, `{{company}}`, `{{fullName}}`, `{{supportEmail}}`) come from `Authentication:Notifications` (host config; no built-in library defaults). Does not read `HttpContext` or `Accept-Language`. |
+| **Cross.Identity** | Consumes `HostSuppliedClientContext` for audit (`Created*`, revoke metadata), notifications (`ResetPasswordStep` via `ISecurityNotifier`), and session binding. Uses `HostSuppliedLanguageContext` + `INotificationComposer` for template language/branding with fallback to `en`. Brand placeholders come from `Authentication:Notifications` (see [Notification templates](#notification-templates-placeholders)). Does not read `HttpContext` or `Accept-Language`. |
+
+### Notification templates (placeholders)
+
+Stock bodies live under `ProcessEngine/Definitions/Templates/` as `{name}.{lang}.{txt|html}` (SMS OTP uses `{name}-sms`). `INotificationComposer` loads by `LanguageCode` (fallback `en`), then substitutes placeholders.
+
+**Brand / static** — `NotificationComposer.ApplyBrand` from `Authentication:Notifications` (`NotificationOptions`; no built-in library defaults) plus UTC year:
+
+| Placeholder | Source |
+|---|---|
+| `{{brand}}` | `Notifications:Brand` |
+| `{{company}}` | `Notifications:Company` |
+| `{{site}}` | `Notifications:Site` |
+| `{{fullName}}` | `Notifications:FullName` (signature) |
+| `{{supportEmail}}` | `Notifications:SupportEmail` |
+| `{{year}}` | `DateTime.UtcNow.Year` |
+
+`ApplyBrand` also replaces `{{logoWidth}}` / `{{logoHeight}}` / `{{imageWidth}}` / `{{imageHeight}}` with `"34"`. Stock templates do **not** use those keys (reserved for host HTML).
+
+**Per-step** — passed into `Compose` by the step (after brand):
+
+| Placeholder | Filled by | Stock templates |
+|---|---|---|
+| `{{code}}` | `sendCode` | `verify`, `verify-sms`, `reset`, `reset-sms` |
+| `{{email}}` | `sendCode` | `reset`, `registered` (file only; see below) |
+| `{{url}}` | `sendCode` | `reset`, `registered` (file only) |
+| `{{verificationLink}}` | `sendCode` | `verify` |
+| `{{helpLink}}` | `sendCode` | `verify` |
+| `{{expires}}` | `sendCode` | `verify`, `reset` |
+| `{{changedAt}}` | `resetPassword` | `password-changed` |
+| `{{ip}}` | `resetPassword` | `password-changed` |
+
+`sendCode` also sets `{{logoLink}}` / `{{imageLink}}` to the same action URL; stock templates do not reference them.
+
+**`registered`:** stock files use brand keys plus `{{email}}` / `{{url}}`. No stock flow sends this template yet (Register still uses `verify` OTP). Hosts that compose `registered` themselves must supply `{{email}}` / `{{url}}` (or equivalent) in `Compose` placeholders.
+
+Unresolved `{{…}}` tokens are left as literal text in the body.
 
 ### User-scoped authorization (host responsibility)
 
