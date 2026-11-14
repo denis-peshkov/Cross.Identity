@@ -30,8 +30,6 @@ Breaking-change details live **only** in this file. [`Cross.Identity/config.nusp
 
 ---
 
----
-
 ## From 2.10.0 to 2.11.0
 
 Release: [v2.11.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.11.0).
@@ -44,6 +42,8 @@ Release: [v2.11.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 | Phone + email (or email-only) with lock | Unchanged | Unchanged |
 
 **Action:** hosts with `Authentication:LockChannelAsEmail: true` must collect email on Register (phone may still be supplied together). Catch `ValidationException` for the explicit message instead of a late OTP failure.
+
+---
 
 ## From 2.9.0 to 2.10.0
 

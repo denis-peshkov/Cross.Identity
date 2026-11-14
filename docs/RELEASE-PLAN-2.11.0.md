@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.10.0.md`](RELEASE-PLAN-2.10.0.md)
 >
-> Дельта: `origin/master...HEAD` — LockChannelAsEmail require email on create. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **1** коммит · **10** файлов · **+169 / −5**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
@@ -35,7 +35,7 @@
 
 ## Принято (осознанный trade-off)
 
-- Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync`.
+- Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync` with explicit `ValidationException`.
 
 ---
 
@@ -43,16 +43,17 @@
 
 | # | Суть |
 |---|---|
-| ✅ #H40 LockChannelAsEmail require email on Register | `CreateUserAsync` → `ValidationException`; FLOWS / BREAKING / tests; reverses TO-DO / 2.7 accepted sendCode-late-fail |
+| ✅ #H40 LockChannelAsEmail require email on Register | `CreateUserAsync` gate; options/IUserService XML; FLOWS; BREAKING 2.10→2.11; `UserServiceTests`; drop obsolete TO-DO Принято sendCode-late-fail |
 
 ---
 
 ## Что в библиотеке уже нормально
 
-- OTP resolve with lock still email-only after create; gate moves earlier to create.
+- With lock + email present, create path unchanged; OTP still email-locked after create.
+- Phone-only Register remains valid when `LockChannelAsEmail` is `false`.
 
 ---
 
 ## Приоритет фиксов
 
-_(пусто.)_
+Открытых пунктов этой дельты нет. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md) (`M126` send `registered` after verify).
