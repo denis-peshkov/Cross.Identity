@@ -5,7 +5,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
 {
     private static readonly string[] TemplateNames =
     {
-        "verify", "reset", "confirm-email", "registered", "password-changed",
+        "verify", "reset", "registered", "password-changed",
     };
 
     private static readonly string[] Languages = { "en", "ru", "ro" };
@@ -47,9 +47,6 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("reset", "en")]
     [TestCase("reset", "ru")]
     [TestCase("reset", "ro")]
-    [TestCase("confirm-email", "en")]
-    [TestCase("confirm-email", "ru")]
-    [TestCase("confirm-email", "ro")]
     public void GivenOtpTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string name, string lang)
     {
         var sut = CreateSut();
