@@ -7,6 +7,25 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.10.0 — 14 Nov 2026
+
+### Library
+
+- Rename welcome notification templates `register.*` → `registered.*` (lookup key `registered`; stock Register still sends `verify` OTP).
+- Drop unused stock `confirm-email.*` templates (never referenced by stock flows).
+
+### Tests
+
+- `EmbeddedTemplatePlaceholderTests`: assert `registered`; drop `confirm-email` coverage.
+
+### Documentation / sample
+
+- `docs/BREAKING.md` From 2.9.0→2.10.0; Sample.Api drops host `registered.*` overrides (use stock embedded templates).
+- README: TFM badge only (prose Supported TFMs section removed as duplicate).
+- `FLOWS.md`: document notification template placeholders (brand vs per-step; note `registered` not sent by stock flows yet).
+
+---
+
 ## v2.9.0 — 14 Nov 2026
 
 ### Library
