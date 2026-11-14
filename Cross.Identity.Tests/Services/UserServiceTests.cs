@@ -49,11 +49,13 @@ public class UserServiceTests : EFTestsBase
     private static Mock<IOptionsSnapshot<AuthenticationOptions>> CreateOptionsSnapshot(
         int maxFailedAccessAttempts = 5,
         TimeSpan? lockoutTimeout = null,
-        bool lockoutEnabled = true)
+        bool lockoutEnabled = true,
+        bool lockChannelAsEmail = false)
     {
         var mock = new Mock<IOptionsSnapshot<AuthenticationOptions>>();
         mock.Setup(o => o.Value).Returns(new AuthenticationOptions
         {
+            LockChannelAsEmail = lockChannelAsEmail,
             Lockout = new AuthenticationOptions.LockoutOptions
             {
                 LockoutEnabled = lockoutEnabled,
@@ -62,6 +64,67 @@ public class UserServiceTests : EFTestsBase
             },
         });
         return mock;
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLockChannelAsEmailAndPhoneOnly_WhenCreateUserAsync_ThenThrowsValidationException()
+    {
+        _options = CreateOptionsSnapshot(lockChannelAsEmail: true);
+        _userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            new AuditService(Context),
+            _communicationEndpoints,
+            _communicationEndpoints,
+            _options.Object);
+
+        var map = new Dictionary<string, object?>
+        {
+            ["PhoneNumber"] = "+15551234567",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        await FluentActions.Invoking(() => _userService.CreateUserAsync(map, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Email is required when LockChannelAsEmail is enabled*");
+
+        (await Context.UsersAccounts.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLockChannelAsEmailAndEmail_WhenCreateUserAsync_ThenCreatesUserAsync()
+    {
+        _options = CreateOptionsSnapshot(lockChannelAsEmail: true);
+        _userService = new UserService(
+            Context,
+            _logger.Object,
+            _pepperVault.Object,
+            _hasher.Object,
+            _jwtTokenService.Object,
+            new AuditService(Context),
+            _communicationEndpoints,
+            _communicationEndpoints,
+            _options.Object);
+
+        var email = "lock-email@example.com";
+        var map = new Dictionary<string, object?>
+        {
+            ["Email"] = email,
+            ["PhoneNumber"] = "+15557654321",
+            ["Password"] = "P@ssw0rd!",
+        };
+
+        var userAccountId = await _userService.CreateUserAsync(map, CancellationToken.None);
+
+        userAccountId.Should().NotBeEmpty();
+        var user = await Context.UsersAccounts.SingleAsync(u => u.Id == userAccountId);
+        user.Email.Should().Be(email);
+        user.PhoneNumber.Should().Be("+15557654321");
     }
 
     [Test]

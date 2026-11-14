@@ -197,10 +197,12 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 **Purpose:** registration with optional password and confirmation code delivery. `Email` / `PhoneNumber` are optional fields with **`atLeastOneRequired`** (OTP channel). `UserName` is an optional login alias (not sufficient alone).
 
+When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAsync` requires an email (`ValidationException`: `Email is required when LockChannelAsEmail is enabled.`) — phone-only registration is rejected before `sendCode`.
+
 | Step | kind | Details |
 |---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` (`atLeastOneRequired`), optional `UserName` alias, optional `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. → `sendCode` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. With `LockChannelAsEmail` → email required. → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |
 

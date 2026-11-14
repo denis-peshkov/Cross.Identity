@@ -62,6 +62,9 @@ internal interface IUserService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Created user identifier.</returns>
     /// <exception cref="ConflictException">A verified email, phone, or username already exists.</exception>
+    /// <exception cref="ValidationException">
+    /// <c>Authentication:LockChannelAsEmail</c> is enabled and the map has no email.
+    /// </exception>
     Task<Guid> CreateUserAsync(
         IDictionary<string, object?> map,
         CancellationToken cancellationToken);

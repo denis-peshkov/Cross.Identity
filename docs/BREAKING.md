@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.10.0` → `2.11.0+` | [From 2.10.0 to 2.11.0](#from-2100-to-2110) |
 | `2.9.0` → `2.10.0+` | [From 2.9.0 to 2.10.0](#from-290-to-2100) |
 | `2.8.0` → `2.9.0+` | [From 2.8.0 to 2.9.0](#from-280-to-290) |
 | `2.7.0` → `2.8.0+` | [From 2.7.0 to 2.8.0](#from-270-to-280) |
@@ -26,6 +27,21 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.10.0 to 2.11.0
+
+Release: [v2.11.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.11.0).
+
+### `LockChannelAsEmail`: email required at registration
+
+| Area | Was (≤2.10.0) | Now (2.11.0+) |
+|---|---|---|
+| `CreateUserAsync` / Register with `LockChannelAsEmail=true` and no email (e.g. phone-only) | User created; `sendCode` failed later (`Invalid credentials.` / no email channel) | `ValidationException`: `Email is required when LockChannelAsEmail is enabled.` before persist |
+| Phone + email (or email-only) with lock | Unchanged | Unchanged |
+
+**Action:** hosts with `Authentication:LockChannelAsEmail: true` must collect email on Register (phone may still be supplied together). Catch `ValidationException` for the explicit message instead of a late OTP failure.
 
 ---
 
