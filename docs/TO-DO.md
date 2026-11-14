@@ -116,7 +116,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Release-plan / to-master: только ATX headings + blank line before `---`; setext out of scope для Change summary script.
 - Stock `main.Register`: хотя бы один OTP-канал (`Email` или `PhoneNumber`); `UserName` — optional alias, сам по себе регистрации не даёт.
 - Identity blank (`null` / `""` / whitespace) = отсутствие в `collectForm` → bag → `CreateUserAsync`.
-- `LockChannelAsEmail=true` + phone-only Register: fail at `sendCode` (`Invalid credentials.`) accepted; host with lock must supply email for OTP (no pre-create form reject).
 - SMS OTP bodies — short single-segment (`verify-sms` / `reset-sms`); email keeps long HTML/txt.
 - `SendCodeStep` appends `-sms` automatically when channel is SMS (idempotent if already `-sms`).
 - Sample.Api drops Romanian `register`/`verify` overrides; stock library still ships `register.ro` / `verify.ro`.

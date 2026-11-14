@@ -7,6 +7,22 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.11.0 — TBD
+
+### Library
+
+- `LockChannelAsEmail=true`: `CreateUserAsync` rejects registration without email (`ValidationException`: Email is required when LockChannelAsEmail is enabled) — no late `sendCode` failure for phone-only Register.
+
+### Tests
+
+- `UserServiceTests`: phone-only vs email+phone under `LockChannelAsEmail`.
+
+### Documentation
+
+- `docs/BREAKING.md` From 2.10.0→2.11.0; `FLOWS.md` Register note; reverse prior “fail at sendCode” trade-off.
+
+---
+
 ## v2.10.0 — 14 Nov 2026
 
 ### Library
