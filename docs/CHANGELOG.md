@@ -21,6 +21,8 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Documentation / sample
 
 - `docs/BREAKING.md` From 2.9.0→2.10.0; Sample.Api drops host `registered.*` overrides (use stock embedded templates).
+- README: TFM badge only (prose Supported TFMs section removed as duplicate).
+- `FLOWS.md`: document notification template placeholders (brand vs per-step; note `registered` not sent by stock flows yet).
 
 ---
 
