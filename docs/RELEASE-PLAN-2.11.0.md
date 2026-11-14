@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.11.0` · **ветка:** `release/lock-channel-email-require-email` · **база:** `origin/master` (`v2.10.0`) · **дата:** `2026-11-14`
+> **Версия:** `2.11.0` (closed) · **ветка:** `release/lock-channel-email-require-email` · **база:** `origin/master` (`v2.10.0`) · **дата:** `2026-11-14`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.11.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.10.0.md`](RELEASE-PLAN-2.10.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **10** файлов · **+169 / −5**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **4** коммита · **12** файлов · **+172 / −7**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
 
-**PR:** —
+**PR:** [#29](https://github.com/denis-peshkov/Cross.Identity/pull/29) (`BREAKING:` require email when LockChannelAsEmail is enabled).
 
 ---
 
@@ -44,6 +44,7 @@
 | # | Суть |
 |---|---|
 | ✅ #H40 LockChannelAsEmail require email on Register | `CreateUserAsync` gate; options/IUserService XML; FLOWS; BREAKING 2.10→2.11; `UserServiceTests`; drop obsolete TO-DO Принято sendCode-late-fail |
+| ✅ #L25 LABELS security description | `.github/LABELS.yml` / `.md` wording refine |
 
 ---
 
@@ -56,4 +57,4 @@
 
 ## Приоритет фиксов
 
-Открытых пунктов этой дельты нет. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md) (`M126` send `registered` after verify).
+_(пусто — релиз `2.11.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

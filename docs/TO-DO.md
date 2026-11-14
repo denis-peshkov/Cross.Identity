@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H39` `M129` `L24`
+**Id high-water (не переиспользовать ≤):** `C1` `H40` `M129` `L25`
 
 ---
 
@@ -126,3 +126,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Stock `confirm-email.*` removed from package — unused by stock flows; hosts that relied on them ship their own.
 - Sample.Api no longer ships host overrides for `registered.*` (use stock embedded templates).
 - README TFMs: badge only; prose Supported TFMs section dropped as duplicate of the badge.
+- Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync` with explicit `ValidationException`.
