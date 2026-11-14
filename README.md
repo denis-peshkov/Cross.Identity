@@ -13,7 +13,7 @@
 ![Activity](https://img.shields.io/github/commit-activity/m/denis-peshkov/Cross.Identity)
 ![Activity](https://img.shields.io/github/commit-activity/y/denis-peshkov/Cross.Identity)
 
-[![TFM](https://img.shields.io/badge/TFM-net8.0%20%7C%20net9.0%20%7C%20net10.0-512BD4)](#supported-tfms)
+![TFM](https://img.shields.io/badge/TFM-net8.0%20%7C%20net9.0%20%7C%20net10.0-512BD4)
 
 # Cross.Identity
 

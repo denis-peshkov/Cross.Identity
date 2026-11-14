@@ -11,15 +11,16 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Library
 
-- Rename welcome notification templates `register.*` → `registered.*` (lookup key `registered`; stock flows unchanged — Register still sends `verify` OTP).
+- Rename welcome notification templates `register.*` → `registered.*` (lookup key `registered`; stock Register still sends `verify` OTP).
+- Drop unused stock `confirm-email.*` templates (never referenced by stock flows).
 
 ### Tests
 
-- `EmbeddedTemplatePlaceholderTests` use `registered`.
+- `EmbeddedTemplatePlaceholderTests`: assert `registered`; drop `confirm-email` coverage.
 
 ### Documentation / sample
 
-- `docs/BREAKING.md` From 2.9.0→2.10.0; Sample.Api host overrides renamed to `registered.en` / `registered.ru`.
+- `docs/BREAKING.md` From 2.9.0→2.10.0; Sample.Api drops host `registered.*` overrides (use stock embedded templates).
 
 ---
 

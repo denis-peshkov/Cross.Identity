@@ -37,10 +37,12 @@ Release: [v2.10.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 
 | Area | Was (≤2.9.0) | Now (2.10.0+) |
 |---|---|---|
-| Stock / Sample welcome notification files | `register.{lang}.{txt\|html}` | `registered.{lang}.{txt\|html}` |
+| Stock welcome notification files | `register.{lang}.{txt\|html}` | `registered.{lang}.{txt\|html}` |
 | Template lookup key | `register` | `registered` |
+| Stock `confirm-email.*` | Embedded locales shipped | **Removed** (unused by stock flows) |
+| Sample.Api host `register` / `registered` overrides | Optional host copies | **Removed** — use stock embedded `registered.*` |
 
-**Action:** hosts/custom providers that load `register` must switch to `registered` (welcome “account ready” notify — not OTP). Stock flows never sent `register` (`main.Register` uses `verify`).
+**Action:** hosts/custom providers that load `register` must switch to `registered` (welcome “account ready” notify — not OTP). Stock flows never sent `register` (`main.Register` uses `verify`). Hosts that depended on package `confirm-email.*` must ship their own templates. Sample no longer overrides welcome bodies.
 
 ---
 
