@@ -40,6 +40,13 @@ CodeRabbit **Major** (deferred): English throughout release-plan workflow docs.
 **Что:** после token exchange читать `id_token` не «как JSON payload», а с crypto-проверкой подписи по Apple JWKS (`https://appleid.apple.com/auth/keys`), плюс claims `iss` / `aud` (== ClientId) / `exp` (и при наличии — `nonce`).
 **Зачем:** сейчас токен доверяется потому что пришёл по TLS с `appleid.apple.com/auth/token` (как Graph/userinfo у других провайдеров). JWKS закрывает класс ошибок «поддельный `id_token` в ответе exchange» (compromised HTTP handler, proxy, ошибочный mock в prod) и выравнивает Apple с OIDC best practice. Не блокер текущего Sign In; hardening вне 2.6.0 ship slice.
 
+### M126. Send `registered` after successful verification (non-SMS)
+После успешной OTP-верификации (контакт unverified→verified), когда аккаунт создан/готов, отправить welcome-шаблон `registered`.
+- **Только** если есть канал доставки **отличный от SMS** (Email); по SMS welcome не слать.
+- Один раз на переход verified (не на каждый последующий login по коду).
+- Stock Register сейчас: `createUser` → `sendCode` (`verify`); верификация позже через `Token` + `Code` → `ValidateCodeAsync` / `ApplyVerifiedContactFromOtpTargetAsync`.
+- Открытые решения при реализации: точка хука (`Token` после code vs отдельный notify-step); OTP был Email vs «есть Email у аккаунта даже если OTP был SMS».
+
 ---
 
 ## Низкий (техдолг / несогласованности)
