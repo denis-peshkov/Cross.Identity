@@ -7,7 +7,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.11.0 — TBD
+## v2.11.0 — 14 Nov 2026
 
 ### Library
 
