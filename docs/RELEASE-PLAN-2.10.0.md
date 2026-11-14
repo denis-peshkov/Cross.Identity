@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.9.0.md`](RELEASE-PLAN-2.9.0.md)
 >
-> Дельта: `origin/master...HEAD` — **4** коммита · **35** файлов · **+101 / −1 493**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **6** коммитов · **38** файлов · **+202 / −1 541**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
@@ -52,6 +52,7 @@
 | ✅ #M127 Sample.Api drop `registered.*` overrides | Host copies removed after rename |
 | ✅ #M128 Placeholder tests for templates | `registered` asserted; `confirm-email` coverage dropped |
 | ✅ #L24 README Supported TFMs removed in delta | dismissed: TFM badge replaces prose/section (duplicate) |
+| ✅ #M129 FLOWS notification placeholders | Document brand vs per-step placeholders; `registered` not sent by stock yet |
 
 ---
 
