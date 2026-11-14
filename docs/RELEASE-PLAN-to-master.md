@@ -1,16 +1,16 @@
 ﻿# Release readiness plan `2.11.0` → `master`
 
 > **Analysis date:** 2026-11-14
-> **Branch:** `release/lock-channel-email-require-email` (`a15b1ab` tip; local ahead + WT finalize docs)
+> **Branch:** `release/lock-channel-email-require-email` (`5614086`)
 > **Comparison base:** `origin/master` (`v2.10.0` / `c30bc00`) · merge-base `c30bc00`
 > **Version plan:** [`docs/RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md) · backlog [`TO-DO.md`](TO-DO.md)
 > **Goal:** verification checklist before merge of **2.11.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
 > **Note:** `LockChannelAsEmail=true` → email required at `CreateUserAsync` (`ValidationException`). PR [#29](https://github.com/denis-peshkov/Cross.Identity/pull/29). Tag `v2.11.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
-> **Sources:** `git` / version plan / `gh pr checks` (2026-11-14)
+> **Sources:** `git` / version plan / `gh pr checks` (2026-11-14, tip build/breaking-gate/CodeQL pass)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **40** items — ✅ **33** (83%) · 🟨 **2** (5%) · ⬜ **5** (13%) · ❌ **0** (0%)
+**Change summary:** **39** items — ✅ **39** (100%) · 🟨 **0** (0%) · ⬜ **0** (0%) · ❌ **0** (0%)
 
 ---
 
@@ -18,21 +18,21 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **4** |
-| Files | **12** · **+172 / −7** |
-| Working tree | dirty — finalize `RELEASE-PLAN-2.11.0` / `TO-DO` HW (ahead 1 vs origin) |
-| Remote branch | tracking · **ahead 1** |
-| Tests | CI build ✅ on PR #29 |
-| PR | [#29](https://github.com/denis-peshkov/Cross.Identity/pull/29) → `master` |
-| CodeRabbit | pass (PR #29) |
-| Version-plan open C/H/M/L | **empty** · closed H40 · L25 · HW tip `C1` `H40` `M129` `L25` |
+| Commits (`origin/master..HEAD`) | **6** |
+| Files | **13** · **+231 / −68** |
+| Working tree | clean · in sync with `origin/release/lock-channel-email-require-email` |
+| Remote branch | tracking · up to date |
+| Tests | CI build ✅ on PR #29 tip |
+| PR | [#29](https://github.com/denis-peshkov/Cross.Identity/pull/29) → `master` · MERGEABLE |
+| CodeRabbit | skipping on latest tip (prior pass on earlier SHA) |
+| Version-plan open C/H/M/L | **empty** · closed H40 · L25 · HW `C1` `H40` `M129` `L25` |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
 | Library | 3 | `UserService` gate + options/IUserService docs |
 | Tests | 1 | `UserServiceTests` lock + phone-only / email+phone |
 | FLOWS | 1 | Register note |
-| docs | 5 | BREAKING / CHANGELOG / PLAN 2.11.0 / PLAN 2.10.0 label / TO-DO |
+| docs | 6 | BREAKING / CHANGELOG / PLAN 2.11.0 / PLAN 2.10.0 / to-master / TO-DO |
 | Labels | 2 | `.github/LABELS` security description |
 
 ---
@@ -78,7 +78,7 @@
 | CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md) empty | ✅ `(closed)` |
 | CG2 | Closed H40 · L25 | ✅ |
 | CG3 | PR opened | ✅ [#29](https://github.com/denis-peshkov/Cross.Identity/pull/29) |
-| CG4 | Finalize docs committed + pushed | ⬜ WT / ahead 1 |
+| CG4 | Finalize docs on remote tip | ✅ |
 
 ---
 
@@ -86,10 +86,10 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Commit + push finalize plan / TO-DO | ⬜ |
+| P1 | Commit + push finalize plan / TO-DO / to-master | ✅ |
 | P2 | PR → `master` | ✅ #29 |
-| P3 | CI green on PR tip | ✅ `gh pr checks` (build, breaking-gate, CodeQL, …) |
-| P4 | Ready to merge → `master` | 🟨 after P1 (tag/NuGet post-merge) |
+| P3 | CI green on PR tip | ✅ build / breaking-gate / CodeQL / Owner-only |
+| P4 | Ready to merge → `master` | ✅ (tag/NuGet post-merge) |
 
 ---
 
@@ -97,11 +97,11 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md) | ✅ `(closed)` WT |
+| D1 | [`RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md) | ✅ `(closed)` |
 | D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.11.0 | ✅ |
 | D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.10.0 to 2.11.0 | ✅ |
 | D4 | [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) Register note | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW + Принято sync WT |
+| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW + Принято synced |
 | D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
 | D7 | Previous [`RELEASE-PLAN-2.10.0.md`](RELEASE-PLAN-2.10.0.md) | ✅ `(published / closed)` |
 
@@ -139,24 +139,23 @@
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
 | R1 | Hosts with lock + phone-only Register | BREAKING — collect email / catch `ValidationException` | ✅ documented |
-| R2 | Finalize plan / TO-DO not on remote tip | Commit + push before merge | ⬜ |
-| R3 | Tag before master | Do not tag until after merge | ✅ policy |
+| R2 | Tag before master | Do not tag until after merge | ✅ policy |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
 - ✅ **1. Code gate** — open C/H/M/L empty; H40 closed
-- ⬜ **2. Commit/push** finalize `RELEASE-PLAN-2.11.0` + `TO-DO` (ahead/WT)
+- ✅ **2. Commit/push** finalize docs on tip
 - ✅ **3. PR → `master`** #29 + CI green
 - ✅ **4. Docs content** — CHANGELOG / BREAKING 2.10.0→2.11.0 / FLOWS
-- 🟨 **5. Ready to merge** — after P1; tag `v2.11.0` / NuGet only after merge to `master` (CI)
+- ✅ **5. Ready to merge** — tag `v2.11.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty
 - ✅ Feature set on branch (`CreateUserAsync` email gate)
-- ⬜ Finalize docs committed + pushed to PR tip
+- ✅ Finalize docs on remote tip
 - ✅ PR / CI green (#29)
 - ✅ PostDeployment N/A
 - ✅ Tag/NuGet out of scope until `master`
