@@ -19,8 +19,6 @@
 
 A .NET identity and authentication library: configurable scenarios (registration, sign-in, password recovery, token issuance and refresh), JWT, Argon2, email/SMS verification, and a process engine with JSON-defined flows.
 
-Supported TFMs: `net8.0`, `net9.0`, `net10.0`.
-
 ## Features
 
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
@@ -76,18 +74,6 @@ bag["collectForm.DeviceFingerprint"] = deviceFingerprintFromHost; // optional
 
 await flowExecutor.ExecuteAsync(bag, "main", FlowOperationEnum.Token, ct);
 ```
-
-## Supported TFMs
-
-NuGet package `Cross.Identity` multi-targets:
-
-| TFM | .NET |
-|---|---|
-| `net8.0` | .NET 8 |
-| `net9.0` | .NET 9 |
-| `net10.0` | .NET 10 |
-
-Sample.Api and Cross.Identity.Tests use `net8.0`.
 
 ## Repository structure
 

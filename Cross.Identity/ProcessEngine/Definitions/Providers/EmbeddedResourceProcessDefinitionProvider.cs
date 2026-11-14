@@ -108,7 +108,7 @@ internal sealed class EmbeddedResourceProcessDefinitionProvider : IProcessDefini
             }
 
             // tail after base namespace (without leading dot)
-            var templateTail = fullName.Substring(tplPrefix.Length).TrimStart('.'); // e.g. "register.en.html" or "verify.ru.txt"
+            var templateTail = fullName.Substring(tplPrefix.Length).TrimStart('.'); // e.g. "registered.en.html" or "verify.ru.txt"
 
             // 2) Templates
             var tplMatch = TemplateKeyRegex.Match(templateTail);

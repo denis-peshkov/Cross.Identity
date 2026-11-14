@@ -7,6 +7,22 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.10.0 — 14 Nov 2026
+
+### Library
+
+- Rename welcome notification templates `register.*` → `registered.*` (lookup key `registered`; stock flows unchanged — Register still sends `verify` OTP).
+
+### Tests
+
+- `EmbeddedTemplatePlaceholderTests` use `registered`.
+
+### Documentation / sample
+
+- `docs/BREAKING.md` From 2.9.0→2.10.0; Sample.Api host overrides renamed to `registered.en` / `registered.ru`.
+
+---
+
 ## v2.9.0 — 14 Nov 2026
 
 ### Library

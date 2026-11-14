@@ -5,7 +5,7 @@ public sealed class EmbeddedTemplatePlaceholderTests
 {
     private static readonly string[] TemplateNames =
     {
-        "verify", "reset", "confirm-email", "register", "password-changed",
+        "verify", "reset", "confirm-email", "registered", "password-changed",
     };
 
     private static readonly string[] Languages = { "en", "ru", "ro" };
@@ -93,12 +93,12 @@ public sealed class EmbeddedTemplatePlaceholderTests
     [TestCase("en")]
     [TestCase("ru")]
     [TestCase("ro")]
-    public void GivenRegisterTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string lang)
+    public void GivenRegisteredTemplate_WhenLoaded_ThenContainsRequiredPlaceholders(string lang)
     {
         var sut = CreateSut();
         foreach (var format in new[] { "txt", "html" })
         {
-            var body = sut.GetTemplate("register", lang, format);
+            var body = sut.GetTemplate("registered", lang, format);
             body.Should().Contain("{{fullName}}");
             body.Should().Contain("{{email}}");
             body.Should().Contain("{{company}}");
