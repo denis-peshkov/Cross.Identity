@@ -15,7 +15,8 @@ public sealed class AuthenticationOptions
     /// <summary>
     /// When <c>true</c>, OTP and password-change notifications always use Email
     /// (ignores preferred phone/messenger endpoints). Requires an email on the account
-    /// or a verified email endpoint.
+    /// or a verified email endpoint. <c>CreateUserAsync</c> rejects registration without
+    /// an email (<see cref="ValidationException"/>).
     /// </summary>
     public bool LockChannelAsEmail { get; set; }
 

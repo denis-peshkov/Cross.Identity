@@ -93,6 +93,12 @@ internal sealed class UserService : IUserService
         var normalizedEmail = NullIfWhiteSpace(emailRaw?.ToString()?.Trim().ToLowerInvariant());
         var normalizedPhone = NullIfWhiteSpace(phoneRaw?.ToString()?.Trim());
 
+        // LockChannelAsEmail forces OTP/notify to email — reject create without email (e.g. phone-only Register).
+        if (_options.LockChannelAsEmail && normalizedEmail is null)
+        {
+            throw new ValidationException("Email is required when LockChannelAsEmail is enabled.");
+        }
+
         // 3) Uniqueness
         if (normalizedUserName is not null
             && await _context.UsersAccounts.AnyAsync(u => u.NormalizedUserName == normalizedUserName, cancellationToken).ConfigureAwait(false))
