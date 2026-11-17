@@ -3,8 +3,8 @@
 [TestFixture]
 public class ExternalLoginServiceTests : EFTestsBase
 {
-    private const string CallbackUrl = "https://app.example/callback";
-    private const string FormCallbackUrl = "https://api.example/oauth/form-callback";
+    private const string CallbackUrl = "https://app.example/auth/external-login-callback";
+    private const string FormCallbackUrl = "https://api.example/api/v1/Identity/ExternalLogin/OAuthReturn";
     private Mock<ILogger<ExternalLoginService>> _logger = null!;
     private HttpContextAccessor _httpContextAccessor = null!;
 

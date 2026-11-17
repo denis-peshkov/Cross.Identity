@@ -27,7 +27,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 - **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+15551234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
 - **SMS OTP templates** — short `verify-sms` / `reset-sms`; email keeps full `verify` / `reset`.
-- **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. `CallbackUrl` → SPA (GET providers); Apple `form_post` requires `FormCallbackUrl` → API bridge (see Sample.Api `POST /oauth/callback` and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
+- **External OAuth** — Google, Microsoft, GitHub, Facebook, Apple Sign In; OAuth state in the database (`auth.ExternalLoginStates`), multi-instance without sticky sessions. `CallbackUrl` → SPA (`/auth/external-login-callback`); Apple `form_post` requires `FormCallbackUrl` → API (`/api/v1/Identity/ExternalLogin/OAuthReturn`; see Sample.Api and [`FLOWS.md`](Cross.Identity/FLOWS.md)).
 - **Forms** — declarative field definitions and validation rules (equal, requiredIf, atLeastOneRequired, etc.).
 - **Licensing (JWT)** — production hosts must set `CrossIdentity:LicenseKey` (Peshkov JWT); missing key is allowed in development/testing (logged, flows not blocked). Validated on `IFlowExecutor.ExecuteAsync` (see table below).
 

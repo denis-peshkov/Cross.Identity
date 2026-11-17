@@ -11,7 +11,7 @@
 > Дельта: `origin/master...HEAD` — **1** коммит · **6** файлов · **+34 / −9**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → все закрыты в этом плане.
+- не запускался. → все закрыты в этом плане (paste L27 stale).
 
 **PR:** —
 
@@ -35,7 +35,7 @@
 
 ## Принято (осознанный trade-off)
 
-- Apple requires `FormCallbackUrl` (API); GET providers use `CallbackUrl` (SPA) — different hosts/ports in Sample.Api.
+- Sample URLs: `CallbackUrl` → `http://localhost:4200/auth/external-login-callback`; `FormCallbackUrl` → `http://localhost:5164/api/v1/Identity/ExternalLogin/OAuthReturn`.
 - Unverified email/phone squat documented as intentional contract (FLOWS + TO-DO Принято + `IUserService` remarks).
 
 ---
@@ -50,6 +50,7 @@
 | ✅ #M132 Apple token `redirect_uri` tests | CR: assert `ExchangeCodeAsync` uses `FormCallbackUrl`; blank `FormCallbackUrl` fails |
 | ✅ #H42 Register `sendCode` bind to createUser id | Optional `userAccountIdKey`; stock Register → `createUser.UserAccountId`; FLOWS + tests |
 | ✅ #L26 Apple requires `FormCallbackUrl` | No CallbackUrl fallback; docs/XML/FLOWS/README/BREAKING |
+| ✅ #L27 Sample FormCallbackUrl XML vs 302 | CR: remove «302 to SPA»; already says bridge → `ExternalLoginCallback` / `Results.Ok` — stale |
 
 ---
 

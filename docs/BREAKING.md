@@ -43,7 +43,7 @@ Release: [v2.12.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 | Apple with only `CallbackUrl` set | Worked | `InvalidOperationException`: `FormCallbackUrl is not configured.` |
 | Non-Apple providers | `CallbackUrl` | Unchanged (`CallbackUrl`) |
 
-**Action:** set `Authentication:ExternalLogin:FormCallbackUrl` (or env `AUTH_EXTERNAL_LOGIN_FORM_CALLBACK_URL` / `Authentication__ExternalLogin__FormCallbackUrl`) to a POST-capable **API** bridge (see Sample.Api `POST /oauth/callback`). Keep `CallbackUrl` on the **SPA** for GET providers — typically a different host/port from `FormCallbackUrl`.
+**Action:** set `Authentication:ExternalLogin:FormCallbackUrl` (or env `AUTH_EXTERNAL_LOGIN_FORM_CALLBACK_URL` / `Authentication__ExternalLogin__FormCallbackUrl`) to a POST-capable **API** bridge (Sample: `http://localhost:5164/api/v1/Identity/ExternalLogin/OAuthReturn`). Keep `CallbackUrl` on the **SPA** for GET providers (Sample: `http://localhost:4200/auth/external-login-callback`).
 
 ---
 

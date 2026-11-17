@@ -45,28 +45,20 @@ app.MapPost(
     .WithName("RunIdentityFlow")
     .WithOpenApi();
 
-// OAuth FormCallbackUrl bridge (API). Apple POSTs form_post here (code, state, user).
-// CallbackUrl for GET providers points at the SPA (ClientUrl), not this host.
-// GET kept only as a local convenience if CallbackUrl is temporarily pointed at the API.
-async Task<IResult> OAuthCallbackBridgeAsync(
+// FormCallbackUrl bridge (API): Apple POSTs form_post (code, state, user) → main.ExternalLoginCallback.
+// CallbackUrl for GET providers is the SPA route (auth/external-login-callback), not this host.
+async Task<IResult> OAuthReturnBridgeAsync(
     HttpRequest request,
     IFlowExecutor flowExecutor,
     CancellationToken cancellation)
 {
+    _ = await request.ReadFormAsync(cancellation).ConfigureAwait(false);
+
+    static string? NullIfWhiteSpace(string? value)
+        => string.IsNullOrWhiteSpace(value) ? null : value;
+
     string? Read(string name)
-    {
-        if (HttpMethods.IsPost(request.Method))
-        {
-            return NullIfWhiteSpace(request.Form[name].ToString());
-        }
-
-        return NullIfWhiteSpace(request.Query[name].ToString());
-    }
-
-    if (HttpMethods.IsPost(request.Method))
-    {
-        _ = await request.ReadFormAsync(cancellation).ConfigureAwait(false);
-    }
+        => NullIfWhiteSpace(request.Form[name].ToString());
 
     var input = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
     {
@@ -83,18 +75,10 @@ async Task<IResult> OAuthCallbackBridgeAsync(
     return Results.Ok(result.Data);
 }
 
-static string? NullIfWhiteSpace(string? value)
-    => string.IsNullOrWhiteSpace(value) ? null : value;
-
-app.MapGet("/oauth/callback", OAuthCallbackBridgeAsync)
-    .AllowAnonymous()
-    .WithName("OAuthCallbackBridgeGet")
-    .WithOpenApi();
-
-app.MapPost("/oauth/callback", OAuthCallbackBridgeAsync)
+app.MapPost("/api/v1/Identity/ExternalLogin/OAuthReturn", OAuthReturnBridgeAsync)
     .AllowAnonymous()
     .DisableAntiforgery()
-    .WithName("OAuthCallbackBridgePost")
+    .WithName("ExternalLoginOAuthReturn")
     .WithOpenApi();
 
 app.Run();

@@ -4,7 +4,7 @@
 internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
 {
     private const string Flow = "main";
-    private const string CallbackUrl = "https://app.example/callback";
+    private const string CallbackUrl = "https://app.example/auth/external-login-callback";
 
     private ExternalLoginService _externalLoginService = null!;
     private HttpContextAccessor _httpContextAccessor = null!;
