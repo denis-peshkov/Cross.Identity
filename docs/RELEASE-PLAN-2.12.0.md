@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.12.0` · **ветка:** `release/apple-form-callback-url` · **база:** `origin/master` (`v2.11.0`) · **дата:** `2026-11-17`
+> **Версия:** `2.12.0` (closed) · **ветка:** `release/apple-form-callback-url` · **база:** `origin/master` (`v2.11.0`) · **дата:** `2026-11-17`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.12.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **6** файлов · **+34 / −9**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **7** коммитов · **20** файлов · **+463 / −55**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → все закрыты в этом плане (paste L27 stale).
+- не запускался.
 
-**PR:** —
+**PR:** [#30](https://github.com/denis-peshkov/Cross.Identity/pull/30) (`BREAKING:` require FormCallbackUrl for Apple OAuth redirects).
 
 ---
 
@@ -65,4 +65,4 @@
 
 ## Приоритет фиксов
 
-1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.12.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

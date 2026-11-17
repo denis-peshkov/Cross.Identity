@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H40` `M129` `L25`
+**Id high-water (не переиспользовать ≤):** `C1` `H42` `M132` `L27`
 
 ---
 
@@ -128,3 +128,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Sample.Api no longer ships host overrides for `registered.*` (use stock embedded templates).
 - README TFMs: badge only; prose Supported TFMs section dropped as duplicate of the badge.
 - Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync` with explicit `ValidationException`.
+- Sample OAuth URLs: `CallbackUrl` → SPA (`http://localhost:4200/auth/external-login-callback`); `FormCallbackUrl` → API bridge (`http://localhost:5164/api/v1/Identity/ExternalLogin/OAuthReturn`).
