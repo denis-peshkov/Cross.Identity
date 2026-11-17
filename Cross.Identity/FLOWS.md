@@ -292,7 +292,7 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 >
 > **Apple:** authorize uses `response_mode=form_post`. Profile comes from token-endpoint `id_token` (`sub` / `email` / `email_verified`). Optional form_post `user` (first authorization only) maps to `DisplayName` via `userKey`.
 >
-> **Apple `CallbackUrl` / form_post:** Apple POSTs `code`, `state`, and (first auth) `user` to `Authentication:ExternalLogin:CallbackUrl`. That URL must be a **server** endpoint that accepts POST (and typically GET for other providers on the same path), then forwards into this flow (`Code` / `State` / `User` / `Error` / `ErrorDescription`). A SPA-only route cannot receive Apple’s form_post. Sample: `Sample.Api` `GET|POST /oauth/callback` → `main` / `ExternalLoginCallback`.
+> **Apple `FormCallbackUrl` / form_post:** Apple POSTs `code`, `state`, and (first auth) `user` to `Authentication:ExternalLogin:FormCallbackUrl` (authorize + token `redirect_uri`). When `FormCallbackUrl` is empty, Apple falls back to `CallbackUrl`. That URL must be a **server** endpoint that accepts POST (query providers often use GET on `CallbackUrl`, possibly the same path), then forwards into this flow (`Code` / `State` / `User` / `Error` / `ErrorDescription`). A SPA-only route cannot receive Apple’s form_post. Sample: `Sample.Api` `GET|POST /oauth/callback` → `main` / `ExternalLoginCallback`.
 >
 > **Facebook:** Graph email may be present with `EmailVerified = false` (no OIDC attestation).
 >

@@ -45,7 +45,7 @@ app.MapPost(
     .WithName("RunIdentityFlow")
     .WithOpenApi();
 
-// OAuth redirect_uri bridge (Authentication:ExternalLogin:CallbackUrl).
+// OAuth redirect_uri bridge (CallbackUrl; Apple prefers FormCallbackUrl).
 // GET — query providers (Google / Microsoft / GitHub / Facebook).
 // POST — Apple Sign In form_post (code, state, user). Forwards into main.ExternalLoginCallback.
 async Task<IResult> OAuthCallbackBridgeAsync(
