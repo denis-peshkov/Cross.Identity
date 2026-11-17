@@ -93,6 +93,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Refresh + `Empty` при `SessionBindingCheckIp=true` → `ValidationException`; при `false` — прежняя UA/FP логика.
 - Password max 32 в stock `collectForm` — контракт UX/JSON, не hasher/БД.
 - OAuth unverified squat + verified profile → новый verified account (не auto-link).
+- Unverified email/phone squat (Register / `CreateUserAsync`): несколько unverified-строк с одним адресом OK; `ConflictException` только если адрес уже **verified**; каждый Register — новый `UserAccountId` (не idempotent reuse/resend); первый успешный OTP-verify становится owner. См. [`FLOWS.md`](../Cross.Identity/FLOWS.md) `main.Register`.
 - Audit PII в `auth.Audits` (Ip/UA/Fingerprint) — forensics by design; retention — хост.
 - PII в логах auth steps (email/phone) — forensics; redaction/sink — хост.
 - Выбор типа канала / messenger bot (#40/#41) — вне stock scope.

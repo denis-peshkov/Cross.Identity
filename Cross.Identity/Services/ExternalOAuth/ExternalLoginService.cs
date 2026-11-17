@@ -323,6 +323,18 @@ internal sealed class ExternalLoginService : IExternalLoginService
         return providerOptions.IsConfigured;
     }
 
+    private string ResolveRedirectUri(ExternalOAuthProviderDefinition definition)
+    {
+        // Apple form_post needs a host that accepts POST; prefer FormCallbackUrl when set.
+        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(_options.FormCallbackUrl))
+        {
+            return _options.FormCallbackUrl;
+        }
+
+        return _options.CallbackUrl;
+    }
+
     private string BuildAuthorizationUrl(
         ExternalOAuthProviderDefinition definition,
         ExternalLoginProviderOptions providerOptions,
@@ -330,7 +342,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     {
         var query = HttpUtility.ParseQueryString(string.Empty);
         query["client_id"] = providerOptions.ClientId;
-        query["redirect_uri"] = _options.CallbackUrl;
+        query["redirect_uri"] = ResolveRedirectUri(definition);
         query["response_type"] = "code";
         query["scope"] = definition.Scope;
         query["state"] = state;
@@ -360,7 +372,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             ["grant_type"] = "authorization_code",
             ["code"] = code,
-            ["redirect_uri"] = _options.CallbackUrl,
+            ["redirect_uri"] = ResolveRedirectUri(definition),
             ["client_id"] = providerOptions.ClientId,
             ["client_secret"] = providerOptions.ClientSecret,
         };

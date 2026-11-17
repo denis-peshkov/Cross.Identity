@@ -1026,11 +1026,13 @@ public class ExternalLoginServiceTests : EFTestsBase
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenAppleProvider_WhenInitiateAsync_ThenReturnsAuthorizationUrlAsync()
     {
+        const string formCallbackUrl = "https://api.example/oauth/form-callback";
         SeedProvider("Apple");
         var sut = CreateService(
             GoogleSuccessHandler(),
             options =>
             {
+                options.FormCallbackUrl = formCallbackUrl;
                 options.Providers["Apple"] = new ExternalLoginProviderOptions
                 {
                     ClientId = "com.example.app",
@@ -1045,7 +1047,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         query["client_id"].Should().Be("com.example.app");
         query["response_mode"].Should().Be("form_post");
         query["scope"].Should().Be("name email");
-        query["redirect_uri"].Should().NotBeNullOrWhiteSpace();
+        query["redirect_uri"].Should().Be(formCallbackUrl);
         query["state"].Should().NotBeNullOrWhiteSpace();
     }
 

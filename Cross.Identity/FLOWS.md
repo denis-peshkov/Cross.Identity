@@ -199,10 +199,12 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 
 When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAsync` requires an email (`ValidationException`: `Email is required when LockChannelAsEmail is enabled.`) — phone-only registration is rejected before `sendCode`.
 
+**Unverified email / phone (squat — intentional):** `CreateUserAsync` raises `ConflictException` (`Email already exists.` / `PhoneNumber already exists.`) only when the same address is already **verified** on another account. Several accounts may hold the same **unverified** email or phone (filtered unique index on verified contacts only). Each Register creates a **new** `UserAccountId` — not idempotent reuse and not an automatic resend for an existing unverified row. Whoever successfully verifies that address first becomes the owner (`EmailVerified` / `PhoneNumberVerified`); later verifies of the same contact fail the uniqueness guard. OTP verify is scoped by `userId`, so one squat cannot consume another account's code. Hosts that want “same Guid + resend confirmation” must implement that above the library (or change this contract).
+
 | Step | kind | Details |
 |---|---|---|
 | `collectForm` | collectForm | `Email` / `PhoneNumber` (`atLeastOneRequired`), optional `UserName` alias, optional `Password` (8–32 when set); optional client context. `selector.candidates`: Email, PhoneNumber, UserName. → `createUser` |
-| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. With `LockChannelAsEmail` → email required. → `sendCode` |
+| `createUser` | createUser | map: `Email`, `Password`, `PhoneNumber`, `UserName`; `userAccountIdKey: UserAccountId`. With `LockChannelAsEmail` → email required. Unverified contact squat: new id (see above). → `sendCode` |
 | `sendCode` | sendCode | `template: verify`, `subject: Verification Code` (delivery via `ResolveOtpTargetAsync`). → `collectResult` |
 | `collectResult` | collectResult | `LastCode`, `UserAccountId`. `next: null` |
 
