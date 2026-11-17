@@ -7,6 +7,23 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.12.0 — 17 Nov 2026
+
+### Library
+
+- `Authentication:ExternalLogin:FormCallbackUrl` — optional Apple Sign In `redirect_uri` for `response_mode=form_post` (falls back to `CallbackUrl` when empty). Used for authorize URL and token exchange.
+
+### Tests
+
+- `ExternalLoginServiceTests`: Apple initiate asserts `redirect_uri` = `FormCallbackUrl`.
+
+### Documentation
+
+- FLOWS Register: document unverified email/phone squat (new id; conflict only if verified).
+- TO-DO Принято + `IUserService` remarks aligned with squat contract.
+
+---
+
 ## v2.11.0 — 14 Nov 2026
 
 ### Library
