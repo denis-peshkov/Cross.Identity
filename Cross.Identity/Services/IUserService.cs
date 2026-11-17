@@ -57,6 +57,8 @@ internal interface IUserService
     /// Map keys are logical field names (e.g. <c>"Email"</c>, <c>"UserName"</c>, <c>"PhoneNumber"</c>, <c>"Password"</c>).
     /// Optional keys may be omitted. <c>PhoneNumber</c>, when provided, must already be valid E.164
     /// (e.g. <c>+15551234567</c>) as produced by <c>collectForm</c>.
+    /// Unverified email/phone may already exist on other accounts (squat); conflict only when that
+    /// contact is already verified. Always allocates a new id (not idempotent reuse). See FLOWS.md Register.
     /// </summary>
     /// <param name="map">User field map.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H40` `M129` `L25`
+**Id high-water (не переиспользовать ≤):** `C1` `H42` `M132` `L27`
 
 ---
 
@@ -93,6 +93,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Refresh + `Empty` при `SessionBindingCheckIp=true` → `ValidationException`; при `false` — прежняя UA/FP логика.
 - Password max 32 в stock `collectForm` — контракт UX/JSON, не hasher/БД.
 - OAuth unverified squat + verified profile → новый verified account (не auto-link).
+- Unverified email/phone squat (Register / `CreateUserAsync`): несколько unverified-строк с одним адресом OK; `ConflictException` только если адрес уже **verified**; каждый Register — новый `UserAccountId` (не idempotent reuse/resend); первый успешный OTP-verify становится owner. См. [`FLOWS.md`](../Cross.Identity/FLOWS.md) `main.Register`.
 - Audit PII в `auth.Audits` (Ip/UA/Fingerprint) — forensics by design; retention — хост.
 - PII в логах auth steps (email/phone) — forensics; redaction/sink — хост.
 - Выбор типа канала / messenger bot (#40/#41) — вне stock scope.
@@ -127,3 +128,4 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Sample.Api no longer ships host overrides for `registered.*` (use stock embedded templates).
 - README TFMs: badge only; prose Supported TFMs section dropped as duplicate of the badge.
 - Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync` with explicit `ValidationException`.
+- Sample OAuth URLs: `CallbackUrl` → SPA (`http://localhost:4200/auth/external-login-callback`); `FormCallbackUrl` → API bridge (`http://localhost:5164/api/v1/Identity/ExternalLogin/OAuthReturn`).

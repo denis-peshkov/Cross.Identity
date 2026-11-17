@@ -3,7 +3,8 @@
 [TestFixture]
 public class ExternalLoginServiceTests : EFTestsBase
 {
-    private const string CallbackUrl = "https://app.example/callback";
+    private const string CallbackUrl = "https://app.example/auth/external-login-callback";
+    private const string FormCallbackUrl = "https://api.example/api/v1/Identity/ExternalLogin/OAuthReturn";
     private Mock<ILogger<ExternalLoginService>> _logger = null!;
     private HttpContextAccessor _httpContextAccessor = null!;
 
@@ -107,6 +108,52 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleFormCallbackUrlWithoutCallbackUrl_WhenInitiateAsync_ThenUsesFormCallbackUrlAsync()
+    {
+        SeedProvider("Apple");
+        var sut = CreateService(
+            new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()),
+            options =>
+            {
+                options.CallbackUrl = string.Empty;
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        query["redirect_uri"].Should().Be(FormCallbackUrl);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleMissingFormCallbackUrl_WhenInitiateAsync_ThenThrowsInvalidOperationExceptionAsync()
+    {
+        SeedProvider("Apple");
+        var sut = CreateService(
+            new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()),
+            options =>
+            {
+                // CallbackUrl alone must not satisfy Apple.
+                options.FormCallbackUrl = string.Empty;
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Apple", null, null, CancellationToken.None))
+            .Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*FormCallbackUrl*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenDisabledProvider_WhenInitiateAsync_ThenThrowsNotFoundAsync()
     {
         SeedProvider("Google", isEnabled: false);
@@ -182,12 +229,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Google", "/home", null, CancellationToken.None);
 
         url.Should().StartWith("https://accounts.google.com/o/oauth2/v2/auth?");
-        url.Should().Contain("client_id=google-client");
-        url.Should().Contain("redirect_uri=");
-        url.Should().Contain("app.example%2fcallback");
-        url.Should().Contain("response_type=code");
-        url.Should().Contain("scope=openid");
-        url.Should().Contain("state=");
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        query["client_id"].Should().Be("google-client");
+        query["redirect_uri"].Should().Be(CallbackUrl);
+        query["response_type"].Should().Be("code");
+        query["scope"].Should().Contain("openid");
+        query["state"].Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]
@@ -1045,8 +1092,57 @@ public class ExternalLoginServiceTests : EFTestsBase
         query["client_id"].Should().Be("com.example.app");
         query["response_mode"].Should().Be("form_post");
         query["scope"].Should().Be("name email");
-        query["redirect_uri"].Should().NotBeNullOrWhiteSpace();
+        query["redirect_uri"].Should().Be(FormCallbackUrl);
         query["state"].Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleFormCallbackUrl_WhenCompleteAsync_ThenTokenExchangeUsesFormCallbackUrlAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001234.formcallback01",
+            email = "apple.form@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+
+        string? tokenRedirectUri = null;
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = request =>
+            {
+                tokenRedirectUri = ReadFormRedirectUri(request);
+                return OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                });
+            },
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var authorizeRedirectUri = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query)["redirect_uri"];
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        authorizeRedirectUri.Should().Be(FormCallbackUrl);
+        tokenRedirectUri.Should().Be(FormCallbackUrl);
     }
 
     [Test]
@@ -1718,6 +1814,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var options = new ExternalLoginOptions
         {
             CallbackUrl = CallbackUrl,
+            FormCallbackUrl = FormCallbackUrl,
             StateLifetime = TimeSpan.FromMinutes(10),
             Providers =
             {
@@ -1808,6 +1905,17 @@ public class ExternalLoginServiceTests : EFTestsBase
             Encoding.UTF8.GetBytes(appSecret),
             Encoding.UTF8.GetBytes(accessToken));
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static string? ReadFormRedirectUri(HttpRequestMessage request)
+    {
+        var body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrEmpty(body))
+        {
+            return null;
+        }
+
+        return System.Web.HttpUtility.ParseQueryString(body)["redirect_uri"];
     }
 
     private static string ExtractState(string authorizationUrl)
