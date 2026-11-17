@@ -50,10 +50,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
             throw new ValidationException($"Provider '{provider}' is not configured.");
         }
 
-        if (string.IsNullOrWhiteSpace(_options.CallbackUrl))
-        {
-            throw new InvalidOperationException("Authentication:ExternalLogin:CallbackUrl is not configured.");
-        }
+        // Apple requires FormCallbackUrl; other providers need CallbackUrl (validated in RequireRedirectUri).
+        _ = RequireRedirectUri(definition);
 
         var providerEntity = await _identityContext.Providers
             .AsNoTracking()
@@ -325,14 +323,29 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     private string ResolveRedirectUri(ExternalOAuthProviderDefinition definition)
     {
-        // Apple form_post needs a host that accepts POST; prefer FormCallbackUrl when set.
-        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrWhiteSpace(_options.FormCallbackUrl))
+        // Apple form_post needs a POST-capable host — FormCallbackUrl only (no CallbackUrl fallback).
+        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase))
         {
             return _options.FormCallbackUrl;
         }
 
         return _options.CallbackUrl;
+    }
+
+    private string RequireRedirectUri(ExternalOAuthProviderDefinition definition)
+    {
+        var redirectUri = ResolveRedirectUri(definition);
+        if (!string.IsNullOrWhiteSpace(redirectUri))
+        {
+            return redirectUri;
+        }
+
+        if (string.Equals(definition.Scheme, "apple", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Authentication:ExternalLogin:FormCallbackUrl is not configured.");
+        }
+
+        throw new InvalidOperationException("Authentication:ExternalLogin:CallbackUrl is not configured.");
     }
 
     private string BuildAuthorizationUrl(
@@ -342,7 +355,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     {
         var query = HttpUtility.ParseQueryString(string.Empty);
         query["client_id"] = providerOptions.ClientId;
-        query["redirect_uri"] = ResolveRedirectUri(definition);
+        query["redirect_uri"] = RequireRedirectUri(definition);
         query["response_type"] = "code";
         query["scope"] = definition.Scope;
         query["state"] = state;
@@ -372,7 +385,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             ["grant_type"] = "authorization_code",
             ["code"] = code,
-            ["redirect_uri"] = ResolveRedirectUri(definition),
+            ["redirect_uri"] = RequireRedirectUri(definition),
             ["client_id"] = providerOptions.ClientId,
             ["client_secret"] = providerOptions.ClientSecret,
         };

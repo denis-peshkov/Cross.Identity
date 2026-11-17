@@ -14,17 +14,18 @@ public sealed class ExternalLoginOptions
     public const string SectionName = "Authentication:ExternalLogin";
 
     /// <summary>
-    /// Full redirect_uri for providers that return with <b>GET</b> query
-    /// (Google / Microsoft / GitHub / Facebook). Typically the SPA callback route.
+    /// OAuth <c>redirect_uri</c> for GET query providers (Google / Microsoft / GitHub / Facebook).
+    /// SPA / front-end route (often under <c>Authentication:ClientUrl</c>). Required for those providers.
+    /// Not used for Apple (see <see cref="FormCallbackUrl"/>).
     /// Env: <c>AUTH_EXTERNAL_LOGIN_CALLBACK_URL</c> → <c>Authentication__ExternalLogin__CallbackUrl</c>.
     /// </summary>
     public string CallbackUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// Full redirect_uri for Apple Sign In (<c>response_mode=form_post</c>).
+    /// Required Apple Sign In <c>redirect_uri</c> (<c>response_mode=form_post</c>) — API / back-end host.
     /// Must accept <b>POST</b> form fields <c>code</c> / <c>state</c> / <c>user</c>
-    /// (API bridge that 302s into the SPA callback — see Sample.Api <c>/oauth/callback</c>).
-    /// When empty, Apple falls back to <see cref="CallbackUrl"/>.
+    /// (bridge into <c>main.ExternalLoginCallback</c> — see Sample.Api <c>POST /oauth/callback</c>).
+    /// Used for authorize + token exchange; Apple does not use <see cref="CallbackUrl"/>.
     /// Env: <c>AUTH_EXTERNAL_LOGIN_FORM_CALLBACK_URL</c> → <c>Authentication__ExternalLogin__FormCallbackUrl</c>.
     /// </summary>
     public string FormCallbackUrl { get; set; } = string.Empty;

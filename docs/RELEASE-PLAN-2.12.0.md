@@ -35,7 +35,7 @@
 
 ## Принято (осознанный trade-off)
 
-- `FormCallbackUrl` optional: empty → Apple uses `CallbackUrl` (backward compatible; not a NuGet breaking change).
+- Apple requires `FormCallbackUrl` (API); GET providers use `CallbackUrl` (SPA) — different hosts/ports in Sample.Api.
 - Unverified email/phone squat documented as intentional contract (FLOWS + TO-DO Принято + `IUserService` remarks).
 
 ---
@@ -44,18 +44,19 @@
 
 | # | Суть |
 |---|---|
-| ✅ #H41 `FormCallbackUrl` for Apple OAuth | `ExternalLoginOptions` + `ResolveRedirectUri` (auth URL + token exchange); test asserts Apple `redirect_uri` |
-| ✅ #M130 FLOWS / README `FormCallbackUrl` | Apple note + External OAuth bullet: `FormCallbackUrl` + fallback to `CallbackUrl` |
+| ✅ #H41 `FormCallbackUrl` for Apple OAuth | `ExternalLoginOptions` + `ResolveRedirectUri` (auth URL + token exchange); Apple uses `FormCallbackUrl` only |
+| ✅ #M130 FLOWS / README `FormCallbackUrl` | Apple note + External OAuth bullet: required `FormCallbackUrl` |
 | ✅ #M131 Register unverified squat docs | FLOWS `main.Register` + TO-DO Принято + `IUserService` XML |
-| ✅ #M132 Apple token `redirect_uri` tests | CR: assert `ExchangeCodeAsync` uses `FormCallbackUrl`; blank → `CallbackUrl` for authorize + token |
+| ✅ #M132 Apple token `redirect_uri` tests | CR: assert `ExchangeCodeAsync` uses `FormCallbackUrl`; blank `FormCallbackUrl` fails |
 | ✅ #H42 Register `sendCode` bind to createUser id | Optional `userAccountIdKey`; stock Register → `createUser.UserAccountId`; FLOWS + tests |
+| ✅ #L26 Apple requires `FormCallbackUrl` | No CallbackUrl fallback; docs/XML/FLOWS/README/BREAKING |
 
 ---
 
 ## Что в библиотеке уже нормально
 
 - Non-Apple providers still use `CallbackUrl` only.
-- Apple without `FormCallbackUrl` keeps previous single-URL behavior.
+- Apple without `FormCallbackUrl` fails fast (`InvalidOperationException`).
 - OTP `VerifyAsync` already takes `userId` (code row scoped).
 - RequestCode / ForgotPassword `sendCode` omit `userAccountIdKey` → selector lookup unchanged.
 

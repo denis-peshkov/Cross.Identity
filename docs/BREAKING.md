@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.11.0` → `2.12.0+` | [From 2.11.0 to 2.12.0](#from-2110-to-2120) |
 | `2.10.0` → `2.11.0+` | [From 2.10.0 to 2.11.0](#from-2100-to-2110) |
 | `2.9.0` → `2.10.0+` | [From 2.9.0 to 2.10.0](#from-290-to-2100) |
 | `2.8.0` → `2.9.0+` | [From 2.8.0 to 2.9.0](#from-280-to-290) |
@@ -27,6 +28,22 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.11.0 to 2.12.0
+
+Release: [v2.12.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.12.0).
+
+### Apple Sign In: `FormCallbackUrl` required
+
+| Area | Was (≤2.11.0) | Now (2.12.0+) |
+|---|---|---|
+| Apple authorize / token `redirect_uri` | `Authentication:ExternalLogin:CallbackUrl` | `Authentication:ExternalLogin:FormCallbackUrl` only (no fallback to `CallbackUrl`) |
+| Apple with only `CallbackUrl` set | Worked | `InvalidOperationException`: `FormCallbackUrl is not configured.` |
+| Non-Apple providers | `CallbackUrl` | Unchanged (`CallbackUrl`) |
+
+**Action:** set `Authentication:ExternalLogin:FormCallbackUrl` (or env `AUTH_EXTERNAL_LOGIN_FORM_CALLBACK_URL` / `Authentication__ExternalLogin__FormCallbackUrl`) to a POST-capable **API** bridge (see Sample.Api `POST /oauth/callback`). Keep `CallbackUrl` on the **SPA** for GET providers — typically a different host/port from `FormCallbackUrl`.
 
 ---
 
