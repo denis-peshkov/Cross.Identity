@@ -46,7 +46,8 @@ internal interface IExternalLoginService
     /// Provider credentials are missing/disabled in options, or the provider is already linked when linking.
     /// </exception>
     /// <exception cref="InvalidOperationException">
-    /// <c>Authentication:ExternalLogin:CallbackUrl</c> is not configured.
+    /// Redirect URI is not configured: Apple needs <c>FormCallbackUrl</c>;
+    /// other providers need <c>CallbackUrl</c>.
     /// </exception>
     Task<string> InitiateAsync(
         string provider,

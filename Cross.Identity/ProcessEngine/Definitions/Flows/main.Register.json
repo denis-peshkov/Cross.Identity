@@ -38,6 +38,7 @@
       "kind": "sendCode",
       "template": "verify",
       "subject": "Verification Code",
+      "userAccountIdKey": "createUser.UserAccountId",
       "next": "collectResult"
     },
     {

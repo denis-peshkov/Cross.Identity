@@ -23,6 +23,7 @@ internal sealed class SendCodeStepFactory : IStepFactory
             Kind                   = Kind,
             Selector               = new Selector(),
             TtlKey                 = cfg.StrOpt("ttlKey"),
+            UserAccountIdKey       = cfg.StrOpt("userAccountIdKey"),
             Template               = cfg.Str("template"),
             Subject                = cfg.Str("subject"),
             CodeService            = codeService,

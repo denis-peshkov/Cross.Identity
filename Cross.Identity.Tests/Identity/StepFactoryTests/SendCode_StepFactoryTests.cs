@@ -112,6 +112,26 @@ public class SendCode_StepFactoryTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    public void GivenUserAccountIdKeyInJson_WhenCreate_ThenBindsUserAccountIdKey()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "sendCode",
+              "template": "verify",
+              "subject": "Verification Code",
+              "userAccountIdKey": "createUser.UserAccountId"
+            }
+            """);
+
+        var factory = new SendCodeStepFactory();
+        var step = (SendCodeStep)factory.Create(json.RootElement, _sp);
+
+        step.UserAccountIdKey.Should().Be("createUser.UserAccountId");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenMissingChannel_WhenCreate_ThenStillCreatesStep()
     {
         using var json = JsonDocument.Parse(

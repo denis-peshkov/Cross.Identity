@@ -33,6 +33,13 @@ internal sealed class SendCodeStep : IStep
     /// </summary>
     public string? TtlKey { get; init; }
 
+    /// <summary>
+    /// Optional bag key for a known <c>UserAccountId</c> (absolute, e.g. <c>createUser.UserAccountId</c>).
+    /// When set, OTP is bound to that account instead of re-resolving by selector (avoids squat race on Register).
+    /// When omitted, identity is resolved via <see cref="IUserService.GetUserAccountIdByAsync"/>.
+    /// </summary>
+    public string? UserAccountIdKey { get; init; }
+
     /// <summary>Template name under Definitions/Templates. Defaults to <c>verify</c>.</summary>
     /// <remarks>
     /// Action link path: <c>reset</c> → <c>/reset-password</c>; other templates (e.g. <c>verify</c>) → <c>/verify</c>.
@@ -51,13 +58,10 @@ internal sealed class SendCodeStep : IStep
     {
         var selector = Selector.Resolve(ctx);
 
-        var userAccountId = await UserService.GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken).ConfigureAwait(false);
-        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
+        var (resolvedOk, resolvedUserAccountId) = await ResolveUserAccountIdAsync(ctx, selector, cancellationToken)
+            .ConfigureAwait(false);
+        if (!resolvedOk)
         {
-            Logger.LogInformation(
-                "Send code rejected for {Field} identity {Identity}: user not found.",
-                selector.Field,
-                selector.Value);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
@@ -132,6 +136,44 @@ internal sealed class SendCodeStep : IStep
             Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
             return StepResult.Fail(ex);
         }
+    }
+
+    private async ValueTask<(bool Ok, Guid UserAccountId)> ResolveUserAccountIdAsync(
+        Bag ctx,
+        (string Field, string Value) selector,
+        CancellationToken cancellationToken)
+    {
+        if (!string.IsNullOrWhiteSpace(UserAccountIdKey))
+        {
+            var bagKey = BagKey.Qualify(Kind, UserAccountIdKey);
+            if (!ctx.TryGet<Guid?>(bagKey, out var fromBag)
+                || fromBag is not { } bagUserAccountId
+                || bagUserAccountId == Guid.Empty)
+            {
+                Logger.LogInformation(
+                    "Send code rejected: userAccountIdKey '{Key}' missing or empty (selector {Field}={Identity}).",
+                    UserAccountIdKey,
+                    selector.Field,
+                    selector.Value);
+                return (false, Guid.Empty);
+            }
+
+            return (true, bagUserAccountId);
+        }
+
+        var userAccountId = await UserService
+            .GetUserAccountIdByAsync(selector.Field, selector.Value, cancellationToken)
+            .ConfigureAwait(false);
+        if (userAccountId is not { } resolvedUserAccountId || resolvedUserAccountId == Guid.Empty)
+        {
+            Logger.LogInformation(
+                "Send code rejected for {Field} identity {Identity}: user not found.",
+                selector.Field,
+                selector.Value);
+            return (false, Guid.Empty);
+        }
+
+        return (true, resolvedUserAccountId);
     }
 
     private string ResolveTemplateName(ChannelEnum channel)
