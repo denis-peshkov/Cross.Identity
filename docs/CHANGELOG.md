@@ -12,14 +12,16 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - `Authentication:ExternalLogin:FormCallbackUrl` — optional Apple Sign In `redirect_uri` for `response_mode=form_post` (falls back to `CallbackUrl` when empty). Used for authorize URL and token exchange.
+- `sendCode` optional `userAccountIdKey`; stock `main.Register` sets `createUser.UserAccountId` so OTP is bound to the just-created account (no re-lookup by email under unverified squat).
 
 ### Tests
 
-- `ExternalLoginServiceTests`: Apple initiate asserts `redirect_uri` = `FormCallbackUrl`.
+- `ExternalLoginServiceTests`: Apple initiate asserts `redirect_uri` = `FormCallbackUrl`; token exchange uses `FormCallbackUrl` / falls back to `CallbackUrl`.
+- `SendCode_StepTests` / factory: bag `userAccountIdKey` binds OTP user id.
 
 ### Documentation
 
-- FLOWS Register: document unverified email/phone squat (new id; conflict only if verified).
+- FLOWS Register / `sendCode` kind: squat + `userAccountIdKey` binding.
 - TO-DO Принято + `IUserService` remarks aligned with squat contract.
 
 ---

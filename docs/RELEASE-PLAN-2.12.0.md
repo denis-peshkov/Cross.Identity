@@ -48,6 +48,7 @@
 | ✅ #M130 FLOWS / README `FormCallbackUrl` | Apple note + External OAuth bullet: `FormCallbackUrl` + fallback to `CallbackUrl` |
 | ✅ #M131 Register unverified squat docs | FLOWS `main.Register` + TO-DO Принято + `IUserService` XML |
 | ✅ #M132 Apple token `redirect_uri` tests | CR: assert `ExchangeCodeAsync` uses `FormCallbackUrl`; blank → `CallbackUrl` for authorize + token |
+| ✅ #H42 Register `sendCode` bind to createUser id | Optional `userAccountIdKey`; stock Register → `createUser.UserAccountId`; FLOWS + tests |
 
 ---
 
@@ -55,6 +56,8 @@
 
 - Non-Apple providers still use `CallbackUrl` only.
 - Apple without `FormCallbackUrl` keeps previous single-URL behavior.
+- OTP `VerifyAsync` already takes `userId` (code row scoped).
+- RequestCode / ForgotPassword `sendCode` omit `userAccountIdKey` → selector lookup unchanged.
 
 ---
 
