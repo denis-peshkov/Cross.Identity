@@ -229,12 +229,12 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Google", "/home", null, CancellationToken.None);
 
         url.Should().StartWith("https://accounts.google.com/o/oauth2/v2/auth?");
-        url.Should().Contain("client_id=google-client");
-        url.Should().Contain("redirect_uri=");
-        url.Should().Contain("app.example%2fcallback");
-        url.Should().Contain("response_type=code");
-        url.Should().Contain("scope=openid");
-        url.Should().Contain("state=");
+        var query = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query);
+        query["client_id"].Should().Be("google-client");
+        query["redirect_uri"].Should().Be(CallbackUrl);
+        query["response_type"].Should().Be("code");
+        query["scope"].Should().Contain("openid");
+        query["state"].Should().NotBeNullOrWhiteSpace();
     }
 
     [Test]
