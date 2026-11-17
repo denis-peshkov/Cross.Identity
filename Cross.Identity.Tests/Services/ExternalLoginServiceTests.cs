@@ -1053,6 +1053,107 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleFormCallbackUrl_WhenCompleteAsync_ThenTokenExchangeUsesFormCallbackUrlAsync()
+    {
+        const string formCallbackUrl = "https://api.example/oauth/form-callback";
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001234.formcallback01",
+            email = "apple.form@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+
+        string? tokenRedirectUri = null;
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = request =>
+            {
+                tokenRedirectUri = ReadFormRedirectUri(request);
+                return OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                });
+            },
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.FormCallbackUrl = formCallbackUrl;
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var authorizeRedirectUri = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query)["redirect_uri"];
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        authorizeRedirectUri.Should().Be(formCallbackUrl);
+        tokenRedirectUri.Should().Be(formCallbackUrl);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleBlankFormCallbackUrl_WhenInitiateAndComplete_ThenUsesCallbackUrlAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001234.blankformcb01",
+            email = "apple.blank@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+
+        string? tokenRedirectUri = null;
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = request =>
+            {
+                tokenRedirectUri = ReadFormRedirectUri(request);
+                return OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                });
+            },
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.FormCallbackUrl = string.Empty;
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var authorizeRedirectUri = System.Web.HttpUtility.ParseQueryString(new Uri(url).Query)["redirect_uri"];
+        var state = ExtractState(url);
+
+        await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
+
+        authorizeRedirectUri.Should().Be(CallbackUrl);
+        tokenRedirectUri.Should().Be(CallbackUrl);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAppleSuccessFlow_WhenCompleteAsync_ThenCreatesUserAndExternalLoginAsync()
     {
         SeedProvider("Apple");
@@ -1810,6 +1911,17 @@ public class ExternalLoginServiceTests : EFTestsBase
             Encoding.UTF8.GetBytes(appSecret),
             Encoding.UTF8.GetBytes(accessToken));
         return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    private static string? ReadFormRedirectUri(HttpRequestMessage request)
+    {
+        var body = request.Content?.ReadAsStringAsync().GetAwaiter().GetResult();
+        if (string.IsNullOrEmpty(body))
+        {
+            return null;
+        }
+
+        return System.Web.HttpUtility.ParseQueryString(body)["redirect_uri"];
     }
 
     private static string ExtractState(string authorizationUrl)

@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.11.0.md`](RELEASE-PLAN-2.11.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **6** файлов · **+34 / −9**. Open: —.
+> Дельта: `origin/master...HEAD` — **1** коммит · **6** файлов · **+34 / −9**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался.
+- не запускался. → все закрыты в этом плане.
 
 **PR:** —
 
@@ -47,6 +47,7 @@
 | ✅ #H41 `FormCallbackUrl` for Apple OAuth | `ExternalLoginOptions` + `ResolveRedirectUri` (auth URL + token exchange); test asserts Apple `redirect_uri` |
 | ✅ #M130 FLOWS / README `FormCallbackUrl` | Apple note + External OAuth bullet: `FormCallbackUrl` + fallback to `CallbackUrl` |
 | ✅ #M131 Register unverified squat docs | FLOWS `main.Register` + TO-DO Принято + `IUserService` XML |
+| ✅ #M132 Apple token `redirect_uri` tests | CR: assert `ExchangeCodeAsync` uses `FormCallbackUrl`; blank → `CallbackUrl` for authorize + token |
 
 ---
 
