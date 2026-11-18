@@ -31,7 +31,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
     public async Task CommunicationEndpointsGetAll_WhenUserIdProvided_ShouldReturnEndpoints()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "c@example.com", EmailVerified = true });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "c@example.com", EmailVerified = true });
         await _endpoints.SyncAccountContactsAsync(userAccountId);
 
         var result = await _flowExecutor.ExecuteAsync(
@@ -54,6 +54,7 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "a@example.com",
             PhoneNumber = "+79161234567",

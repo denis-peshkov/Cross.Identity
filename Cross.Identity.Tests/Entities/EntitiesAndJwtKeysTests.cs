@@ -9,6 +9,7 @@ public sealed class EntitiesAndJwtKeysTests
     {
         var user = new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),

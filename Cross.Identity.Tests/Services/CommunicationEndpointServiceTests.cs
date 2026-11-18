@@ -16,7 +16,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     public async Task Upsert_FirstVerified_BecomesPreferred()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "a@example.com", EmailVerified = true });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "a@example.com", EmailVerified = true });
 
         var dto = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Email, "a@example.com", CommunicationEndpointSource.Account, isVerified: true);
@@ -30,7 +30,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     public async Task SetPreferred_OnlyVerified_AndClearsPrevious()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "a@example.com", PhoneNumber = "+79161234567" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "a@example.com", PhoneNumber = "+79161234567" });
 
         var email = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Email, "a@example.com", CommunicationEndpointSource.Account, true);
@@ -59,7 +59,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     public async Task SetPreferred_WhenNotVerified_ShouldThrow()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId });
         var ep = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Email, "x@example.com", CommunicationEndpointSource.Manual, isVerified: false);
 
@@ -74,7 +74,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+79161234567";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
 
         await _service.UpsertAsync(userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, true);
         var tg = await _service.UpsertAsync(
@@ -92,7 +92,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+79161234567";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
 
         var tg = await _service.UpsertAsync(
             userAccountId, ChannelEnum.Telegram, phone, CommunicationEndpointSource.LinkedMessenger, true);
@@ -110,6 +110,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "fallback@example.com",
             EmailVerified = true,
@@ -143,6 +144,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "locked@example.com",
             EmailVerified = true,
@@ -171,6 +173,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "new@example.com",
             EmailVerified = false,
@@ -188,6 +191,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "new@example.com",
             EmailVerified = false,
@@ -206,6 +210,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             PhoneNumber = phone,
             PhoneNumberVerified = true,
@@ -224,6 +229,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var phone = "+79169876543";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             PhoneNumber = phone,
             PhoneNumberVerified = false,
@@ -241,6 +247,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             PhoneNumber = "+79161112233",
             PhoneNumberVerified = false,
@@ -258,6 +265,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "new@example.com",
             EmailVerified = false,
@@ -280,6 +288,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "sync@example.com",
             EmailVerified = true,

@@ -19,6 +19,7 @@ public sealed class IdentityContextPoolingTests
         var id = Guid.NewGuid();
         ctx.UsersAccounts.Add(new UserAccountEntity
         {
+            IsActive = true,
             Id = id,
             Email = "pool@example.com",
             CreatedAt = DateTime.UtcNow,
@@ -47,6 +48,7 @@ public sealed class IdentityContextPoolingTests
         var id = Guid.NewGuid();
         ctx.UsersAccounts.Add(new UserAccountEntity
         {
+            IsActive = true,
             Id = id,
             Email = "factory@example.com",
             CreatedAt = DateTime.UtcNow,
@@ -75,6 +77,7 @@ public sealed class IdentityContextPoolingTests
         var id = Guid.NewGuid();
         ctx.UsersAccounts.Add(new UserAccountEntity
         {
+            IsActive = true,
             Id = id,
             Email = "rotate@example.com",
             CreatedAt = DateTime.UtcNow,

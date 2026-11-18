@@ -23,6 +23,7 @@ internal class License_LicenseCheck_FlowTests : RunFlowCommandHandlerTestsBase
 
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             Email = Email,
         });

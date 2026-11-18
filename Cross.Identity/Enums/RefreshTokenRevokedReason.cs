@@ -101,6 +101,11 @@ public enum RefreshTokenRevokedReason : short
     /// </summary>
     EXTERNAL_LOGIN_REMOVED = 304,
 
+    /// <summary>
+    /// Account absorbed into another via confirmed external-login merge → all tokens revoked.
+    /// </summary>
+    ACCOUNT_MERGED = 305,
+
     #endregion
 
     #region 4. Admin / backend-initiated reasons

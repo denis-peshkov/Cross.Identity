@@ -238,6 +238,7 @@ public class UserServiceTests : EFTestsBase
         var email = "existing@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             Email = email,
             EmailVerified = true,
@@ -262,6 +263,7 @@ public class UserServiceTests : EFTestsBase
         var email = "victim@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             Email = email,
             EmailVerified = false,
@@ -287,6 +289,7 @@ public class UserServiceTests : EFTestsBase
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             PhoneNumber = phone,
             PhoneNumberVerified = true,
@@ -311,6 +314,7 @@ public class UserServiceTests : EFTestsBase
         var phone = "+79161234567";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = Guid.NewGuid(),
             PhoneNumber = phone,
             PhoneNumberVerified = false,
@@ -336,6 +340,7 @@ public class UserServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "test@example.com",
         });
@@ -352,6 +357,7 @@ public class UserServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "userid-alias@example.com",
         });
@@ -370,6 +376,7 @@ public class UserServiceTests : EFTestsBase
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
         });
@@ -398,6 +405,7 @@ public class UserServiceTests : EFTestsBase
         var userName = "testuser";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
@@ -417,6 +425,7 @@ public class UserServiceTests : EFTestsBase
         var phone = "+12125551234";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             PhoneNumber = phone,
             Email = "test@example.com",
@@ -446,6 +455,7 @@ public class UserServiceTests : EFTestsBase
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             UserName = "testuser",
@@ -470,6 +480,7 @@ public class UserServiceTests : EFTestsBase
         var verifiedId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = squatId,
             Email = email,
             UserName = "squat",
@@ -481,6 +492,7 @@ public class UserServiceTests : EFTestsBase
         });
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = verifiedId,
             Email = email,
             UserName = "owner",
@@ -507,6 +519,7 @@ public class UserServiceTests : EFTestsBase
 
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = squatId,
             Email = "squat@example.com",
             PhoneNumber = phone,
@@ -519,6 +532,7 @@ public class UserServiceTests : EFTestsBase
         });
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = verifiedId,
             Email = "owner@example.com",
             PhoneNumber = phone,
@@ -543,6 +557,7 @@ public class UserServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "test@example.com",
             UserName = "u",
@@ -563,6 +578,7 @@ public class UserServiceTests : EFTestsBase
         var userName = "myuser";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             UserName = userName,
             NormalizedUserName = userName.ToLowerInvariant(),
@@ -591,7 +607,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -615,7 +631,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -661,7 +677,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email, LockoutEnabled = true });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email, LockoutEnabled = true });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -690,6 +706,7 @@ public class UserServiceTests : EFTestsBase
         var email = "locked-code@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
@@ -735,6 +752,7 @@ public class UserServiceTests : EFTestsBase
         var email = "code-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
@@ -772,6 +790,7 @@ public class UserServiceTests : EFTestsBase
         var email = "code-reset-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             LockoutEnabled = true,
@@ -803,7 +822,7 @@ public class UserServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+12125551234";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone, PhoneNumberVerified = true });
         var sms = await _communicationEndpoints.UpsertAsync(
             userAccountId, ChannelEnum.Sms, phone, CommunicationEndpointSource.Account, isVerified: true);
         await _communicationEndpoints.SetPreferredAsync(userAccountId, sms.Id, HostSuppliedClientContext.Empty);
@@ -914,6 +933,7 @@ public class UserServiceTests : EFTestsBase
         var hashed = "$pbkdf2$";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "test@example.com",
             PasswordPhc = hashed,
@@ -941,6 +961,7 @@ public class UserServiceTests : EFTestsBase
         var hashed = "$pbkdf2$";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = hashed,
@@ -965,6 +986,7 @@ public class UserServiceTests : EFTestsBase
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
@@ -1108,6 +1130,7 @@ public class UserServiceTests : EFTestsBase
         var email = "test@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "hash",
@@ -1134,6 +1157,7 @@ public class UserServiceTests : EFTestsBase
         var oldHash = "$pbkdf2$old";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = oldHash,
@@ -1171,6 +1195,7 @@ public class UserServiceTests : EFTestsBase
         var oldHash = "$pbkdf2$old";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = oldHash,
@@ -1224,6 +1249,7 @@ public class UserServiceTests : EFTestsBase
         var oldStamp = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$old",
@@ -1272,6 +1298,7 @@ public class UserServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         ctx1.UsersAccounts.Add(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "concurrency@example.com",
             CreatedAt = DateTime.UtcNow,
@@ -1312,6 +1339,7 @@ public class UserServiceTests : EFTestsBase
         var email = "expired-lockout@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
@@ -1355,6 +1383,7 @@ public class UserServiceTests : EFTestsBase
         var email = "lockout@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
@@ -1394,6 +1423,7 @@ public class UserServiceTests : EFTestsBase
         var password = "P@ssw0rd!";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$stored",
@@ -1424,6 +1454,7 @@ public class UserServiceTests : EFTestsBase
         var email = "locked@example.com";
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = email,
             PasswordPhc = "$pbkdf2$old",

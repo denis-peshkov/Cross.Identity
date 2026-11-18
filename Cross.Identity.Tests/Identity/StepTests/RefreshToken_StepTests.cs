@@ -29,6 +29,7 @@ public class RefreshToken_StepTests
         var newRefreshToken = "new-refresh-token";
         var userEntity = new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = _faker.Internet.Email(),
             UserName = "user",

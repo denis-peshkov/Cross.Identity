@@ -13,6 +13,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
     private readonly ILogger<ExternalLoginService> _logger;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly ICommunicationEndpointUpsertService _communicationEndpoints;
+    private readonly IAuditService _audit;
     private readonly IExternalLoginUserProvisioner? _userProvisioner;
 
     public ExternalLoginService(
@@ -22,6 +23,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         ILogger<ExternalLoginService> logger,
         IJwtTokenService jwtTokenService,
         ICommunicationEndpointUpsertService communicationEndpoints,
+        IAuditService audit,
         IExternalLoginUserProvisioner? userProvisioner = null)
     {
         _identityContext = identityContext;
@@ -30,6 +32,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         _logger = logger;
         _jwtTokenService = jwtTokenService;
         _communicationEndpoints = communicationEndpoints;
+        _audit = audit;
         _userProvisioner = userProvisioner;
     }
 
@@ -177,6 +180,16 @@ internal sealed class ExternalLoginService : IExternalLoginService
         {
             throw new ValidationException(
                 "External provider did not return an email address. Sign-in cannot continue.");
+        }
+
+        if (payload.UserAccountId.HasValue)
+        {
+            await ThrowIfLinkConflictNeedsMergeAsync(
+                    providerEntity,
+                    profile,
+                    payload.UserAccountId.Value,
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
 
         var userAccountId = await ResolveOrCreateUserAsync(
@@ -331,6 +344,183 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         return _options.CallbackUrl;
     }
+
+
+    /// <inheritdoc/>
+    public async Task<UserAccountsMergedDto> MergeAccountsAsync(
+        string mergeToken,
+        Guid survivorUserAccountId,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(mergeToken);
+        if (survivorUserAccountId == Guid.Empty)
+            throw new ValidationException("UserAccountId is required to merge accounts.");
+
+        var now = DateTime.UtcNow;
+        var pending = await _identityContext.AccountMergePendings
+            .FirstOrDefaultAsync(
+                x => x.MergeToken == mergeToken && x.ConsumedAt == null && x.ExpiresAt > now,
+                cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new ValidationException("Merge token is invalid or has expired.");
+
+        if (pending.SurvivorUserAccountId != survivorUserAccountId)
+        {
+            throw new ValidationException("Merge token does not belong to the current user.");
+        }
+
+        if (pending.SurvivorUserAccountId == pending.AbsorbedUserAccountId)
+        {
+            throw new ValidationException("Cannot merge an account into itself.");
+        }
+
+        var survivor = await _identityContext.UsersAccounts
+            .FirstOrDefaultAsync(x => x.Id == pending.SurvivorUserAccountId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new NotFoundException("Current user account was not found.");
+
+        var absorbed = await _identityContext.UsersAccounts
+            .FirstOrDefaultAsync(x => x.Id == pending.AbsorbedUserAccountId, cancellationToken)
+            .ConfigureAwait(false)
+            ?? throw new ValidationException("Absorbed user account was not found.");
+
+        await UserAccountGuard.EnsureIsActiveAsync(_identityContext, survivor.Id, cancellationToken).ConfigureAwait(false);
+
+        var survivorProviderIds = await _identityContext.UsersExternalLogins
+            .Where(x => x.UserAccountId == survivor.Id)
+            .Select(x => x.ProviderId)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var survivorProviderIdSet = survivorProviderIds.ToHashSet();
+
+        var absorbedLogins = await _identityContext.UsersExternalLogins
+            .Where(x => x.UserAccountId == absorbed.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var absorbedProviderIds = absorbedLogins.Select(l => l.ProviderId).Distinct().ToList();
+        var providerNames = await _identityContext.Providers
+            .AsNoTracking()
+            .Where(x => absorbedProviderIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var nameById = providerNames.ToDictionary(x => x.Id, x => x.Name);
+
+        var movedProviders = new List<string>();
+
+        foreach (var login in absorbedLogins)
+        {
+            if (survivorProviderIdSet.Contains(login.ProviderId))
+            {
+                // Survivor already has this provider — drop absorbed duplicate row.
+                _identityContext.UsersExternalLogins.Remove(login);
+                continue;
+            }
+
+            login.UserAccountId = survivor.Id;
+            login.UpdatedAt = now;
+            survivorProviderIdSet.Add(login.ProviderId);
+            if (nameById.TryGetValue(login.ProviderId, out var providerName))
+            {
+                movedProviders.Add(providerName);
+            }
+        }
+
+        var survivorHasPreferred = await _identityContext.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .AnyAsync(x => x.UserAccountId == survivor.Id && x.IsPreferred, cancellationToken)
+            .ConfigureAwait(false);
+
+        var absorbedEndpoints = await _identityContext.UsersCommunicationEndpoints
+            .Where(x => x.UserAccountId == absorbed.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var survivorEndpointKeys = await _identityContext.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == survivor.Id)
+            .Select(x => new { x.Channel, x.Address })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var survivorEndpointKeySet = survivorEndpointKeys
+            .Select(x => (x.Channel, x.Address))
+            .ToHashSet();
+
+        foreach (var endpoint in absorbedEndpoints)
+        {
+            var key = (endpoint.Channel, endpoint.Address);
+            if (survivorEndpointKeySet.Contains(key))
+            {
+                _identityContext.UsersCommunicationEndpoints.Remove(endpoint);
+                continue;
+            }
+
+            endpoint.UserAccountId = survivor.Id;
+            endpoint.UpdatedAt = now;
+            if (survivorHasPreferred || endpoint.IsPreferred)
+            {
+                // At most one preferred per survivor after merge.
+                endpoint.IsPreferred = !survivorHasPreferred && endpoint.IsPreferred;
+                if (endpoint.IsPreferred)
+                {
+                    survivorHasPreferred = true;
+                }
+            }
+
+            survivorEndpointKeySet.Add(key);
+        }
+
+        absorbed.IsActive = false;
+        absorbed.SecurityStamp = Guid.NewGuid();
+        survivor.SecurityStamp = Guid.NewGuid();
+
+        pending.ConsumedAt = now;
+
+        await _jwtTokenService
+            .RevokeAllTokensForUserAsync(
+                absorbed.Id,
+                RefreshTokenRevokedReason.ACCOUNT_MERGED,
+                hostSuppliedClientContext,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        var movedProvidersNotes = movedProviders.Count == 0
+            ? "(none)"
+            : string.Join(',', movedProviders);
+
+        _audit.Record(new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = now,
+            UserAccountId = survivor.Id,
+            UserAccount = null!,
+            Operation = AuditOperation.UserAccountsMerged,
+            EntityType = AuditEntityType.UserAccount,
+            EntityId = absorbed.Id.ToString("D"),
+            IpAddress = hostSuppliedClientContext.IpAddress,
+            UserAgent = hostSuppliedClientContext.UserAgent,
+            DeviceFingerprint = hostSuppliedClientContext.DeviceFingerprint,
+            Notes = $"SurvivorUserAccountId={survivor.Id:D}; AbsorbedUserAccountId={absorbed.Id:D}; MovedProviders={movedProvidersNotes}",
+        });
+
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation(
+            "Merged user accounts. SurvivorUserAccountId={SurvivorUserAccountId} AbsorbedUserAccountId={AbsorbedUserAccountId} MovedProviders={MovedProviders}",
+            survivor.Id,
+            absorbed.Id,
+            movedProvidersNotes);
+
+        return new UserAccountsMergedDto
+        {
+            SurvivorUserAccountId = survivor.Id,
+            AbsorbedUserAccountId = absorbed.Id,
+            MovedProviders = movedProviders,
+        };
+    }
+
 
     private string RequireRedirectUri(ExternalOAuthProviderDefinition definition)
     {
@@ -500,6 +690,56 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
         return result;
     }
+
+
+    private async Task ThrowIfLinkConflictNeedsMergeAsync(
+        ProviderEntity providerEntity,
+        ExternalOAuthProfile profile,
+        Guid survivorUserAccountId,
+        CancellationToken cancellationToken)
+    {
+        var absorbedUserAccountId = await _identityContext.UsersExternalLogins
+            .AsNoTracking()
+            .Where(x => x.ProviderId == providerEntity.Id && x.ProviderUserId == profile.ProviderUserId)
+            .Select(x => x.UserAccountId)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (absorbedUserAccountId == Guid.Empty || absorbedUserAccountId == survivorUserAccountId)
+        {
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+
+        await _identityContext.AccountMergePendings.AddAsync(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorUserAccountId,
+            AbsorbedUserAccountId = absorbedUserAccountId,
+            CreatedAt = now,
+            ExpiresAt = now.Add(_options.StateLifetime),
+            ConcurrencyStamp = Guid.NewGuid(),
+        }, cancellationToken).ConfigureAwait(false);
+
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        var message = "This external account is already linked to another user.";
+        throw new ValidationException(
+            message,
+            new[]
+            {
+                new FluentValidation.Results.ValidationFailure(string.Empty, message) { ErrorCode = "alreadyLinked" },
+                new FluentValidation.Results.ValidationFailure("code", "alreadyLinked"),
+                new FluentValidation.Results.ValidationFailure("mergeToken", mergeToken),
+                new FluentValidation.Results.ValidationFailure("absorbedUserAccountId", absorbedUserAccountId.ToString("D")),
+                new FluentValidation.Results.ValidationFailure("survivorUserAccountId", survivorUserAccountId.ToString("D")),
+                new FluentValidation.Results.ValidationFailure("provider", providerEntity.Name),
+            });
+    }
+
 
     private async Task<Guid> ResolveOrCreateUserAsync(
         ProviderEntity providerEntity,

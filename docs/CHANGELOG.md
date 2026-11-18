@@ -7,6 +7,28 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.13.0 — 18 Nov 2026
+
+### Library
+
+- OAuth link conflict → one-time `mergeToken` (`auth.AccountMergePendings`); confirm via `main.ExternalLoginMerge` / `MergeAccountsAsync` (move externals + endpoints, deactivate absorbed, revoke with `ACCOUNT_MERGED`, audit `UserAccountsMerged`).
+- `UserAccountEntity.IsActive` no longer defaults to `true` in C# (call sites set explicitly; absorbed merge sets `false`).
+
+### Tests
+
+- `ExternalLoginServiceTests` / `Main_ExternalOAuth_FlowTests`: mint merge token on link conflict; merge happy-path + survivor mismatch + invalid token.
+- `ExternalLogin_StepFactoryTests`: `externalLoginMerge` factory wiring.
+- Fixtures set `IsActive = true` where entities are constructed without prior default.
+
+### Documentation / DB
+
+- `docs/BREAKING.md` From 2.12.0→2.13.0 (AccountMergePendings scripts + mergeToken failures + `IsActive` default).
+- FLOWS / README: `main.ExternalLoginMerge`, link-conflict `mergeToken`, user-scoped auth list.
+- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL.
+- `Infrastructure/Scripts/README.md` EF mapping row for `auth.AccountMergePendings`.
+
+---
+
 ## v2.12.0 — 17 Nov 2026
 
 ### Library

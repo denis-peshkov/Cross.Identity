@@ -63,7 +63,7 @@ Unresolved `{{…}}` tokens are left as literal text in the body.
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`ExternalLoginMerge`**, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
 |---|---|
@@ -116,13 +116,14 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `*.ExternalLoginCallback.json` | `ExternalLoginCallback` |
 | `*.ExternalLoginUnlink.json` | `ExternalLoginUnlink` |
 | `*.ExternalLoginGetAll.json` | `ExternalLoginGetAll` |
+| `*.ExternalLoginMerge.json` | `ExternalLoginMerge` |
 | `*.Logout.json` | `Logout` |
 | `*.LogoutAll.json` | `LogoutAll` |
 | `*.CommunicationEndpointsGetAll.json` | `CommunicationEndpointsGetAll` |
 | `*.CommunicationEndpointSetPreferred.json` | `CommunicationEndpointSetPreferred` |
 | `*.ChangeAccountEmail.json` | `ChangeAccountEmail` |
 
-### All flow files (18)
+### All flow files (19)
 
 | Flow | Operation | File |
 |---|---|---|
@@ -139,6 +140,7 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `main` | ExternalLoginCallback | `main.ExternalLoginCallback.json` |
 | `main` | ExternalLoginUnlink | `main.ExternalLoginUnlink.json` |
 | `main` | ExternalLoginGetAll | `main.ExternalLoginGetAll.json` |
+| `main` | ExternalLoginMerge | `main.ExternalLoginMerge.json` |
 | `main` | Logout | `main.Logout.json` |
 | `main` | LogoutAll | `main.LogoutAll.json` |
 | `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
@@ -288,6 +290,8 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 
 > OAuth callback **requires** a non-empty provider email after profile fetch (Apple `id_token`, Graph/userinfo, etc.). Missing email → `ValidationException` (failed login; no local account / link). Then resolves the user by existing external login, or — when emails match a **verified** local account — only if the provider attests a verified email (`ExternalOAuthProfile.EmailVerified`). Unverified email rows do not block registration or OAuth: a provider with attested verified email can create a new local account alongside any unverified rows. Without a verified provider email, merge onto an existing verified local email is rejected. For explicit linking to a specific account, use `UserAccountId` (host-authorized).
 >
+> **Link conflict (link mode):** when `UserAccountId` (survivor A) is set and the provider user is already linked to another account B, callback does **not** complete. It mints a one-time row in `auth.AccountMergePendings` (TTL — `ExternalLoginOptions.StateLifetime`) and throws `ValidationException` with structured failures: `alreadyLinked`, `mergeToken`, `absorbedUserAccountId`, `survivorUserAccountId`, `provider`. Host should surface confirm UI, then call [`main.ExternalLoginMerge`](#mainexternalloginmergejson).
+>
 > **New registration (no existing external login / no email merge):** email is always present (see above). `CreateUserAsync` sets `UsersAccounts.EmailVerified = true` when `ExternalOAuthProfile.EmailVerified` is true; otherwise `EmailVerified = false` (e.g. Facebook). The synced email communication endpoint uses the same attestation (`IsVerified`). Subsequent logins / link refresh update `ProviderEmail` and the endpoint — they do **not** flip `UsersAccounts.EmailVerified`.
 >
 > **Apple:** authorize uses `response_mode=form_post`. Profile comes from token-endpoint `id_token` (`sub` / `email` / `email_verified`). Optional form_post `user` (first authorization only) maps to `DisplayName` via `userKey`.
@@ -297,6 +301,26 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 > **Facebook:** Graph email may be present with `EmailVerified = false` (no OIDC attestation).
 >
 > Between `ExternalLogin` and `ExternalLoginCallback`, `ExternalLoginService` stores one-time OAuth state in `auth.ExternalLoginStates` (TTL — `ExternalLoginOptions.StateLifetime`). Provider and callback configuration — `Authentication:ExternalLogin`.
+
+---
+
+## `main.ExternalLoginMerge.json`
+
+**Purpose:** confirm merge of absorbed account B into survivor A after an OAuth **link** conflict (`mergeToken` from `ExternalLoginCallback`).
+
+| Step | kind | Details |
+|---|---|---|
+| `collectForm` | collectForm | `UserAccountId` (required Guid — survivor A), `MergeToken` (required, 16–64); optional client context. → `externalLoginMerge` |
+| `externalLoginMerge` | externalLoginMerge | `mergeTokenKey`, `userAccountIdKey` from `collectForm.*`. → `collectResult` |
+| `collectResult` | collectResult | `survivor_user_account_id`, `absorbed_user_account_id`, `moved_providers`. `next: null` |
+
+> Host supplies an authorized survivor `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). `MergeAccountsAsync`:
+>
+> - Validates token (not expired / not consumed) and that it belongs to this survivor.
+> - Moves `auth.UsersExternalLogins` from B → A (drops B’s row when A already has the same provider).
+> - Moves `auth.UsersCommunicationEndpoints` from B → A (drops duplicate channel+address on A; at most one preferred on A).
+> - Sets B `IsActive = false`, rotates security stamps, revokes B tokens (`ACCOUNT_MERGED`), audits `UserAccountsMerged`, consumes the pending row.
+> - Does **not** copy email / password / profile from B to A (email/phone identity merge — later).
 
 ---
 

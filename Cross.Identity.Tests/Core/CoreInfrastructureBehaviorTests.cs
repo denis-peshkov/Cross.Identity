@@ -115,7 +115,7 @@ public sealed class CoreInfrastructureBehaviorTests
 
         using var ctx = new IdentityContext(options);
         var id = Guid.NewGuid();
-        ctx.UsersAccounts.Add(new UserAccountEntity { Id = id, Email = "u@a.b", CreatedAt = DateTime.UtcNow, SecurityStamp = Guid.NewGuid(), ConcurrencyStamp = Guid.NewGuid() });
+        ctx.UsersAccounts.Add(new UserAccountEntity { IsActive = true, Id = id, Email = "u@a.b", CreatedAt = DateTime.UtcNow, SecurityStamp = Guid.NewGuid(), ConcurrencyStamp = Guid.NewGuid() });
         ctx.SaveChanges();
         ctx.ChangeTracker.Clear();
 

@@ -60,6 +60,7 @@ public class ExternalLoginServiceTests : EFTestsBase
             Email = email,
             UserName = email,
             NormalizedUserName = email,
+            IsActive = true,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
             ConcurrencyStamp = Guid.NewGuid(),
@@ -383,6 +384,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var providerId = SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "linked@example.com",
             UserName = "linked",
@@ -459,6 +461,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = squatterUserAccountId,
             Email = "user@example.com",
             UserName = "squatter",
@@ -491,6 +494,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "existing",
@@ -534,6 +538,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "existing",
@@ -562,6 +567,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "link@example.com",
             UserName = "link",
@@ -589,6 +595,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = ownerUserAccountId,
             Email = "owner@example.com",
             UserName = "owner",
@@ -624,7 +631,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenExternalAccountLinkedToAnotherUser_WhenCompleteAsyncForLinking_ThenThrowsValidationExceptionAsync()
+    public async Task GivenExternalAccountLinkedToAnotherUser_WhenCompleteAsyncForLinking_ThenThrowsValidationExceptionWithMergeTokenAsync()
     {
         var currentUserAccountId = Guid.NewGuid();
         var otherUserAccountId = Guid.NewGuid();
@@ -636,6 +643,7 @@ public class ExternalLoginServiceTests : EFTestsBase
                 Email = "current@example.com",
                 UserName = "current",
                 NormalizedUserName = "current",
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
@@ -646,12 +654,14 @@ public class ExternalLoginServiceTests : EFTestsBase
                 Email = "other@example.com",
                 UserName = "other",
                 NormalizedUserName = "other",
+                IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 SecurityStamp = Guid.NewGuid(),
                 ConcurrencyStamp = Guid.NewGuid(),
             });
         AddToDb(new UserExternalLoginEntity
         {
+            Id = Guid.NewGuid(),
             UserAccountId = otherUserAccountId,
             UserAccount = null!,
             ProviderId = providerId,
@@ -667,8 +677,204 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        await act.Should().ThrowAsync<ValidationException>()
+        var ex = await act.Should().ThrowAsync<ValidationException>()
             .WithMessage("*already linked to another user*");
+
+        ex.Which.Errors.Should().Contain(e => e.PropertyName == "code" && e.ErrorMessage == "alreadyLinked");
+        ex.Which.Errors.Should().Contain(e => e.PropertyName == "mergeToken" && !string.IsNullOrWhiteSpace(e.ErrorMessage));
+        ex.Which.Errors.Should().Contain(e => e.PropertyName == "absorbedUserAccountId" && e.ErrorMessage == otherUserAccountId.ToString("D"));
+        ex.Which.Errors.Should().Contain(e => e.PropertyName == "survivorUserAccountId" && e.ErrorMessage == currentUserAccountId.ToString("D"));
+
+        var mergeToken = ex.Which.Errors.Single(e => e.PropertyName == "mergeToken").ErrorMessage;
+        (await Context.AccountMergePendings.CountAsync(x => x.MergeToken == mergeToken && x.ConsumedAt == null))
+            .Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMergeTokenFromLinkConflict_WhenMergeAccountsAsync_ThenMovesExternalsAndDeactivatesAbsorbedAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var microsoftId = SeedProvider("Microsoft");
+
+        AddToDb(
+            new UserAccountEntity
+            {
+                Id = survivorId,
+                Email = "survivor@example.com",
+                UserName = "survivor",
+                NormalizedUserName = "survivor",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                Id = absorbedId,
+                Email = "absorbed@example.com",
+                UserName = "absorbed",
+                NormalizedUserName = "absorbed",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+
+        AddToDb(
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = survivorId,
+                UserAccount = null!,
+                ProviderId = googleId,
+                ProviderEntity = null!,
+                ProviderUserId = "google-survivor",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            },
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = microsoftId,
+                ProviderEntity = null!,
+                ProviderUserId = "microsoft-absorbed",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            });
+
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(x => x.RevokeAllTokensForUserAsync(
+                absorbedId,
+                RefreshTokenRevokedReason.ACCOUNT_MERGED,
+                It.IsAny<HostSuppliedClientContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        var result = await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        result.SurvivorUserAccountId.Should().Be(survivorId);
+        result.AbsorbedUserAccountId.Should().Be(absorbedId);
+        result.MovedProviders.Should().Contain("Microsoft");
+
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == survivorId)).Should().Be(2);
+        (await Context.UsersExternalLogins.AnyAsync(x => x.UserAccountId == survivorId && x.ProviderId == microsoftId))
+            .Should().BeTrue();
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == absorbedId)).Should().Be(0);
+
+        var absorbed = await Context.UsersAccounts.SingleAsync(x => x.Id == absorbedId);
+        absorbed.IsActive.Should().BeFalse();
+
+        var pending = await Context.AccountMergePendings.SingleAsync(x => x.MergeToken == mergeToken);
+        pending.ConsumedAt.Should().NotBeNull();
+
+        var audit = await Context.Audits.SingleAsync(x => x.Operation == AuditOperation.UserAccountsMerged);
+        audit.UserAccountId.Should().Be(survivorId);
+        audit.EntityType.Should().Be(AuditEntityType.UserAccount);
+        audit.EntityId.Should().Be(absorbedId.ToString("D"));
+        audit.Notes.Should().Contain("MovedProviders=Microsoft");
+
+        jwt.Verify(x => x.RevokeAllTokensForUserAsync(
+            absorbedId,
+            RefreshTokenRevokedReason.ACCOUNT_MERGED,
+            It.IsAny<HostSuppliedClientContext>(),
+            It.IsAny<CancellationToken>()), Times.Once);
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                survivorId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*invalid or has expired*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMergeTokenForOtherSurvivor_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var otherSurvivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+
+        AddToDb(
+            new UserAccountEntity
+            {
+                Id = survivorId,
+                Email = "survivor@example.com",
+                UserName = "survivor",
+                NormalizedUserName = "survivor",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                Id = otherSurvivorId,
+                Email = "other@example.com",
+                UserName = "other",
+                NormalizedUserName = "other",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                Id = absorbedId,
+                Email = "absorbed@example.com",
+                UserName = "absorbed",
+                NormalizedUserName = "absorbed",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                otherSurvivorId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*does not belong to the current user*");
     }
 
     [Test]
@@ -679,6 +885,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var providerId = SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
@@ -854,6 +1061,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Microsoft");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "ms@example.com",
             UserName = "existing",
@@ -1571,6 +1779,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var providerId = SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
@@ -1609,6 +1818,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var providerId = SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
@@ -1669,6 +1879,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var providerId = SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "oauth-only@example.com",
             UserName = "oauth-only",
@@ -1708,6 +1919,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
@@ -1738,6 +1950,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Apple");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "owner@example.com",
             UserName = "owner",
@@ -1836,13 +2049,15 @@ public class ExternalLoginServiceTests : EFTestsBase
             .Setup(f => f.CreateClient(nameof(ExternalLoginService)))
             .Returns(new HttpClient(handler));
 
+        var audit = new AuditService(Context);
         return new ExternalLoginService(
             Context,
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,
             jwtTokenService ?? CreateJwtTokenService(),
-            new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot()),
+            new CommunicationEndpointService(Context, audit, TestAuthOptions.Snapshot()),
+            audit,
             provisioner);
     }
 

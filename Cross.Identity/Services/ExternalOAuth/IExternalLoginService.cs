@@ -8,12 +8,14 @@
 /// <item><description><c>ExternalLoginCompleteStep</c> — <see cref="CompleteAsync"/></description></item>
 /// <item><description><c>ExternalLoginUnlinkStep</c> — <see cref="UnlinkAsync"/></description></item>
 /// <item><description><c>ExternalLoginGetAllStep</c> — <see cref="GetAllAsync"/></description></item>
+/// <item><description><c>ExternalLoginMergeStep</c> — <see cref="MergeAccountsAsync"/></description></item>
 /// </list>
 /// Corresponding flows:
 /// <c>main.ExternalLogin</c>,
 /// <c>main.ExternalLoginCallback</c>,
 /// <c>main.ExternalLoginUnlink</c>,
-/// <c>main.ExternalLoginGetAll</c>.
+/// <c>main.ExternalLoginGetAll</c>,
+/// <c>main.ExternalLoginMerge</c>.
 /// OAuth state is persisted in <c>auth.ExternalLoginStates</c> (nonce + TTL) and consumed once on callback.
 /// </summary>
 internal interface IExternalLoginService
@@ -142,5 +144,28 @@ internal interface IExternalLoginService
     /// </exception>
     Task<ExternalLoginOverviewDto> GetAllAsync(
         Guid userAccountId,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Confirm merge of absorbed account B into survivor A using a one-time <paramref name="mergeToken"/>
+    /// minted when link-mode <see cref="CompleteAsync"/> hit an already-linked conflict.
+    /// Moves external logins from B to A (skipping providers already on A), deactivates B, and revokes B tokens.
+    /// The host must authorize that <paramref name="survivorUserAccountId"/> belongs to the caller.
+    /// </summary>
+    /// <param name="mergeToken">Opaque token from the link-conflict validation response.</param>
+    /// <param name="survivorUserAccountId">Authenticated survivor account id (A).</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata; use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Survivor/absorbed ids and provider names moved from B to A.</returns>
+    /// <exception cref="ValidationException">
+    /// Token missing/invalid/expired/consumed, survivor mismatch, A equals B, or absorbed account missing.
+    /// </exception>
+    /// <exception cref="NotFoundException">
+    /// Survivor account was not found.
+    /// </exception>
+    Task<UserAccountsMergedDto> MergeAccountsAsync(
+        string mergeToken,
+        Guid survivorUserAccountId,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken);
 }

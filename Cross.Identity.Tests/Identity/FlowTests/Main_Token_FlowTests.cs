@@ -31,6 +31,7 @@ internal class Main_Token_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(s => s.GetUserByAsync("Email", "test@example.com", It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserAccountEntity
             {
+                IsActive = true,
                 Id = userAccountId,
                 Email = "test@example.com",
             });

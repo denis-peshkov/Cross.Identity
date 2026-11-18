@@ -1,4 +1,4 @@
-﻿﻿namespace Cross.Identity.Tests.Identity.FlowTests;
+﻿namespace Cross.Identity.Tests.Identity.FlowTests;
 
 [TestFixture]
 internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
@@ -58,6 +58,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var familyId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "refresh@example.com",
             UserName = "refresh-user",
@@ -121,6 +122,7 @@ internal class Main_RefreshToken_FlowTests : RunFlowCommandHandlerTestsBase
         var familyId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "replay@example.com",
             UserName = "replay-user",
