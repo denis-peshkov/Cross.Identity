@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: H6 M2 L0 (H44–H48, H50, M136–M138).
+> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: H5 M2 L0 (H45–H48, H50, M136–M138).
 
 **CodeRabbit:**
-- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: H44–H48, H50, M136–M138; closed #H49 #M135; skipped 1 (ProviderId fixtures — no columns).
+- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: H45–H48, H50, M136–M138; closed #H44 #H49 #M135; skipped 1 (ProviderId fixtures — no columns).
 
 **PR:** —
 
@@ -22,9 +22,6 @@
 ---
 
 ## Высокий (логика / licensing / auth model)
-
-### H44. `FlowOperationEnum.ExternalLoginMerge` shifts ordinals
-⬜ Inserted before `Logout` / `LogoutAll` / … — changes implicit int values of existing members vs `v2.12.0`. Move `ExternalLoginMerge` to the **end** of the enum.
 
 ### H45. Merge token not bound to conflicted provider link
 ⬜ Pending row stores only survivor/absorbed ids. Confirm does not re-check that the OAuth `(ProviderId, ProviderUserId)` that minted the token still belongs to absorbed. CR: persist + revalidate link; reject if removed/reassigned (needs schema columns + mint/confirm + tests).
@@ -76,6 +73,7 @@
 | ✅ #M133 Merge tests | Service + flow + step factory coverage |
 | ✅ #M134 DbUp `AccountMergePendings` | `1_12` PreDeployment + `2_03` Initial ×3 providers; EF config |
 | ✅ #L28 CHANGELOG / BREAKING 2.13.0 | CHANGELOG section + BREAKING DbUp + mergeToken contract |
+| ✅ #H44 `FlowOperationEnum` explicit ordinals | Existing 0–17 unchanged vs 2.12; `ExternalLoginMerge = 18` (additive, not BREAKING) |
 | ✅ #H49 `IsActive` default in BREAKING | From 2.12→2.13: no C# `= true`; hosts/fixtures set explicitly |
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
 
@@ -92,9 +90,8 @@
 
 ## Приоритет фиксов
 
-1. **H44** — enum ordinals (breaking for int consumers).
-2. **H46** / **H48** — atomic merge + concurrency.
-3. **H47** — MySQL/PG journal (+ index guard).
-4. **H45** / **H50** — provider-link bind + endpoint verify transfer.
-5. **M136**–**M138** — ValidationException / collation / ErrorCode.
-6. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+1. **H46** / **H48** — atomic merge + concurrency.
+2. **H47** — MySQL/PG journal (+ index guard).
+3. **H45** / **H50** — provider-link bind + endpoint verify transfer.
+4. **M136**–**M138** — ValidationException / collation / ErrorCode.
+5. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).

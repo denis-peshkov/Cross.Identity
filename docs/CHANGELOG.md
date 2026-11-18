@@ -12,6 +12,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Library
 
 - OAuth link conflict → one-time `mergeToken` (`auth.AccountMergePendings`); confirm via `main.ExternalLoginMerge` / `MergeAccountsAsync` (move externals + endpoints, deactivate absorbed, revoke with `ACCOUNT_MERGED`, audit `UserAccountsMerged`).
+- `FlowOperationEnum`: explicit ordinals (`Register`…`ChangeAccountEmail` = 0…17 unchanged); `ExternalLoginMerge = 18`.
 - `UserAccountEntity.IsActive` no longer defaults to `true` in C# (call sites set explicitly; absorbed merge sets `false`).
 
 ### Tests
