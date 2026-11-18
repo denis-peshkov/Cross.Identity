@@ -25,7 +25,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 - `docs/BREAKING.md` From 2.12.0→2.13.0 (AccountMergePendings scripts + mergeToken failures + `IsActive` default).
 - FLOWS / README: `main.ExternalLoginMerge`, link-conflict `mergeToken`, user-scoped auth list.
-- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL.
+- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL (`1_12` journals `2_03`; MySQL/PG index idempotent).
 - `Infrastructure/Scripts/README.md` EF mapping row for `auth.AccountMergePendings`.
 
 ---

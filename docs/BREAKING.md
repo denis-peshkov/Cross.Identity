@@ -42,7 +42,7 @@ Release: [v2.13.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 |---|---|---|
 | Schema | No merge-pending table | `auth.AccountMergePendings` (one-time merge tokens after OAuth link conflict) |
 | Existing DBs | — | Run PreDeployment `1_12_auth_AccountMergePendings.sql` (SqlServer / PostgreSQL / MySQL) |
-| Greenfield | — | `2_Initial/2_03_auth_AccountMergePendings.sql` (PreDeployment journals `2_03` when it creates the table) |
+| Greenfield | — | `2_Initial/2_03_auth_AccountMergePendings.sql` (PreDeployment `1_12` journals `2_03` on SqlServer / PostgreSQL / MySQL) |
 
 **Action:** apply provider scripts under `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/` before using `main.ExternalLoginMerge` / link-conflict merge tokens. See [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 

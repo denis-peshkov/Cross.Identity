@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: H5 M2 L0 (H45–H48, H50, M136–M138).
+> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: H2 M2 L0 (H48, H50, M136–M138).
 
 **CodeRabbit:**
-- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: H45–H48, H50, M136–M138; closed #H44 #H49 #M135; skipped 1 (ProviderId fixtures — no columns).
+- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: H48, H50, M136–M138; closed #H44–#H47 #H49 #M135; skipped 1 (ProviderId fixtures — no columns).
 
 **PR:** —
 
@@ -22,15 +22,6 @@
 ---
 
 ## Высокий (логика / licensing / auth model)
-
-### H45. Merge token not bound to conflicted provider link
-⬜ Pending row stores only survivor/absorbed ids. Confirm does not re-check that the OAuth `(ProviderId, ProviderUserId)` that minted the token still belongs to absorbed. CR: persist + revalidate link; reject if removed/reassigned (needs schema columns + mint/confirm + tests).
-
-### H46. Merge + token revoke not one atomic commit
-⬜ `RevokeAllTokensForUserAsync` calls `SaveChanges` mid-merge (same `IdentityContext`) — persists login/endpoint/pending mutations before audit/`UserAccountsMerged` final save. Use one transaction / defer revoke save so failed merge leaves token retryable.
-
-### H47. MySQL / PostgreSQL `1_12` missing `2_03` journal (+ MySQL index)
-⬜ SqlServer `1_12` journals `2_03_auth_AccountMergePendings.sql` after create; MySQL/PG do not. MySQL also `CREATE UNIQUE INDEX` without existence guard (rerun risk). Align with SqlServer + project MySQL index pattern.
 
 ### H48. Concurrent merge confirm race
 ⬜ `ConcurrencyStamp` is a token but confirm does not rotate it before/with `ConsumedAt`; two confirms can both pass the early `ConsumedAt == null` read. Rotate stamp (or equivalent write-time guard) so stale confirm fails before effects persist.
@@ -60,6 +51,8 @@
 ## Принято (осознанный trade-off)
 
 - Merge переносит external logins + communication endpoints; absorbed `IsActive=false` + revoke `ACCOUNT_MERGED`; email/password/profile absorbed → survivor **не** копируются (email/phone merge — later).
+- Merge pending bound to survivor/absorbed accounts only (not `ProviderId`/`ProviderUserId`); confirm merges whole B→A by design (CR H45 dismissed).
+- Transaction unit = flow step; `RevokeAllTokensForUserAsync` may `SaveChanges` mid-`MergeAccountsAsync` (shared JWT service) — accepted (CR H46 dismissed).
 - TTL `AccountMergePendings` = `ExternalLoginOptions.StateLifetime`; host обязан авторизовать `UserAccountId` survivor до `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` без C#-default `true` — явная установка на create; тесты/фикстуры правят сами (documented in BREAKING).
 
@@ -74,6 +67,9 @@
 | ✅ #M134 DbUp `AccountMergePendings` | `1_12` PreDeployment + `2_03` Initial ×3 providers; EF config |
 | ✅ #L28 CHANGELOG / BREAKING 2.13.0 | CHANGELOG section + BREAKING DbUp + mergeToken contract |
 | ✅ #H44 `FlowOperationEnum` explicit ordinals | Existing 0–17 unchanged vs 2.12; `ExternalLoginMerge = 18` (additive, not BREAKING) |
+| ✅ #H45 ProviderId/ProviderUserId on pending | Dismissed: merge is account-level B→A; no bind to conflicted OAuth link |
+| ✅ #H46 Merge+revoke single atomic commit | Dismissed: step is the transaction unit; mid-merge SaveChanges via JWT revoke OK |
+| ✅ #H47 MySQL/PG `1_12` journal + index | Journal `2_03` in `__MigrationsHistory`; MySQL guarded unique index; PG `IF NOT EXISTS` |
 | ✅ #H49 `IsActive` default in BREAKING | From 2.12→2.13: no C# `= true`; hosts/fixtures set explicitly |
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
 
@@ -90,8 +86,7 @@
 
 ## Приоритет фиксов
 
-1. **H46** / **H48** — atomic merge + concurrency.
-2. **H47** — MySQL/PG journal (+ index guard).
-3. **H45** / **H50** — provider-link bind + endpoint verify transfer.
-4. **M136**–**M138** — ValidationException / collation / ErrorCode.
-5. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+1. **H48** — concurrent merge confirm (stamp rotation).
+2. **H50** — endpoint verify/preferred transfer on duplicate collapse.
+3. **M136**–**M138** — ValidationException / collation / ErrorCode.
+4. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
