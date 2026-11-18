@@ -879,6 +879,21 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmptyMergeToken_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                "   ",
+                Guid.NewGuid(),
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Merge token is required*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingExternalLogin_WhenCompleteAsync_ThenUpdatesExternalLoginAsync()
     {
         var userAccountId = Guid.NewGuid();

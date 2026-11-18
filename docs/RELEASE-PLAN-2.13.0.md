@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: H2 M2 L0 (H48, H50, M136–M138).
+> Дельта: `origin/master...HEAD` — **0** коммитов · WT **43** файлов · **+1196 / −37**. Open: M2 L0 (M137–M138).
 
 **CodeRabbit:**
-- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: H48, H50, M136–M138; closed #H44–#H47 #H49 #M135; skipped 1 (ProviderId fixtures — no columns).
+- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → Open: M137–M138; closed #H44–#H50 #M135–#M136; skipped 1 (ProviderId fixtures — no columns).
 
 **PR:** —
 
@@ -23,18 +23,9 @@
 
 ## Высокий (логика / licensing / auth model)
 
-### H48. Concurrent merge confirm race
-⬜ `ConcurrencyStamp` is a token but confirm does not rotate it before/with `ConsumedAt`; two confirms can both pass the early `ConsumedAt == null` read. Rotate stamp (or equivalent write-time guard) so stale confirm fails before effects persist.
-
-### H50. Duplicate endpoint collapse drops Verified / Preferred
-⬜ When absorbed endpoint matches survivor `(Channel, Address)`, row is removed without transferring `IsVerified` / preferred onto survivor. Preserve verification (and preferred if survivor has none).
-
 ---
 
 ## Средний (противоречия / баги контрактов)
-
-### M136. Empty `mergeToken` → `ArgumentException`
-⬜ `MergeAccountsAsync` uses `ArgumentException.ThrowIfNullOrWhiteSpace`; unknown token uses `ValidationException`. Align empty/whitespace to `ValidationException`.
 
 ### M137. Endpoint duplicate keys vs DB collation
 ⬜ In-memory `HashSet<(Channel, Address)>` may not match unique-index collation (case/accent). Prefer DB comparison rules when detecting duplicates before move.
@@ -53,6 +44,7 @@
 - Merge переносит external logins + communication endpoints; absorbed `IsActive=false` + revoke `ACCOUNT_MERGED`; email/password/profile absorbed → survivor **не** копируются (email/phone merge — later).
 - Merge pending bound to survivor/absorbed accounts only (not `ProviderId`/`ProviderUserId`); confirm merges whole B→A by design (CR H45 dismissed).
 - Transaction unit = flow step; `RevokeAllTokensForUserAsync` may `SaveChanges` mid-`MergeAccountsAsync` (shared JWT service) — accepted (CR H46 dismissed).
+- Duplicate endpoint on merge: drop absorbed row as-is (no Verified/Preferred transfer). Survivor is already signed-in; unverified-A vs verified-B not a realistic case (CR H50 dismissed).
 - TTL `AccountMergePendings` = `ExternalLoginOptions.StateLifetime`; host обязан авторизовать `UserAccountId` survivor до `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` без C#-default `true` — явная установка на create; тесты/фикстуры правят сами (documented in BREAKING).
 
@@ -70,6 +62,9 @@
 | ✅ #H45 ProviderId/ProviderUserId on pending | Dismissed: merge is account-level B→A; no bind to conflicted OAuth link |
 | ✅ #H46 Merge+revoke single atomic commit | Dismissed: step is the transaction unit; mid-merge SaveChanges via JWT revoke OK |
 | ✅ #H47 MySQL/PG `1_12` journal + index | Journal `2_03` in `__MigrationsHistory`; MySQL guarded unique index; PG `IF NOT EXISTS` |
+| ✅ #H48 Concurrent merge confirm race | Already covered: `IsConcurrencyToken` in EF config + `IdentityContext` rotates stamp on SaveChanges |
+| ✅ #H50 Duplicate endpoint Verified/Preferred | Dismissed: signed-in survivor; drop absorbed duplicate without transfer |
+| ✅ #M136 Empty mergeToken → ValidationException | `Merge token is required.` (same path as other merge validation → host 406) |
 | ✅ #H49 `IsActive` default in BREAKING | From 2.12→2.13: no C# `= true`; hosts/fixtures set explicitly |
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
 
@@ -86,7 +81,5 @@
 
 ## Приоритет фиксов
 
-1. **H48** — concurrent merge confirm (stamp rotation).
-2. **H50** — endpoint verify/preferred transfer on duplicate collapse.
-3. **M136**–**M138** — ValidationException / collation / ErrorCode.
-4. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+1. **M137**–**M138** — collation / ErrorCode.
+2. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).

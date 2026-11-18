@@ -353,7 +353,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
         HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(mergeToken);
+        if (string.IsNullOrWhiteSpace(mergeToken))
+            throw new ValidationException("Merge token is required.");
         if (survivorUserAccountId == Guid.Empty)
             throw new ValidationException("UserAccountId is required to merge accounts.");
 
