@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **4** коммита · **49** файлов · **+1431 / −61**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **6** коммитов · **51** файл · **+1496 / −118**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → все закрыты в этом плане; skipped 1 (ProviderId fixtures — no columns).
 
-**PR:** —
+**PR:** [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) (`BREAKING:` add external-login account merge via mergeToken).
 
 ---
 
