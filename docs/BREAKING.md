@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.12.0` → `2.13.0+` | [From 2.12.0 to 2.13.0](#from-2120-to-2130) |
 | `2.11.0` → `2.12.0+` | [From 2.11.0 to 2.12.0](#from-2110-to-2120) |
 | `2.10.0` → `2.11.0+` | [From 2.10.0 to 2.11.0](#from-2100-to-2110) |
 | `2.9.0` → `2.10.0+` | [From 2.9.0 to 2.10.0](#from-290-to-2100) |
@@ -28,6 +29,40 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.12.0 to 2.13.0
+
+Release: [v2.13.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.13.0).
+
+### DbUp: `auth.AccountMergePendings`
+
+| Area | Was (≤2.12.0) | Now (2.13.0+) |
+|---|---|---|
+| Schema | No merge-pending table | `auth.AccountMergePendings` (one-time merge tokens after OAuth link conflict) |
+| Existing DBs | — | Run PreDeployment `1_12_auth_AccountMergePendings.sql` (SqlServer / PostgreSQL / MySQL) |
+| Greenfield | — | `2_Initial/2_03_auth_AccountMergePendings.sql` (PreDeployment `1_12` journals `2_03` on SqlServer / PostgreSQL / MySQL) |
+
+**Action:** apply provider scripts under `Infrastructure/Scripts/{SqlServer,PostgreSQL,MySQL}/` before using `main.ExternalLoginMerge` / link-conflict merge tokens. See [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
+
+### OAuth link conflict: merge token in `ValidationException`
+
+| Area | Was (≤2.12.0) | Now (2.13.0+) |
+|---|---|---|
+| Link-mode callback when provider user already linked to another account | `ValidationException` message only | Same message + failures: `alreadyLinked`, `mergeToken`, `absorbedUserAccountId`, `survivorUserAccountId`, `provider` |
+| Confirm merge | — | New flow `main.ExternalLoginMerge` (`MergeToken` + authorized `UserAccountId`) |
+
+**Action:** hosts that offer “link provider while signed in” should surface `mergeToken` and call `ExternalLoginMerge` after user confirm. Absorbed account is deactivated; refresh tokens revoked with `ACCOUNT_MERGED`.
+
+### `UserAccountEntity.IsActive` default
+
+| Area | Was (≤2.12.0) | Now (2.13.0+) |
+|---|---|---|
+| `new UserAccountEntity { … }` without setting `IsActive` | `IsActive = true` (C# property initializer) | `IsActive = false` (default `bool`) |
+| Password / OTP validation | Rejects inactive | Unchanged (still rejects inactive) |
+
+**Action:** set `IsActive = true` whenever creating an account that should sign in (library `CreateUserAsync` already sets it; custom seed/tests/fixtures must set it explicitly). Absorbed accounts after merge are set to `false`.
 
 ---
 

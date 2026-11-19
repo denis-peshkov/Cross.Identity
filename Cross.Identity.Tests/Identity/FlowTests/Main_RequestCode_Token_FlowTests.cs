@@ -67,6 +67,7 @@ internal class Main_RequestCode_Token_FlowTests : RunFlowCommandHandlerTestsBase
         _userId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = _userId,
             Email = "test@example.com",
         });

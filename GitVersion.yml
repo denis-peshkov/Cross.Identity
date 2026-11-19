@@ -97,7 +97,8 @@ branches:
     pre-release-weight: 40000
 
   feature:
-    regex: ^feature(s)?[/-]
+    # Named capture required — GV6 substitutes only regex groups in label (same as pr{Number}).
+    regex: ^feature(s)?[/-](?<BranchName>.+)
     mode: ContinuousDelivery
     label: '{BranchName}'
     increment: Inherit

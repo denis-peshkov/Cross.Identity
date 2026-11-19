@@ -12,7 +12,7 @@
 #   Authentication:DeveloperMode=true — Register / RequestCode / ForgotPassword return LastCode in the body.
 #   InMemory DB — data is lost on Sample.Api restart; run Register again before dependent calls.
 #   After Register or Token — copy LastCode / refresh_token into http-client.private.env.json (gitignored) if needed.
-#   OAuth (ExternalLogin / ExternalLoginCallback) — seed Providers in DB + appsettings; placeholders below.
+#   OAuth (ExternalLogin / ExternalLoginCallback / ExternalLoginMerge) — seed Providers in DB + appsettings; placeholders below.
 
 ### Register
 # @name main-register
@@ -125,8 +125,19 @@ Content-Type: application/json
 
 {
   "UserAccountId": "{{USER_ACCOUNT_ID}}",
-  "RefreshToken": "{{REFRESH_TOKEN}}",
   "Provider": "Google"
+}
+
+###
+# @name main-external-login-merge
+# After link-mode ExternalLoginCallback returns ValidationException with mergeToken (alreadyLinked).
+# Host authorizes UserAccountId = survivor before ExecuteAsync.
+POST {{HOST}}/api/identity/main/ExternalLoginMerge
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "MergeToken": "{{MERGE_TOKEN}}"
 }
 
 ###

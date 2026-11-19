@@ -107,7 +107,7 @@ public class UserAccountEntity : IHasConcurrencyStamp
     [PersonalData]
     public bool TwoFactorEnabled { get; set; }
 
-    public bool IsActive { get; set; } = true;
+    public bool IsActive { get; set; }
     public DateTime? LastLoginAt { get; set; }
 
     public DateTime CreatedAt { get; set; }

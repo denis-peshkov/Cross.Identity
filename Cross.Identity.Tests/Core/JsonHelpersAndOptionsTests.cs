@@ -33,6 +33,13 @@ public sealed class JsonHelpersAndOptionsTests
 
         Action badObj = () => root.Obj("name");
         badObj.Should().Throw<InvalidOperationException>();
+
+        root.EnumReq<FlowOperationEnum>("enumValue").Should().Be(FlowOperationEnum.RefreshToken);
+        Action badEnum = () => root.EnumReq<FlowOperationEnum>("name");
+        badEnum.Should().Throw<InvalidOperationException>().WithMessage("*FlowOperationEnum*");
+
+        using var emptyEnumJson = JsonDocument.Parse("""{"enumValue":""}""");
+        emptyEnumJson.RootElement.EnumOpt<FlowOperationEnum>("enumValue").Should().BeNull();
     }
 
     [Test]

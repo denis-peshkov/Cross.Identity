@@ -44,6 +44,9 @@ public class IdentityContext : DbContext
     /// <summary>Short-lived OAuth state/nonces for external login flows.</summary>
     public DbSet<ExternalLoginStateEntity> ExternalLoginStates { get; set; }
 
+    /// <summary>One-time pending account merges after external-login link conflicts.</summary>
+    public DbSet<AccountMergePendingEntity> AccountMergePendings { get; set; }
+
     /// <summary>Security and token lifecycle audit rows.</summary>
     public DbSet<AuditEntity> Audits { get; set; }
 

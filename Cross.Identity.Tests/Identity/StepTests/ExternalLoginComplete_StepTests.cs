@@ -45,6 +45,7 @@ public class ExternalLoginComplete_StepTests
         var userAccountId = Guid.NewGuid();
         var user = new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "user@example.com",
             UserName = "user",
