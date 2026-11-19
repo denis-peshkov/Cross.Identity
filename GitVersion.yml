@@ -99,7 +99,8 @@ branches:
   feature:
     regex: ^feature(s)?[/-]
     mode: ContinuousDelivery
-    label: '{BranchName}'
+    # GV 6.x does not expand {BranchName}; use EscapedBranchName for a valid NuGet SemVer.
+    label: '{EscapedBranchName}'
     increment: Inherit
     prevent-increment:
       of-merged-branch: false
