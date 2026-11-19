@@ -61,6 +61,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
 
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "logout-all@example.com",
             UserName = "logout-all",
@@ -69,6 +70,7 @@ internal class Main_LogoutAll_FlowTests : RunFlowCommandHandlerTestsBase
         });
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = otherUserAccountId,
             Email = "logout-all-other@example.com",
             UserName = "logout-all-other",

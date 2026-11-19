@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H42` `M132` `L27`
+**Id high-water (не переиспользовать ≤):** `C1` `H50` `M138` `L28`
 
 ---
 
@@ -129,3 +129,11 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - README TFMs: badge only; prose Supported TFMs section dropped as duplicate of the badge.
 - Reversed prior trade-off (≤2.10): phone-only Register under `LockChannelAsEmail` no longer deferred to `sendCode`; reject at `CreateUserAsync` with explicit `ValidationException`.
 - Sample OAuth URLs: `CallbackUrl` → SPA (`http://localhost:4200/auth/external-login-callback`); `FormCallbackUrl` → API bridge (`http://localhost:5164/api/v1/Identity/ExternalLogin/OAuthReturn`).
+- External-login account merge: moves externals + communication endpoints; absorbed `IsActive=false` + revoke `ACCOUNT_MERGED`; email/password/profile of absorbed are not copied (email/phone merge later).
+- Merge pending bound to survivor/absorbed accounts only (not provider link ids); confirm merges whole B→A.
+- Merge transaction unit = flow step; `RevokeAllTokensForUserAsync` may `SaveChanges` mid-`MergeAccountsAsync` (shared JWT service).
+- Duplicate communication endpoint on merge: drop absorbed row as-is (no Verified/Preferred transfer onto survivor).
+- Endpoint `Address` normalized on write (`NormalizeAddress` / email lower) — in-memory key set matches DB uniqueness.
+- OAuth link-conflict machine code: `errors.code = alreadyLinked`; FluentValidation `ErrorCode` not required in ProblemDetails.
+- `AccountMergePendings` TTL = `ExternalLoginOptions.StateLifetime`; host must authorize survivor `UserAccountId` before `ExternalLoginMerge`.
+- `UserAccountEntity.IsActive` has no C# default `true` — create paths and fixtures set it explicitly.

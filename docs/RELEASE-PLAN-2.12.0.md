@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.12.0` (closed) · **ветка:** `release/apple-form-callback-url` · **база:** `origin/master` (`v2.11.0`) · **дата:** `2026-11-17`
+> **Версия:** `2.12.0` (published / closed) · **ветка:** `release/apple-form-callback-url` · **база:** `origin/master` (`v2.11.0`) · **дата:** `2026-11-17`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.12.0
 >

@@ -79,6 +79,7 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginCompleteStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginUnlinkStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ExternalLoginGetAllStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, ExternalLoginMergeStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, LogoutStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, LogoutAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),

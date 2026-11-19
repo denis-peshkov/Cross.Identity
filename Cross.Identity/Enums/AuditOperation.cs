@@ -51,6 +51,9 @@ public enum AuditOperation : short
     /// <summary>Account primary email changed (may auto-verify via linked external provider).</summary>
     AccountEmailChanged = 16,
 
+    /// <summary>Absorbed account merged into survivor after external-login conflict confirm.</summary>
+    UserAccountsMerged = 17,
+
     /// <summary>Catch-all for operations not covered by a dedicated value.</summary>
     Other = 99,
 }

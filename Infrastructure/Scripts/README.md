@@ -231,6 +231,7 @@ options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 | `auth.Providers` | `2_01_auth_Providers.sql` | `ProviderEntity` |
 | `auth.UsersExternalLogins` | `2_01_auth_UsersExternalLogins.sql` | `UserExternalLoginEntity` |
 | `auth.ExternalLoginStates` | `2_01_auth_ExternalLoginStates.sql` | `ExternalLoginStateEntity` |
+| `auth.AccountMergePendings` | `2_03_auth_AccountMergePendings.sql` (`1_12` PreDeployment for existing DBs) | `AccountMergePendingEntity` |
 | `auth.AccessTokens` | `2_01_auth_AccessTokens.sql` | `AccessTokenEntity` |
 | `auth.RefreshTokens` | `2_01_auth_RefreshTokens.sql` | `RefreshTokenEntity` |
 | `auth.EmailVerifications` | `2_01_auth_EmailVerifications.sql` | `EmailVerificationEntity` |

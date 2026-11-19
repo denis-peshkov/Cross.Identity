@@ -60,6 +60,7 @@ internal class Main_Logout_FlowTests : RunFlowCommandHandlerTestsBase
 
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "logout@example.com",
             UserName = "logout-user",

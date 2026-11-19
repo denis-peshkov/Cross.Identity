@@ -7,6 +7,33 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.13.0 — 19 Nov 2026
+
+### Library
+
+- OAuth link conflict → one-time `mergeToken` (`auth.AccountMergePendings`); confirm via `main.ExternalLoginMerge` / `MergeAccountsAsync` (move externals + endpoints, deactivate absorbed, revoke with `ACCOUNT_MERGED`, audit `UserAccountsMerged`).
+- `FlowOperationEnum`: explicit ordinals (`Register`…`ChangeAccountEmail` = 0…17 unchanged); `ExternalLoginMerge = 18`.
+- `UserAccountEntity.IsActive` no longer defaults to `true` in C# (call sites set explicitly; absorbed merge sets `false`).
+
+### Tests
+
+- `ExternalLoginServiceTests` / `Main_ExternalOAuth_FlowTests`: mint merge token on link conflict; merge happy-path + survivor mismatch + invalid token; multi-provider move; validation/endpoint coverage.
+- `ExternalLogin_StepFactoryTests`: `externalLoginMerge` factory wiring.
+- Fixtures set `IsActive = true` where entities are constructed without prior default.
+
+### Documentation / DB
+
+- `docs/BREAKING.md` From 2.12.0→2.13.0 (AccountMergePendings scripts + mergeToken failures + `IsActive` default).
+- FLOWS / README: `main.ExternalLoginMerge`, link-conflict `mergeToken`, user-scoped auth list.
+- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL (`1_12` journals `2_03`; MySQL/PG index idempotent; SqlServer independent table/index/journal guards).
+- `Infrastructure/Scripts/README.md` EF mapping row for `auth.AccountMergePendings`.
+
+### Tooling
+
+- `GitVersion.yml` `feature` branch: named `BranchName` capture so `{BranchName}` prerelease label substitutes under GitVersion 6.
+
+---
+
 ## v2.12.0 — 17 Nov 2026
 
 ### Library

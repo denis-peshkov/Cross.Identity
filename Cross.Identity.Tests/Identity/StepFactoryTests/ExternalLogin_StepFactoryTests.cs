@@ -122,4 +122,28 @@ public class ExternalLogin_StepFactoryTests
         step.Next.Should().Be("done");
         step.ExternalLoginService.Should().NotBeNull();
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenValidMergeJson_WhenCreate_ThenReturnsConfiguredStep()
+    {
+        using var json = JsonDocument.Parse(
+            """
+            {
+              "kind": "externalLoginMerge",
+              "mergeTokenKey": "MergeToken",
+              "userAccountIdKey": "UserAccountId",
+              "next": "done"
+            }
+            """);
+
+        var factory = new ExternalLoginMergeStepFactory();
+        var step = (ExternalLoginMergeStep)factory.Create(json.RootElement, _sp);
+
+        step.Kind.Should().Be("externalLoginMerge");
+        step.MergeTokenKey.Should().Be("MergeToken");
+        step.UserAccountIdKey.Should().Be("UserAccountId");
+        step.Next.Should().Be("done");
+        step.ExternalLoginService.Should().NotBeNull();
+    }
 }

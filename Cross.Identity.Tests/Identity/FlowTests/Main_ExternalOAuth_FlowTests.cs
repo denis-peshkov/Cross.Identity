@@ -48,6 +48,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         AddRegistryStep<ExternalLoginCompleteStepFactory>();
         AddRegistryStep<ExternalLoginUnlinkStepFactory>();
         AddRegistryStep<ExternalLoginGetAllStepFactory>();
+        AddRegistryStep<ExternalLoginMergeStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
@@ -93,6 +94,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var provider = await Context.Providers.SingleAsync(x => x.Name == "Google");
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "unlink@example.com",
             UserName = "unlink",
@@ -150,6 +152,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         });
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "owner@example.com",
             UserName = "owner",
@@ -216,6 +219,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var linkUserAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = linkUserAccountId,
             Email = "link@example.com",
             UserName = "link",
@@ -332,6 +336,203 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             .WithMessage("User denied access");
     }
 
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenValidMergeToken_WhenExternalLoginMerge_ThenMovesExternalsAndReturnsIdsAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var google = await Context.Providers.SingleAsync(x => x.Name == "Google");
+        AddToDb(new ProviderEntity
+        {
+            Name = "Microsoft",
+            Scheme = "microsoft",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        });
+        var microsoft = await Context.Providers.SingleAsync(x => x.Name == "Microsoft");
+
+        AddToDb(
+            new UserAccountEntity
+            {
+                IsActive = true,
+                Id = survivorId,
+                Email = "survivor@example.com",
+                UserName = "survivor",
+                NormalizedUserName = "survivor",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                IsActive = true,
+                Id = absorbedId,
+                Email = "absorbed@example.com",
+                UserName = "absorbed",
+                NormalizedUserName = "absorbed",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+        AddToDb(
+            new UserExternalLoginEntity
+            {
+                UserAccountId = survivorId,
+                UserAccount = null!,
+                ProviderId = google.Id,
+                ProviderEntity = null!,
+                ProviderUserId = "google-survivor",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserExternalLoginEntity
+            {
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = microsoft.Id,
+                ProviderEntity = null!,
+                ProviderUserId = "microsoft-absorbed",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var result = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["UserAccountId"] = survivorId.ToString("D"),
+                ["MergeToken"] = mergeToken,
+            },
+            Flow,
+            FlowOperationEnum.ExternalLoginMerge,
+            CancellationToken.None);
+
+        var payload = result.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        payload["survivor_user_account_id"].Should().Be(survivorId);
+        payload["absorbed_user_account_id"].Should().Be(absorbedId);
+        payload["moved_providers"].Should().BeAssignableTo<IReadOnlyList<string>>()
+            .Which.Should().Contain("Microsoft");
+
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == survivorId)).Should().Be(2);
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == absorbedId)).Should().Be(0);
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == absorbedId)).IsActive.Should().BeFalse();
+        (await Context.AccountMergePendings.SingleAsync(x => x.MergeToken == mergeToken)).ConsumedAt.Should().NotBeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenMergeTokenForOtherSurvivor_WhenExternalLoginMerge_ThenThrowsValidationExceptionAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var otherSurvivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+
+        AddToDb(
+            new UserAccountEntity
+            {
+                IsActive = true,
+                Id = survivorId,
+                Email = "survivor@example.com",
+                UserName = "survivor",
+                NormalizedUserName = "survivor",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                IsActive = true,
+                Id = otherSurvivorId,
+                Email = "other@example.com",
+                UserName = "other",
+                NormalizedUserName = "other",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                IsActive = true,
+                Id = absorbedId,
+                Email = "absorbed@example.com",
+                UserName = "absorbed",
+                NormalizedUserName = "absorbed",
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
+                new Dictionary<string, object?>
+                {
+                    ["UserAccountId"] = otherSurvivorId.ToString("D"),
+                    ["MergeToken"] = mergeToken,
+                },
+                Flow,
+                FlowOperationEnum.ExternalLoginMerge,
+                CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*does not belong to the current user*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenInvalidMergeToken_WhenExternalLoginMerge_ThenThrowsValidationExceptionAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = survivorId,
+            Email = "survivor@example.com",
+            UserName = "survivor",
+            NormalizedUserName = "survivor",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        await FluentActions.Invoking(() => _flowExecutor.ExecuteAsync(
+                new Dictionary<string, object?>
+                {
+                    ["UserAccountId"] = survivorId.ToString("D"),
+                    ["MergeToken"] = Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+                },
+                Flow,
+                FlowOperationEnum.ExternalLoginMerge,
+                CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*invalid or has expired*");
+    }
+
     private void SeedGoogleProvider()
     {
         AddToDb(new ProviderEntity
@@ -370,13 +571,14 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
             .Setup(f => f.CreateClient(nameof(ExternalLoginService)))
             .Returns(new HttpClient(handler));
 
+        var audit = new AuditService(Context);
         return new ExternalLoginService(
             Context,
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),
             _jwtTokenService,
-            new CommunicationEndpointService(Context, new AuditService(Context), TestAuthOptions.Snapshot()));
+            new CommunicationEndpointService(Context, audit, TestAuthOptions.Snapshot()), audit);
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()

@@ -154,6 +154,7 @@ public class CodeServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "test@example.com",
         });
@@ -186,6 +187,7 @@ public class CodeServiceTests : EFTestsBase
         var userAccountId = Guid.NewGuid();
         AddToDb(new UserAccountEntity
         {
+            IsActive = true,
             Id = userAccountId,
             Email = "test@example.com",
         });
@@ -214,7 +216,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenUsedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -239,7 +241,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenPreviouslyVerifiedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -270,7 +272,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenExpiredEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -294,7 +296,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -320,7 +322,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -353,7 +355,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -377,7 +379,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -402,7 +404,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var phone = "+1234567890";
-        AddToDb(new UserAccountEntity { Id = userAccountId, PhoneNumber = phone });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, PhoneNumber = phone });
         AddToDb(new PhoneVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -425,7 +427,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenMismatchedEmailCode_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -449,7 +451,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenEmailMaxAttemptsExceeded_WhenVerifyAsync_ThenReturnsFalseAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -472,7 +474,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenWrongIdentity_WhenVerifyAsync_ThenDoesNotIncrementAttemptsAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "victim@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "victim@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -497,7 +499,7 @@ public class CodeServiceTests : EFTestsBase
     public async Task GivenRepeatedWrongEmailCode_WhenVerifyAsync_ThenBlocksAfterMaxAttemptsAsync()
     {
         var userAccountId = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = "test@example.com" });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = "test@example.com" });
         AddToDb(new EmailVerificationEntity
         {
             UserAccountId = userAccountId,
@@ -527,7 +529,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "test@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email });
         var ttl = TimeSpan.FromMinutes(5);
         var message = NotificationMessage.For(ChannelEnum.Email, email)
             .WithSubject("Test")
@@ -549,8 +551,8 @@ public class CodeServiceTests : EFTestsBase
         var sharedEmail = "shared@example.com";
         var userAccountIdA = Guid.NewGuid();
         var userAccountIdB = Guid.NewGuid();
-        AddToDb(new UserAccountEntity { Id = userAccountIdA, Email = sharedEmail, EmailVerified = false });
-        AddToDb(new UserAccountEntity { Id = userAccountIdB, Email = sharedEmail, EmailVerified = false });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountIdA, Email = sharedEmail, EmailVerified = false });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountIdB, Email = sharedEmail, EmailVerified = false });
 
         var ttl = TimeSpan.FromMinutes(5);
         var messageA = NotificationMessage.For(ChannelEnum.Email, sharedEmail)
@@ -575,7 +577,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "cooldown@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email });
         var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
         {
             Cooldown = TimeSpan.FromMinutes(1),
@@ -600,7 +602,7 @@ public class CodeServiceTests : EFTestsBase
     {
         var userAccountId = Guid.NewGuid();
         var email = "window@example.com";
-        AddToDb(new UserAccountEntity { Id = userAccountId, Email = email });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId, Email = email });
         var sut = CreateCodeServiceWithRateLimit(new AuthenticationOptions.OtpSendRateLimitOptions
         {
             Cooldown = TimeSpan.Zero,
