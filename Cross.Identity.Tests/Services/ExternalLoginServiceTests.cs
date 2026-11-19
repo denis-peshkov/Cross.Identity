@@ -1018,6 +1018,302 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmptySurvivorUserAccountId_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                Convert.ToHexString(RandomNumberGenerator.GetBytes(32)),
+                Guid.Empty,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*UserAccountId is required*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenExpiredMergeToken_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        AddToDb(NewUser(survivorId, "survivor-expired@example.com"), NewUser(absorbedId, "absorbed-expired@example.com"));
+        var mergeToken = SeedMergePending(survivorId, absorbedId, expiresAt: DateTime.UtcNow.AddMinutes(-1));
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                survivorId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*invalid or has expired*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSelfMergePending_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var userId = Guid.NewGuid();
+        AddToDb(NewUser(userId, "self-merge@example.com"));
+        var mergeToken = SeedMergePending(userId, userId);
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                userId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Cannot merge an account into itself*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAbsorbedAccountMissing_WhenMergeAccountsAsync_ThenThrowsValidationExceptionAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var missingAbsorbedId = Guid.NewGuid();
+        AddToDb(NewUser(survivorId, "survivor-missing-b@example.com"));
+        var mergeToken = SeedMergePending(survivorId, missingAbsorbedId);
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                survivorId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Absorbed user account was not found*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSurvivorInactive_WhenMergeAccountsAsync_ThenThrowsNotAuthorizedAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var survivor = NewUser(survivorId, "survivor-inactive@example.com");
+        survivor.IsActive = false;
+        AddToDb(survivor, NewUser(absorbedId, "absorbed-for-inactive-a@example.com"));
+        var mergeToken = SeedMergePending(survivorId, absorbedId);
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.MergeAccountsAsync(
+                mergeToken,
+                survivorId,
+                HostSuppliedClientContext.Empty,
+                CancellationToken.None))
+            .Should().ThrowAsync<NotAuthorizedException>()
+            .WithMessage("*Account is disabled*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAbsorbedInactive_WhenMergeAccountsAsync_ThenStillMergesExternalsAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var microsoftId = SeedProvider("Microsoft");
+        var absorbed = NewUser(absorbedId, "absorbed-inactive@example.com");
+        absorbed.IsActive = false;
+        AddToDb(NewUser(survivorId, "survivor-active@example.com"), absorbed);
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = Guid.NewGuid(),
+            UserAccountId = absorbedId,
+            UserAccount = null!,
+            ProviderId = microsoftId,
+            ProviderEntity = null!,
+            ProviderUserId = "microsoft-on-inactive",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        });
+        var mergeToken = SeedMergePending(survivorId, absorbedId);
+        var jwt = CreateMergeJwtMock(absorbedId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        var result = await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        result.MovedProviders.Should().BeEquivalentTo("Microsoft");
+        (await Context.UsersExternalLogins.AnyAsync(x => x.UserAccountId == survivorId && x.ProviderId == microsoftId))
+            .Should().BeTrue();
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == absorbedId)).IsActive.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenDuplicateProviderOnSurvivor_WhenMergeAccountsAsync_ThenDropsAbsorbedDuplicateAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var microsoftId = SeedProvider("Microsoft");
+        AddToDb(NewUser(survivorId, "survivor-dup@example.com"), NewUser(absorbedId, "absorbed-dup@example.com"));
+        AddToDb(
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = survivorId,
+                UserAccount = null!,
+                ProviderId = googleId,
+                ProviderEntity = null!,
+                ProviderUserId = "google-on-survivor",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            },
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = googleId,
+                ProviderEntity = null!,
+                ProviderUserId = "google-on-absorbed",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            },
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = microsoftId,
+                ProviderEntity = null!,
+                ProviderUserId = "microsoft-on-absorbed",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            });
+        var mergeToken = SeedMergePending(survivorId, absorbedId);
+        var jwt = CreateMergeJwtMock(absorbedId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        var result = await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        result.MovedProviders.Should().BeEquivalentTo("Microsoft");
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == survivorId)).Should().Be(2);
+        (await Context.UsersExternalLogins.CountAsync(x => x.ProviderId == googleId)).Should().Be(1);
+        (await Context.UsersExternalLogins.SingleAsync(x => x.ProviderId == googleId)).ProviderUserId
+            .Should().Be("google-on-survivor");
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == absorbedId)).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenCommunicationEndpoints_WhenMergeAccountsAsync_ThenMovesDistinctDropsDuplicatesAndKeepsOnePreferredAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var microsoftId = SeedProvider("Microsoft");
+        AddToDb(NewUser(survivorId, "survivor-ep@example.com"), NewUser(absorbedId, "absorbed-ep@example.com"));
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = Guid.NewGuid(),
+            UserAccountId = absorbedId,
+            UserAccount = null!,
+            ProviderId = microsoftId,
+            ProviderEntity = null!,
+            ProviderUserId = "microsoft-ep",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        });
+
+        // Same key on both → drop absorbed duplicate; distinct SMS preferred on absorbed → move without preferred
+        // because survivor already has a preferred email.
+        SeedEndpoint(survivorId, ChannelEnum.Email, "shared@example.com", isPreferred: true);
+        SeedEndpoint(absorbedId, ChannelEnum.Email, "shared@example.com", isPreferred: false);
+        SeedEndpoint(absorbedId, ChannelEnum.Sms, "+15551234567", isPreferred: true);
+
+        var mergeToken = SeedMergePending(survivorId, absorbedId);
+        var jwt = CreateMergeJwtMock(absorbedId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        var survivorEndpoints = await Context.UsersCommunicationEndpoints
+            .Where(x => x.UserAccountId == survivorId)
+            .ToListAsync();
+        survivorEndpoints.Should().HaveCount(2);
+        survivorEndpoints.Should().ContainSingle(x => x.Channel == ChannelEnum.Email && x.Address == "shared@example.com" && x.IsPreferred);
+        survivorEndpoints.Should().ContainSingle(x => x.Channel == ChannelEnum.Sms && x.Address == "+15551234567" && !x.IsPreferred);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x => x.UserAccountId == absorbedId)).Should().Be(0);
+        survivorEndpoints.Count(x => x.IsPreferred).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAbsorbedPreferredEndpointAndSurvivorWithout_WhenMergeAccountsAsync_ThenPreferredMovesAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var microsoftId = SeedProvider("Microsoft");
+        AddToDb(NewUser(survivorId, "survivor-pref@example.com"), NewUser(absorbedId, "absorbed-pref@example.com"));
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = Guid.NewGuid(),
+            UserAccountId = absorbedId,
+            UserAccount = null!,
+            ProviderId = microsoftId,
+            ProviderEntity = null!,
+            ProviderUserId = "microsoft-pref",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        });
+        SeedEndpoint(absorbedId, ChannelEnum.Email, "only-on-b@example.com", isPreferred: true);
+
+        var mergeToken = SeedMergePending(survivorId, absorbedId);
+        var jwt = CreateMergeJwtMock(absorbedId);
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        var moved = await Context.UsersCommunicationEndpoints.SingleAsync(x => x.UserAccountId == survivorId);
+        moved.Address.Should().Be("only-on-b@example.com");
+        moved.IsPreferred.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenLinkStateWithMissingUserAccount_WhenCompleteAsync_ThenThrowsNotFoundExceptionAsync()
+    {
+        // State row can still hold a UserAccountId that no longer exists (e.g. deleted after mint without FK clear).
+        var missingUserId = Guid.NewGuid();
+        var payload = new ExternalLoginStatePayload
+        {
+            Nonce = Guid.NewGuid().ToString("N"),
+            Provider = "Google",
+            ReturnUrl = "/account/ExternalLogins",
+            UserAccountId = missingUserId,
+        };
+        var state = EncodeState(payload);
+        SeedOAuthState(payload);
+        SeedProvider("Google");
+        SetAuthenticatedUser(missingUserId);
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<NotFoundException>()
+            .WithMessage("*Current user account was not found*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenExistingExternalLogin_WhenCompleteAsync_ThenUpdatesExternalLoginAsync()
     {
         var userAccountId = Guid.NewGuid();
@@ -2225,6 +2521,56 @@ public class ExternalLoginServiceTests : EFTestsBase
         };
         AddToDb(provider);
         return provider.Id;
+    }
+
+    private string SeedMergePending(Guid survivorId, Guid absorbedId, DateTime? expiresAt = null)
+    {
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = expiresAt ?? DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        return mergeToken;
+    }
+
+    private void SeedEndpoint(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string address,
+        bool isPreferred)
+    {
+        AddToDb(new UserCommunicationEndpointEntity
+        {
+            Id = Guid.NewGuid(),
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            Source = CommunicationEndpointSource.Manual,
+            Channel = channel,
+            Address = address,
+            IsVerified = true,
+            IsPreferred = isPreferred,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+    }
+
+    private static Mock<IJwtTokenService> CreateMergeJwtMock(Guid absorbedId)
+    {
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(x => x.RevokeAllTokensForUserAsync(
+                absorbedId,
+                RefreshTokenRevokedReason.ACCOUNT_MERGED,
+                It.IsAny<HostSuppliedClientContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        return jwt;
     }
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()
