@@ -7,7 +7,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
-## v2.13.0 — 18 Nov 2026
+## v2.13.0 — 19 Nov 2026
 
 ### Library
 
@@ -17,7 +17,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Tests
 
-- `ExternalLoginServiceTests` / `Main_ExternalOAuth_FlowTests`: mint merge token on link conflict; merge happy-path + survivor mismatch + invalid token.
+- `ExternalLoginServiceTests` / `Main_ExternalOAuth_FlowTests`: mint merge token on link conflict; merge happy-path + survivor mismatch + invalid token; multi-provider move; validation/endpoint coverage.
 - `ExternalLogin_StepFactoryTests`: `externalLoginMerge` factory wiring.
 - Fixtures set `IsActive = true` where entities are constructed without prior default.
 
@@ -25,8 +25,12 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 - `docs/BREAKING.md` From 2.12.0→2.13.0 (AccountMergePendings scripts + mergeToken failures + `IsActive` default).
 - FLOWS / README: `main.ExternalLoginMerge`, link-conflict `mergeToken`, user-scoped auth list.
-- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL (`1_12` journals `2_03`; MySQL/PG index idempotent).
+- DbUp `1_12` / `2_03` `auth_AccountMergePendings` for SqlServer / PostgreSQL / MySQL (`1_12` journals `2_03`; MySQL/PG index idempotent; SqlServer independent table/index/journal guards).
 - `Infrastructure/Scripts/README.md` EF mapping row for `auth.AccountMergePendings`.
+
+### Tooling
+
+- `GitVersion.yml` `feature` branch: named `BranchName` capture so `{BranchName}` prerelease label substitutes under GitVersion 6.
 
 ---
 

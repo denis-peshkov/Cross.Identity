@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.13.0` (closed) · **ветка:** `feature/account-merge-external-login` · **база:** `origin/master` (`v2.12.0`) · **дата:** `2026-11-18`
+> **Версия:** `2.13.0` · **ветка:** `release/account-merge-external-login` · **база:** `origin/master` (`v2.12.0`) · **дата:** `2026-11-19`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.13.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **6** коммитов · **51** файл · **+1496 / −118**. Open: нет.
+> Дельта: `origin/master...HEAD` — **14** коммитов · **52** файла · **+1988 / −120**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → все закрыты в этом плане.
 
-**PR:** [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) (`BREAKING:` add external-login account merge via mergeToken).
+**PR:** [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) (`BREAKING:` add external-login account merge via mergeToken) · head still `feature/account-merge-external-login`.
 
 ---
 
@@ -71,6 +71,8 @@
 | ✅ #M139 Survivor check before AccountMergePendings | Dismissed: host authorizes existing survivor `UserAccountId` (FLOWS); no library pre-check / FK→NotFound |
 | ✅ #H51 EnsureIsActive on absorbed before merge | Dismissed: disabled absorbed must not block link/merge; only survivor must be active |
 | ✅ #H52 SqlServer `1_12` independent guards | Table / UX index / journal `2_03` each guarded; heal missing index or journal when table exists |
+| ✅ #M140 Merge validation / endpoint coverage | Extra `ExternalLoginServiceTests` for merge validation + endpoint move paths |
+| ✅ #L30 GitVersion feature `BranchName` | `feature` regex named group so `{BranchName}` label substitutes (GV6) |
 
 ---
 
@@ -86,3 +88,4 @@
 ## Приоритет фиксов
 
 1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+2. PR #31 head: переключить на `release/account-merge-external-login` (сейчас `feature/…`), если ship идёт с release-ветки.
