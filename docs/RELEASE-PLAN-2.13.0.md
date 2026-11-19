@@ -46,6 +46,7 @@
 - Link-conflict mint: no extra survivor pre-check / FK→NotFound in library — host already authorizes existing `UserAccountId` (FLOWS); missing survivor is host/bug path (CR M139 dismissed).
 - Merge: `EnsureIsActive` only on survivor; absorbed may be `IsActive=false` — disabled B must not block link-conflict merge / reclaim of externals (CR H51 dismissed).
 - Late Resolve/Upsert cross-account `ValidationException` without mergeToken — accepted: race window tiny; retry link hits `ThrowIf…` merge flow (CR H53 dismissed).
+- PG `1_12` journal `EXISTS`+`NOT EXISTS` in one `IF` — accepted: DbUp always has `__MigrationsHistory` before PreDeployment (CR L32 dismissed).
 
 ---
 
@@ -76,6 +77,7 @@
 | ✅ #L30 GitVersion feature `BranchName` | `feature` regex named group so `{BranchName}` label substitutes (GV6) |
 | ✅ #H53 Late cross-account without mergeToken | Dismissed: tiny race; retry link gets mergeToken via ThrowIf |
 | ✅ #L31 `MergeAccountsAsync` XML `NotAuthorizedException` | Document disabled survivor → `NotAuthorizedException` |
+| ✅ #L32 PG `1_12` nested journal IF | Dismissed: `__MigrationsHistory` always exists before PreDeployment (DbUp) |
 
 ---
 
