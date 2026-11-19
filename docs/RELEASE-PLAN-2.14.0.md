@@ -8,7 +8,7 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · committed **14** файлов · **+274 / −34**; + WT → **27** файлов · **+660 / −71** vs `master`. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **2** коммита · **28** файлов · **+663 / −72**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
