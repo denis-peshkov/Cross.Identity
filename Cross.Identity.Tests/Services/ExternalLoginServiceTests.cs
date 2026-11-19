@@ -2686,6 +2686,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         var audit = new AuditService(Context);
         return new ExternalLoginService(
             Context,
+            CreateIdentityContextFactory(),
             httpClientFactory.Object,
             optionsMock.Object,
             _logger.Object,

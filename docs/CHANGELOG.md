@@ -11,16 +11,19 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ### Library
 
-- OAuth link conflict throws `ConflictException` (`AccountMergeRequired.Create`, sub-code `alreadyLinked`) instead of `ValidationException`; use `ToConflictProblemDetails` → HTTP **409** (same error keys: `code`, `mergeToken`, ids, `provider`).
-- Mint of `auth.AccountMergePendings` runs under `TransactionScopeOption.Suppress` so an ambient host transaction cannot roll back the pending row when the conflict is thrown.
+- OAuth link conflict throws `ConflictException` (`AccountMergeRequired.Create`, sub-code `alreadyLinked`) instead of `ValidationException` → HTTP **409** with `Cross.ErrorHandlers` **≥7.7.0** (optional `ToConflictProblemDetails` for `code` / `mergeToken` / ids / `provider` body).
+- Depends on `Cross.ErrorHandlers` **7.7.0** (`ConflictException` → 409; ≤7.6.x mapped it to 400).
+- Mint of `auth.AccountMergePendings` runs under `TransactionScopeOption.Suppress` on a **new** `IdentityContext` from `IDbContextFactory<IdentityContext>` (fresh connection) so an ambient host transaction cannot roll back the pending row when the conflict is thrown.
+- `AddCrossIdentity(configuration, configureDbContext)` overload registers factory + scoped `IdentityContext` with the same options (preferred host wiring).
 
 ### Tests
 
 - Link-conflict + `ToConflictProblemDetails` coverage; validation ProblemDetails 406 unchanged.
+- PostgreSQL (Testcontainers + repo DDL) relational regression: ambient outer transaction + `CompleteAsync` link conflict → rollback → merge token still resolves to pending row.
 
 ### Documentation
 
-- `docs/BREAKING.md` From 2.13.0→2.14.0; FLOWS link-conflict note updated for 409 / Suppress.
+- `docs/BREAKING.md` From 2.13.0→2.14.0; FLOWS / README / Sample.Api updated for 409 / Suppress + `AddCrossIdentity(..., configureDbContext)`.
 
 ---
 

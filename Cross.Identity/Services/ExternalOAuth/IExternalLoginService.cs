@@ -45,7 +45,8 @@ internal interface IExternalLoginService
     /// or the link target user account was not found.
     /// </exception>
     /// <exception cref="ValidationException">
-    /// Provider credentials are missing/disabled in options, or the provider is already linked when linking.
+    /// Provider credentials are missing/disabled in options; link mode with empty <paramref name="userAccountId"/>;
+    /// or the provider is already linked when linking.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// Redirect URI is not configured: Apple needs <c>FormCallbackUrl</c>;
@@ -89,17 +90,25 @@ internal interface IExternalLoginService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Provider returned an error; state is invalid, expired, or already used; provider is misconfigured;
-    /// the provider profile has no email; or the same provider is already linked to this user under a different identity.
+    /// the provider profile has no email; sign-in email collides with an existing account; or this provider
+    /// is already linked to the current user under a different provider user id.
     /// </exception>
     /// <exception cref="ConflictException">
-    /// Link mode: the provider user is already linked to another account; a one-time <c>mergeToken</c> was minted
-    /// (<see cref="AccountMergeRequired"/> / map to HTTP 409 via <c>ToConflictProblemDetails</c>).
+    /// Link mode only: the provider user is already linked to another account; a one-time <c>mergeToken</c>
+    /// was minted (<see cref="AccountMergeRequired"/>, sub-code <c>alreadyLinked</c>,
+    /// <see cref="Exception.Data"/> holds <c>mergeToken</c> / account ids / <c>provider</c>).
+    /// With <c>Cross.ErrorHandlers</c> ≥7.7.0 middleware this is HTTP <c>409</c>;
+    /// use <c>ToConflictProblemDetails</c> when the host needs the structured mergeToken ProblemDetails body.
     /// </exception>
     /// <exception cref="NotFoundException">
-    /// Provider is not supported or not enabled.
+    /// Provider is not supported or not enabled, or the link-target user account was not found.
     /// </exception>
     /// <exception cref="NotAuthorizedException">
-    /// Linking requires authentication and a matching <c>UserAccountId</c>.
+    /// Linking requires authentication (state has <c>UserAccountId</c> / link return URL without a principal),
+    /// or the resolved user account is disabled (<c>IsActive = false</c>).
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Provider user id or access token was missing from the provider response.
     /// </exception>
     Task<ExternalLoginCompletion> CompleteAsync(
         string code,
@@ -122,10 +131,11 @@ internal interface IExternalLoginService
     /// <param name="hostSuppliedClientContext">Host-supplied request metadata (<see cref="HostSuppliedClientContext"/>); use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <exception cref="NotFoundException">
-    /// Provider is not enabled, or is not linked to the user.
+    /// Provider is not enabled, is not linked to the user, or the user account was not found.
     /// </exception>
     /// <exception cref="ValidationException">
-    /// Unlinking would leave the user with no login method (no password and no other external logins).
+    /// <paramref name="userAccountId"/> is empty, or unlinking would leave the user with no login method
+    /// (no password and no other external logins).
     /// </exception>
     Task UnlinkAsync(
         string provider,
@@ -155,7 +165,10 @@ internal interface IExternalLoginService
     /// Moves external logins from B to A (skipping providers already on A), deactivates B, and revokes B tokens.
     /// The host must authorize that <paramref name="survivorUserAccountId"/> belongs to the caller.
     /// </summary>
-    /// <param name="mergeToken">Opaque token from the link-conflict validation response.</param>
+    /// <param name="mergeToken">
+    /// Opaque token from the link-conflict <see cref="ConflictException"/> / HTTP 409 response
+    /// (<see cref="AccountMergeRequired"/>).
+    /// </param>
     /// <param name="survivorUserAccountId">Authenticated survivor account id (A).</param>
     /// <param name="hostSuppliedClientContext">Host-supplied request metadata; use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
     /// <param name="cancellationToken">Cancellation token.</param>

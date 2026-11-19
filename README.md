@@ -108,12 +108,16 @@ Cross.Identity.slnx
 
 ## Usage
 
-1. **Register `IdentityContext`** in the host application. `AddCrossIdentity` does **not** register `DbContext`.
+1. **Register Cross.Identity, Pepper, and `IdentityContext`** in the host application.
 
-   `IdentityContext` rotates `ConcurrencyStamp` on tracked insert/update inside `SaveChanges` / `SaveChangesAsync` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors`. This works with both `AddDbContext` and pooled registration (`AddDbContextPool` / `AddPooledDbContextFactory`).
+   Prefer the overload that configures EF once — it registers **`IDbContextFactory<IdentityContext>`** and scoped **`IdentityContext`** with the same options (factory is required so OAuth link-conflict mint can persist outside an ambient host transaction):
 
 ```csharp
-services.AddDbContext<IdentityContext>(options =>
+// Required for password hash/verify — do not skip.
+services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
+services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();
+
+services.AddCrossIdentity(configuration, options =>
     options
         // SQL Server:
         .UseSqlServer(connectionString)
@@ -121,23 +125,18 @@ services.AddDbContext<IdentityContext>(options =>
         // MySQL:      .UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
         // Test:       .UseInMemoryDatabase("…")
         );
+// Registers: IdentityContext + IDbContextFactory, IFlowExecutor, StepRegistry, all IStepFactory,
+// UserService, CodeService, JwtTokenService, LicenseAccessor, LicenseValidator, ILicenseProductInfo,
+// definition providers (files + embedded), forms, etc.
 ```
+
+   The parameterless-DbContext overload `AddCrossIdentity(configuration)` still does **not** register `DbContext` — use it with pooled / custom registration (`AddDbContextPool` / `AddPooledDbContextFactory` + scoped context), keeping factory and scoped options aligned.
+
+   `IdentityContext` rotates `ConcurrencyStamp` on tracked insert/update inside `SaveChanges` / `SaveChangesAsync` for all `IHasConcurrencyStamp` entities. Hosts do **not** need to call `AddInterceptors`.
 
    Apply the matching DDL under [`Infrastructure/Scripts`](Infrastructure/Scripts/README.md) (`SqlServer`, `PostgreSQL`, or `MySQL`). The EF model has no provider-specific column types; the host owns the database package and migrations.
 
    Note: bulk `ExecuteUpdateAsync` / `ExecuteDeleteAsync` bypass `SaveChanges` and automatic `ConcurrencyStamp` rotation. Prefer tracked `SaveChanges`. If you must use bulk APIs: filter by the **original** stamp, treat **0 affected rows** as a concurrency conflict, and assign a **new** stamp only in `ExecuteUpdateAsync` (`SetProperty`). `ExecuteDeleteAsync` has no SET — put the stamp only in the WHERE.
-
-2. **Register Cross.Identity** services **and Pepper** (password hashing). `AddCrossIdentity` does **not** register the pepper provider — the host must wire Cross.PepperVault (see Sample.Api):
-
-```csharp
-// Required for password hash/verify — do not skip.
-services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(configuration);
-services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();
-
-services.AddCrossIdentity(configuration);
-// Registers: IFlowExecutor, StepRegistry, all IStepFactory, UserService, CodeService, JwtTokenService,
-// LicenseAccessor, LicenseValidator, ILicenseProductInfo, definition providers (files + embedded), forms, etc.
-```
 
 **Required host config:**
 - **`Pepper`** (real pepper values + host-registered `IPepperVaultProvider`) — **always required** for password hash/verify (Register / Token / ChangePassword / ResetPassword). Do **not** omit it.
