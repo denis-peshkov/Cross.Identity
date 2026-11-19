@@ -260,8 +260,6 @@ public sealed class CoreInfrastructureBehaviorTests
             var services = new ServiceCollection();
             services.AddHttpContextAccessor();
             services.AddLogging();
-            services.AddDbContext<IdentityContext>(options =>
-                options.UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}"));
             services.AddScoped<IPepperVaultProvider>(_ =>
             {
                 var mock = new Mock<IPepperVaultProvider>();
@@ -269,13 +267,17 @@ public sealed class CoreInfrastructureBehaviorTests
             });
 
             services.AddFlowDefinitionsCompositeFromDirectoryAndEmbedded(config);
-            services.AddCrossIdentity(config);
+            services.AddCrossIdentity(
+                config,
+                options => options.UseInMemoryDatabase($"cross-identity-di-{Guid.NewGuid()}"));
 
             services.Any(x => x.ServiceType == typeof(CompositeProcessDefinitionProvider)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(IJwtTokenService)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(RsaSecurityKey)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(LicenseAccessor)).Should().BeTrue();
             services.Any(x => x.ServiceType == typeof(ILicenseProductInfo)).Should().BeTrue();
+            services.Any(x => x.ServiceType == typeof(IdentityContext)).Should().BeTrue();
+            services.Any(x => x.ServiceType == typeof(IDbContextFactory<IdentityContext>)).Should().BeTrue();
         }
         finally
         {

@@ -1,9 +1,5 @@
 ﻿var builder = WebApplication.CreateBuilder(args);
 
-// DbContext for Cross.Identity (in-memory for the sample)
-builder.Services.AddDbContext<IdentityContext>(options =>
-    options.UseInMemoryDatabase("CrossIdentity"));
-
 // HttpContextAccessor for JwtTokenService
 builder.Services.AddHttpContextAccessor();
 
@@ -11,8 +7,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddPepperOptions<EnvProviderOptions, EnvProviderOptionsValidator>(builder.Configuration);
 builder.Services.TryAddScoped<IPepperVaultProvider, EnvPepperProvider>();
 
-// Register Cross.Identity
-builder.Services.AddCrossIdentity(builder.Configuration);
+// Register Cross.Identity + IdentityContext / factory (InMemory for the sample).
+builder.Services.AddCrossIdentity(
+    builder.Configuration,
+    options => options.UseInMemoryDatabase("CrossIdentity"));
 
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();

@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.13.0` → `2.14.0+` | [From 2.13.0 to 2.14.0](#from-2130-to-2140) |
 | `2.12.0` → `2.13.0+` | [From 2.12.0 to 2.13.0](#from-2120-to-2130) |
 | `2.11.0` → `2.12.0+` | [From 2.11.0 to 2.12.0](#from-2110-to-2120) |
 | `2.10.0` → `2.11.0+` | [From 2.10.0 to 2.11.0](#from-2100-to-2110) |
@@ -29,6 +30,23 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.13.0 to 2.14.0
+
+Release: [v2.14.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.14.0).
+
+### OAuth link conflict → `ConflictException` (HTTP 409)
+
+| Area | Was (≤2.13.0) | Now (2.14.0+) |
+|---|---|---|
+| Link-mode callback when provider user already linked to another account | `ValidationException` + FluentValidation failures (`alreadyLinked`, `mergeToken`, …) → typically **406** via `ToValidationProblemDetails` | **`ConflictException`** (sub-code `alreadyLinked`) built by `AccountMergeRequired.Create` with `Exception.Data` keys `mergeToken` / ids / `provider` → HTTP **409** (`Cross.ErrorHandlers` **≥7.7.0** middleware; optional `ToConflictProblemDetails` for structured body) |
+| Pending mint vs ambient host `TransactionScope` | `SaveChanges` enlisted in ambient scope; throw could roll back the pending row | Mint runs under `TransactionScopeOption.Suppress` on a **new** `IdentityContext` from `IDbContextFactory<IdentityContext>` (fresh connection), so the pending row survives the throw / host rollback |
+| DI | Scoped `IdentityContext` only | Host must also register `IDbContextFactory<IdentityContext>` (or `AddPooledDbContextFactory`) with the **same** provider options. Prefer `AddCrossIdentity(configuration, configureDbContext)` which registers both |
+| `Cross.ErrorHandlers` | **≤7.6.x** maps `ConflictException` → **400** | **≥7.7.0** maps `ConflictException` → **409**. Cross.Identity **2.14** depends on **7.7.0** |
+
+**Action:** treat link conflict as `ConflictException` / HTTP **409** (bump host `Cross.ErrorHandlers` to **≥7.7.0** if you rely on its middleware). Use `AccountMergeRequired.TryGetMergeToken` / `ToConflictProblemDetails` when you need the mergeToken ProblemDetails shape. Do not treat link-conflict merge as `ValidationException` / 406. Ordinary validation failures still use `ToValidationProblemDetails` → 406. Use `AddCrossIdentity(configuration, configureDbContext)` or register factory + scoped context yourself (see README / Sample.Api). Hosts that disabled ambient transactions only for OAuth callback can restore them if desired — pending mint no longer depends on that workaround.
 
 ---
 

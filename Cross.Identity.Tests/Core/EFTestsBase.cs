@@ -9,6 +9,9 @@ public class EFTestsBase
     protected IdentityContext Context;
     private string _dbName = null!;
 
+    /// <summary>InMemory database name shared by <see cref="Context"/> and factory-created contexts.</summary>
+    protected string DatabaseName => _dbName;
+
     [SetUp]
     public virtual void Setup()
     {
@@ -21,6 +24,12 @@ public class EFTestsBase
     {
         Context?.Dispose();
     }
+
+    /// <summary>
+    /// Factory that opens a new <see cref="IdentityContext"/> against the same InMemory store as <see cref="Context"/>.
+    /// </summary>
+    protected IDbContextFactory<IdentityContext> CreateIdentityContextFactory()
+        => new SharingInMemoryIdentityContextFactory(_dbName);
 
     protected void AddToDb<TEntity>(params TEntity[] entities)
         where TEntity : class

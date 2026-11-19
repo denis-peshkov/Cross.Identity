@@ -574,6 +574,7 @@ internal class Main_ExternalOAuth_FlowTests : RunFlowCommandHandlerTestsBase
         var audit = new AuditService(Context);
         return new ExternalLoginService(
             Context,
+            CreateIdentityContextFactory(),
             httpClientFactory.Object,
             optionsMock.Object,
             Mock.Of<ILogger<ExternalLoginService>>(),

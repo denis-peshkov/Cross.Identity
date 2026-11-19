@@ -1,16 +1,16 @@
-﻿# Release readiness plan `2.13.0` → `master`
+﻿# Release readiness plan `2.14.0` → `master`
 
-> **Analysis date:** 2026-11-18
-> **Branch:** `feature/account-merge-external-login` (`315677f`)
-> **Comparison base:** `origin/master` (`v2.12.0` / `bb33195`) · merge-base `bb33195`
-> **Version plan:** [`docs/RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md) · backlog [`TO-DO.md`](TO-DO.md)
-> **Goal:** verification checklist before merge of **2.13.0** into `master`
+> **Analysis date:** 2026-11-19
+> **Branch:** `release/oauth-link-conflict-409` (`2b3ae9f`)
+> **Comparison base:** `origin/master` (`v2.13.0` / `7baa985`) · merge-base `7baa985`
+> **Version plan:** [`docs/RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) · backlog [`TO-DO.md`](TO-DO.md)
+> **Goal:** verification checklist before merge of **2.14.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** OAuth link conflict → `mergeToken` + `main.ExternalLoginMerge`; DbUp `auth.AccountMergePendings`. PR [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) (`BREAKING:`). Tag `v2.13.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan.
-> **Sources:** `git` / version plan / `gh pr checks` (2026-11-18: build **in progress**; latest breaking-gate ✅; earlier breaking-gate failures on prior SHAs)
+> **Note:** OAuth link conflict → `ConflictException` / HTTP **409**; mint via Suppress + `IDbContextFactory`; `Cross.ErrorHandlers` **7.7.0**. PR [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) (`BREAKING:`). Tag `v2.14.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan. Leftover **M141** (rest-client wording) → TO-DO, not a merge blocker.
+> **Sources:** `git` / version plan / `gh pr checks` (2026-11-19: build **in progress**; breaking-gate ✅)
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **43** items — ✅ **35** (81%) · 🟨 **6** (14%) · ⬜ **2** (5%) · ❌ **0** (0%)
+**Change summary:** **45** items — ✅ **36** (80%) · 🟨 **7** (16%) · ⬜ **2** (4%) · ❌ **0** (0%)
 
 ---
 
@@ -18,28 +18,28 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **6** |
-| Files | **51** · **+1496 / −118** (+ this checklist WT) |
-| Working tree | to-master refresh pending commit · tip `315677f` = `origin/feature/account-merge-external-login` |
+| Commits (`origin/master..HEAD`) | **2** |
+| Files | **28** · **+663 / −72** (+ this checklist WT) |
+| Working tree | to-master refresh pending commit · tip `2b3ae9f` = `origin/release/oauth-link-conflict-409` |
 | Remote branch | tracking · up to date (except local to-master) |
-| Tests | CI build 🟨 in progress on PR #31 tip |
-| PR | [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) → `master` · MERGEABLE |
-| CodeRabbit | local agent `2026-11-18` closed in plan; GitHub CodeRabbit pending on PR |
-| Version-plan open C/H/M/L | **empty** · closed H43–H50 · M133–M138 · L28 · HW `C1` `H50` `M138` `L28` |
+| Tests | CI build 🟨 in progress on PR #33 tip |
+| PR | [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) → `master` · MERGEABLE |
+| CodeRabbit | not run on this tip |
+| Version-plan open C/H/M/L | **empty** (finalized) · closed H54–H56 · M142 · L33–L34 · leftover M141 → TO-DO · HW `C1` `H56` `M142` `L34` |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
-| Library | 15 | Merge mint/confirm, entity/EF, flow/step/DI, enums |
-| Tests | 20 | Service + flow + factory; `IsActive` fixtures |
-| Infrastructure scripts | 7 | `1_12` / `2_03` AccountMergePendings ×3 + Scripts README |
-| FLOWS / README / Sample.http | 3+ | Merge flow docs + http sample + env example |
-| docs | 6 | BREAKING / CHANGELOG / PLAN 2.13.0 / PLAN 2.12.0 / TO-DO / to-master |
+| Library | ~8 | ConflictException mint; factory Suppress; DI overload; ErrorHandlers 7.7 |
+| Tests | ~8 | 409 ProblemDetails; PG ambient-tx merge-pending regression; sharing factory |
+| Sample / README / FLOWS / CONTRIBUTING | ~5 | Host wiring `AddCrossIdentity(..., configureDbContext)` |
+| Tooling | ~2 | EditorConfig charset; Scripts README |
+| docs | ~4 | BREAKING / CHANGELOG / PLAN 2.14.0 / PLAN 2.13.0 (+ this to-master) |
 
 ---
 
 ## Table of contents
 
-1. [New functionality (2.13.0)](#1-new-functionality-2130)
+1. [New functionality (2.14.0)](#1-new-functionality-2140)
 2. [Breaking / consumer notes](#2-breaking--consumer-notes)
 3. [Code gate](#3-code-gate)
 4. [Practical ship steps](#4-practical-ship-steps)
@@ -52,14 +52,14 @@
 
 ---
 
-## 1. New functionality (2.13.0)
+## 1. New functionality (2.14.0)
 
 | # | Block | Key changes | Status |
 |---|---|---|---|
-| F1 | Link-conflict merge token | `ThrowIfLinkConflictNeedsMergeAsync` → `AccountMergePendings` + `alreadyLinked` failures | ✅ |
-| F2 | `ExternalLoginMerge` flow | Step/factory/DI + `MergeAccountsAsync` (move externals/endpoints, deactivate, revoke) | ✅ |
-| F3 | Audit / revoke reason | `UserAccountsMerged` + `ACCOUNT_MERGED` | ✅ |
-| F4 | Host docs / sample | FLOWS + README + Scripts README + Sample.Api.http | ✅ |
+| F1 | Link conflict → `ConflictException` | `AccountMergeRequired` + throw (was ValidationException) | ✅ |
+| F2 | HTTP 409 mapping | `ToConflictProblemDetails` + ErrorHandlers **7.7.0** | ✅ |
+| F3 | Durable pending mint | Suppress + `IDbContextFactory` fresh context | ✅ |
+| F4 | DI host wiring | `AddCrossIdentity(configuration, configureDbContext)`; Sample.Api | ✅ |
 
 ---
 
@@ -67,9 +67,9 @@
 
 | # | Change | Action | Status |
 |---|---|---|---|
-| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.12.0 to 2.13.0 — DbUp | Run `1_12` / ship with `2_03` AccountMergePendings | ✅ |
-| B2 | Link-conflict `ValidationException` shape | Surface `mergeToken`; call `ExternalLoginMerge` | ✅ documented |
-| B3 | `UserAccountEntity.IsActive` no C# default `true` | Set explicitly on create / fixtures | ✅ documented |
+| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.13.0 to 2.14.0 | Catch ConflictException / 409; not ValidationException / 406 | ✅ |
+| B2 | `IDbContextFactory<IdentityContext>` required | Prefer new overload or register factory yourself | ✅ documented |
+| B3 | `Cross.ErrorHandlers` ≥7.7.0 | ≤7.6 mapped Conflict → 400 | ✅ documented |
 
 ---
 
@@ -77,10 +77,10 @@
 
 | # | Check | Status |
 |---|---|---|
-| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md) empty | ✅ `(closed)` |
-| CG2 | Closed H43–H50 · M133–M138 · L28 | ✅ |
-| CG3 | PR opened | ✅ [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) |
-| CG4 | Finalize docs on remote tip | ✅ (`315677f`) |
+| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) empty | ✅ `(closed)` |
+| CG2 | Closed H54–H56 · M142 · L33–L34 | ✅ |
+| CG3 | PR opened | ✅ [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) |
+| CG4 | Finalize docs on remote tip | ✅ (`2b3ae9f`) |
 
 ---
 
@@ -88,9 +88,9 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Commit + push finalize plan / TO-DO / to-master | ✅ |
-| P2 | PR → `master` | ✅ #31 |
-| P3 | CI green on PR tip | 🟨 build in progress · latest breaking-gate ✅ |
+| P1 | Commit + push finalize plan / TO-DO | ✅ |
+| P2 | PR → `master` | ✅ #33 |
+| P3 | CI green on PR tip | 🟨 build in progress · breaking-gate ✅ |
 | P4 | Ready to merge → `master` | ⬜ (wait build green; tag/NuGet post-merge) |
 
 ---
@@ -99,13 +99,13 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md) | ✅ `(closed)` |
-| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.13.0 | ✅ |
-| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.12.0 to 2.13.0 | ✅ |
-| D4 | [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) ExternalLoginMerge | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW + Принято synced |
+| D1 | [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) | ✅ `(closed)` |
+| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.14.0 | ✅ |
+| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.13.0 to 2.14.0 | ✅ |
+| D4 | [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) + README / Sample | ✅ |
+| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW + Принято + leftover M141 |
 | D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
-| D7 | Previous [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md) | ✅ `(published / closed)` |
+| D7 | Previous [`RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md) | ✅ `(published / closed)` |
 
 ---
 
@@ -113,9 +113,9 @@
 
 | # | Check | Status |
 |---|---|---|
-| T1 | `ExternalLoginServiceTests` merge mint / confirm / empty token | ✅ in delta |
-| T2 | `Main_ExternalOAuth_FlowTests` + step factory | ✅ in delta |
-| T3 | PR CI build | 🟨 in progress (#31) |
+| T1 | ConflictException / `ToConflictProblemDetails` 409 | ✅ in delta |
+| T2 | PG Testcontainers ambient-tx merge-pending regression | ✅ in delta |
+| T3 | PR CI build | 🟨 in progress (#33) |
 
 ---
 
@@ -132,7 +132,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| M1 | Schema scripts `AccountMergePendings` | ✅ `1_12` PreDeployment + `2_03` Initial ×3 providers |
+| M1 | Schema / seed scripts | ✅ N/A (no new DDL; uses `AccountMergePendings` from prior release) |
 
 ---
 
@@ -140,26 +140,28 @@
 
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
-| R1 | Existing DBs without `AccountMergePendings` | BREAKING — run `1_12` before using merge | ✅ documented |
-| R2 | Hosts ignore `mergeToken` on link conflict | Surface token + `ExternalLoginMerge` UX | ✅ documented |
-| R3 | Tag before master | Do not tag until after merge | ✅ policy |
-| R4 | CI not fully green yet | Wait `.NET` build on #31 tip | 🟨 |
+| R1 | Hosts still catch ValidationException for link conflict | BREAKING — switch to ConflictException / 409 | ✅ documented |
+| R2 | Hosts without `IDbContextFactory` | Register factory or use new `AddCrossIdentity` overload | ✅ documented |
+| R3 | ErrorHandlers ≤7.6 → Conflict **400** | Bump to ≥7.7.0 | ✅ documented |
+| R4 | Tag before master | Do not tag until after merge | ✅ policy |
+| R5 | CI not fully green yet | Wait `.NET` build on #33 tip | 🟨 |
+| R6 | rest-client ValidationException wording (M141) | Leftover in TO-DO — not a merge blocker | 🟨 deferred |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — open C/H/M/L empty; H43–H50 / M133–M138 / L28 closed
-- ✅ **2. Commit/push** finalize docs on tip (`315677f`)
-- 🟨 **3. PR → `master`** #31 · MERGEABLE · build in progress
-- ✅ **4. Docs content** — CHANGELOG / BREAKING 2.12.0→2.13.0 / FLOWS / README
-- ⬜ **5. Ready to merge** — wait CI green; tag `v2.13.0` / NuGet only after merge to `master` (CI)
+- ✅ **1. Code gate** — open C/H/M/L empty; H54–H56 / M142 / L33–L34 closed
+- ✅ **2. Commit/push** finalize docs on tip (`2b3ae9f`)
+- 🟨 **3. PR → `master`** #33 · MERGEABLE · build in progress
+- ✅ **4. Docs content** — CHANGELOG / BREAKING 2.13.0→2.14.0 / FLOWS / README
+- ⬜ **5. Ready to merge** — wait CI green; tag `v2.14.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty
-- ✅ Feature set on branch (merge token + ExternalLoginMerge + DbUp)
+- ✅ Feature set on branch (ConflictException 409 + factory mint + ErrorHandlers 7.7)
 - ✅ Finalize docs on remote tip
-- 🟨 PR open (#31) · CI not fully green yet
-- ✅ PostDeployment N/A (PreDeployment `1_12` + Initial `2_03` shipped)
+- 🟨 PR open (#33) · CI not fully green yet
+- ✅ PostDeployment N/A (no new DDL)
 - ✅ Tag/NuGet out of scope until `master`
