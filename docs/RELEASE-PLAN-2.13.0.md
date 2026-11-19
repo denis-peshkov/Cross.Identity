@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.12.0.md`](RELEASE-PLAN-2.12.0.md)
 >
-> Дельта: `origin/master...HEAD` — **6** коммитов · **51** файл · **+1496 / −118**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **6** коммитов · **51** файл · **+1496 / −118**. Open: нет.
 
 **CodeRabbit:**
-- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → все закрыты в этом плане; skipped 1 (ProviderId fixtures — no columns).
+- `2026-11-18` · log `.cursor/skills/coderabbit/.cache/cr-feature-account-merge-external-login-vs-origin-master-all-20261118-221101.jsonl` · 14 findings (0 Critical, 13 Major, 1 Minor) → все закрыты в этом плане.
 
 **PR:** [#31](https://github.com/denis-peshkov/Cross.Identity/pull/31) (`BREAKING:` add external-login account merge via mergeToken).
 
@@ -65,6 +65,7 @@
 | ✅ #M138 alreadyLinked ErrorCode in ProblemDetails | Dismissed: client already gets `errors.code: ["alreadyLinked"]`; ErrorCode field redundant |
 | ✅ #H49 `IsActive` default in BREAKING | From 2.12→2.13: no C# `= true`; hosts/fixtures set explicitly |
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
+| ✅ #L29 Merge test `MovedProviders` exact | `BeEquivalentTo("Microsoft")` + multi-provider test Microsoft+Apple |
 
 ---
 
@@ -79,4 +80,4 @@
 
 ## Приоритет фиксов
 
-_(пусто — релиз `2.13.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
+1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).

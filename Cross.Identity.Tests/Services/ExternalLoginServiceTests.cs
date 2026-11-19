@@ -777,7 +777,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         result.SurvivorUserAccountId.Should().Be(survivorId);
         result.AbsorbedUserAccountId.Should().Be(absorbedId);
-        result.MovedProviders.Should().Contain("Microsoft");
+        result.MovedProviders.Should().BeEquivalentTo("Microsoft");
 
         (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == survivorId)).Should().Be(2);
         (await Context.UsersExternalLogins.AnyAsync(x => x.UserAccountId == survivorId && x.ProviderId == microsoftId))
@@ -809,6 +809,130 @@ public class ExternalLoginServiceTests : EFTestsBase
                 CancellationToken.None))
             .Should().ThrowAsync<ValidationException>()
             .WithMessage("*invalid or has expired*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAbsorbedHasMultipleExternals_WhenMergeAccountsAsync_ThenMovesAllProvidersAsync()
+    {
+        var survivorId = Guid.NewGuid();
+        var absorbedId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var microsoftId = SeedProvider("Microsoft");
+        var appleId = SeedProvider("Apple");
+
+        AddToDb(
+            new UserAccountEntity
+            {
+                Id = survivorId,
+                Email = "survivor-multi@example.com",
+                UserName = "survivor-multi",
+                NormalizedUserName = "survivor-multi",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            },
+            new UserAccountEntity
+            {
+                Id = absorbedId,
+                Email = "absorbed-multi@example.com",
+                UserName = "absorbed-multi",
+                NormalizedUserName = "absorbed-multi",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SecurityStamp = Guid.NewGuid(),
+                ConcurrencyStamp = Guid.NewGuid(),
+            });
+
+        AddToDb(
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = survivorId,
+                UserAccount = null!,
+                ProviderId = googleId,
+                ProviderEntity = null!,
+                ProviderUserId = "google-survivor-multi",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            },
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = microsoftId,
+                ProviderEntity = null!,
+                ProviderUserId = "microsoft-absorbed-multi",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            },
+            new UserExternalLoginEntity
+            {
+                Id = Guid.NewGuid(),
+                UserAccountId = absorbedId,
+                UserAccount = null!,
+                ProviderId = appleId,
+                ProviderEntity = null!,
+                ProviderUserId = "apple-absorbed-multi",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            });
+
+        var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+        AddToDb(new AccountMergePendingEntity
+        {
+            Id = Guid.NewGuid(),
+            MergeToken = mergeToken,
+            SurvivorUserAccountId = survivorId,
+            AbsorbedUserAccountId = absorbedId,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(x => x.RevokeAllTokensForUserAsync(
+                absorbedId,
+                RefreshTokenRevokedReason.ACCOUNT_MERGED,
+                It.IsAny<HostSuppliedClientContext>(),
+                It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+
+        var result = await sut.MergeAccountsAsync(
+            mergeToken,
+            survivorId,
+            HostSuppliedClientContext.Empty,
+            CancellationToken.None);
+
+        result.SurvivorUserAccountId.Should().Be(survivorId);
+        result.AbsorbedUserAccountId.Should().Be(absorbedId);
+        result.MovedProviders.Should().BeEquivalentTo("Microsoft", "Apple");
+
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == survivorId)).Should().Be(3);
+        (await Context.UsersExternalLogins.AnyAsync(x => x.UserAccountId == survivorId && x.ProviderId == microsoftId))
+            .Should().BeTrue();
+        (await Context.UsersExternalLogins.AnyAsync(x => x.UserAccountId == survivorId && x.ProviderId == appleId))
+            .Should().BeTrue();
+        (await Context.UsersExternalLogins.CountAsync(x => x.UserAccountId == absorbedId)).Should().Be(0);
+
+        var absorbed = await Context.UsersAccounts.SingleAsync(x => x.Id == absorbedId);
+        absorbed.IsActive.Should().BeFalse();
+
+        var audit = await Context.Audits.SingleAsync(x => x.Operation == AuditOperation.UserAccountsMerged);
+        audit.Notes.Should().Match(n =>
+            n.Contains("MovedProviders=", StringComparison.Ordinal)
+            && n.Contains("Microsoft", StringComparison.Ordinal)
+            && n.Contains("Apple", StringComparison.Ordinal));
+
+        jwt.Verify(x => x.RevokeAllTokensForUserAsync(
+            absorbedId,
+            RefreshTokenRevokedReason.ACCOUNT_MERGED,
+            It.IsAny<HostSuppliedClientContext>(),
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Test]
