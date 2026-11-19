@@ -44,6 +44,7 @@
 - TTL `AccountMergePendings` = `ExternalLoginOptions.StateLifetime`; host обязан авторизовать `UserAccountId` survivor до `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` без C#-default `true` — явная установка на create; тесты/фикстуры правят сами (documented in BREAKING).
 - Link-conflict mint: no extra survivor pre-check / FK→NotFound in library — host already authorizes existing `UserAccountId` (FLOWS); missing survivor is host/bug path (CR M139 dismissed).
+- Merge: `EnsureIsActive` only on survivor; absorbed may be `IsActive=false` — disabled B must not block link-conflict merge / reclaim of externals (CR H51 dismissed).
 
 ---
 
@@ -68,6 +69,7 @@
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
 | ✅ #L29 Merge test `MovedProviders` exact | `BeEquivalentTo("Microsoft")` + multi-provider test Microsoft+Apple |
 | ✅ #M139 Survivor check before AccountMergePendings | Dismissed: host authorizes existing survivor `UserAccountId` (FLOWS); no library pre-check / FK→NotFound |
+| ✅ #H51 EnsureIsActive on absorbed before merge | Dismissed: disabled absorbed must not block link/merge; only survivor must be active |
 
 ---
 
