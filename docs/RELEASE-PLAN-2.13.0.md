@@ -70,6 +70,7 @@
 | ✅ #L29 Merge test `MovedProviders` exact | `BeEquivalentTo("Microsoft")` + multi-provider test Microsoft+Apple |
 | ✅ #M139 Survivor check before AccountMergePendings | Dismissed: host authorizes existing survivor `UserAccountId` (FLOWS); no library pre-check / FK→NotFound |
 | ✅ #H51 EnsureIsActive on absorbed before merge | Dismissed: disabled absorbed must not block link/merge; only survivor must be active |
+| ✅ #H52 SqlServer `1_12` independent guards | Table / UX index / journal `2_03` each guarded; heal missing index or journal when table exists |
 
 ---
 
