@@ -43,6 +43,7 @@
 - Link-conflict machine code is `errors.code = alreadyLinked` (ErrorMessage); FluentValidation `ErrorCode` not mapped to ProblemDetails — redundant, accepted (CR M138 dismissed).
 - TTL `AccountMergePendings` = `ExternalLoginOptions.StateLifetime`; host обязан авторизовать `UserAccountId` survivor до `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` без C#-default `true` — явная установка на create; тесты/фикстуры правят сами (documented in BREAKING).
+- Link-conflict mint: no extra survivor pre-check / FK→NotFound in library — host already authorizes existing `UserAccountId` (FLOWS); missing survivor is host/bug path (CR M139 dismissed).
 
 ---
 
@@ -66,6 +67,7 @@
 | ✅ #H49 `IsActive` default in BREAKING | From 2.12→2.13: no C# `= true`; hosts/fixtures set explicitly |
 | ✅ #M135 FLOWS / README `ExternalLoginMerge` | Flow section + link-conflict note; README + Scripts README + Sample.Api.http |
 | ✅ #L29 Merge test `MovedProviders` exact | `BeEquivalentTo("Microsoft")` + multi-provider test Microsoft+Apple |
+| ✅ #M139 Survivor check before AccountMergePendings | Dismissed: host authorizes existing survivor `UserAccountId` (FLOWS); no library pre-check / FK→NotFound |
 
 ---
 
