@@ -202,3 +202,30 @@ Content-Type: application/json
   "UserAccountId": "{{USER_ACCOUNT_ID}}",
   "Email": "new@example.com"
 }
+
+###
+# @name main-communication-endpoint-add
+# Secondary email/phone — step 1: ICommunicationEndpointService.AddAsync (unverified Manual) + OTP to that address.
+# Provide exactly one of Email / PhoneNumber. Host must authorize UserAccountId.
+# DeveloperMode may return LastCode in the response for local testing.
+POST {{HOST}}/api/identity/main/CommunicationEndpointAdd
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "Email": "second@example.com",
+  "Ttl": "00:05:00"
+}
+
+###
+# @name main-communication-endpoint-set-verified
+# Secondary email/phone — step 2: verify OTP, then ICommunicationEndpointService.SetVerifiedAsync.
+# Same Email or PhoneNumber as in CommunicationEndpointAdd. Does not set preferred (use SetPreferred).
+POST {{HOST}}/api/identity/main/CommunicationEndpointSetVerified
+Content-Type: application/json
+
+{
+  "UserAccountId": "{{USER_ACCOUNT_ID}}",
+  "Email": "second@example.com",
+  "Code": "{{LAST_CODE}}"
+}

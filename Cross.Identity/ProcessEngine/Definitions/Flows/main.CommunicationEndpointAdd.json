@@ -1,0 +1,44 @@
+{
+  "start": "collectForm",
+  "steps": [
+    {
+      "kind": "collectForm",
+      "schemaDef": {
+        "fields": [
+          { "key": "UserAccountId", "type": "String", "required": true, "min": 36, "max": 36, "regex": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" },
+          { "key": "Email", "type": "Email", "required": false, "min": 8, "max": 128 },
+          { "key": "PhoneNumber", "type": "PhoneNumber", "required": false, "max": 16 },
+          { "key": "Ttl", "type": "TimeSpan", "required": true },
+          { "key": "LanguageCode", "type": "String", "required": false, "min": 2, "max": 2, "regex": "^[a-zA-Z]{2}$" },
+          { "key": "IpAddress", "type": "String", "required": false, "max": 64 },
+          { "key": "UserAgent", "type": "String", "required": false, "max": 512 },
+          { "key": "DeviceFingerprint", "type": "String", "required": false, "max": 128 }
+        ],
+        "validators": [
+          { "kind": "exactlyOneRequired", "fields": ["Email", "PhoneNumber"], "message": "Provide exactly one of Email or PhoneNumber." }
+        ]
+      },
+      "next": "communicationEndpointAdd"
+    },
+    {
+      "kind": "communicationEndpointAdd",
+      "userAccountIdKey": "collectForm.UserAccountId",
+      "emailKey": "collectForm.Email",
+      "phoneKey": "collectForm.PhoneNumber",
+      "ttlKey": "collectForm.Ttl",
+      "template": "verify",
+      "subject": "Verification Code",
+      "next": "collectResult"
+    },
+    {
+      "kind": "collectResult",
+      "map": {
+        "endpoint": "communicationEndpointAdd.Endpoint",
+        "channel": "communicationEndpointAdd.Channel",
+        "address": "communicationEndpointAdd.Address",
+        "LastCode": "communicationEndpointAdd.LastCode"
+      },
+      "next": null
+    }
+  ]
+}

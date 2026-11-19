@@ -19,12 +19,31 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
         AddRegistryStep<CollectFormStepFactory>();
         AddRegistryStep<CommunicationEndpointsGetAllStepFactory>();
         AddRegistryStep<CommunicationEndpointSetPreferredStepFactory>();
+        AddRegistryStep<CommunicationEndpointAddStepFactory>();
+        AddRegistryStep<CommunicationEndpointSetVerifiedStepFactory>();
         AddRegistryStep<ChangeAccountEmailStepFactory>();
         AddRegistryStep<CollectResultStepFactory>();
 
         RegisterToServiceProvider<IProcessDefinitionProvider, IProcessDefinitionProvider>(_processDefinitionProvider);
         RegisterToServiceProvider<ICommunicationEndpointService, ICommunicationEndpointService>(_endpoints);
         RegisterToServiceProvider<IUserService, IUserService>(CreateUserService());
+
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:DeveloperMode"] = "true",
+                ["Authentication:ClientUrl"] = "http://localhost:4200",
+            })
+            .Build();
+        RegisterToServiceProvider<IConfiguration, IConfiguration>(configuration);
+        RegisterToServiceProvider<ICodeService, ICodeService>(
+            new CodeService(
+                Context,
+                Mock.Of<ILogger<CodeService>>(),
+                Mock.Of<IEmailSenderService>(),
+                Mock.Of<ISmsSenderService>(),
+                configuration,
+                TestAuthOptions.Snapshot()));
     }
 
     [Test]
@@ -143,5 +162,64 @@ internal class Main_CommunicationEndpoints_FlowTests : RunFlowCommandHandlerTest
             && a.EntityId == userAccountId.ToString()
             && a.IpAddress == "10.0.0.7"
             && a.UserAgent == "flow-tests");
+    }
+
+    [Test]
+    public async Task CommunicationEndpointAddThenSetVerified_ShouldVerifySecondaryEmail()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            EmailVerified = true,
+        });
+        await _endpoints.SyncAccountContactsAsync(userAccountId);
+
+        var request = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["UserAccountId"] = userAccountId.ToString(),
+                ["Email"] = "second@example.com",
+                ["Ttl"] = TimeSpan.FromMinutes(5),
+                ["IpAddress"] = "10.0.0.8",
+                ["UserAgent"] = "add-flow",
+            },
+            Flow,
+            FlowOperationEnum.CommunicationEndpointAdd,
+            CancellationToken.None);
+
+        var requestPayload = request.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        var code = requestPayload["LastCode"].Should().BeOfType<string>().Subject;
+        requestPayload["address"].Should().Be("second@example.com");
+        var pending = requestPayload["endpoint"].Should().BeOfType<CommunicationEndpointDto>().Subject;
+        pending.IsVerified.Should().BeFalse();
+
+        var confirm = await _flowExecutor.ExecuteAsync(
+            new Dictionary<string, object?>
+            {
+                ["UserAccountId"] = userAccountId.ToString(),
+                ["Email"] = "second@example.com",
+                ["Code"] = code,
+                ["IpAddress"] = "10.0.0.8",
+                ["UserAgent"] = "add-flow",
+            },
+            Flow,
+            FlowOperationEnum.CommunicationEndpointSetVerified,
+            CancellationToken.None);
+
+        var confirmPayload = confirm.Data.Should().BeOfType<Dictionary<string, object?>>().Subject;
+        confirmPayload["verified"].Should().Be(true);
+        confirmPayload["address"].Should().Be("second@example.com");
+        confirmPayload["endpoint"].Should().BeOfType<CommunicationEndpointDto>()
+            .Which.IsVerified.Should().BeTrue();
+
+        var all = await _endpoints.GetAllAsync(userAccountId);
+        all.Should().Contain(x => x.Address == "second@example.com" && x.IsVerified);
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.CommunicationEndpointChanged
+            && a.IpAddress == "10.0.0.8"
+            && a.UserAgent == "add-flow");
     }
 }

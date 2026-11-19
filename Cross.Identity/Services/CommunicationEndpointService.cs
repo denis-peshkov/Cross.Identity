@@ -175,6 +175,92 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
     }
 
     /// <inheritdoc />
+    public async Task<CommunicationEndpointDto> AddAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string address,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureOtpChannel(channel);
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        await UserAccountGuard.EnsureIsActiveAsync(_context, userAccountId, cancellationToken).ConfigureAwait(false);
+
+        var normalized = channel.NormalizeAddress(address);
+        await EnsureAddressAvailableForAddAsync(userAccountId, channel, normalized, cancellationToken)
+            .ConfigureAwait(false);
+
+        var existing = await _context.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.UserAccountId == userAccountId && x.Channel == channel && x.Address == normalized,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (existing is { IsVerified: true })
+        {
+            throw new ValidationException("Communication endpoint is already verified.");
+        }
+
+        return await UpsertAsync(
+                userAccountId,
+                channel,
+                normalized,
+                CommunicationEndpointSource.Manual,
+                isVerified: false,
+                entityId: null,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<CommunicationEndpointDto> SetVerifiedAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string address,
+        HostSuppliedClientContext hostSuppliedClientContext,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureOtpChannel(channel);
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        await UserAccountGuard.EnsureIsActiveAsync(_context, userAccountId, cancellationToken).ConfigureAwait(false);
+
+        var normalized = channel.NormalizeAddress(address);
+        await EnsureAddressAvailableForAddAsync(userAccountId, channel, normalized, cancellationToken)
+            .ConfigureAwait(false);
+
+        var dto = await UpsertAsync(
+                userAccountId,
+                channel,
+                normalized,
+                CommunicationEndpointSource.Manual,
+                isVerified: true,
+                entityId: null,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        await ApplyVerifiedAccountContactIfMatchingAsync(userAccountId, channel, normalized, cancellationToken)
+            .ConfigureAwait(false);
+
+        _audit.Record(new AuditEntity
+        {
+            Id = Guid.NewGuid(),
+            CreatedAt = DateTime.UtcNow,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            Operation = AuditOperation.CommunicationEndpointChanged,
+            EntityType = AuditEntityType.UserCommunicationEndpoint,
+            EntityId = dto.Id.ToString(),
+            IpAddress = hostSuppliedClientContext.IpAddress,
+            UserAgent = hostSuppliedClientContext.UserAgent,
+            DeviceFingerprint = hostSuppliedClientContext.DeviceFingerprint,
+            Notes = "Communication endpoint verified via CommunicationEndpointSetVerified OTP.",
+        });
+
+        await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        return dto;
+    }
+
+    /// <inheritdoc />
     public async Task SyncAccountContactsAsync(Guid userAccountId, CancellationToken cancellationToken = default)
     {
         var account = await _context.UsersAccounts
@@ -359,6 +445,106 @@ internal sealed class CommunicationEndpointService : ICommunicationEndpointServi
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UserAccountId == userAccountId && x.IsPreferred && x.IsVerified, cancellationToken)
             .ConfigureAwait(false);
+    }
+
+    private static void EnsureOtpChannel(ChannelEnum channel)
+    {
+        if (!channel.SupportsOtp())
+        {
+            throw new ValidationException("Only email and SMS channels can be added via OTP. Messenger channels are not supported yet.");
+        }
+    }
+
+    private async Task EnsureAddressAvailableForAddAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string normalizedAddress,
+        CancellationToken cancellationToken)
+    {
+        var takenByEndpoint = await _context.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .AnyAsync(
+                x => x.Channel == channel
+                    && x.Address == normalizedAddress
+                    && x.IsVerified
+                    && x.UserAccountId != userAccountId,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        if (takenByEndpoint)
+        {
+            throw new ConflictException(channel == ChannelEnum.Email
+                ? "Email already exists."
+                : "PhoneNumber already exists.");
+        }
+
+        if (channel == ChannelEnum.Email)
+        {
+            await UserAccountGuard.EnsureNoOtherVerifiedEmailAsync(
+                    _context,
+                    userAccountId,
+                    normalizedAddress,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return;
+        }
+
+        await UserAccountGuard.EnsureNoOtherVerifiedPhoneAsync(
+                _context,
+                userAccountId,
+                normalizedAddress,
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// When the verified address matches (or fills) the account primary contact, mark it verified on UsersAccounts.
+    /// </summary>
+    private async Task ApplyVerifiedAccountContactIfMatchingAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string normalizedAddress,
+        CancellationToken cancellationToken)
+    {
+        var account = await _context.UsersAccounts
+            .FirstOrDefaultAsync(x => x.Id == userAccountId, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (account is null)
+        {
+            return;
+        }
+
+        if (channel == ChannelEnum.Email)
+        {
+            if (string.IsNullOrWhiteSpace(account.Email))
+            {
+                account.Email = normalizedAddress;
+            }
+
+            if (string.Equals(
+                    ChannelEnum.Email.NormalizeAddress(account.Email!),
+                    normalizedAddress,
+                    StringComparison.Ordinal))
+            {
+                account.EmailVerified = true;
+            }
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(account.PhoneNumber))
+        {
+            account.PhoneNumber = normalizedAddress;
+        }
+
+        if (string.Equals(
+                ChannelEnum.Sms.NormalizeAddress(account.PhoneNumber!),
+                normalizedAddress,
+                StringComparison.Ordinal))
+        {
+            account.PhoneNumberVerified = true;
+        }
     }
 
     private static DeliveryTarget ToTarget(UserCommunicationEndpointEntity entity)

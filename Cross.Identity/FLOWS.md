@@ -46,12 +46,12 @@ Stock bodies live under `ProcessEngine/Definitions/Templates/` as `{name}.{lang}
 
 | Placeholder | Filled by | Stock templates |
 |---|---|---|
-| `{{code}}` | `sendCode` | `verify`, `verify-sms`, `reset`, `reset-sms` |
-| `{{email}}` | `sendCode` | `reset`, `registered` (file only; see below) |
-| `{{url}}` | `sendCode` | `reset`, `registered` (file only) |
-| `{{verificationLink}}` | `sendCode` | `verify` |
-| `{{helpLink}}` | `sendCode` | `verify` |
-| `{{expires}}` | `sendCode` | `verify`, `reset` |
+| `{{code}}` | `sendCode` / `communicationEndpointAdd` | `verify`, `verify-sms`, `reset`, `reset-sms` |
+| `{{email}}` | `sendCode` / `communicationEndpointAdd` | `reset`, `registered` (file only; see below); add also fills for `verify` |
+| `{{url}}` | `sendCode` / `communicationEndpointAdd` | `reset`, `registered` (file only) |
+| `{{verificationLink}}` | `sendCode` / `communicationEndpointAdd` | `verify` |
+| `{{helpLink}}` | `sendCode` / `communicationEndpointAdd` | `verify` |
+| `{{expires}}` | `sendCode` / `communicationEndpointAdd` | `verify`, `reset` |
 | `{{changedAt}}` | `resetPassword` | `password-changed` |
 | `{{ip}}` | `resetPassword` | `password-changed` |
 
@@ -63,7 +63,7 @@ Unresolved `{{…}}` tokens are left as literal text in the body.
 
 ### User-scoped authorization (host responsibility)
 
-Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`ExternalLoginMerge`**, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
+Flows that take `UserAccountId` but are **not** token credential operations (`CommunicationEndpointsGetAll`, `CommunicationEndpointSetPreferred`, `CommunicationEndpointAdd`, `CommunicationEndpointSetVerified`, `ExternalLogin` link, `ExternalLoginUnlink`, `ExternalLoginGetAll`, **`ExternalLoginMerge`**, **`LogoutAll`**, **`ChangeAccountEmail`**) **trust** the bag `UserAccountId`. The library does **not** require a refresh token as session proof on these paths.
 
 | Party | Responsibility |
 |---|---|
@@ -121,9 +121,11 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `*.LogoutAll.json` | `LogoutAll` |
 | `*.CommunicationEndpointsGetAll.json` | `CommunicationEndpointsGetAll` |
 | `*.CommunicationEndpointSetPreferred.json` | `CommunicationEndpointSetPreferred` |
+| `*.CommunicationEndpointAdd.json` | `CommunicationEndpointAdd` |
+| `*.CommunicationEndpointSetVerified.json` | `CommunicationEndpointSetVerified` |
 | `*.ChangeAccountEmail.json` | `ChangeAccountEmail` |
 
-### All flow files (19)
+### All flow files (21)
 
 | Flow | Operation | File |
 |---|---|---|
@@ -145,6 +147,8 @@ Behind a reverse proxy: configure ASP.NET Core `ForwardedHeaders` so `RemoteIpAd
 | `main` | LogoutAll | `main.LogoutAll.json` |
 | `main` | CommunicationEndpointsGetAll | `main.CommunicationEndpointsGetAll.json` |
 | `main` | CommunicationEndpointSetPreferred | `main.CommunicationEndpointSetPreferred.json` |
+| `main` | CommunicationEndpointAdd | `main.CommunicationEndpointAdd.json` |
+| `main` | CommunicationEndpointSetVerified | `main.CommunicationEndpointSetVerified.json` |
 | `main` | ChangeAccountEmail | `main.ChangeAccountEmail.json` |
 
 ---
@@ -437,6 +441,49 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 
 ---
 
+## `main.CommunicationEndpointAdd.json`
+
+**Purpose:** add a **secondary** email or phone (two-step with `CommunicationEndpointSetVerified`).
+
+| Layer | Role |
+|---|---|
+| Service | `ICommunicationEndpointService.AddAsync` — upsert **unverified** `Manual` endpoint only (no OTP) |
+| Step | then send OTP **to that address** (not `ResolveOtpTargetAsync` / preferred contact) |
+
+| Step | kind | Details |
+|---|---|---|
+| `collectForm` | collectForm | `UserAccountId`, exactly one of `Email` / `PhoneNumber`, required `Ttl`; optional client context. → `communicationEndpointAdd` |
+| `communicationEndpointAdd` | communicationEndpointAdd | `AddAsync` + OTP send (`verify` / `verify-sms`). → `collectResult` |
+| `collectResult` | collectResult | `endpoint`, `channel`, `address`, `LastCode` (DeveloperMode only). `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
+> Already-verified address on this user → `ValidationException`. Address verified on another user / account → `ConflictException`.
+> Unverified row may be upserted again (resend). Pair with `CommunicationEndpointSetVerified`.
+
+---
+
+## `main.CommunicationEndpointSetVerified.json`
+
+**Purpose:** finish adding a secondary email/phone after OTP (pair with `CommunicationEndpointAdd`).
+
+| Layer | Role |
+|---|---|
+| Step | verify OTP for the submitted email/phone |
+| Service | `ICommunicationEndpointService.SetVerifiedAsync` — mark `Manual` endpoint **verified** (no OTP check inside the service) |
+
+When the address matches (or fills) the account primary email/phone, also sets `UsersAccounts` verification. Does **not** force preferred.
+
+| Step | kind | Details |
+|---|---|---|
+| `collectForm` | collectForm | `UserAccountId`, exactly one of `Email` / `PhoneNumber`, required `Code`; optional client context. → `communicationEndpointSetVerified` |
+| `communicationEndpointSetVerified` | communicationEndpointSetVerified | Verify OTP → `SetVerifiedAsync`. → `collectResult` |
+| `collectResult` | collectResult | `endpoint`, `channel`, `address`, `verified`. `next: null` |
+
+> Host must authorize `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)).
+> Invalid/expired code → `ValidationException`. Preferred stays via `CommunicationEndpointSetPreferred` (or upsert bootstrap when this is the first verified endpoint).
+
+---
+
 ## `kind` reference (registered factories)
 
 | kind | Purpose |
@@ -460,6 +507,8 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 | `verifyToken` | Validate access token; return `valid` (+ `user_account_id` / `jti` when valid) |
 | `communicationEndpointsGetAll` | List user communication endpoints |
 | `communicationEndpointSetPreferred` | Set preferred communication endpoint |
+| `communicationEndpointAdd` | `AddAsync` (unverified Manual) + send OTP to that address |
+| `communicationEndpointSetVerified` | Verify OTP, then `SetVerifiedAsync` (mark Manual verified) |
 | `changeAccountEmail` | Change account primary email via `IUserService.ChangeAccountEmailAsync`; auto-verify when address matches linked provider email |
 
 ### Form validators (`schemaDef.validators`)

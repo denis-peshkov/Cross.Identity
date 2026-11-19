@@ -10,9 +10,11 @@
 /// <item><description><c>ResetPasswordStep</c> (notify) — <see cref="ResolveDeliveryTargetAsync"/></description></item>
 /// <item><description><c>CommunicationEndpointsGetAllStep</c> — <see cref="GetAllAsync"/></description></item>
 /// <item><description><c>CommunicationEndpointSetPreferredStep</c> — <see cref="SetPreferredAsync"/></description></item>
+/// <item><description><c>CommunicationEndpointAddStep</c> — <see cref="AddAsync"/></description></item>
+/// <item><description><c>CommunicationEndpointSetVerifiedStep</c> — <see cref="SetVerifiedAsync"/></description></item>
 /// </list>
 /// <para>
-/// <see cref="GetAllAsync"/> / <see cref="SetPreferredAsync"/>
+/// <see cref="GetAllAsync"/> / <see cref="SetPreferredAsync"/> / <see cref="AddAsync"/> / <see cref="SetVerifiedAsync"/>
 /// trust <c>userAccountId</c> from the host.
 /// The host must authorize the caller for that account (for example via access-token middleware);
 /// the library does not require a refresh token as session proof on these APIs.
@@ -83,5 +85,56 @@ public interface ICommunicationEndpointService
     /// <returns>Preferred endpoint DTO, or <c>null</c>.</returns>
     Task<CommunicationEndpointDto?> GetPreferredAsync(
         Guid userAccountId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add a secondary email or phone: upsert an <em>unverified</em>
+    /// <see cref="CommunicationEndpointSource.Manual"/> endpoint for the address.
+    /// Does <strong>not</strong> send or verify OTP — stock
+    /// <c>CommunicationEndpointAdd</c> calls this, then sends OTP to <paramref name="address"/>
+    /// (unlike <see cref="ResolveOtpTargetAsync"/>, which uses preferred/account contacts).
+    /// </summary>
+    /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
+    /// <param name="channel"><see cref="ChannelEnum.Email"/> or <see cref="ChannelEnum.Sms"/> only.</param>
+    /// <param name="address">Raw email or phone; normalized by the implementation.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The upserted unverified endpoint DTO (resend-safe if the row already exists unverified).</returns>
+    /// <exception cref="ValidationException">
+    /// Channel does not support OTP, address is empty, or the endpoint is already verified on this account.
+    /// </exception>
+    /// <exception cref="ConflictException">
+    /// Another account already owns this address as a verified endpoint or verified account contact.
+    /// </exception>
+    /// <exception cref="NotAuthorizedException">Account is disabled or missing.</exception>
+    Task<CommunicationEndpointDto> AddAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string address,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Mark a secondary email or phone as verified
+    /// (<see cref="CommunicationEndpointSource.Manual"/> endpoint upsert with <c>IsVerified = true</c>).
+    /// Does <strong>not</strong> validate OTP — the caller (stock <c>CommunicationEndpointSetVerified</c>)
+    /// must verify the code first, then call this.
+    /// When the address matches the account primary email/phone (or the primary is empty),
+    /// also sets the corresponding <c>UsersAccounts</c> verification flag. Does not force preferred.
+    /// </summary>
+    /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
+    /// <param name="channel"><see cref="ChannelEnum.Email"/> or <see cref="ChannelEnum.Sms"/> only.</param>
+    /// <param name="address">Raw email or phone; normalized by the implementation.</param>
+    /// <param name="hostSuppliedClientContext">Host-supplied request metadata; use <see cref="HostSuppliedClientContext.Empty"/> when unknown.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The verified endpoint DTO.</returns>
+    /// <exception cref="ValidationException">Channel does not support OTP or address is empty.</exception>
+    /// <exception cref="ConflictException">
+    /// Another account already owns this address as a verified endpoint or verified account contact.
+    /// </exception>
+    /// <exception cref="NotAuthorizedException">Account is disabled or missing.</exception>
+    Task<CommunicationEndpointDto> SetVerifiedAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string address,
+        HostSuppliedClientContext hostSuppliedClientContext,
         CancellationToken cancellationToken = default);
 }
