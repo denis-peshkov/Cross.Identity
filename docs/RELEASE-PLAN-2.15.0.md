@@ -11,7 +11,7 @@
 > Дельта: `origin/master...HEAD` — **1** коммит · **23** файла · **+1219 / −22**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался.
+- не запускался. → все закрыты в этом плане.
 
 **PR:** —
 
@@ -50,6 +50,7 @@
 | ✅ #H57 CommunicationEndpoint add OTP flows | `AddAsync` / `SetVerifiedAsync` + Add / SetVerified steps, DI, enum 19/20 |
 | ✅ #M143 Add-endpoint tests | Flow / step / factory / service coverage |
 | ✅ #L35 FLOWS / README / rest-client / CHANGELOG | Docs + samples for Add / SetVerified |
+| ✅ #L36 Add/SetVerified tests → `TestCategory.INTEGRATION` | Method-level on five tests in `CommunicationEndpointServiceTests` |
 
 ---
 

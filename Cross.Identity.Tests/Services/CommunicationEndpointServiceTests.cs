@@ -306,6 +306,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task Add_CreatesUnverifiedManualEndpoint()
     {
         var userAccountId = Guid.NewGuid();
@@ -326,6 +327,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task Add_WhenAlreadyVerifiedOnSameUser_Throws()
     {
         var userAccountId = Guid.NewGuid();
@@ -340,6 +342,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task Add_WhenVerifiedOnOtherUser_ThrowsConflict()
     {
         var ownerId = Guid.NewGuid();
@@ -356,6 +359,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task SetVerified_MarksVerified_AndAudits()
     {
         var userAccountId = Guid.NewGuid();
@@ -387,6 +391,7 @@ public class CommunicationEndpointServiceTests : EFTestsBase
     }
 
     [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task SetVerified_WhenAddressMatchesEmptyPrimary_SetsAccountVerified()
     {
         var userAccountId = Guid.NewGuid();
