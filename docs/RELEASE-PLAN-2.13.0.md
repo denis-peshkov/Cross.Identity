@@ -45,6 +45,7 @@
 - `UserAccountEntity.IsActive` без C#-default `true` — явная установка на create; тесты/фикстуры правят сами (documented in BREAKING).
 - Link-conflict mint: no extra survivor pre-check / FK→NotFound in library — host already authorizes existing `UserAccountId` (FLOWS); missing survivor is host/bug path (CR M139 dismissed).
 - Merge: `EnsureIsActive` only on survivor; absorbed may be `IsActive=false` — disabled B must not block link-conflict merge / reclaim of externals (CR H51 dismissed).
+- Late Resolve/Upsert cross-account `ValidationException` without mergeToken — accepted: race window tiny; retry link hits `ThrowIf…` merge flow (CR H53 dismissed).
 
 ---
 
@@ -73,6 +74,8 @@
 | ✅ #H52 SqlServer `1_12` independent guards | Table / UX index / journal `2_03` each guarded; heal missing index or journal when table exists |
 | ✅ #M140 Merge validation / endpoint coverage | Extra `ExternalLoginServiceTests` for merge validation + endpoint move paths |
 | ✅ #L30 GitVersion feature `BranchName` | `feature` regex named group so `{BranchName}` label substitutes (GV6) |
+| ✅ #H53 Late cross-account without mergeToken | Dismissed: tiny race; retry link gets mergeToken via ThrowIf |
+| ✅ #L31 `MergeAccountsAsync` XML `NotAuthorizedException` | Document disabled survivor → `NotAuthorizedException` |
 
 ---
 

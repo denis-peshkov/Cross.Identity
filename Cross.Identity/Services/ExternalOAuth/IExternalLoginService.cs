@@ -163,6 +163,9 @@ internal interface IExternalLoginService
     /// <exception cref="NotFoundException">
     /// Survivor account was not found.
     /// </exception>
+    /// <exception cref="NotAuthorizedException">
+    /// Survivor account exists but is disabled (<c>IsActive = false</c>).
+    /// </exception>
     Task<UserAccountsMergedDto> MergeAccountsAsync(
         string mergeToken,
         Guid survivorUserAccountId,
