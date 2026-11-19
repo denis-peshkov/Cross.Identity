@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H50` `M138` `L28`
+**Id high-water (не переиспользовать ≤):** `C1` `H56` `M142` `L34`
 
 ---
 
@@ -46,6 +46,9 @@ CodeRabbit **Major** (deferred): English throughout release-plan workflow docs.
 - Один раз на переход verified (не на каждый последующий login по коду).
 - Stock Register сейчас: `createUser` → `sendCode` (`verify`); верификация позже через `Token` + `Code` → `ValidateCodeAsync` / `ApplyVerifiedContactFromOtpTargetAsync`.
 - Открытые решения при реализации: точка хука (`Token` после code vs отдельный notify-step); OTP был Email vs «есть Email у аккаунта даже если OTP был SMS».
+
+### M141. rest-client still says `ValidationException` for mergeToken
+[`rest-client/Sample.Api.http`](../rest-client/Sample.Api.http) + [`http-client.private.env.json.example`](../rest-client/http-client.private.env.json.example) still describe link-conflict as `ValidationException`; update to `ConflictException` / HTTP **409** / `AccountMergeRequired`.
 
 ---
 
@@ -137,3 +140,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth link-conflict machine code: `errors.code = alreadyLinked`; FluentValidation `ErrorCode` not required in ProblemDetails.
 - `AccountMergePendings` TTL = `ExternalLoginOptions.StateLifetime`; host must authorize survivor `UserAccountId` before `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` has no C# default `true` — create paths and fixtures set it explicitly.
+- OAuth link conflict: throw-after-mint `ConflictException` (`AccountMergeRequired`); HTTP **409** via `Cross.ErrorHandlers` ≥7.7.0 and/or `ToConflictProblemDetails`; ordinary validation stays **406**.
+- Pending merge-token mint: `TransactionScopeOption.Suppress` + `IDbContextFactory<IdentityContext>` (fresh connection) so ambient host tx can stay on OAuth callback.
+- Prefer `AddCrossIdentity(configuration, configureDbContext)`; bare overload for pooled/custom hosts that register factory themselves.

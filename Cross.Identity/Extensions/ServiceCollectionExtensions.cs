@@ -22,6 +22,9 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers core Cross.Identity services and dependencies in the DI container.
+    /// Does <strong>not</strong> register <see cref="IdentityContext"/> — use the overload with
+    /// <c>configureDbContext</c>, or register <c>AddDbContext</c> / <c>AddDbContextFactory</c> yourself
+    /// (factory is required for OAuth link-conflict pending mint).
     /// </summary>
     /// <param name="services">Application service collection.</param>
     /// <param name="configuration">Application configuration.</param>
@@ -94,6 +97,27 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<RsaSecurityKey>(rsaKey);
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers <see cref="IDbContextFactory{TContext}"/> and scoped <see cref="IdentityContext"/> with the same
+    /// provider options, then registers core Cross.Identity services.
+    /// Prefer this overload unless the host uses pooled registration or a custom DbContext setup.
+    /// </summary>
+    /// <param name="services">Application service collection.</param>
+    /// <param name="configuration">Application configuration.</param>
+    /// <param name="configureDbContext">EF Core options (provider, connection string). Applied to both factory and scoped context.</param>
+    /// <returns>The current service collection for fluent chaining.</returns>
+    public static IServiceCollection AddCrossIdentity(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        Action<DbContextOptionsBuilder> configureDbContext)
+    {
+        ArgumentNullException.ThrowIfNull(configureDbContext);
+
+        services.AddDbContextFactory<IdentityContext>(configureDbContext);
+        services.AddDbContext<IdentityContext>(configureDbContext);
+        return services.AddCrossIdentity(configuration);
     }
 
     private static IServiceCollection AddExternalLogin(this IServiceCollection services, IConfiguration configuration)

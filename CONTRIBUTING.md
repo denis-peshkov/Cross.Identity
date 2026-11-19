@@ -25,7 +25,7 @@ Thank you for your interest in the project.
 - **`CrossIdentity:LicenseKey`** — **required in production** (Peshkov JWT; non-empty key). Missing/invalid key is allowed in development/testing (`LogCritical`, soft-fail — flows still run);
 - **Pepper** (`Pepper` config + host-registered `IPepperVaultProvider`) — **always required** for password hash/verify (`AddCrossIdentity` does not register the pepper provider).
 
-Consumers configure Pepper (always) and LicenseKey (production), register PepperVault, then `services.AddCrossIdentity(configuration)`, and call `IFlowExecutor.ExecuteAsync`.
+Consumers configure Pepper (always) and LicenseKey (production), register PepperVault, then `services.AddCrossIdentity(configuration, configureDbContext)` (or `AddCrossIdentity(configuration)` plus custom/pooled DbContext + factory), and call `IFlowExecutor.ExecuteAsync`.
 
 ---
 

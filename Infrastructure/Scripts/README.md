@@ -209,7 +209,7 @@ options.UseNpgsql(connectionString);
 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 ```
 
-`IdentityContext` rotates `ConcurrencyStamp` in `SaveChanges` (no interceptor registration required). `AddCrossIdentity` does not register `DbContext` or database providers — the host owns that.
+`IdentityContext` rotates `ConcurrencyStamp` in `SaveChanges` (no interceptor registration required). Prefer `AddCrossIdentity(configuration, configureDbContext)` to register factory + scoped context; the overload without `configureDbContext` does not register `DbContext` (host owns pooled/custom providers).
 
 ## Type mapping notes
 
