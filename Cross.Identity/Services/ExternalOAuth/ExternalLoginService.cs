@@ -714,31 +714,32 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var now = DateTime.UtcNow;
         var mergeToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
 
-        await _identityContext.AccountMergePendings.AddAsync(new AccountMergePendingEntity
+        // Mint must survive ambient host TransactionScope when this method throws afterward.
+        using (var suppress = new TransactionScope(
+                   TransactionScopeOption.Suppress,
+                   TransactionScopeAsyncFlowOption.Enabled))
         {
-            Id = Guid.NewGuid(),
-            MergeToken = mergeToken,
-            SurvivorUserAccountId = survivorUserAccountId,
-            AbsorbedUserAccountId = absorbedUserAccountId,
-            CreatedAt = now,
-            ExpiresAt = now.Add(_options.StateLifetime),
-            ConcurrencyStamp = Guid.NewGuid(),
-        }, cancellationToken).ConfigureAwait(false);
-
-        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        var message = "This external account is already linked to another user.";
-        throw new ValidationException(
-            message,
-            new[]
+            await _identityContext.AccountMergePendings.AddAsync(new AccountMergePendingEntity
             {
-                new FluentValidation.Results.ValidationFailure(string.Empty, message) { ErrorCode = "alreadyLinked" },
-                new FluentValidation.Results.ValidationFailure("code", "alreadyLinked"),
-                new FluentValidation.Results.ValidationFailure("mergeToken", mergeToken),
-                new FluentValidation.Results.ValidationFailure("absorbedUserAccountId", absorbedUserAccountId.ToString("D")),
-                new FluentValidation.Results.ValidationFailure("survivorUserAccountId", survivorUserAccountId.ToString("D")),
-                new FluentValidation.Results.ValidationFailure("provider", providerEntity.Name),
-            });
+                Id = Guid.NewGuid(),
+                MergeToken = mergeToken,
+                SurvivorUserAccountId = survivorUserAccountId,
+                AbsorbedUserAccountId = absorbedUserAccountId,
+                CreatedAt = now,
+                ExpiresAt = now.Add(_options.StateLifetime),
+                ConcurrencyStamp = Guid.NewGuid(),
+            }, cancellationToken).ConfigureAwait(false);
+
+            await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            suppress.Complete();
+        }
+
+        throw AccountMergeRequired.Create(
+            "This external account is already linked to another user.",
+            mergeToken,
+            absorbedUserAccountId,
+            survivorUserAccountId,
+            providerEntity.Name);
     }
 
 

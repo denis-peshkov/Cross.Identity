@@ -775,15 +775,23 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var act = () => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        var ex = await act.Should().ThrowAsync<ValidationException>()
+        var ex = await act.Should().ThrowAsync<ConflictException>()
             .WithMessage("*already linked to another user*");
 
-        ex.Which.Errors.Should().Contain(e => e.PropertyName == "code" && e.ErrorMessage == "alreadyLinked");
-        ex.Which.Errors.Should().Contain(e => e.PropertyName == "mergeToken" && !string.IsNullOrWhiteSpace(e.ErrorMessage));
-        ex.Which.Errors.Should().Contain(e => e.PropertyName == "absorbedUserAccountId" && e.ErrorMessage == otherUserAccountId.ToString("D"));
-        ex.Which.Errors.Should().Contain(e => e.PropertyName == "survivorUserAccountId" && e.ErrorMessage == currentUserAccountId.ToString("D"));
+        AccountMergeRequired.TryGetMergeToken(ex.Which, out var mergeToken).Should().BeTrue();
+        mergeToken.Should().NotBeNullOrWhiteSpace();
+        ex.Which.Data[AccountMergeRequired.AbsorbedUserAccountIdKey].Should().Be(otherUserAccountId.ToString("D"));
+        ex.Which.Data[AccountMergeRequired.SurvivorUserAccountIdKey].Should().Be(currentUserAccountId.ToString("D"));
+        ex.Which.Data[AccountMergeRequired.ProviderKey].Should().Be("Google");
 
-        var mergeToken = ex.Which.Errors.Single(e => e.PropertyName == "mergeToken").ErrorMessage;
+        var problem = ex.Which.ToConflictProblemDetails();
+        problem.Status.Should().Be(409);
+        problem.Errors.Should().ContainKey("code").WhoseValue.Should().Equal(AccountMergeRequired.ErrorCode);
+        problem.Errors.Should().ContainKey("mergeToken").WhoseValue.Should().Equal(mergeToken);
+        problem.Errors.Should().ContainKey("absorbedUserAccountId").WhoseValue.Should().Equal(otherUserAccountId.ToString("D"));
+        problem.Errors.Should().ContainKey("survivorUserAccountId").WhoseValue.Should().Equal(currentUserAccountId.ToString("D"));
+        problem.Errors.Should().ContainKey("provider").WhoseValue.Should().Equal("Google");
+
         (await Context.AccountMergePendings.CountAsync(x => x.MergeToken == mergeToken && x.ConsumedAt == null))
             .Should().Be(1);
     }

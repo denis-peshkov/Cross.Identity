@@ -89,8 +89,11 @@ internal interface IExternalLoginService
     /// </returns>
     /// <exception cref="ValidationException">
     /// Provider returned an error; state is invalid, expired, or already used; provider is misconfigured;
-    /// the provider profile has no email; the external account is already linked to another user;
-    /// or the same provider is already linked to this user.
+    /// the provider profile has no email; or the same provider is already linked to this user under a different identity.
+    /// </exception>
+    /// <exception cref="ConflictException">
+    /// Link mode: the provider user is already linked to another account; a one-time <c>mergeToken</c> was minted
+    /// (<see cref="AccountMergeRequired"/> / map to HTTP 409 via <c>ToConflictProblemDetails</c>).
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Provider is not supported or not enabled.

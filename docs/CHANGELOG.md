@@ -7,6 +7,23 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.14.0 — 19 Nov 2026
+
+### Library
+
+- OAuth link conflict throws `ConflictException` (`AccountMergeRequired.Create`, sub-code `alreadyLinked`) instead of `ValidationException`; use `ToConflictProblemDetails` → HTTP **409** (same error keys: `code`, `mergeToken`, ids, `provider`).
+- Mint of `auth.AccountMergePendings` runs under `TransactionScopeOption.Suppress` so an ambient host transaction cannot roll back the pending row when the conflict is thrown.
+
+### Tests
+
+- Link-conflict + `ToConflictProblemDetails` coverage; validation ProblemDetails 406 unchanged.
+
+### Documentation
+
+- `docs/BREAKING.md` From 2.13.0→2.14.0; FLOWS link-conflict note updated for 409 / Suppress.
+
+---
+
 ## v2.13.0 — 19 Nov 2026
 
 ### Library
