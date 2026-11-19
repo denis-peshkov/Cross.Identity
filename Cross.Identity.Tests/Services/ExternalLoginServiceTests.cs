@@ -167,6 +167,18 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenEmptyUserAccountId_WhenInitiateAsyncForLinking_ThenThrowsValidationExceptionAsync()
+    {
+        SeedProvider("Google");
+        var sut = CreateService(new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>()));
+
+        await FluentActions.Invoking(() => sut.InitiateAsync("Google", null, Guid.Empty, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*UserAccountId is required*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenAlreadyLinkedProvider_WhenInitiateAsync_ThenThrowsValidationExceptionAsync()
     {
         var userAccountId = Guid.NewGuid();
@@ -528,6 +540,92 @@ public class ExternalLoginServiceTests : EFTestsBase
             .WithMessage("*email already exists*");
 
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithUnverifiedEmail_ThenDoesNotCreateSecondAccountAsync()
+    {
+        var squatterUserAccountId = Guid.NewGuid();
+        SeedProvider("Google");
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = squatterUserAccountId,
+            Email = "user@example.com",
+            UserName = "squatter",
+            NormalizedUserName = "squatter",
+            EmailVerified = false,
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://oauth2.googleapis.com/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "google-token" }),
+            ["https://openidconnect.googleapis.com/v1/userinfo"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    sub = "google-sub-squat",
+                    email = "user@example.com",
+                    email_verified = false,
+                    name = "Google User",
+                }),
+        });
+
+        var sut = CreateService(handler);
+        var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
+        var state = ExtractState(url);
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*email already exists*");
+
+        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenUnsupportedProviderInState_WhenCompleteAsync_ThenThrowsNotFoundExceptionAsync()
+    {
+        var payload = new ExternalLoginStatePayload
+        {
+            Nonce = Guid.NewGuid().ToString("N"),
+            Provider = "NotARealProvider",
+            ReturnUrl = null,
+        };
+        var state = EncodeState(payload);
+        SeedOAuthState(payload);
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<NotFoundException>()
+            .WithMessage("*not supported*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenProviderNotConfigured_WhenCompleteAsync_ThenThrowsValidationExceptionAsync()
+    {
+        SeedProvider("Google");
+        var payload = new ExternalLoginStatePayload
+        {
+            Nonce = Guid.NewGuid().ToString("N"),
+            Provider = "Google",
+            ReturnUrl = null,
+        };
+        var state = EncodeState(payload);
+        SeedOAuthState(payload);
+        var sut = CreateService(
+            GoogleSuccessHandler(),
+            options => options.Providers.Clear());
+
+        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
+            .Should().ThrowAsync<ValidationException>()
+            .WithMessage("*not configured*");
     }
 
     [Test]
@@ -1991,6 +2089,99 @@ public class ExternalLoginServiceTests : EFTestsBase
         login.ProviderUserId.Should().Be("001222.bbbbbbbbbbbbbbbb");
         login.DisplayName.Should().BeNull();
         completion.UserAccountId.Should().Be(login.UserAccountId);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleUserJsonWithEmptyNames_WhenCompleteAsync_ThenDisplayNameRemainsNullAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001333.cccccccccccccccc",
+            email = "empty-name@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        await sut.CompleteAsync(
+            "auth-code",
+            ExtractState(url),
+            null,
+            null,
+            CancellationToken.None,
+            """{"name":{"firstName":"","lastName":"   "}}""");
+
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().BeNull();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenAppleMalformedUserJson_WhenCompleteAsync_ThenIgnoresAndCompletesAsync()
+    {
+        SeedProvider("Apple");
+        var idToken = CreateUnsignedJwt(new
+        {
+            sub = "001444.dddddddddddddddd",
+            email = "bad-json@example.com",
+            email_verified = "true",
+            iss = "https://appleid.apple.com",
+            aud = "com.example.app",
+        });
+        var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://appleid.apple.com/auth/token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    access_token = "apple-access",
+                    id_token = idToken,
+                }),
+        });
+
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Apple"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "com.example.app",
+                    ClientSecret = "apple-client-secret-jwt",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Apple", null, null, CancellationToken.None);
+        var completion = await sut.CompleteAsync(
+            "auth-code",
+            ExtractState(url),
+            null,
+            null,
+            CancellationToken.None,
+            "{not-json");
+
+        completion.UserAccountId.Should().NotBe(Guid.Empty);
+        (await Context.UsersExternalLogins.SingleAsync()).DisplayName.Should().BeNull();
     }
 
     [Test]

@@ -188,4 +188,60 @@ public class VerifyCode_StepTests
         _codeService.Verify(c => c.VerifyAsync(It.IsAny<Guid>(), ChannelEnum.Email, email, code, It.IsAny<CancellationToken>()), Times.Once);
         _userService.Verify(u => u.ValidateCodeAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenResolveOtpTargetThrowsValidation_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        _communicationEndpoints
+            .Setup(c => c.ResolveOtpTargetAsync(userAccountId, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new ValidationException("No OTP delivery target."));
+
+        var step = CreateStep(next: null);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+        bag.Set("collectForm.Code", "ABC123");
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            c => c.VerifyAsync(It.IsAny<Guid>(), It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenNonOtpChannel_WhenExecuteAsync_ThenReturnsInvalidCredentialsAsync()
+    {
+        var email = _faker.Internet.Email();
+        var userAccountId = Guid.NewGuid();
+
+        _userService.Setup(u => u.GetUserAccountIdByAsync("Email", email, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(userAccountId);
+        SetupOtpTarget(ChannelEnum.Telegram, "tg-chat-1");
+
+        var step = CreateStep(next: null);
+        var bag = new Bag();
+        bag.Set("collectForm.Field", "Email");
+        bag.Set("collectForm.Value", email);
+        bag.Set("collectForm.Code", "ABC123");
+
+        var result = await step.ExecuteAsync(bag, CancellationToken.None);
+
+        result.Status.Should().Be(StepStatusEnum.Fail);
+        result.Error.Should().BeOfType<NotAuthorizedException>()
+            .Which.Message.Should().Be("Invalid credentials.");
+        _codeService.Verify(
+            c => c.VerifyAsync(It.IsAny<Guid>(), It.IsAny<ChannelEnum>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }
