@@ -43,6 +43,7 @@
 - OTP-reject log keeps masked Address (`MaskEmailForLog` / `MaskPhoneForLog`) instead of dropping the field entirely.
 - Verified endpoint uniqueness: app pre-check (`EnsureAddressAvailableForAddAsync`) + existing `UsersAccounts` verified Email/Phone unique indexes; no extra filtered unique on `UsersCommunicationEndpoints` / DbUpdate→Conflict mapping for SetVerified races.
 - Atomicity of `SetVerifiedAsync` (Upsert + primary + audit): host/ambient transactions outside the library; no extra `_context` transaction wrapper inside.
+- Public `ICommunicationEndpointService` adds `AddAsync` / `SetVerifiedAsync` without default impl; only library `internal` implementer. Hosts using DI registration are unaffected; external interface implementers out of scope for to-master B1/B2.
 
 ---
 
@@ -60,6 +61,7 @@
 | ✅ #H59 No filtered unique on verified endpoints | Dismiss CR; pre-check + UsersAccounts unique enough |
 | ✅ #M145 No SetVerified inner transaction | Dismiss CR; transactions outside the library |
 | ✅ #L38 SetVerified preferred bootstrap docs + test | XML bootstrap vs leave existing; assert IsPreferred in empty-primary test |
+| ✅ #L39 to-master B1/B2 leave as-is | Dismiss CR; DI hosts OK; external interface implementers out of scope |
 
 ---
 
