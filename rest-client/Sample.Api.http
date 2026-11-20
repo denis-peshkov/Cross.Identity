@@ -220,7 +220,9 @@ Content-Type: application/json
 ###
 # @name main-communication-endpoint-set-verified
 # Secondary email/phone — step 2: verify OTP, then ICommunicationEndpointService.SetVerifiedAsync.
-# Same Email or PhoneNumber as in CommunicationEndpointAdd. Does not set preferred (use SetPreferred).
+# Same Email or PhoneNumber as in CommunicationEndpointAdd.
+# Keeps an existing preferred endpoint; if none exists, this verified endpoint becomes preferred.
+# Use SetPreferred to explicitly change preference.
 POST {{HOST}}/api/identity/main/CommunicationEndpointSetVerified
 Content-Type: application/json
 

@@ -62,6 +62,7 @@
 | ✅ #M145 No SetVerified inner transaction | Dismiss CR; transactions outside the library |
 | ✅ #L38 SetVerified preferred bootstrap docs + test | XML bootstrap vs leave existing; assert IsPreferred in empty-primary test |
 | ✅ #L39 to-master B1/B2 leave as-is | Dismiss CR; DI hosts OK; external interface implementers out of scope |
+| ✅ #L40 Sample.Api.http SetVerified preferred comment | Bootstrap vs keep existing; SetPreferred for explicit change |
 
 ---
 
