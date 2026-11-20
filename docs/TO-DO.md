@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H56` `M142` `L34`
+**Id high-water (не переиспользовать ≤):** `C1` `H60` `M147` `L40`
 
 ---
 
@@ -143,3 +143,5 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth link conflict: throw-after-mint `ConflictException` (`AccountMergeRequired`); HTTP **409** via `Cross.ErrorHandlers` ≥7.7.0; ordinary validation stays **406**. Structured mergeToken body is host-mapped from `Exception.Data` (`TryGetMergeToken`).
 - Pending merge-token mint: `TransactionScopeOption.Suppress` + `IDbContextFactory<IdentityContext>` (fresh connection) so ambient host tx can stay on OAuth callback.
 - Prefer `AddCrossIdentity(configuration, configureDbContext)`; bare overload for pooled/custom hosts that register factory themselves.
+- Linked OAuth email → communication endpoint always verified (`ExternalProvider`); no OTP for that address.
+- `ExternalOAuthProfile.EmailVerified` remains the gate for **account** `EmailVerified` and verified-email collision / merge — not for endpoint sync.
