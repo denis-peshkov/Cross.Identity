@@ -304,4 +304,106 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         all.Should().Contain(x => x.Channel == ChannelEnum.Sms && x.IsVerified);
         all.Count(x => x.IsPreferred).Should().Be(1);
     }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task Add_CreatesUnverifiedManualEndpoint()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            EmailVerified = true,
+        });
+
+        var dto = await _service.AddAsync(userAccountId, ChannelEnum.Email, "second@example.com");
+
+        dto.IsVerified.Should().BeFalse();
+        dto.Source.Should().Be(CommunicationEndpointSource.Manual);
+        dto.Address.Should().Be("second@example.com");
+        dto.IsPreferred.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task Add_WhenAlreadyVerifiedOnSameUser_Throws()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId });
+        await _service.UpsertAsync(
+            userAccountId, ChannelEnum.Email, "a@example.com", CommunicationEndpointSource.Manual, isVerified: true);
+
+        var act = () => _service.AddAsync(userAccountId, ChannelEnum.Email, "a@example.com");
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*already verified*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task Add_WhenVerifiedOnOtherUser_ThrowsConflict()
+    {
+        var ownerId = Guid.NewGuid();
+        var otherId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { IsActive = true, Id = ownerId });
+        AddToDb(new UserAccountEntity { IsActive = true, Id = otherId });
+        await _service.UpsertAsync(
+            ownerId, ChannelEnum.Email, "taken@example.com", CommunicationEndpointSource.Manual, isVerified: true);
+
+        var act = () => _service.AddAsync(otherId, ChannelEnum.Email, "taken@example.com");
+
+        await act.Should().ThrowAsync<ConflictException>()
+            .WithMessage("*Email*");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task SetVerified_MarksVerified_AndAudits()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            EmailVerified = true,
+        });
+        // Existing preferred primary so secondary verify does not bootstrap IsPreferred.
+        await _service.SyncAccountContactsAsync(userAccountId);
+        await _service.AddAsync(userAccountId, ChannelEnum.Email, "second@example.com");
+
+        var dto = await _service.SetVerifiedAsync(
+            userAccountId,
+            ChannelEnum.Email,
+            "second@example.com",
+            new HostSuppliedClientContext("10.0.0.9", "add-tests", "fp"));
+
+        dto.IsVerified.Should().BeTrue();
+        dto.IsPreferred.Should().BeFalse();
+        Context.Audits.Should().Contain(a =>
+            a.Operation == AuditOperation.CommunicationEndpointChanged
+            && a.EntityId == dto.Id.ToString()
+            && a.IpAddress == "10.0.0.9"
+            && a.UserAgent == "add-tests"
+            && a.DeviceFingerprint == "fp");
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task SetVerified_WhenAddressMatchesEmptyPrimary_SetsAccountVerified()
+    {
+        var userAccountId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId });
+
+        await _service.AddAsync(userAccountId, ChannelEnum.Sms, "+79161234567");
+        var dto = await _service.SetVerifiedAsync(
+            userAccountId, ChannelEnum.Sms, "+79161234567", HostSuppliedClientContext.Empty);
+
+        dto.IsPreferred.Should().BeTrue();
+        var account = await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId);
+        account.PhoneNumber.Should().Be("+79161234567");
+        account.PhoneNumberVerified.Should().BeTrue();
+    }
 }

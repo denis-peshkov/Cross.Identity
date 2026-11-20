@@ -33,7 +33,7 @@ internal sealed class GetUserAccountIdStep : IStep
             Logger.LogInformation(
                 "Get user account id rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
-                selector.Value);
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value));
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 

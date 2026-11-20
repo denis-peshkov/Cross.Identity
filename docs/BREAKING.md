@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.14.0` → `2.15.0+` | [From 2.14.0 to 2.15.0](#from-2140-to-2150) |
 | `2.13.0` → `2.14.0+` | [From 2.13.0 to 2.14.0](#from-2130-to-2140) |
 | `2.12.0` → `2.13.0+` | [From 2.12.0 to 2.13.0](#from-2120-to-2130) |
 | `2.11.0` → `2.12.0+` | [From 2.11.0 to 2.12.0](#from-2110-to-2120) |
@@ -33,6 +34,20 @@ Breaking-change details live **only** in this file. [`Cross.Identity/config.nusp
 
 ---
 
+## From 2.14.0 to 2.15.0
+
+Release: [v2.15.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.15.0).
+
+### Removed `ProblemDetailsFactoryExtensions`
+
+| Area | Was (≤2.14.0) | Now (2.15.0+) |
+|---|---|---|
+| `ToValidationProblemDetails` / `ToConflictProblemDetails` | Public helpers on `Cross.Identity.Extensions.ProblemDetailsFactoryExtensions` | **Removed** |
+
+**Action:** map `ValidationException` / `ConflictException` (and `AccountMergeRequired` `Exception.Data`) in the host, or rely on `Cross.ErrorHandlers` ≥7.7.0 middleware for HTTP status. Use `AccountMergeRequired.TryGetMergeToken` for the merge token.
+
+---
+
 ## From 2.13.0 to 2.14.0
 
 Release: [v2.14.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.14.0).
@@ -46,7 +61,7 @@ Release: [v2.14.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 | DI | Scoped `IdentityContext` only | Host must also register `IDbContextFactory<IdentityContext>` (or `AddPooledDbContextFactory`) with the **same** provider options. Prefer `AddCrossIdentity(configuration, configureDbContext)` which registers both |
 | `Cross.ErrorHandlers` | **≤7.6.x** maps `ConflictException` → **400** | **≥7.7.0** maps `ConflictException` → **409**. Cross.Identity **2.14** depends on **7.7.0** |
 
-**Action:** treat link conflict as `ConflictException` / HTTP **409** (bump host `Cross.ErrorHandlers` to **≥7.7.0** if you rely on its middleware). Use `AccountMergeRequired.TryGetMergeToken` / `ToConflictProblemDetails` when you need the mergeToken ProblemDetails shape. Do not treat link-conflict merge as `ValidationException` / 406. Ordinary validation failures still use `ToValidationProblemDetails` → 406. Use `AddCrossIdentity(configuration, configureDbContext)` or register factory + scoped context yourself (see README / Sample.Api). Hosts that disabled ambient transactions only for OAuth callback can restore them if desired — pending mint no longer depends on that workaround.
+**Action:** treat link conflict as `ConflictException` / HTTP **409** (bump host `Cross.ErrorHandlers` to **≥7.7.0** if you rely on its middleware). Use `AccountMergeRequired.TryGetMergeToken` / `Exception.Data` for merge payload. Do not treat link-conflict merge as `ValidationException` / 406. Ordinary validation stays `ValidationException` (host maps status). Use `AddCrossIdentity(configuration, configureDbContext)` or register factory + scoped context yourself (see README / Sample.Api). Hosts that disabled ambient transactions only for OAuth callback can restore them if desired — pending mint no longer depends on that workaround. (`ProblemDetailsFactoryExtensions` existed in **2.14** and was removed in **2.15** — see section above.)
 
 ---
 

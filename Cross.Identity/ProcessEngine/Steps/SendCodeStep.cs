@@ -77,7 +77,7 @@ internal sealed class SendCodeStep : IStep
             Logger.LogInformation(
                 "Send code rejected for {Field} identity {Identity}: {Reason}",
                 selector.Field,
-                selector.Value,
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value),
                 ex.Message);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
@@ -87,7 +87,7 @@ internal sealed class SendCodeStep : IStep
             Logger.LogInformation(
                 "Send code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
                 selector.Field,
-                selector.Value,
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value),
                 target.Channel);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
@@ -154,7 +154,7 @@ internal sealed class SendCodeStep : IStep
                     "Send code rejected: userAccountIdKey '{Key}' missing or empty (selector {Field}={Identity}).",
                     UserAccountIdKey,
                     selector.Field,
-                    selector.Value);
+                    StringExtensions.MaskIdentityForLog(selector.Field, selector.Value));
                 return (false, Guid.Empty);
             }
 
@@ -169,7 +169,7 @@ internal sealed class SendCodeStep : IStep
             Logger.LogInformation(
                 "Send code rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
-                selector.Value);
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value));
             return (false, Guid.Empty);
         }
 

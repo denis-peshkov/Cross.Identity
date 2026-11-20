@@ -97,8 +97,9 @@ internal interface IExternalLoginService
     /// Link mode only: the provider user is already linked to another account; a one-time <c>mergeToken</c>
     /// was minted (<see cref="AccountMergeRequired"/>, sub-code <c>alreadyLinked</c>,
     /// <see cref="Exception.Data"/> holds <c>mergeToken</c> / account ids / <c>provider</c>).
-    /// With <c>Cross.ErrorHandlers</c> ≥7.7.0 middleware this is HTTP <c>409</c>;
-    /// use <c>ToConflictProblemDetails</c> when the host needs the structured mergeToken ProblemDetails body.
+    /// With <c>Cross.ErrorHandlers</c> ≥7.7.0 middleware this is HTTP <c>409</c>.
+    /// Hosts that need a structured mergeToken ProblemDetails body can map
+    /// <see cref="Exception.Data"/> (<c>mergeToken</c> / account ids / <c>provider</c>) themselves.
     /// </exception>
     /// <exception cref="NotFoundException">
     /// Provider is not supported or not enabled, or the link-target user account was not found.

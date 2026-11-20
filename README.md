@@ -22,7 +22,7 @@ A .NET identity and authentication library: configurable scenarios (registration
 ## Features
 
 - **Process Engine** — runs scenarios (flows) from JSON definitions with sequential steps.
-- **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS).
+- **Flows** — registration, password/code sign-in, forgot password, token, refresh token, get user, request and verify codes (email/SMS), secondary email/phone add (`CommunicationEndpointAdd` / `CommunicationEndpointSetVerified` via `AddAsync` + `SetVerifiedAsync`).
 - **JWT** — issue and validate access/refresh tokens, configurable claims and lifetimes.
 - **Security** — password hashing (Argon2), one-time codes; phone number inputs must be E.164 (e.g. `+15551234567`).
 - **Channels** — email and SMS (code delivery via Cross.Messaging).
@@ -169,7 +169,7 @@ License validation runs on calls to `IFlowExecutor.ExecuteAsync` (`LicenseAccess
 | Expired / wrong product type | `LogError` + `LogCritical` (`LicenseValidator`) |
 | Valid key | `LogInformation` with edition and expiration date |
 
-3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, `ExternalLoginMerge`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
+3. **Authorize user-scoped flows in the host.** Flows such as `CommunicationEndpoints*`, `CommunicationEndpointAdd` / `CommunicationEndpointSetVerified`, `ChangeAccountEmail`, `ExternalLogin` (link), `ExternalLoginUnlink`, `ExternalLoginGetAll`, `ExternalLoginMerge`, and `LogoutAll` take `UserAccountId` — the host must ensure the caller may act as that account before `ExecuteAsync`. `Logout` takes access-token `Jti` and `RefreshToken` takes refresh-token `Jti` (the host validates the client token and extracts `jti`). Details: [`FLOWS.md`](Cross.Identity/FLOWS.md). `Token` still accepts credentials or a code in the payload.
 
 4. **Running a scenario** — in a controller or minimal API, pass the request body as a dictionary and call:
 
