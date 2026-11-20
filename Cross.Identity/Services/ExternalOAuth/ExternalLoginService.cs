@@ -893,7 +893,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             existing.AvatarUrl = profile.AvatarUrl;
             existing.UpdatedAt = DateTime.UtcNow;
             await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await SyncProviderEmailEndpointAsync(userAccountId, existing.Id, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+            await SyncProviderEmailEndpointAsync(userAccountId, existing.Id, profile.Email, cancellationToken).ConfigureAwait(false);
             return;
         }
 
@@ -938,14 +938,18 @@ internal sealed class ExternalLoginService : IExternalLoginService
             .FirstAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        await SyncProviderEmailEndpointAsync(userAccountId, loginId, profile.Email, profile.EmailVerified, cancellationToken).ConfigureAwait(false);
+        await SyncProviderEmailEndpointAsync(userAccountId, loginId, profile.Email, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// Upserts the provider email as a verified <see cref="CommunicationEndpointSource.ExternalProvider"/> endpoint.
+    /// Linked OAuth emails are trusted without OTP; <see cref="ExternalOAuthProfile.EmailVerified"/> still
+    /// gates new-account <c>UsersAccounts.EmailVerified</c> and email-collision rules.
+    /// </summary>
     private async Task SyncProviderEmailEndpointAsync(
         Guid userAccountId,
         Guid externalLoginId,
         string? providerEmail,
-        bool emailVerified,
         CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(providerEmail))
@@ -959,7 +963,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 ChannelEnum.Email,
                 providerEmail,
                 CommunicationEndpointSource.ExternalProvider,
-                isVerified: emailVerified,
+                isVerified: true,
                 entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);

@@ -1540,6 +1540,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
         account.Email.Should().Be("ms-unverified@example.com");
         account.EmailVerified.Should().BeFalse();
+
+        var endpoint = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
+            x.UserAccountId == completion.UserAccountId && x.Address == "ms-unverified@example.com");
+        endpoint.IsVerified.Should().BeTrue();
+        endpoint.Source.Should().Be(CommunicationEndpointSource.ExternalProvider);
     }
 
     [Test]
@@ -1585,6 +1590,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
         account.Email.Should().Be("graph-only@example.com");
         account.EmailVerified.Should().BeFalse();
+
+        var endpoint = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
+            x.UserAccountId == completion.UserAccountId && x.Address == "graph-only@example.com");
+        endpoint.IsVerified.Should().BeTrue();
+        endpoint.Source.Should().Be(CommunicationEndpointSource.ExternalProvider);
     }
 
     [Test]

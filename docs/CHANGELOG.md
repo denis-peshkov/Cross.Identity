@@ -7,6 +7,22 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.16.0 — 20 Nov 2026
+
+### Library
+
+- OAuth link/sign-in: synced `ExternalProvider` email communication endpoint is always `IsVerified = true` (linked provider email trusted without OTP). `ExternalOAuthProfile.EmailVerified` still gates new-account `UsersAccounts.EmailVerified` and email-collision / merge rules.
+
+### Tests
+
+- Microsoft Graph / unverified-attestation complete paths assert endpoint `IsVerified` + `ExternalProvider` source.
+
+### Documentation
+
+- `docs/BREAKING.md` From 2.15.0→2.16.0; FLOWS OAuth registration note updated.
+
+---
+
 ## v2.15.0 — 19 Nov 2026
 
 ### Library

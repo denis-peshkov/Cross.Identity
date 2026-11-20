@@ -16,7 +16,9 @@ public sealed class ExternalOAuthProfile
     /// Whether the provider attests that <see cref="Email"/> is verified at the identity provider.
     /// On <b>new</b> local registration via OAuth, copied to <c>UsersAccounts.EmailVerified</c>
     /// (true only when this flag is true and <see cref="Email"/> is non-empty).
-    /// Re-login / link does not update <c>UsersAccounts.EmailVerified</c>; endpoint sync uses this flag for <c>IsVerified</c>.
+    /// Re-login / link does not update <c>UsersAccounts.EmailVerified</c>.
+    /// Communication endpoint sync for a linked <see cref="Email"/> always sets <c>IsVerified = true</c>
+    /// (linked external-provider emails are trusted without OTP).
     /// </summary>
     public bool EmailVerified { get; init; }
 

@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.15.0` · **ветка:** `release/communication-endpoint-add` · **база:** `origin/master` (`v2.14.0`) · **дата:** `2026-11-19`
+> **Версия:** `2.15.0` (published / closed) · **ветка:** `release/communication-endpoint-add` · **база:** `origin/master` (`v2.14.0`) · **дата:** `2026-11-19`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.15.0
 >
