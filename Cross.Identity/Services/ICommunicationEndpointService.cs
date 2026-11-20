@@ -118,7 +118,9 @@ public interface ICommunicationEndpointService
     /// Does <strong>not</strong> validate OTP — the caller (stock <c>CommunicationEndpointSetVerified</c>)
     /// must verify the code first, then call this.
     /// When the address matches the account primary email/phone (or the primary is empty),
-    /// also sets the corresponding <c>UsersAccounts</c> verification flag. Does not force preferred.
+    /// also sets the corresponding <c>UsersAccounts</c> verification flag.
+    /// If the account has no preferred endpoint yet, this verified endpoint becomes preferred;
+    /// an existing preferred endpoint is left unchanged.
     /// </summary>
     /// <param name="userAccountId">Local user account id (host must authorize the caller for this account).</param>
     /// <param name="channel"><see cref="ChannelEnum.Email"/> or <see cref="ChannelEnum.Sms"/> only.</param>

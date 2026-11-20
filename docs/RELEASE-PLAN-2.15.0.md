@@ -8,10 +8,10 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md)
 >
-> Дельта: `origin/master...HEAD` — **1** коммит · **23** файла · **+1219 / −22**. Open: L1.
+> Дельта: `origin/master...HEAD` — **1** коммит · **23** файла · **+1219 / −22**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → Open: L1 (#L38).
+- не запускался. → все закрыты в этом плане.
 
 **PR:** —
 
@@ -31,9 +31,6 @@
 
 ## Низкий (техдолг / несогласованности)
 
-### L38. SetVerifiedAsync preferred bootstrap docs + test
-⬜ XML `ICommunicationEndpointService.SetVerifiedAsync`: «Does not force preferred» неточно — `UpsertAsync` ставит `IsPreferred`, если preferred ещё нет. Уточнить summary (bootstrap vs leave existing). В `SetVerified_WhenAddressMatchesEmptyPrimary_SetsAccountVerified` assert `IsPreferred == true`.
-
 ---
 
 ## Принято (осознанный trade-off)
@@ -41,7 +38,7 @@
 - Service split: **`AddAsync`** = unverified Manual upsert (no OTP); **`SetVerifiedAsync`** = mark verified (no OTP check — `CommunicationEndpointSetVerified` step verifies first).
 - `CommunicationEndpointAdd` OTP goes to the **submitted** email/phone (not `ResolveOtpTargetAsync` preferred/account contact).
 - Only Email / SMS via OTP; messenger channels rejected (`ValidationException`).
-- `SetVerified` may fill empty primary `UsersAccounts.Email` / `PhoneNumber` and set `*Verified` when the address matches; preferred is not forced.
+- `SetVerified` may fill empty primary `UsersAccounts.Email` / `PhoneNumber` and set `*Verified` when the address matches; preferred only via upsert bootstrap (no existing preferred), otherwise unchanged.
 - `FlowOperationEnum` **19** / **20** (`CommunicationEndpointAdd` / `CommunicationEndpointSetVerified`); ordinal **18** remains `ExternalLoginMerge`.
 - OTP-reject log keeps masked Address (`MaskEmailForLog` / `MaskPhoneForLog`) instead of dropping the field entirely.
 - Verified endpoint uniqueness: app pre-check (`EnsureAddressAvailableForAddAsync`) + existing `UsersAccounts` verified Email/Phone unique indexes; no extra filtered unique on `UsersCommunicationEndpoints` / DbUpdate→Conflict mapping for SetVerified races.
@@ -62,6 +59,7 @@
 | ✅ #L37 OTP-reject keep masked Address | Dismiss CR drop-Address; masking enough (Принято / #M144) |
 | ✅ #H59 No filtered unique on verified endpoints | Dismiss CR; pre-check + UsersAccounts unique enough |
 | ✅ #M145 No SetVerified inner transaction | Dismiss CR; transactions outside the library |
+| ✅ #L38 SetVerified preferred bootstrap docs + test | XML bootstrap vs leave existing; assert IsPreferred in empty-primary test |
 
 ---
 
@@ -75,5 +73,4 @@
 
 ## Приоритет фиксов
 
-1. L38 — SetVerified preferred bootstrap: XML + assert в empty-primary тесте.
-2. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md) (вкл. leftover M141 rest-client mergeToken wording).
+1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md) (вкл. leftover M141 rest-client mergeToken wording).

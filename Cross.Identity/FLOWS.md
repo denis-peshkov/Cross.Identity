@@ -471,7 +471,7 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 | Step | verify OTP for the submitted email/phone |
 | Service | `ICommunicationEndpointService.SetVerifiedAsync` — mark `Manual` endpoint **verified** (no OTP check inside the service) |
 
-When the address matches (or fills) the account primary email/phone, also sets `UsersAccounts` verification. Does **not** force preferred.
+When the address matches (or fills) the account primary email/phone, also sets `UsersAccounts` verification. Preferred only via upsert bootstrap (no existing preferred); otherwise unchanged.
 
 | Step | kind | Details |
 |---|---|---|

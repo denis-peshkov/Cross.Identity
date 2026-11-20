@@ -398,9 +398,10 @@ public class CommunicationEndpointServiceTests : EFTestsBase
         AddToDb(new UserAccountEntity { IsActive = true, Id = userAccountId });
 
         await _service.AddAsync(userAccountId, ChannelEnum.Sms, "+79161234567");
-        await _service.SetVerifiedAsync(
+        var dto = await _service.SetVerifiedAsync(
             userAccountId, ChannelEnum.Sms, "+79161234567", HostSuppliedClientContext.Empty);
 
+        dto.IsPreferred.Should().BeTrue();
         var account = await Context.UsersAccounts.AsNoTracking().SingleAsync(x => x.Id == userAccountId);
         account.PhoneNumber.Should().Be("+79161234567");
         account.PhoneNumberVerified.Should().BeTrue();
