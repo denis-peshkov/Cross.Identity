@@ -72,6 +72,47 @@ public class StringExtensionsTests
 
     [Test]
     [Category(TestCategory.UNIT)]
+    [TestCase("second@example.com", "s***@e***.com")]
+    [TestCase("a@b.co", "*@b***.co")]
+    [TestCase("not-an-email", "*****")]
+    public void GivenEmail_WhenMaskEmailForLog_ThenMasksLocalAndDomain(string input, string expected)
+    {
+        input.MaskEmailForLog().Should().Be(expected);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    [TestCase("+79161234567", "+791****67")]
+    [TestCase("1234", "****")]
+    public void GivenPhone_WhenMaskPhoneForLog_ThenMasksMiddle(string input, string expected)
+    {
+        input.MaskPhoneForLog().Should().Be(expected);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    [TestCase("Email", "second@example.com", "s***@e***.com")]
+    [TestCase("PhoneNumber", "+79161234567", "+791****67")]
+    [TestCase("Phone", "+79161234567", "+791****67")]
+    [TestCase("UserName", "alice", "alice")]
+    public void GivenField_WhenMaskIdentityForLog_ThenMasksEmailOrPhone(
+        string field,
+        string value,
+        string expected)
+    {
+        StringExtensions.MaskIdentityForLog(field, value).Should().Be(expected);
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public void GivenChannel_WhenMaskAddressForLog_ThenMasksByChannel()
+    {
+        ChannelEnum.Email.MaskAddressForLog("second@example.com").Should().Be("s***@e***.com");
+        ChannelEnum.Sms.MaskAddressForLog("+79161234567").Should().Be("+791****67");
+    }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
     public void GivenSpacedInput_WhenToPascalCaseWithoutSpaces_ThenCapitalizesAfterSpaces()
     {
         "hello world".ToPascalCaseWithoutSpaces().Should().Be("HelloWorld");

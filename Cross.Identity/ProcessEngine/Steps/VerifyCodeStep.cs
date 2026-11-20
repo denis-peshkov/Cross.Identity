@@ -47,7 +47,7 @@ internal sealed class VerifyCodeStep : IStep
             Logger.LogInformation(
                 "Verify code rejected for {Field} identity {Identity}: user not found.",
                 selector.Field,
-                selector.Value);
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value));
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 
@@ -63,7 +63,7 @@ internal sealed class VerifyCodeStep : IStep
             Logger.LogInformation(
                 "Verify code rejected for {Field} identity {Identity}: {Reason}",
                 selector.Field,
-                selector.Value,
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value),
                 ex.Message);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
@@ -73,7 +73,7 @@ internal sealed class VerifyCodeStep : IStep
             Logger.LogInformation(
                 "Verify code rejected for {Field} identity {Identity}: channel {Channel} does not support OTP.",
                 selector.Field,
-                selector.Value,
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value),
                 target.Channel);
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
@@ -84,7 +84,7 @@ internal sealed class VerifyCodeStep : IStep
             Logger.LogInformation(
                 "Verify code rejected for {Field} identity {Identity}: invalid or expired verification code.",
                 selector.Field,
-                selector.Value);
+                StringExtensions.MaskIdentityForLog(selector.Field, selector.Value));
             return StepResult.Fail(new NotAuthorizedException("Invalid credentials."));
         }
 

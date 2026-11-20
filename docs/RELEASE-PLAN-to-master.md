@@ -1,16 +1,16 @@
-﻿# Release readiness plan `2.14.0` → `master`
+﻿# Release readiness plan `2.15.0` → `master`
 
 > **Analysis date:** 2026-11-19
-> **Branch:** `release/oauth-link-conflict-409` (`2b3ae9f`)
-> **Comparison base:** `origin/master` (`v2.13.0` / `7baa985`) · merge-base `7baa985`
-> **Version plan:** [`docs/RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) · backlog [`TO-DO.md`](TO-DO.md)
-> **Goal:** verification checklist before merge of **2.14.0** into `master`
+> **Branch:** `release/communication-endpoint-add` (`1ac07bf`)
+> **Comparison base:** `origin/master` (`v2.14.0` / `293b859`) · merge-base `293b859`
+> **Version plan:** [`docs/RELEASE-PLAN-2.15.0.md`](RELEASE-PLAN-2.15.0.md) · backlog [`TO-DO.md`](TO-DO.md)
+> **Goal:** verification checklist before merge of **2.15.0** into `master`
 > **Legend:** ⬜ open · ✅ done · 🟨 partial · ❌ blocker
-> **Note:** OAuth link conflict → `ConflictException` / HTTP **409**; mint via Suppress + `IDbContextFactory`; `Cross.ErrorHandlers` **7.7.0**. PR [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) (`BREAKING:`). Tag `v2.14.0` / NuGet — **after** merge to `master` (CI); out of scope for this pre-merge plan. Leftover **M141** (rest-client wording) → TO-DO, not a merge blocker.
-> **Sources:** `git` / version plan / `gh pr checks` (2026-11-19: build **in progress**; breaking-gate ✅)
+> **Note:** Secondary email/phone via `main.CommunicationEndpointAdd` + `main.CommunicationEndpointSetVerified` (`FlowOperationEnum` 19/20). Additive (not BREAKING). Tag `v2.15.0` / NuGet — **after** merge to `master` (CI). Leftover **M141** (Sample.Api.http still says ValidationException for mergeToken) → TO-DO, not a merge blocker.
+> **Sources:** `git` / version plan · **no open PR yet**
 > **Maintenance:** `node .cursor/skills/release-plan/scripts/release-plan-to-master.mjs --write`
 
-**Change summary:** **45** items — ✅ **36** (80%) · 🟨 **7** (16%) · ⬜ **2** (4%) · ❌ **0** (0%)
+**Change summary:** **42** items — ✅ **25** (60%) · 🟨 **6** (14%) · ⬜ **11** (26%) · ❌ **0** (0%)
 
 ---
 
@@ -18,28 +18,27 @@
 
 | Metric | Value |
 |---|---|
-| Commits (`origin/master..HEAD`) | **2** |
-| Files | **28** · **+663 / −72** (+ this checklist WT) |
-| Working tree | to-master refresh pending commit · tip `2b3ae9f` = `origin/release/oauth-link-conflict-409` |
+| Commits (`origin/master..HEAD`) | **1** |
+| Files | **23** · **+1219 / −22** (+ this checklist WT) |
+| Working tree | to-master update pending commit · tip `1ac07bf` = `origin/release/communication-endpoint-add` |
 | Remote branch | tracking · up to date (except local to-master) |
-| Tests | CI build 🟨 in progress on PR #33 tip |
-| PR | [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) → `master` · MERGEABLE |
-| CodeRabbit | not run on this tip |
-| Version-plan open C/H/M/L | **empty** (finalized) · closed H54–H56 · M142 · L33–L34 · leftover M141 → TO-DO · HW `C1` `H56` `M142` `L34` |
+| Tests | In delta; no PR CI yet |
+| PR | ⬜ none yet |
+| CodeRabbit | not run |
+| Version-plan open C/H/M/L | **empty** · closed H57 · M143 · L35 · HW still `C1` `H56` `M142` `L34` until finalize · leftover M141 in TO-DO |
 
 | Area | Files (≈) | Role in release |
 |---|---|---|
-| Library | ~8 | ConflictException mint; factory Suppress; DI overload; ErrorHandlers 7.7 |
-| Tests | ~8 | 409 ProblemDetails; PG ambient-tx merge-pending regression; sharing factory |
-| Sample / README / FLOWS / CONTRIBUTING | ~5 | Host wiring `AddCrossIdentity(..., configureDbContext)` |
-| Tooling | ~2 | EditorConfig charset; Scripts README |
-| docs | ~4 | BREAKING / CHANGELOG / PLAN 2.14.0 / PLAN 2.13.0 (+ this to-master) |
+| Library | 8 | `AddAsync` / `SetVerifiedAsync`; steps/factories/flows; enum 19/20; DI |
+| Tests | 5 | Flow / step / factory / service |
+| FLOWS / README / rest-client | 3 | Host docs + http samples (+ partial M141 env fix) |
+| docs | 3 | CHANGELOG / PLAN 2.15.0 / PLAN 2.14.0 published (+ this to-master) |
 
 ---
 
 ## Table of contents
 
-1. [New functionality (2.14.0)](#1-new-functionality-2140)
+1. [New functionality (2.15.0)](#1-new-functionality-2150)
 2. [Breaking / consumer notes](#2-breaking--consumer-notes)
 3. [Code gate](#3-code-gate)
 4. [Practical ship steps](#4-practical-ship-steps)
@@ -52,14 +51,14 @@
 
 ---
 
-## 1. New functionality (2.14.0)
+## 1. New functionality (2.15.0)
 
 | # | Block | Key changes | Status |
 |---|---|---|---|
-| F1 | Link conflict → `ConflictException` | `AccountMergeRequired` + throw (was ValidationException) | ✅ |
-| F2 | HTTP 409 mapping | `ToConflictProblemDetails` + ErrorHandlers **7.7.0** | ✅ |
-| F3 | Durable pending mint | Suppress + `IDbContextFactory` fresh context | ✅ |
-| F4 | DI host wiring | `AddCrossIdentity(configuration, configureDbContext)`; Sample.Api | ✅ |
+| F1 | `CommunicationEndpointAdd` | Upsert unverified Manual + OTP to submitted address | ✅ |
+| F2 | `CommunicationEndpointSetVerified` | Verify OTP then `SetVerifiedAsync` | ✅ |
+| F3 | Service API | Public `AddAsync` / `SetVerifiedAsync` | ✅ |
+| F4 | Host docs / sample | FLOWS + README + rest-client | ✅ |
 
 ---
 
@@ -67,9 +66,8 @@
 
 | # | Change | Action | Status |
 |---|---|---|---|
-| B1 | [`docs/BREAKING.md`](BREAKING.md) § From 2.13.0 to 2.14.0 | Catch ConflictException / 409; not ValidationException / 406 | ✅ |
-| B2 | `IDbContextFactory<IdentityContext>` required | Prefer new overload or register factory yourself | ✅ documented |
-| B3 | `Cross.ErrorHandlers` ≥7.7.0 | ≤7.6 mapped Conflict → 400 | ✅ documented |
+| B1 | Consumer-breaking NuGet surface | None — additive flows/API/enum 19–20 | ✅ N/A |
+| B2 | [`docs/BREAKING.md`](BREAKING.md) | No new From 2.14→2.15 section required | ✅ |
 
 ---
 
@@ -77,10 +75,10 @@
 
 | # | Check | Status |
 |---|---|---|
-| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) empty | ✅ `(closed)` |
-| CG2 | Closed H54–H56 · M142 · L33–L34 | ✅ |
-| CG3 | PR opened | ✅ [#33](https://github.com/denis-peshkov/Cross.Identity/pull/33) |
-| CG4 | Finalize docs on remote tip | ✅ (`2b3ae9f`) |
+| CG1 | Open C/H/M/L in [`RELEASE-PLAN-2.15.0.md`](RELEASE-PLAN-2.15.0.md) empty | ✅ |
+| CG2 | Closed H57 · M143 · L35 | ✅ |
+| CG3 | PR opened | ⬜ none |
+| CG4 | Docs on remote tip | ✅ (`1ac07bf`; plan still active / not finalized) |
 
 ---
 
@@ -88,10 +86,10 @@
 
 | # | Step | Status |
 |---|---|---|
-| P1 | Commit + push finalize plan / TO-DO | ✅ |
-| P2 | PR → `master` | ✅ #33 |
-| P3 | CI green on PR tip | 🟨 build in progress · breaking-gate ✅ |
-| P4 | Ready to merge → `master` | ⬜ (wait build green; tag/NuGet post-merge) |
+| P1 | Commit + push feature tip | ✅ |
+| P2 | PR → `master` (or `dev` per policy) | ⬜ |
+| P3 | CI green on PR tip | ⬜ blocked on PR |
+| P4 | Ready to merge → `master` | ⬜ (wait PR/CI; tag/NuGet post-merge) |
 
 ---
 
@@ -99,13 +97,13 @@
 
 | # | Document | Status |
 |---|---|---|
-| D1 | [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) | ✅ `(closed)` |
-| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.14.0 | ✅ |
-| D3 | [`docs/BREAKING.md`](BREAKING.md) § From 2.13.0 to 2.14.0 | ✅ |
-| D4 | [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) + README / Sample | ✅ |
-| D5 | [`TO-DO.md`](TO-DO.md) | ✅ HW + Принято + leftover M141 |
+| D1 | [`RELEASE-PLAN-2.15.0.md`](RELEASE-PLAN-2.15.0.md) | 🟨 draft (not finalized) |
+| D2 | [`docs/CHANGELOG.md`](CHANGELOG.md) § v2.15.0 | ✅ |
+| D3 | [`docs/BREAKING.md`](BREAKING.md) | ✅ no new section |
+| D4 | [`Cross.Identity/FLOWS.md`](../Cross.Identity/FLOWS.md) + README | ✅ |
+| D5 | [`TO-DO.md`](TO-DO.md) | 🟨 HW bump on finalize; M141 leftover |
 | D6 | [`RELEASE-PLAN-to-master.md`](RELEASE-PLAN-to-master.md) | ✅ this file |
-| D7 | Previous [`RELEASE-PLAN-2.13.0.md`](RELEASE-PLAN-2.13.0.md) | ✅ `(published / closed)` |
+| D7 | Previous [`RELEASE-PLAN-2.14.0.md`](RELEASE-PLAN-2.14.0.md) | ✅ `(published / closed)` |
 
 ---
 
@@ -113,9 +111,9 @@
 
 | # | Check | Status |
 |---|---|---|
-| T1 | ConflictException / `ToConflictProblemDetails` 409 | ✅ in delta |
-| T2 | PG Testcontainers ambient-tx merge-pending regression | ✅ in delta |
-| T3 | PR CI build | 🟨 in progress (#33) |
+| T1 | Flow / step / factory / service add + set-verified | ✅ in delta |
+| T2 | Suite evidence | ⬜ no PR CI yet |
+| T3 | PR CI build | ⬜ no PR |
 
 ---
 
@@ -123,7 +121,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| C1 | CI green on PR tip | 🟨 build in progress |
+| C1 | CI green on PR tip | ⬜ no PR |
 | C2 | Tag / NuGet pipeline | ✅ post-merge on `master` (not a pre-merge gate) |
 
 ---
@@ -132,7 +130,7 @@
 
 | # | Check | Status |
 |---|---|---|
-| M1 | Schema / seed scripts | ✅ N/A (no new DDL; uses `AccountMergePendings` from prior release) |
+| M1 | Schema / seed scripts | ✅ N/A (no DDL) |
 
 ---
 
@@ -140,28 +138,26 @@
 
 | # | Issue | Recommendation | Status |
 |---|---|---|---|
-| R1 | Hosts still catch ValidationException for link conflict | BREAKING — switch to ConflictException / 409 | ✅ documented |
-| R2 | Hosts without `IDbContextFactory` | Register factory or use new `AddCrossIdentity` overload | ✅ documented |
-| R3 | ErrorHandlers ≤7.6 → Conflict **400** | Bump to ≥7.7.0 | ✅ documented |
-| R4 | Tag before master | Do not tag until after merge | ✅ policy |
-| R5 | CI not fully green yet | Wait `.NET` build on #33 tip | 🟨 |
-| R6 | rest-client ValidationException wording (M141) | Leftover in TO-DO — not a merge blocker | 🟨 deferred |
+| R1 | No PR yet | Open PR before CI / merge gate | ⬜ |
+| R2 | Tag before master | Do not tag until after merge | ✅ policy |
+| R3 | Sample.Api.http mergeToken still says ValidationException (M141) | Fix or leave in TO-DO | 🟨 deferred |
+| R4 | Version plan not finalized | Run «закрой» when ship slice done | 🟨 |
 
 ---
 
 ## 10. Recommended work order (release gate)
 
-- ✅ **1. Code gate** — open C/H/M/L empty; H54–H56 / M142 / L33–L34 closed
-- ✅ **2. Commit/push** finalize docs on tip (`2b3ae9f`)
-- 🟨 **3. PR → `master`** #33 · MERGEABLE · build in progress
-- ✅ **4. Docs content** — CHANGELOG / BREAKING 2.13.0→2.14.0 / FLOWS / README
-- ⬜ **5. Ready to merge** — wait CI green; tag `v2.14.0` / NuGet only after merge to `master` (CI)
+- ✅ **1. Code gate** — open C/H/M/L empty; H57 / M143 / L35 closed
+- ✅ **2. Feature tip** on remote (`1ac07bf`)
+- ⬜ **3. PR** — open → `master` (or `dev`) + CI green
+- 🟨 **4. Docs** — CHANGELOG/FLOWS done; finalize version plan when ready
+- ⬜ **5. Ready to merge** — wait PR/CI; tag `v2.15.0` / NuGet only after merge to `master` (CI)
 
 ### Minimum go/no-go checklist
 
 - ✅ Version-plan open C/H/M/L empty
-- ✅ Feature set on branch (ConflictException 409 + factory mint + ErrorHandlers 7.7)
-- ✅ Finalize docs on remote tip
-- 🟨 PR open (#33) · CI not fully green yet
-- ✅ PostDeployment N/A (no new DDL)
+- ✅ Feature set on branch (Add + SetVerified OTP flows)
+- 🟨 Finalize version plan still pending
+- ⬜ PR / CI green
+- ✅ PostDeployment N/A
 - ✅ Tag/NuGet out of scope until `master`

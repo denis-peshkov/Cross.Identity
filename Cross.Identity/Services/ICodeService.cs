@@ -4,8 +4,8 @@
 /// One-time code (OTP) service: send and verify.
 /// Used by steps:
 /// <list type="bullet">
-/// <item><description><c>SendCodeStep</c> — <see cref="SendAsync"/></description></item>
-/// <item><description><c>VerifyCodeStep</c> — <see cref="VerifyAsync"/></description></item>
+/// <item><description><c>SendCodeStep</c> / <c>CommunicationEndpointAddStep</c> — <see cref="SendAsync"/></description></item>
+/// <item><description><c>VerifyCodeStep</c> / <c>CommunicationEndpointSetVerifiedStep</c> — <see cref="VerifyAsync"/></description></item>
 /// </list>
 /// </summary>
 internal interface ICodeService

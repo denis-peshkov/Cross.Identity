@@ -88,6 +88,8 @@ public static class ServiceCollectionExtensions
                 ServiceDescriptor.Scoped<IStepFactory, VerifyTokenStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointsGetAllStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetPreferredStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointAddStepFactory>(),
+                ServiceDescriptor.Scoped<IStepFactory, CommunicationEndpointSetVerifiedStepFactory>(),
                 ServiceDescriptor.Scoped<IStepFactory, ChangeAccountEmailStepFactory>(),
             });
 

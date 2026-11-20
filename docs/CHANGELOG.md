@@ -7,6 +7,28 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.15.0 — 19 Nov 2026
+
+### Library
+
+- Stock flows `main.CommunicationEndpointAdd` / `main.CommunicationEndpointSetVerified` (`FlowOperationEnum` **19** / **20**): secondary email/phone with OTP to **that** address (not `ResolveOtpTargetAsync`).
+- Public `ICommunicationEndpointService`:
+  - **`AddAsync`** — upsert unverified `Manual` endpoint (no OTP).
+  - **`SetVerifiedAsync`** — mark that endpoint verified after the caller verified OTP (no OTP check inside the service).
+- Conflict if the address is already verified on another account/endpoint; already verified on the same account → `ValidationException` on `AddAsync`.
+- **Removed** `ProblemDetailsFactoryExtensions` (`ToValidationProblemDetails` / `ToConflictProblemDetails`) — hosts map ProblemDetails themselves or use ErrorHandlers middleware.
+
+### Tests
+
+- Flow / step / factory / service coverage for add and set-verified.
+
+### Documentation
+
+- `FLOWS.md` / README / `rest-client` samples: `AddAsync` + OTP request, then OTP + `SetVerifiedAsync` confirm.
+- `docs/BREAKING.md` From 2.14.0→2.15.0: ProblemDetails helpers removed.
+
+---
+
 ## v2.14.0 — 19 Nov 2026
 
 ### Library

@@ -107,8 +107,12 @@ internal sealed class CodeService : ICodeService
         }
         await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-        _logger.LogInformation("[Notifier] {Channel} → {Dest}: {Subject} | {Body}",
-            msg.Channel, msg.Destination, msg.Subject, msg.TextBody);
+        _logger.LogInformation(
+            "[Notifier] {Channel} → {Dest}: {Subject} | {Body}",
+            msg.Channel,
+            msg.Channel.MaskAddressForLog(msg.Destination),
+            msg.Subject,
+            "[redacted]");
     }
 
     /// <inheritdoc />
@@ -168,20 +172,20 @@ internal sealed class CodeService : ICodeService
 
         if (entity is null)
         {
-            _logger.LogWarning("Email verification code not found for {Email}", normalizedEmail);
+            _logger.LogWarning("Email verification code not found for {Email}", normalizedEmail.MaskEmailForLog());
             return false;
         }
 
         if (!await IsUserAccountActiveAsync(userAccountId, cancellationToken).ConfigureAwait(false))
         {
-            _logger.LogWarning("Email verification rejected for disabled account {Email}", normalizedEmail);
+            _logger.LogWarning("Email verification rejected for disabled account {Email}", normalizedEmail.MaskEmailForLog());
             return false;
         }
 
         // Check attempt count
         if (entity.Attempts >= entity.MaxAttempts)
         {
-            _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedEmail);
+            _logger.LogWarning("Email verification code max attempts exceeded for {Email}", normalizedEmail.MaskEmailForLog());
             return false;
         }
 
@@ -194,7 +198,7 @@ internal sealed class CodeService : ICodeService
             // Wrong code for this identity — increment attempt counter
             entity.Attempts++;
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            _logger.LogWarning("Email verification code mismatch for {Email}", normalizedEmail);
+            _logger.LogWarning("Email verification code mismatch for {Email}", normalizedEmail.MaskEmailForLog());
             return false;
         }
 
@@ -208,7 +212,7 @@ internal sealed class CodeService : ICodeService
         }
         catch (DbUpdateConcurrencyException)
         {
-            _logger.LogWarning("Email verification code already used for {Email}", normalizedEmail);
+            _logger.LogWarning("Email verification code already used for {Email}", normalizedEmail.MaskEmailForLog());
             return false;
         }
     }
@@ -233,20 +237,24 @@ internal sealed class CodeService : ICodeService
 
         if (entity is null)
         {
-            _logger.LogWarning("PhoneNumber verification code not found for {PhoneNumber}", normalizedPhone);
+            _logger.LogWarning("PhoneNumber verification code not found for {PhoneNumber}", normalizedPhone.MaskPhoneForLog());
             return false;
         }
 
         if (!await IsUserAccountActiveAsync(userAccountId, cancellationToken).ConfigureAwait(false))
         {
-            _logger.LogWarning("PhoneNumber verification rejected for disabled account {PhoneNumber}", normalizedPhone);
+            _logger.LogWarning(
+                "PhoneNumber verification rejected for disabled account {PhoneNumber}",
+                normalizedPhone.MaskPhoneForLog());
             return false;
         }
 
         // Check attempt count
         if (entity.Attempts >= entity.MaxAttempts)
         {
-            _logger.LogWarning("PhoneNumber verification code max attempts exceeded for {PhoneNumber}", normalizedPhone);
+            _logger.LogWarning(
+                "PhoneNumber verification code max attempts exceeded for {PhoneNumber}",
+                normalizedPhone.MaskPhoneForLog());
             return false;
         }
 
@@ -259,7 +267,9 @@ internal sealed class CodeService : ICodeService
             // Wrong code for this identity — increment attempt counter
             entity.Attempts++;
             await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            _logger.LogWarning("PhoneNumber verification code mismatch for {PhoneNumber}", normalizedPhone);
+            _logger.LogWarning(
+                "PhoneNumber verification code mismatch for {PhoneNumber}",
+                normalizedPhone.MaskPhoneForLog());
             return false;
         }
 
@@ -273,7 +283,9 @@ internal sealed class CodeService : ICodeService
         }
         catch (DbUpdateConcurrencyException)
         {
-            _logger.LogWarning("PhoneNumber verification code already used for {PhoneNumber}", normalizedPhone);
+            _logger.LogWarning(
+                "PhoneNumber verification code already used for {PhoneNumber}",
+                normalizedPhone.MaskPhoneForLog());
             return false;
         }
     }
@@ -310,7 +322,7 @@ internal sealed class CodeService : ICodeService
                     _logger.LogInformation(
                         "OTP send cooldown for user {UserAccountId} email {Email}: last send at {LastSendAt}",
                         userAccountId,
-                        normalizedDestination,
+                        normalizedDestination.MaskEmailForLog(),
                         lastCreatedAt.Value);
                     throw new ValidationException("Please wait before requesting another code.");
                 }
@@ -333,7 +345,7 @@ internal sealed class CodeService : ICodeService
                     _logger.LogInformation(
                         "OTP send window limit for user {UserAccountId} email {Email}: {Count} sends since {Since}",
                         userAccountId,
-                        normalizedDestination,
+                        normalizedDestination.MaskEmailForLog(),
                         count,
                         since);
                     throw new ValidationException("Too many verification codes requested. Please try again later.");
@@ -360,7 +372,7 @@ internal sealed class CodeService : ICodeService
                     _logger.LogInformation(
                         "OTP send cooldown for user {UserAccountId} phone {Phone}: last send at {LastSendAt}",
                         userAccountId,
-                        normalizedDestination,
+                        normalizedDestination.MaskPhoneForLog(),
                         lastCreatedAt.Value);
                     throw new ValidationException("Please wait before requesting another code.");
                 }
@@ -383,7 +395,7 @@ internal sealed class CodeService : ICodeService
                     _logger.LogInformation(
                         "OTP send window limit for user {UserAccountId} phone {Phone}: {Count} sends since {Since}",
                         userAccountId,
-                        normalizedDestination,
+                        normalizedDestination.MaskPhoneForLog(),
                         count,
                         since);
                     throw new ValidationException("Too many verification codes requested. Please try again later.");
