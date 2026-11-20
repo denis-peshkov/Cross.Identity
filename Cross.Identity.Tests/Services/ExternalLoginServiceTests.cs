@@ -780,17 +780,10 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         AccountMergeRequired.TryGetMergeToken(ex.Which, out var mergeToken).Should().BeTrue();
         mergeToken.Should().NotBeNullOrWhiteSpace();
+        ex.Which.Data["SubCode"].Should().Be(AccountMergeRequired.ErrorCode);
         ex.Which.Data[AccountMergeRequired.AbsorbedUserAccountIdKey].Should().Be(otherUserAccountId.ToString("D"));
         ex.Which.Data[AccountMergeRequired.SurvivorUserAccountIdKey].Should().Be(currentUserAccountId.ToString("D"));
         ex.Which.Data[AccountMergeRequired.ProviderKey].Should().Be("Google");
-
-        var problem = ex.Which.ToConflictProblemDetails();
-        problem.Status.Should().Be(409);
-        problem.Errors.Should().ContainKey("code").WhoseValue.Should().Equal(AccountMergeRequired.ErrorCode);
-        problem.Errors.Should().ContainKey("mergeToken").WhoseValue.Should().Equal(mergeToken);
-        problem.Errors.Should().ContainKey("absorbedUserAccountId").WhoseValue.Should().Equal(otherUserAccountId.ToString("D"));
-        problem.Errors.Should().ContainKey("survivorUserAccountId").WhoseValue.Should().Equal(currentUserAccountId.ToString("D"));
-        problem.Errors.Should().ContainKey("provider").WhoseValue.Should().Equal("Google");
 
         (await Context.AccountMergePendings.CountAsync(x => x.MergeToken == mergeToken && x.ConsumedAt == null))
             .Should().Be(1);

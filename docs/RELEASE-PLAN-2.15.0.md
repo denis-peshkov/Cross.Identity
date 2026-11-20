@@ -40,6 +40,7 @@
 - Only Email / SMS via OTP; messenger channels rejected (`ValidationException`).
 - `SetVerified` may fill empty primary `UsersAccounts.Email` / `PhoneNumber` and set `*Verified` when the address matches; preferred is not forced.
 - `FlowOperationEnum` **19** / **20** (`CommunicationEndpointAdd` / `CommunicationEndpointSetVerified`); ordinal **18** remains `ExternalLoginMerge`.
+- OTP-reject log keeps masked Address (`MaskEmailForLog` / `MaskPhoneForLog`) instead of dropping the field entirely.
 
 ---
 
@@ -51,6 +52,8 @@
 | ✅ #M143 Add-endpoint tests | Flow / step / factory / service coverage |
 | ✅ #L35 FLOWS / README / rest-client / CHANGELOG | Docs + samples for Add / SetVerified |
 | ✅ #L36 Add/SetVerified tests → `TestCategory.INTEGRATION` | Method-level on five tests in `CommunicationEndpointServiceTests` |
+| ✅ #M144 OTP-reject log masks email/phone | `MaskEmailForLog` / `MaskPhoneForLog` in `CommunicationEndpointSetVerifiedStep` (keep Address, no raw PII) |
+| ✅ #H58 Remove `ProblemDetailsFactoryExtensions` | Host maps ProblemDetails / ErrorHandlers; BREAKING 2.14→2.15 |
 
 ---
 

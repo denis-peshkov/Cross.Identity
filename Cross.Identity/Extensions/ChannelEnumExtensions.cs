@@ -47,4 +47,22 @@ public static class ChannelEnumExtensions
         var trimmed = address.Trim();
         return channel == ChannelEnum.Email ? trimmed.ToLowerInvariant() : trimmed;
     }
+
+    /// <summary>
+    /// Masks a channel address for logs (email / SMS / phone-like channels).
+    /// </summary>
+    public static string MaskAddressForLog(this ChannelEnum channel, string? address)
+    {
+        if (channel == ChannelEnum.Email)
+        {
+            return address.MaskEmailForLog();
+        }
+
+        if (channel.SupportsOtp() || channel.IsPhoneChannel())
+        {
+            return address.MaskPhoneForLog();
+        }
+
+        return address ?? string.Empty;
+    }
 }

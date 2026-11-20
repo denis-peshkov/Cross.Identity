@@ -45,12 +45,15 @@ internal sealed class CommunicationEndpointSetVerifiedStep : IStep
 
         if (!ok)
         {
+            var endpointId = await TryResolveEndpointIdAsync(userAccountId, channel, normalized, cancellationToken)
+                .ConfigureAwait(false);
             Logger.LogInformation(
-                "{Kind} rejected for user {UserAccountId} channel {Channel} address {Address}: invalid or expired code.",
+                "{Kind} rejected for user {UserAccountId} {UserCommunicationEndpointId} channel {Channel} address {Address}: invalid or expired code.",
                 Kind,
                 userAccountId,
+                endpointId,
                 channel,
-                normalized);
+                channel.MaskAddressForLog(normalized));
             throw new ValidationException("Invalid or expired verification code.");
         }
 
@@ -87,5 +90,20 @@ internal sealed class CommunicationEndpointSetVerifiedStep : IStep
         return hasEmail
             ? (ChannelEnum.Email, email!)
             : (ChannelEnum.Sms, phone!);
+    }
+
+    private async Task<Guid?> TryResolveEndpointIdAsync(
+        Guid userAccountId,
+        ChannelEnum channel,
+        string normalizedAddress,
+        CancellationToken cancellationToken)
+    {
+        var endpoints = await CommunicationEndpoints
+            .GetAllAsync(userAccountId, cancellationToken)
+            .ConfigureAwait(false);
+
+        return endpoints
+            .FirstOrDefault(x => x.Channel == channel && x.Address == normalizedAddress)
+            ?.Id;
     }
 }

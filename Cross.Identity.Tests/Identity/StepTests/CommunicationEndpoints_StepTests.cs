@@ -219,4 +219,61 @@ public class CommunicationEndpoints_StepTests
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Test]
+    [Category(TestCategory.UNIT)]
+    public async Task GivenInvalidCode_WhenSetVerified_ThenLooksUpEndpointIdAndThrowsAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var endpointId = Guid.NewGuid();
+        _codeService
+            .Setup(s => s.VerifyAsync(
+                userAccountId, ChannelEnum.Email, "second@example.com", "bad-code", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+        _endpoints
+            .Setup(s => s.GetAllAsync(userAccountId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<CommunicationEndpointDto>
+            {
+                new()
+                {
+                    Id = endpointId,
+                    Channel = ChannelEnum.Email,
+                    Address = "second@example.com",
+                    IsVerified = false,
+                    Source = CommunicationEndpointSource.Manual,
+                },
+            });
+
+        var step = new CommunicationEndpointSetVerifiedStep
+        {
+            Kind = "communicationEndpointSetVerified",
+            UserAccountIdKey = "UserAccountId",
+            EmailKey = "Email",
+            PhoneKey = "PhoneNumber",
+            CodeKey = "Code",
+            CommunicationEndpoints = _endpoints.Object,
+            CodeService = _codeService.Object,
+            Logger = Mock.Of<ILogger>(),
+            Next = "done",
+        };
+
+        var bag = new Bag()
+            .Set("communicationEndpointSetVerified.UserAccountId", userAccountId)
+            .Set("communicationEndpointSetVerified.Email", "second@example.com")
+            .Set("communicationEndpointSetVerified.Code", "bad-code");
+
+        var act = () => step.ExecuteAsync(bag, CancellationToken.None).AsTask();
+
+        await act.Should().ThrowAsync<ValidationException>()
+            .WithMessage("*Invalid or expired*");
+        _endpoints.Verify(s => s.GetAllAsync(userAccountId, It.IsAny<CancellationToken>()), Times.Once);
+        _endpoints.Verify(
+            s => s.SetVerifiedAsync(
+                It.IsAny<Guid>(),
+                It.IsAny<ChannelEnum>(),
+                It.IsAny<string>(),
+                It.IsAny<HostSuppliedClientContext>(),
+                It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
 }

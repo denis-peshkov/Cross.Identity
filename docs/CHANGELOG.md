@@ -16,6 +16,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
   - **`AddAsync`** — upsert unverified `Manual` endpoint (no OTP).
   - **`SetVerifiedAsync`** — mark that endpoint verified after the caller verified OTP (no OTP check inside the service).
 - Conflict if the address is already verified on another account/endpoint; already verified on the same account → `ValidationException` on `AddAsync`.
+- **Removed** `ProblemDetailsFactoryExtensions` (`ToValidationProblemDetails` / `ToConflictProblemDetails`) — hosts map ProblemDetails themselves or use ErrorHandlers middleware.
 
 ### Tests
 
@@ -24,6 +25,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 ### Documentation
 
 - `FLOWS.md` / README / `rest-client` samples: `AddAsync` + OTP request, then OTP + `SetVerifiedAsync` confirm.
+- `docs/BREAKING.md` From 2.14.0→2.15.0: ProblemDetails helpers removed.
 
 ---
 

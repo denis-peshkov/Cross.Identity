@@ -79,7 +79,15 @@ internal sealed class CommunicationEndpointAddStep : IStep
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "{Kind} send failed: {Message}", Kind, ex.Message);
+            Logger.LogError(
+                ex,
+                "{Kind} send failed for user {UserAccountId} {UserCommunicationEndpointId} channel {Channel} address {Address}: {Message}",
+                Kind,
+                userAccountId,
+                endpoint.Id,
+                channel,
+                channel.MaskAddressForLog(endpoint.Address),
+                ex.Message);
             return StepResult.Fail(ex);
         }
 

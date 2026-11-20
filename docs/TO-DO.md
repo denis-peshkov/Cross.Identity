@@ -140,6 +140,6 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth link-conflict machine code: `errors.code = alreadyLinked`; FluentValidation `ErrorCode` not required in ProblemDetails.
 - `AccountMergePendings` TTL = `ExternalLoginOptions.StateLifetime`; host must authorize survivor `UserAccountId` before `ExternalLoginMerge`.
 - `UserAccountEntity.IsActive` has no C# default `true` — create paths and fixtures set it explicitly.
-- OAuth link conflict: throw-after-mint `ConflictException` (`AccountMergeRequired`); HTTP **409** via `Cross.ErrorHandlers` ≥7.7.0 and/or `ToConflictProblemDetails`; ordinary validation stays **406**.
+- OAuth link conflict: throw-after-mint `ConflictException` (`AccountMergeRequired`); HTTP **409** via `Cross.ErrorHandlers` ≥7.7.0; ordinary validation stays **406**. Structured mergeToken body is host-mapped from `Exception.Data` (`TryGetMergeToken`).
 - Pending merge-token mint: `TransactionScopeOption.Suppress` + `IDbContextFactory<IdentityContext>` (fresh connection) so ambient host tx can stay on OAuth callback.
 - Prefer `AddCrossIdentity(configuration, configureDbContext)`; bare overload for pooled/custom hosts that register factory themselves.

@@ -232,7 +232,7 @@ internal sealed class UserService : IUserService
             _logger.LogWarning(
                 "Code validation rejected for disabled account, {Channel} channel, identity: {Identity}",
                 field,
-                selectorValue);
+                StringExtensions.MaskIdentityForLog(field, selectorValue));
             return false;
         }
 
@@ -260,7 +260,7 @@ internal sealed class UserService : IUserService
             _logger.LogWarning(
                 "Code validation failed for {Channel} channel, identity: {Identity}",
                 field,
-                selectorValue);
+                StringExtensions.MaskIdentityForLog(field, selectorValue));
             return false;
         }
 
