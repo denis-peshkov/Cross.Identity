@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.15.0` → `2.16.0+` | [From 2.15.0 to 2.16.0](#from-2150-to-2160) |
 | `2.14.0` → `2.15.0+` | [From 2.14.0 to 2.15.0](#from-2140-to-2150) |
 | `2.13.0` → `2.14.0+` | [From 2.13.0 to 2.14.0](#from-2130-to-2140) |
 | `2.12.0` → `2.13.0+` | [From 2.12.0 to 2.13.0](#from-2120-to-2130) |
@@ -31,6 +32,22 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.15.0 to 2.16.0
+
+Release: [v2.16.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.16.0).
+
+### OAuth provider email endpoint always verified
+
+| Area | Was (≤2.15.0) | Now (2.16.0+) |
+|---|---|---|
+| `UsersCommunicationEndpoints` for linked OAuth email (`ExternalProvider`) | `IsVerified` copied from `ExternalOAuthProfile.EmailVerified` | Always **`IsVerified = true`** when a provider email is synced |
+| `UsersAccounts.EmailVerified` on new OAuth registration | Unchanged | Still gated by `ExternalOAuthProfile.EmailVerified` |
+| Email collision / verified-account merge rules | Unchanged | Still gated by `ExternalOAuthProfile.EmailVerified` |
+
+**Action:** do not treat provider-attested-unverified emails (e.g. Facebook / Graph without OIDC email claim) as unverified delivery endpoints after link/sign-in. OTP/preferred delivery may use that endpoint. Account-level `EmailVerified` and merge/collision rules are unchanged.
 
 ---
 
