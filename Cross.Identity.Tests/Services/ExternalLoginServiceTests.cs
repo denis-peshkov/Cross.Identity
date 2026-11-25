@@ -2359,6 +2359,44 @@ public class ExternalLoginServiceTests : EFTestsBase
     }
 
     [Test]
+    public void GivenUnverifiedProviderEmail_WhenEnsureProviderEmailVerified_ThenForcesEmailVerifiedTrue()
+    {
+        var profile = new ExternalOAuthProfile
+        {
+            ProviderUserId = "sub-1",
+            Email = "raw@example.com",
+            EmailVerified = false,
+            DisplayName = "Raw",
+            AvatarUrl = "https://example.com/a.png",
+        };
+
+        var result = ExternalLoginService.EnsureProviderEmailVerified(profile);
+
+        result.Should().NotBeSameAs(profile);
+        result.EmailVerified.Should().BeTrue();
+        result.ProviderUserId.Should().Be("sub-1");
+        result.Email.Should().Be("raw@example.com");
+        result.DisplayName.Should().Be("Raw");
+        result.AvatarUrl.Should().Be("https://example.com/a.png");
+    }
+
+    [Test]
+    public void GivenAlreadyVerifiedProviderEmail_WhenEnsureProviderEmailVerified_ThenReturnsSameInstance()
+    {
+        var profile = new ExternalOAuthProfile
+        {
+            ProviderUserId = "sub-2",
+            Email = "ok@example.com",
+            EmailVerified = true,
+        };
+
+        var result = ExternalLoginService.EnsureProviderEmailVerified(profile);
+
+        result.Should().BeSameAs(profile);
+        result.EmailVerified.Should().BeTrue();
+    }
+
+    [Test]
     [Category(TestCategory.INTEGRATION)]
     public async Task GivenFacebookSolePreferredEmail_WhenUnlinkAsync_ThenThrowsAndKeepsLoginAsync()
     {

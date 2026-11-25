@@ -49,7 +49,7 @@
 |---|---|
 | ✅ #H63 Provider email always verified when present | Providers set `EmailVerified` from non-empty email; CompleteAsync forces true |
 | ✅ #M152 Drop legacy same-email re-attach/promote | Unverified rows not reused; verified match or create |
-| ✅ #M154 OAuth always-verified tests | Facebook/Microsoft/Google verified; squat→new account; sole FB unlink blocked; secondary verified FB unlink → fork on re-login |
+| ✅ #M154 OAuth always-verified tests | Facebook/Microsoft/Google verified; squat→new account; sole FB unlink blocked; secondary verified FB unlink → fork; `EnsureProviderEmailVerified` unit coverage |
 | ✅ #L45 CHANGELOG drop orphan `v2.17.1` | Folded into 2.18.0 / removed reuse bullets |
 | ✅ #L47 FLOWS / ExternalOAuthProfile docs | Callback / Facebook / profile XML updated |
 | ✅ #L48 BREAKING + CHANGELOG 2.18.0 | Always-verified; no unverified same-email reuse |

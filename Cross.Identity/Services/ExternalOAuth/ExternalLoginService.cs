@@ -186,17 +186,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         // Product rule: any non-empty provider email is treated as verified for account / collision rules.
-        if (!profile.EmailVerified)
-        {
-            profile = new ExternalOAuthProfile
-            {
-                ProviderUserId = profile.ProviderUserId,
-                Email = profile.Email,
-                EmailVerified = true,
-                DisplayName = profile.DisplayName,
-                AvatarUrl = profile.AvatarUrl,
-            };
-        }
+        profile = EnsureProviderEmailVerified(profile);
 
         if (payload.UserAccountId.HasValue)
         {
@@ -906,6 +896,27 @@ internal sealed class ExternalLoginService : IExternalLoginService
             providerEntity.Name);
     }
 
+
+    /// <summary>
+    /// Product rule: after CompleteAsync has required a non-empty email, treat it as verified
+    /// even when the provider profile left <see cref="ExternalOAuthProfile.EmailVerified"/> false.
+    /// </summary>
+    internal static ExternalOAuthProfile EnsureProviderEmailVerified(ExternalOAuthProfile profile)
+    {
+        if (profile.EmailVerified)
+        {
+            return profile;
+        }
+
+        return new ExternalOAuthProfile
+        {
+            ProviderUserId = profile.ProviderUserId,
+            Email = profile.Email,
+            EmailVerified = true,
+            DisplayName = profile.DisplayName,
+            AvatarUrl = profile.AvatarUrl,
+        };
+    }
 
     private async Task<Guid> ResolveOrCreateUserAsync(
         ProviderEntity providerEntity,
