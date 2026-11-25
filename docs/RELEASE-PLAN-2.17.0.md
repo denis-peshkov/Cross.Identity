@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.17.0` · **ветка:** `release/oauth-unlink-conditional-email` · **база:** `origin/master` (`v2.16.0`) · **дата:** `2026-11-25`
+> **Версия:** `2.17.0` (closed) · **ветка:** `release/oauth-unlink-conditional-email` · **база:** `origin/master` (`v2.16.0`) · **дата:** `2026-11-25`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.17.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.16.0.md`](RELEASE-PLAN-2.16.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · WT **10** файлов · **+490 / −10**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **4** коммита · **10** файлов · **+639 / −10**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → все закрыты в этом плане.
+- не запускался.
 
-**PR:** —
+**PR:** [#36](https://github.com/denis-peshkov/Cross.Identity/pull/36) (`BREAKING:` conditionally remove OAuth email endpoint on unlink).
 
 ---
 
@@ -55,6 +55,8 @@
 | ✅ #M150 Empty ProviderEmail before EntityId | login-only when email blank; EntityId/address only if populated |
 | ✅ #M151 Stale EntityId unlink match | Address-prefer match + clear EntityId on sync superseded rows |
 | ✅ #H62 Retarget EmailVerified from endpoint | Dismiss CR; keep `EmailVerified = preferred.IsVerified` |
+| ✅ #L43 Release-plan delta summary stale | Fixed on finalize: 4 commits · 10 files · +639/−10 |
+| ✅ #L44 Release-plan PR line missing #36 | Fixed on finalize: PR [#36](https://github.com/denis-peshkov/Cross.Identity/pull/36) |
 
 ---
 
@@ -67,4 +69,4 @@
 
 ## Приоритет фиксов
 
-1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.17.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
