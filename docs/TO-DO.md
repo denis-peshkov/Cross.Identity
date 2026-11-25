@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H65` `M154` `L50`
+**Id high-water (не переиспользовать ≤):** `C1` `H66` `M155` `L51`
 
 ---
 
@@ -153,3 +153,5 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth email sync clears `EntityId` on superseded address rows (one login↔endpoint association).
 - Account email retarget to remaining preferred email when primary matched removed address (else clear); `EmailVerified` follows remaining endpoint `IsVerified` (incl. always-verified ExternalProvider).
 - Last-login guard unchanged and folds into `CanUnlink`.
+- OAuth Complete link mode = `UserAccountId` present in state only (authenticated link).
+- `ReturnUrl` containing `ExternalLogins` (e.g. post-login redirect to settings) is sign-in, not link — no `NotAuthorizedException` for anonymous complete.

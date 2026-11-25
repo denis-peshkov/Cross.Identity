@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.19.0` · **ветка:** `release/oauth-link-mode-userid-only` · **база:** `origin/master` (`v2.18.0`) · **дата:** `2026-11-25`
+> **Версия:** `2.19.0` (closed) · **ветка:** `release/oauth-link-mode-userid-only` · **база:** `origin/master` (`v2.18.0`) · **дата:** `2026-11-25`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.19.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.18.0.md`](RELEASE-PLAN-2.18.0.md)
 >
-> Дельта: `origin/master...HEAD` — **0** коммитов · WT **4** файлов · **+22 / −16** (incl. plan). Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **1** коммит · **5** файлов · **+85 / −16**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
 - не запускался.
 
-**PR:** —
+**PR:** [#38](https://github.com/denis-peshkov/Cross.Identity/pull/38) (Fix OAuth link mode to require UserAccountId only).
 
 ---
 
@@ -60,4 +60,4 @@
 
 ## Приоритет фиксов
 
-1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.19.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_
