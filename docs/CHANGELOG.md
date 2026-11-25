@@ -7,6 +7,18 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.19.0 — 25 Nov 2026
+
+### Library
+
+- OAuth Complete: link mode is determined only by `UserAccountId` in state. A `ReturnUrl` containing `ExternalLogins` (post-login redirect to settings) is treated as sign-in, so anonymous login no longer throws "Authentication is required to link".
+
+### Tests
+
+- ExternalLogins returnUrl without UserAccountId completes as sign-in.
+
+---
+
 ## v2.18.0 — 25 Nov 2026
 
 ### Library

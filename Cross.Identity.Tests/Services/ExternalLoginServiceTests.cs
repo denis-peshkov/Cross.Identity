@@ -324,7 +324,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnauthenticatedUser_WhenCompleteAsyncForLinking_ThenThrowsNotAuthorizedAsync()
+    public async Task GivenExternalLoginsReturnUrlWithoutUserAccountId_WhenCompleteAsync_ThenSignsInAsync()
     {
         var payload = new ExternalLoginStatePayload
         {
@@ -338,9 +338,11 @@ public class ExternalLoginServiceTests : EFTestsBase
         SeedProvider("Google");
         var sut = CreateService(GoogleSuccessHandler());
 
-        await FluentActions.Invoking(() => sut.CompleteAsync("code", state, null, null, CancellationToken.None))
-            .Should().ThrowAsync<NotAuthorizedException>()
-            .WithMessage("*Authentication is required*");
+        var completion = await sut.CompleteAsync("code", state, null, null, CancellationToken.None);
+
+        completion.IsLinking.Should().BeFalse();
+        completion.UserAccountId.Should().NotBe(Guid.Empty);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
     }
 
     [Test]
