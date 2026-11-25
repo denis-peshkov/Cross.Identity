@@ -978,14 +978,13 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var userAccountId = Guid.NewGuid();
         var normalizedEmail = profile.Email?.Trim().ToLowerInvariant();
         var now = DateTime.UtcNow;
-        var userName = profile.Email ?? profile.DisplayName ?? profile.ProviderUserId;
 
         var account = new UserAccountEntity
         {
             Id = userAccountId,
             Email = normalizedEmail,
-            UserName = userName,
-            NormalizedUserName = userName.Trim().ToLowerInvariant(),
+            UserName = null,
+            NormalizedUserName = null,
             EmailVerified = profile.EmailVerified && !string.IsNullOrWhiteSpace(normalizedEmail),
             PhoneNumberVerified = false,
             TwoFactorEnabled = false,

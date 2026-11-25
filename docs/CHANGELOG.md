@@ -13,6 +13,7 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 - OAuth: any non-empty provider email is treated as verified (`EmailVerified = true`) for Google / Microsoft / Apple / Facebook / GitHub. CompleteAsync still rejects providers that return no email.
 - Sign-in / registration auto-links only to an existing **verified** same-email account; otherwise creates a new verified account. No legacy re-attach/promote of unverified same-email rows.
+- OAuth new-account path leaves `UserName` / `NormalizedUserName` **null** (no longer invents username from email / display name / provider id).
 
 ### Tests
 

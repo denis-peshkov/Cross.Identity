@@ -361,7 +361,8 @@ public class ExternalLoginServiceTests : EFTestsBase
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
         account.Email.Should().Be("user@example.com");
         account.EmailVerified.Should().BeTrue();
-        account.UserName.Should().Be("user@example.com");
+        account.UserName.Should().BeNull();
+        account.NormalizedUserName.Should().BeNull();
 
         var externalLogin = await Context.UsersExternalLogins.SingleAsync();
         externalLogin.ProviderUserId.Should().Be("google-sub-1");
@@ -476,8 +477,9 @@ public class ExternalLoginServiceTests : EFTestsBase
             IsActive = true,
             Id = squatterUserAccountId,
             Email = "user@example.com",
-            UserName = "squatter",
-            NormalizedUserName = "squatter",
+            // Register-style: username often equals email — must not block OAuth fork.
+            UserName = "user@example.com",
+            NormalizedUserName = "user@example.com",
             EmailVerified = false,
             CreatedAt = DateTime.UtcNow,
             SecurityStamp = Guid.NewGuid(),
@@ -493,7 +495,10 @@ public class ExternalLoginServiceTests : EFTestsBase
         completion.UserAccountId.Should().NotBe(squatterUserAccountId);
         (await Context.UsersAccounts.CountAsync()).Should().Be(2);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
-        (await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId)).EmailVerified.Should().BeTrue();
+        var oauthAccount = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
+        oauthAccount.EmailVerified.Should().BeTrue();
+        oauthAccount.UserName.Should().BeNull();
+        oauthAccount.NormalizedUserName.Should().BeNull();
         (await Context.UsersAccounts.SingleAsync(x => x.Id == squatterUserAccountId)).EmailVerified.Should().BeFalse();
     }
 

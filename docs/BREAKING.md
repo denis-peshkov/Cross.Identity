@@ -49,8 +49,9 @@ Release: [v2.18.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/
 | Missing provider email | Already rejected | Unchanged — `ValidationException`, no account / link |
 | New `UsersAccounts.EmailVerified` | Followed provider attestation | **`true`** for OAuth registrations with email |
 | Same-email sign-in | Verified match required provider attestation; unverified squat threw or forked | Auto-link only to an existing **verified** same-email account; otherwise **new** verified account (unverified rows are not reused) |
+| New OAuth `UserName` | Invented from email / display name / provider user id | **`null`** (and `NormalizedUserName` null) — username is a separate alias; host sets via Register / provisioner / settings |
 
-**Action:** hosts can rely on OAuth sign-in/link producing a verified account email. UI copy that assumed Facebook/Microsoft emails stay unverified should be updated. Do not expect automatic promote/re-link onto legacy unverified same-email rows.
+**Action:** hosts can rely on OAuth sign-in/link producing a verified account email. UI copy that assumed Facebook/Microsoft emails stay unverified should be updated. Do not expect automatic promote/re-link onto legacy unverified same-email rows. Do not assume OAuth registration fills `UserName` from the provider email.
 
 ---
 
