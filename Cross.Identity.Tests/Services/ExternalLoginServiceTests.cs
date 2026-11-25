@@ -2829,6 +2829,71 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
+    public async Task GivenStaleEntityIdOnOldAddress_WhenUnlinkAsync_ThenRemovesCurrentAddressEndpointAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            EmailVerified = true,
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = googleId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "current@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        // Preferred primary + stale EntityId on old address must not block / hijack unlink of current.
+        SeedEndpoint(userAccountId, ChannelEnum.Email, "primary@example.com", isPreferred: true);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "old@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "current@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SetAuthenticatedUser(userAccountId);
+
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(j => j.RevokeAllTokensForUserAsync(
+                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+        await sut.UnlinkAsync("Google", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "current@example.com")).Should().Be(0);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "old@example.com")).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
     public async Task GivenEmptyProviderEmailWithEntityIdEndpoint_WhenUnlinkAsync_ThenLoginOnlyKeepsEndpointAsync()
     {
         var userAccountId = Guid.NewGuid();

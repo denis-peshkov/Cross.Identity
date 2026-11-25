@@ -384,7 +384,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
         bool IsPreferred);
 
     /// <summary>
-    /// Match the email endpoint tied to this external login (by <c>EntityId</c> and/or normalized address).
+    /// Match the email endpoint for the current <paramref name="providerEmail"/>.
+    /// Prefers <c>EntityId</c> + address, then address alone — never a stale <c>EntityId</c> on another address.
     /// </summary>
     private static UserCommunicationEndpointEntity? FindProviderEmailEndpoint(
         IReadOnlyList<UserCommunicationEndpointEntity> emailEndpoints,
@@ -411,24 +412,25 @@ internal sealed class ExternalLoginService : IExternalLoginService
             return null;
         }
 
+        var normalized = ChannelEnum.Email.NormalizeAddress(providerEmail);
+        EmailEndpointUnlinkInfo? addressOnly = null;
         foreach (var endpoint in emailEndpoints)
         {
+            if (!string.Equals(endpoint.Address, normalized, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
             if (endpoint.EntityId == externalLoginId)
             {
                 return endpoint;
             }
+
+            addressOnly ??= endpoint;
         }
 
-        var normalized = ChannelEnum.Email.NormalizeAddress(providerEmail);
-        foreach (var endpoint in emailEndpoints)
-        {
-            if (string.Equals(endpoint.Address, normalized, StringComparison.Ordinal))
-            {
-                return endpoint;
-            }
-        }
-
-        return null;
+        // Current provider address wins over a stale EntityId on a different address.
+        return addressOnly;
     }
 
     /// <summary>
@@ -1090,6 +1092,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
             return;
         }
 
+        var normalized = ChannelEnum.Email.NormalizeAddress(providerEmail);
         await _communicationEndpoints
             .UpsertAsync(
                 userAccountId,
@@ -1100,6 +1103,28 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 entityId: externalLoginId,
                 cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+
+        // Keep one login→endpoint association: drop EntityId from superseded addresses.
+        var stale = await _identityContext.UsersCommunicationEndpoints
+            .Where(x => x.UserAccountId == userAccountId
+                && x.Channel == ChannelEnum.Email
+                && x.EntityId == externalLoginId
+                && x.Address != normalized)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        if (stale.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var endpoint in stale)
+        {
+            endpoint.EntityId = null;
+            endpoint.UpdatedAt = DateTime.UtcNow;
+        }
+
+        await _identityContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
