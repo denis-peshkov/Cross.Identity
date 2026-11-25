@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.18.0` · **ветка:** `release/oauth-email-always-verified` · **база:** `origin/master` (`v2.17.0`) · **дата:** `2026-11-25`
+> **Версия:** `2.18.0` (closed) · **ветка:** `release/oauth-email-always-verified` · **база:** `origin/master` (`v2.17.0`) · **дата:** `2026-11-25`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.18.0
 >
@@ -8,12 +8,12 @@
 >
 > **Предыдущий план:** [`RELEASE-PLAN-2.17.0.md`](RELEASE-PLAN-2.17.0.md)
 >
-> Дельта: `origin/master...HEAD` — **3** коммита · **11** файлов · **+425 / −144**. Open C/H/M/L пустые.
+> Дельта: `origin/master...HEAD` — **4** коммита · **11** файлов · **+439 / −148**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался. → все закрыты в этом плане.
+- не запускался.
 
-**PR:** —
+**PR:** [#37](https://github.com/denis-peshkov/Cross.Identity/pull/37) (`BREAKING:` treat OAuth provider emails as verified when present).
 
 ---
 
@@ -24,7 +24,6 @@
 ## Высокий (логика / licensing / auth model)
 
 ---
-
 
 ## Средний (противоречия / баги контрактов)
 
@@ -56,9 +55,11 @@
 | ✅ #L47 FLOWS / ExternalOAuthProfile docs | Callback / Facebook / profile XML updated |
 | ✅ #L48 BREAKING + CHANGELOG 2.18.0 | Always-verified; no unverified same-email reuse |
 | ✅ #H64 OAuth CreateUserAsync UserName null | Stop inventing username from email/display/provider id; leave null |
+| ✅ #H65 CR: reverse Microsoft always-verified / drop EnsureProviderEmailVerified | Dismissed — contradicts 2.18 product rule (Принято + #H63); Graph/OIDC email presence is trusted |
+| ✅ #L49 BREAKING Action “verified account email” wording | Dismissed — table already scopes new registrations; Action + promote warning accepted as-is |
+| ✅ #L50 Stale RELEASE-PLAN-to-master / ship metadata | Dismissed — refresh deferred; version-plan PR/дельта already point at #37 |
 
 ---
-
 
 ## Что в библиотеке уже нормально
 
@@ -71,4 +72,4 @@
 
 ## Приоритет фиксов
 
-1. Кросс-версионный backlog — [`TO-DO.md`](TO-DO.md).
+_(пусто — релиз `2.18.0` опубликован; открытый backlog → [`TO-DO.md`](TO-DO.md).)_

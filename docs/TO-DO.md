@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H62` `M151` `L44`
+**Id high-water (не переиспользовать ≤):** `C1` `H65` `M154` `L50`
 
 ---
 
@@ -95,7 +95,7 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - OAuth `ReturnUrl` — библиотека только хранит/отдаёт; allowlist open redirect — хост.
 - Refresh + `Empty` при `SessionBindingCheckIp=true` → `ValidationException`; при `false` — прежняя UA/FP логика.
 - Password max 32 в stock `collectForm` — контракт UX/JSON, не hasher/БД.
-- OAuth unverified squat + verified profile → новый verified account (не auto-link).
+- OAuth same-email: auto-link only to an existing **verified** row; otherwise create a new verified account (unverified squat rows are not re-attached / promoted).
 - Unverified email/phone squat (Register / `CreateUserAsync`): несколько unverified-строк с одним адресом OK; `ConflictException` только если адрес уже **verified**; каждый Register — новый `UserAccountId` (не idempotent reuse/resend); первый успешный OTP-verify становится owner. См. [`FLOWS.md`](../Cross.Identity/FLOWS.md) `main.Register`.
 - Audit PII в `auth.Audits` (Ip/UA/Fingerprint) — forensics by design; retention — хост.
 - PII в логах auth steps (email/phone) — forensics; redaction/sink — хост.
@@ -144,7 +144,10 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Pending merge-token mint: `TransactionScopeOption.Suppress` + `IDbContextFactory<IdentityContext>` (fresh connection) so ambient host tx can stay on OAuth callback.
 - Prefer `AddCrossIdentity(configuration, configureDbContext)`; bare overload for pooled/custom hosts that register factory themselves.
 - Linked OAuth email → communication endpoint always verified (`ExternalProvider`); no OTP for that address.
-- `ExternalOAuthProfile.EmailVerified` remains the gate for **account** `EmailVerified` and verified-email collision / merge — not for endpoint sync.
+- Any non-empty provider email → `ExternalOAuthProfile.EmailVerified = true` (providers + CompleteAsync force); missing email still rejected.
+- New OAuth registration sets `UsersAccounts.EmailVerified = true` when email is present.
+- OAuth new account leaves `UserName` / `NormalizedUserName` null (not invented from provider profile).
+- Facebook / Microsoft Graph emails without OIDC attestation are treated as verified when present (product trust of provider-returned address).
 - Unlink removes non-preferred secondary OAuth email endpoint only when user has >1 email endpoint; preferred / sole → ValidationException (UI via `CanUnlink`).
 - Empty `ProviderEmail` → login-only unlink (skip EntityId/address match); populated email → match current address (`EntityId`+address, else address); never bare stale `EntityId`.
 - OAuth email sync clears `EntityId` on superseded address rows (one login↔endpoint association).
