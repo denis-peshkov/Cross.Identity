@@ -38,7 +38,7 @@
 - Unlink removes non-preferred secondary OAuth email endpoint only when user has >1 email endpoint; preferred / sole → ValidationException (UI via `CanUnlink`).
 - Empty `ProviderEmail` → login-only unlink (skip EntityId/address match); populated email → match current address (`EntityId`+address, else address); never bare stale `EntityId`.
 - OAuth email sync clears `EntityId` on superseded address rows (one login↔endpoint association).
-- Account email retarget to remaining preferred email when primary matched removed address (else clear).
+- Account email retarget to remaining preferred email when primary matched removed address (else clear); `EmailVerified` follows remaining endpoint `IsVerified` (incl. always-verified ExternalProvider).
 - Last-login guard unchanged and folds into `CanUnlink`.
 
 ---
@@ -54,6 +54,7 @@
 | ✅ #L42 README CanUnlink / secondary unlink | External OAuth bullet mentions `CanUnlink` + secondary email drop |
 | ✅ #M150 Empty ProviderEmail before EntityId | login-only when email blank; EntityId/address only if populated |
 | ✅ #M151 Stale EntityId unlink match | Address-prefer match + clear EntityId on sync superseded rows |
+| ✅ #H62 Retarget EmailVerified from endpoint | Dismiss CR; keep `EmailVerified = preferred.IsVerified` |
 
 ---
 
