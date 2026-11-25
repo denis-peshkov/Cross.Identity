@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.16.0` → `2.17.0+` | [From 2.16.0 to 2.17.0](#from-2160-to-2170) |
 | `2.15.0` → `2.16.0+` | [From 2.15.0 to 2.16.0](#from-2150-to-2160) |
 | `2.14.0` → `2.15.0+` | [From 2.14.0 to 2.15.0](#from-2140-to-2150) |
 | `2.13.0` → `2.14.0+` | [From 2.13.0 to 2.14.0](#from-2130-to-2140) |
@@ -32,6 +33,22 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.16.0 to 2.17.0
+
+Release: [v2.17.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.17.0).
+
+### OAuth unlink may remove secondary email endpoint + `CanUnlink`
+
+| Area | Was (≤2.16.0) | Now (2.17.0+) |
+|---|---|---|
+| `UnlinkAsync` | Removed `UsersExternalLogins` only (+ stamp / revoke) | Also removes matching **non-preferred** email endpoint when the user has **>1** email endpoint; retargets `UsersAccounts.Email` when it matched the removed address |
+| Preferred / sole email endpoint | Unlink allowed (login-only) | **`ValidationException`** — host should hide Unlink |
+| `ExternalLoginProviderItemDto` | No unlink hint | New **`CanUnlink`** (last-login + preferred/sole email rules) |
+
+**Action:** use `CanUnlink` in Security / linked-providers UI. Treat preferred/sole-email unlink failures as expected validation, not 404. After secondary unlink, account email may change to the remaining preferred address.
 
 ---
 

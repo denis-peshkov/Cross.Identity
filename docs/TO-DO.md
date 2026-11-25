@@ -1,6 +1,6 @@
 ﻿# Cross.Identity — open backlog (`TO-DO`)
 
-**Id high-water (не переиспользовать ≤):** `C1` `H60` `M147` `L40`
+**Id high-water (не переиспользовать ≤):** `C1` `H62` `M151` `L44`
 
 ---
 
@@ -145,3 +145,8 @@ CodeRabbit: в `.cursor/skills/triage/SKILL.md` (и связанных usage) о
 - Prefer `AddCrossIdentity(configuration, configureDbContext)`; bare overload for pooled/custom hosts that register factory themselves.
 - Linked OAuth email → communication endpoint always verified (`ExternalProvider`); no OTP for that address.
 - `ExternalOAuthProfile.EmailVerified` remains the gate for **account** `EmailVerified` and verified-email collision / merge — not for endpoint sync.
+- Unlink removes non-preferred secondary OAuth email endpoint only when user has >1 email endpoint; preferred / sole → ValidationException (UI via `CanUnlink`).
+- Empty `ProviderEmail` → login-only unlink (skip EntityId/address match); populated email → match current address (`EntityId`+address, else address); never bare stale `EntityId`.
+- OAuth email sync clears `EntityId` on superseded address rows (one login↔endpoint association).
+- Account email retarget to remaining preferred email when primary matched removed address (else clear); `EmailVerified` follows remaining endpoint `IsVerified` (incl. always-verified ExternalProvider).
+- Last-login guard unchanged and folds into `CanUnlink`.

@@ -7,6 +7,23 @@ Dates follow [GitHub Releases](https://github.com/denis-peshkov/Cross.Identity/r
 
 ---
 
+## v2.17.0 — 25 Nov 2026
+
+### Library
+
+- OAuth `UnlinkAsync`: when the provider has a matching non-preferred email endpoint and the user has more than one email endpoint, remove that endpoint; if `UsersAccounts.Email` matched, retarget to the remaining preferred email (or clear). Preferred / sole email → `ValidationException`. Empty `ProviderEmail` / no endpoint → login-only unlink. Last-login guard unchanged.
+- `ExternalLoginProviderItemDto.CanUnlink` on `GetAllAsync` overview (same rules + last-login).
+
+### Tests
+
+- Unlink secondary / preferred / sole email; overview `CanUnlink` true/false.
+
+### Documentation
+
+- `docs/BREAKING.md` From 2.16.0→2.17.0; FLOWS Unlink / GetAll notes.
+
+---
+
 ## v2.16.0 — 20 Nov 2026
 
 ### Library
