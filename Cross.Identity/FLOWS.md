@@ -340,7 +340,7 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 
 > Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
 >
-> **Email endpoint on unlink:** when the provider has a matching email endpoint (`EntityId` = login id and/or normalized `ProviderEmail`) that is **not** preferred and the user has **more than one** email endpoint, that endpoint is removed. If `UsersAccounts.Email` matched the removed address, it is retargeted to the remaining preferred email (or cleared). Preferred / sole email → `ValidationException` (host should hide Unlink via `CanUnlink`). Empty `ProviderEmail` / no matching endpoint → login-only unlink (unchanged). Last-login guard unchanged.
+> **Email endpoint on unlink:** when `ProviderEmail` is non-empty and a matching email endpoint exists (`EntityId` = login id, else normalized address) that is **not** preferred and the user has **more than one** email endpoint, that endpoint is removed. If `UsersAccounts.Email` matched the removed address, it is retargeted to the remaining preferred email (or cleared). Preferred / sole email → `ValidationException` (host should hide Unlink via `CanUnlink`). Empty `ProviderEmail` → login-only unlink (no EntityId/address match). Last-login guard unchanged.
 
 ---
 

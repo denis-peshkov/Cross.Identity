@@ -405,17 +405,18 @@ internal sealed class ExternalLoginService : IExternalLoginService
         Guid externalLoginId,
         string? providerEmail)
     {
+        // Empty ProviderEmail → login-only unlink (no EntityId / address match).
+        if (string.IsNullOrWhiteSpace(providerEmail))
+        {
+            return null;
+        }
+
         foreach (var endpoint in emailEndpoints)
         {
             if (endpoint.EntityId == externalLoginId)
             {
                 return endpoint;
             }
-        }
-
-        if (string.IsNullOrWhiteSpace(providerEmail))
-        {
-            return null;
         }
 
         var normalized = ChannelEnum.Email.NormalizeAddress(providerEmail);

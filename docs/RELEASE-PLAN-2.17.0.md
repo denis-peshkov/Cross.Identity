@@ -11,7 +11,7 @@
 > Дельта: `origin/master...HEAD` — **0** коммитов · WT **10** файлов · **+490 / −10**. Open C/H/M/L пустые.
 
 **CodeRabbit:**
-- не запускался.
+- не запускался. → все закрыты в этом плане.
 
 **PR:** —
 
@@ -36,7 +36,7 @@
 ## Принято (осознанный trade-off)
 
 - Unlink removes non-preferred secondary OAuth email endpoint only when user has >1 email endpoint; preferred / sole → ValidationException (UI via `CanUnlink`).
-- Empty `ProviderEmail` / no matching endpoint → login-only unlink (unchanged).
+- Empty `ProviderEmail` → login-only unlink (skip EntityId/address match); populated email → EntityId then address.
 - Account email retarget to remaining preferred email when primary matched removed address (else clear).
 - Last-login guard unchanged and folds into `CanUnlink`.
 
@@ -48,9 +48,10 @@
 |---|---|
 | ✅ #H61 Unlink conditional email endpoint remove | `UnlinkAsync` match EntityId/address; remove secondary; retarget account email |
 | ✅ #M148 `CanUnlink` on overview DTO | Same formula + last-login in `GetAllAsync` |
-| ✅ #M149 Unlink / CanUnlink tests | Secondary remove; preferred/sole reject; overview flags |
+| ✅ #M149 Unlink / CanUnlink tests | Secondary remove; preferred/sole reject; overview flags; empty ProviderEmail keeps endpoint |
 | ✅ #L41 CHANGELOG / BREAKING / FLOWS 2.17.0 | Consumer notes + flow docs |
 | ✅ #L42 README CanUnlink / secondary unlink | External OAuth bullet mentions `CanUnlink` + secondary email drop |
+| ✅ #M150 Empty ProviderEmail before EntityId | login-only when email blank; EntityId/address only if populated |
 
 ---
 
