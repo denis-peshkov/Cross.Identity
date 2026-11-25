@@ -2638,9 +2638,240 @@ public class ExternalLoginServiceTests : EFTestsBase
         google.IsConnected.Should().BeTrue();
         google.ProviderEmail.Should().Be("linked@gmail.com");
         google.AvatarUrl.Should().Be("https://example.com/avatar.png");
+        // No password and only one external → last-login guard.
+        google.CanUnlink.Should().BeFalse();
 
         var microsoft = result.Providers.Single(x => x.Provider == "Microsoft");
         microsoft.IsConnected.Should().BeFalse();
+        microsoft.CanUnlink.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSecondaryNonPreferredOAuthEmail_WhenUnlinkAsync_ThenRemovesEndpointRetargetsAccountEmailAndDropsLoginAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var microsoftId = SeedProvider("Microsoft");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "secondary@example.com",
+            EmailVerified = true,
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = googleId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "secondary@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = microsoftId,
+            ProviderEntity = null!,
+            ProviderUserId = "ms-sub-1",
+            ProviderEmail = "primary@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "primary@example.com",
+            isPreferred: true,
+            source: CommunicationEndpointSource.ExternalProvider);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "secondary@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SetAuthenticatedUser(userAccountId);
+
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(j => j.RevokeAllTokensForUserAsync(
+                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateService(GoogleSuccessHandler(), jwtTokenService: jwt.Object);
+        await sut.UnlinkAsync("Google", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.CountAsync(x => x.ProviderId == googleId)).Should().Be(0);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "secondary@example.com")).Should().Be(0);
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
+        account.Email.Should().Be("primary@example.com");
+        account.EmailVerified.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenPreferredOAuthEmail_WhenUnlinkAsync_ThenThrowsAndKeepsLoginAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = googleId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "primary@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "primary@example.com",
+            isPreferred: true,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "other@example.com",
+            isPreferred: false);
+        SetAuthenticatedUser(userAccountId);
+
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*preferred or only email*");
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x => x.UserAccountId == userAccountId)).Should().Be(2);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSoleEmailEndpoint_WhenUnlinkAsync_ThenThrowsAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "only@example.com",
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = googleId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "only@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "only@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SetAuthenticatedUser(userAccountId);
+
+        var sut = CreateService(GoogleSuccessHandler());
+
+        await FluentActions.Invoking(() => sut.UnlinkAsync("Google", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*preferred or only email*");
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenSecondaryNonPreferred_WhenGetAllAsync_ThenCanUnlinkTrueAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var googleId = SeedProvider("Google");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = googleId,
+            ProviderEntity = null!,
+            ProviderUserId = "google-sub-1",
+            ProviderEmail = "secondary@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SeedEndpoint(userAccountId, ChannelEnum.Email, "primary@example.com", isPreferred: true);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "secondary@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+        SetAuthenticatedUser(userAccountId);
+
+        var sut = CreateService(GoogleSuccessHandler());
+        var result = await sut.GetAllAsync(userAccountId, CancellationToken.None);
+
+        result.Providers.Single(x => x.Provider == "Google").CanUnlink.Should().BeTrue();
     }
 
     [Test]
@@ -2746,14 +2977,17 @@ public class ExternalLoginServiceTests : EFTestsBase
         Guid userAccountId,
         ChannelEnum channel,
         string address,
-        bool isPreferred)
+        bool isPreferred,
+        CommunicationEndpointSource source = CommunicationEndpointSource.Manual,
+        Guid? entityId = null)
     {
         AddToDb(new UserCommunicationEndpointEntity
         {
             Id = Guid.NewGuid(),
             UserAccountId = userAccountId,
             UserAccount = null!,
-            Source = CommunicationEndpointSource.Manual,
+            Source = source,
+            EntityId = entityId,
             Channel = channel,
             Address = address,
             IsVerified = true,

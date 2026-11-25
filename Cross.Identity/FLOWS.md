@@ -339,6 +339,8 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 | `collectResult` | collectResult | `unlinked = externalLoginUnlink.Unlinked`. `next: null` |
 
 > Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). Removes the matching row from `auth.UsersExternalLogins` and revokes all tokens for that user (`EXTERNAL_LOGIN_REMOVED`).
+>
+> **Email endpoint on unlink:** when the provider has a matching email endpoint (`EntityId` = login id and/or normalized `ProviderEmail`) that is **not** preferred and the user has **more than one** email endpoint, that endpoint is removed. If `UsersAccounts.Email` matched the removed address, it is retargeted to the remaining preferred email (or cleared). Preferred / sole email → `ValidationException` (host should hide Unlink via `CanUnlink`). Empty `ProviderEmail` / no matching endpoint → login-only unlink (unchanged). Last-login guard unchanged.
 
 ---
 
@@ -350,7 +352,9 @@ When `Authentication:LockChannelAsEmail` is `true`, `createUser` / `CreateUserAs
 |---|---|---|
 | `collectForm` | collectForm | `UserAccountId` (required Guid string); optional client context. → `externalLoginGetAll` |
 | `externalLoginGetAll` | externalLoginGetAll | `userAccountIdKey` from `collectForm.*`. → `collectResult` |
-| `collectResult` | collectResult | `account_email`, `providers`. `next: null` |
+| `collectResult` | collectResult | `account_email`, `providers` (each row includes `CanUnlink`). `next: null` |
+
+> `CanUnlink` is `false` when not connected, when unlinking would remove the last login method, or when the provider email endpoint is preferred / the only email endpoint.
 
 > Host supplies an authorized `UserAccountId` (see [User-scoped authorization](#user-scoped-authorization-host-responsibility)). A provider is included when it is already linked **or** credentials are configured (`ExternalLoginProviderOptions.IsConfigured`). Disabled-in-options providers are omitted unless linked.
 

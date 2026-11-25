@@ -255,6 +255,27 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 "Cannot unlink the last login method. Set a password or link another provider first.");
         }
 
+        var emailEndpoints = await _identityContext.UsersCommunicationEndpoints
+            .Where(x => x.UserAccountId == userAccountId && x.Channel == ChannelEnum.Email)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var matchedEndpoint = FindProviderEmailEndpoint(emailEndpoints, login.Id, login.ProviderEmail);
+        if (matchedEndpoint is not null)
+        {
+            if (matchedEndpoint.IsPreferred || emailEndpoints.Count == 1)
+            {
+                throw new ValidationException(
+                    "Cannot unlink this provider while its email is the preferred or only email endpoint.");
+            }
+
+            var removedAddress = matchedEndpoint.Address;
+            _identityContext.UsersCommunicationEndpoints.Remove(matchedEndpoint);
+
+            var remainingEmails = emailEndpoints.Where(x => x.Id != matchedEndpoint.Id).ToList();
+            RetargetAccountEmailIfMatched(account, removedAddress, remainingEmails);
+        }
+
         _identityContext.UsersExternalLogins.Remove(login);
         account.SecurityStamp = Guid.NewGuid();
 
@@ -281,7 +302,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var account = await _identityContext.UsersAccounts
             .AsNoTracking()
             .Where(x => x.Id == userAccountId)
-            .Select(x => new { x.Email })
+            .Select(x => new { x.Email, x.PasswordPhc })
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false)
             ?? throw new NotFoundException("Current user account was not found.");
@@ -296,13 +317,25 @@ internal sealed class ExternalLoginService : IExternalLoginService
         var connectedLogins = await _identityContext.UsersExternalLogins
             .AsNoTracking()
             .Where(x => x.UserAccountId == userAccountId)
-            .Select(x => new { x.ProviderId, x.ProviderEmail, x.AvatarUrl, x.ProfileUrl })
+            .Select(x => new { x.Id, x.ProviderId, x.ProviderEmail, x.AvatarUrl, x.ProfileUrl })
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
         var connectedByProviderId = connectedLogins.ToDictionary(
             x => x.ProviderId,
-            x => new { x.ProviderEmail, x.AvatarUrl, x.ProfileUrl });
+            x => x);
+
+        var hasPassword = !string.IsNullOrWhiteSpace(account.PasswordPhc);
+
+        var emailEndpointRows = await _identityContext.UsersCommunicationEndpoints
+            .AsNoTracking()
+            .Where(x => x.UserAccountId == userAccountId && x.Channel == ChannelEnum.Email)
+            .Select(x => new { x.Id, x.EntityId, x.Address, x.IsPreferred })
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var emailEndpoints = emailEndpointRows
+            .Select(x => new EmailEndpointUnlinkInfo(x.Id, x.EntityId, x.Address, x.IsPreferred))
+            .ToList();
 
         var result = new List<ExternalLoginProviderItemDto>();
         foreach (var provider in providers)
@@ -312,6 +345,20 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 continue;
 
             connectedByProviderId.TryGetValue(provider.Id, out var connectedLogin);
+            var canUnlink = false;
+            if (isConnected && connectedLogin is not null)
+            {
+                var remainingExternals = connectedLogins.Count - 1;
+                var isLastLogin = !hasPassword && remainingExternals == 0;
+                var matched = FindProviderEmailEndpointInfo(
+                    emailEndpoints,
+                    connectedLogin.Id,
+                    connectedLogin.ProviderEmail);
+                var blocksOnEmail = matched is { } info
+                    && (info.IsPreferred || emailEndpoints.Count == 1);
+                canUnlink = !isLastLogin && !blocksOnEmail;
+            }
+
             result.Add(new ExternalLoginProviderItemDto
             {
                 Provider = provider.Name,
@@ -319,6 +366,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 IsConnected = isConnected,
                 ProviderEmail = connectedLogin?.ProviderEmail,
                 AvatarUrl = connectedLogin?.AvatarUrl ?? connectedLogin?.ProfileUrl,
+                CanUnlink = canUnlink,
             });
         }
 
@@ -327,6 +375,90 @@ internal sealed class ExternalLoginService : IExternalLoginService
             AccountEmail = account.Email,
             Providers = result,
         };
+    }
+
+    private readonly record struct EmailEndpointUnlinkInfo(
+        Guid Id,
+        Guid? EntityId,
+        string Address,
+        bool IsPreferred);
+
+    /// <summary>
+    /// Match the email endpoint tied to this external login (by <c>EntityId</c> and/or normalized address).
+    /// </summary>
+    private static UserCommunicationEndpointEntity? FindProviderEmailEndpoint(
+        IReadOnlyList<UserCommunicationEndpointEntity> emailEndpoints,
+        Guid externalLoginId,
+        string? providerEmail)
+    {
+        var info = FindProviderEmailEndpointInfo(
+            emailEndpoints.Select(x => new EmailEndpointUnlinkInfo(x.Id, x.EntityId, x.Address, x.IsPreferred)).ToList(),
+            externalLoginId,
+            providerEmail);
+        return info is null
+            ? null
+            : emailEndpoints.First(x => x.Id == info.Value.Id);
+    }
+
+    private static EmailEndpointUnlinkInfo? FindProviderEmailEndpointInfo(
+        IReadOnlyList<EmailEndpointUnlinkInfo> emailEndpoints,
+        Guid externalLoginId,
+        string? providerEmail)
+    {
+        foreach (var endpoint in emailEndpoints)
+        {
+            if (endpoint.EntityId == externalLoginId)
+            {
+                return endpoint;
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(providerEmail))
+        {
+            return null;
+        }
+
+        var normalized = ChannelEnum.Email.NormalizeAddress(providerEmail);
+        foreach (var endpoint in emailEndpoints)
+        {
+            if (string.Equals(endpoint.Address, normalized, StringComparison.Ordinal))
+            {
+                return endpoint;
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// When the removed address was the account primary email, point it at a remaining preferred email
+    /// (or clear it) so the address can be claimed by a new registration.
+    /// </summary>
+    private static void RetargetAccountEmailIfMatched(
+        UserAccountEntity account,
+        string removedAddress,
+        IReadOnlyList<UserCommunicationEndpointEntity> remainingEmailEndpoints)
+    {
+        var accountEmail = string.IsNullOrWhiteSpace(account.Email)
+            ? null
+            : ChannelEnum.Email.NormalizeAddress(account.Email);
+        if (!string.Equals(accountEmail, removedAddress, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var preferredEmail = remainingEmailEndpoints.FirstOrDefault(x => x.IsPreferred)
+            ?? remainingEmailEndpoints.OrderByDescending(x => x.IsVerified).FirstOrDefault();
+
+        if (preferredEmail is null)
+        {
+            account.Email = null;
+            account.EmailVerified = false;
+            return;
+        }
+
+        account.Email = preferredEmail.Address;
+        account.EmailVerified = preferredEmail.IsVerified;
     }
 
     private bool IsProviderConfigured(string providerName)
