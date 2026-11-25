@@ -135,8 +135,11 @@ internal interface IExternalLoginService
     /// Provider is not enabled, is not linked to the user, or the user account was not found.
     /// </exception>
     /// <exception cref="ValidationException">
-    /// <paramref name="userAccountId"/> is empty, or unlinking would leave the user with no login method
-    /// (no password and no other external logins).
+    /// <paramref name="userAccountId"/> is empty; unlinking would leave the user with no login method
+    /// (no password and no other external logins); or the provider email endpoint is preferred /
+    /// the only email endpoint (host should hide Unlink via <c>CanUnlink</c>).
+    /// When the provider has a non-preferred secondary email endpoint, that endpoint is removed and
+    /// <c>UsersAccounts.Email</c> is retargeted to the remaining preferred email when it matched.
     /// </exception>
     Task UnlinkAsync(
         string provider,

@@ -41,4 +41,11 @@ public sealed class ExternalLoginProviderItemDto
     /// <c>AvatarUrl ?? ProfileUrl</c>).
     /// </summary>
     public string? AvatarUrl { get; init; }
+
+    /// <summary>
+    /// <c>true</c> when the host may offer Unlink for this connected provider.
+    /// <c>false</c> when not connected, when unlinking would remove the last login method,
+    /// or when the provider email endpoint is preferred / the only email endpoint.
+    /// </summary>
+    public bool CanUnlink { get; init; }
 }
