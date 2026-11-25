@@ -66,11 +66,12 @@ internal static class ExternalOAuthProviders
         using var document = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false), cancellationToken: cancellationToken).ConfigureAwait(false);
         var root = document.RootElement;
 
+        var googleEmail = root.TryGetProperty("email", out var email) ? email.GetString() : null;
         return new ExternalOAuthProfile
         {
             ProviderUserId = root.GetProperty("sub").GetString() ?? string.Empty,
-            Email = root.TryGetProperty("email", out var email) ? email.GetString() : null,
-            EmailVerified = root.TryGetProperty("email_verified", out var emailVerified) && emailVerified.GetBoolean(),
+            Email = googleEmail,
+            EmailVerified = !string.IsNullOrWhiteSpace(googleEmail),
             DisplayName = root.TryGetProperty("name", out var name) ? name.GetString() : null,
             AvatarUrl = root.TryGetProperty("picture", out var picture) ? picture.GetString() : null,
         };
@@ -98,11 +99,8 @@ internal static class ExternalOAuthProviders
                 ? upn.GetString()
                 : null;
 
-        // Graph mail/UPN alone is not mailbox attestation (admin-editable / non-SMTP UPN).
-        // EmailVerified only when OIDC userinfo supplies a non-empty email AND email_verified.
+        // Prefer OIDC userinfo email when present; otherwise Graph mail/UPN.
         string? email = graphEmail;
-        string? oidcEmailAddress = null;
-        var oidcEmailVerified = false;
 
         using var userInfoRequest = new HttpRequestMessage(HttpMethod.Get, "https://graph.microsoft.com/oidc/userinfo");
         userInfoRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken);
@@ -120,20 +118,16 @@ internal static class ExternalOAuthProviders
                 var oidcEmailValue = oidcEmail.GetString();
                 if (!string.IsNullOrWhiteSpace(oidcEmailValue))
                 {
-                    oidcEmailAddress = oidcEmailValue;
                     email = oidcEmailValue;
                 }
             }
-
-            oidcEmailVerified = userInfo.TryGetProperty("email_verified", out var verifiedNode)
-                && verifiedNode.ValueKind == JsonValueKind.True;
         }
 
         return new ExternalOAuthProfile
         {
             ProviderUserId = me.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailVerified = oidcEmailVerified && !string.IsNullOrWhiteSpace(oidcEmailAddress),
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
             DisplayName = me.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
         };
     }
@@ -236,22 +230,11 @@ internal static class ExternalOAuthProviders
             ? emailClaim
             : null;
 
-        // Apple may emit email_verified as boolean or string "true"/"false".
-        var emailVerified = false;
-        if (jwt.TryGetPayloadValue<bool>("email_verified", out var verifiedBool))
-        {
-            emailVerified = verifiedBool;
-        }
-        else if (jwt.TryGetPayloadValue<string>("email_verified", out var verifiedString))
-        {
-            emailVerified = string.Equals(verifiedString, "true", StringComparison.OrdinalIgnoreCase);
-        }
-
         return Task.FromResult(new ExternalOAuthProfile
         {
             ProviderUserId = jwt.Subject ?? string.Empty,
             Email = email,
-            EmailVerified = emailVerified && !string.IsNullOrWhiteSpace(email),
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
             // Given/family name are only posted once via form_post `user` JSON — not in id_token.
             DisplayName = null,
             AvatarUrl = null,
@@ -296,12 +279,11 @@ internal static class ExternalOAuthProviders
             avatarUrl = pictureUrl.GetString();
         }
 
-        // Graph may return email when granted, but has no OIDC email_verified attestation.
         return new ExternalOAuthProfile
         {
             ProviderUserId = root.GetProperty("id").GetString() ?? string.Empty,
             Email = email,
-            EmailVerified = false,
+            EmailVerified = !string.IsNullOrWhiteSpace(email),
             DisplayName = root.TryGetProperty("name", out var nameNode) && nameNode.ValueKind == JsonValueKind.String
                 ? nameNode.GetString()
                 : null,
