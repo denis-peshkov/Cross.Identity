@@ -1,6 +1,6 @@
 ﻿Ниже — **проблемы внутри библиотеки**, по уровню критичности. Аудит по дельте ветки относительно базовой ветки (обычно `master`).
 
-> **Версия:** `2.18.0` (closed) · **ветка:** `release/oauth-email-always-verified` · **база:** `origin/master` (`v2.17.0`) · **дата:** `2026-11-25`
+> **Версия:** `2.18.0` (published / closed) · **ветка:** `release/oauth-email-always-verified` · **база:** `origin/master` (`v2.17.0`) · **дата:** `2026-11-25`
 >
 > **Релиз (если есть):** https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.18.0
 >

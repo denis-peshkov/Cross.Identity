@@ -139,13 +139,9 @@ internal sealed class ExternalLoginService : IExternalLoginService
         }
 
         var payload = await ResolveStateAsync(state, cancellationToken).ConfigureAwait(false);
-        var isLinking = payload.UserAccountId.HasValue
-            || IsExternalLoginLinkReturnUrl(payload.ReturnUrl);
-
-        if (isLinking && !payload.UserAccountId.HasValue)
-        {
-            throw new NotAuthorizedException("Authentication is required to link an external login.");
-        }
+        // Link mode only when initiate stamped UserAccountId (authenticated link).
+        // ReturnUrl may contain "ExternalLogins" after login redirect — that is sign-in, not link.
+        var isLinking = payload.UserAccountId.HasValue;
 
         if (!ExternalOAuthProviders.TryGet(payload.Provider, out var definition))
         {
@@ -1185,10 +1181,6 @@ internal sealed class ExternalLoginService : IExternalLoginService
             return profile;
         }
     }
-
-    private static bool IsExternalLoginLinkReturnUrl(string? returnUrl)
-        => !string.IsNullOrWhiteSpace(returnUrl)
-           && returnUrl.Contains("ExternalLogins", StringComparison.OrdinalIgnoreCase);
 
     private static string EncodeState(ExternalLoginStatePayload payload)
         => Base64UrlEncode(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(payload)));
