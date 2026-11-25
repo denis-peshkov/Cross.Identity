@@ -467,7 +467,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithVerifiedEmail_ThenCreatesVerifiedAccountAsync()
+    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithEmail_ThenCreatesNewVerifiedAccountAsync()
     {
         var squatterUserAccountId = Guid.NewGuid();
         SeedProvider("Google");
@@ -493,14 +493,13 @@ public class ExternalLoginServiceTests : EFTestsBase
         completion.UserAccountId.Should().NotBe(squatterUserAccountId);
         (await Context.UsersAccounts.CountAsync()).Should().Be(2);
         (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
-        var oauthAccount = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
-        oauthAccount.EmailVerified.Should().BeTrue();
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId)).EmailVerified.Should().BeTrue();
         (await Context.UsersAccounts.SingleAsync(x => x.Id == squatterUserAccountId)).EmailVerified.Should().BeFalse();
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenVerifiedEmailAccount_WhenOAuthWithUnverifiedEmail_ThenDoesNotLinkAsync()
+    public async Task GivenVerifiedEmailAccount_WhenOAuthWithEmail_ThenLinksExistingVerifiedAccountAsync()
     {
         var userAccountId = Guid.NewGuid();
         SeedProvider("Google");
@@ -535,16 +534,17 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
-            .Should().ThrowAsync<ValidationException>()
-            .WithMessage("*email already exists*");
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+        completion.UserAccountId.Should().Be(userAccountId);
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.UserAccountId.Should().Be(userAccountId);
+        login.ProviderUserId.Should().Be("google-sub-1");
     }
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithUnverifiedEmail_ThenDoesNotCreateSecondAccountAsync()
+    public async Task GivenUnverifiedEmailSquat_WhenOAuthWithProviderUnverifiedClaim_ThenCreatesNewVerifiedAccountAsync()
     {
         var squatterUserAccountId = Guid.NewGuid();
         SeedProvider("Google");
@@ -579,12 +579,14 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Google", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
-            .Should().ThrowAsync<ValidationException>()
-            .WithMessage("*email already exists*");
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        (await Context.UsersAccounts.CountAsync()).Should().Be(1);
-        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+        completion.UserAccountId.Should().NotBe(squatterUserAccountId);
+        (await Context.UsersAccounts.CountAsync()).Should().Be(2);
+        (await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId)).EmailVerified.Should().BeTrue();
+        var login = await Context.UsersExternalLogins.SingleAsync();
+        login.UserAccountId.Should().Be(completion.UserAccountId);
+        login.ProviderUserId.Should().Be("google-sub-squat");
     }
 
     [Test]
@@ -1499,7 +1501,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMicrosoftGraphMailWithoutEmailVerified_WhenCompleteAsync_ThenCreatesUnverifiedAccountAsync()
+    public async Task GivenMicrosoftGraphMailWithoutEmailVerified_WhenCompleteAsync_ThenCreatesVerifiedAccountAsync()
     {
         SeedProvider("Microsoft");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -1539,7 +1541,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
         account.Email.Should().Be("ms-unverified@example.com");
-        account.EmailVerified.Should().BeFalse();
+        account.EmailVerified.Should().BeTrue();
 
         var endpoint = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
             x.UserAccountId == completion.UserAccountId && x.Address == "ms-unverified@example.com");
@@ -1549,7 +1551,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenMicrosoftEmailVerifiedWithoutOidcEmail_WhenCompleteAsync_ThenGraphMailRemainsUnverifiedAsync()
+    public async Task GivenMicrosoftEmailVerifiedWithoutOidcEmail_WhenCompleteAsync_ThenGraphMailIsVerifiedAsync()
     {
         SeedProvider("Microsoft");
         var handler = new OAuthTestHttpHandler(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
@@ -1589,7 +1591,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == completion.UserAccountId);
         account.Email.Should().Be("graph-only@example.com");
-        account.EmailVerified.Should().BeFalse();
+        account.EmailVerified.Should().BeTrue();
 
         var endpoint = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
             x.UserAccountId == completion.UserAccountId && x.Address == "graph-only@example.com");
@@ -1599,7 +1601,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
     [Test]
     [Category(TestCategory.INTEGRATION)]
-    public async Task GivenVerifiedEmailAccount_WhenMicrosoftWithoutEmailVerified_ThenDoesNotLinkAsync()
+    public async Task GivenVerifiedEmailAccount_WhenMicrosoftWithEmail_ThenLinksExistingVerifiedAccountAsync()
     {
         var userAccountId = Guid.NewGuid();
         SeedProvider("Microsoft");
@@ -1650,11 +1652,10 @@ public class ExternalLoginServiceTests : EFTestsBase
         var url = await sut.InitiateAsync("Microsoft", null, null, CancellationToken.None);
         var state = ExtractState(url);
 
-        await FluentActions.Invoking(() => sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None))
-            .Should().ThrowAsync<ValidationException>()
-            .WithMessage("*email already exists*");
+        var completion = await sut.CompleteAsync("auth-code", state, null, null, CancellationToken.None);
 
-        (await Context.UsersExternalLogins.CountAsync()).Should().Be(0);
+        completion.UserAccountId.Should().Be(userAccountId);
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
     }
 
     [Test]
@@ -2346,7 +2347,7 @@ public class ExternalLoginServiceTests : EFTestsBase
 
         var user = await Context.UsersAccounts.SingleAsync();
         user.Email.Should().Be("fb.user@example.com");
-        user.EmailVerified.Should().BeFalse();
+        user.EmailVerified.Should().BeTrue();
 
         var login = await Context.UsersExternalLogins.SingleAsync();
         login.ProviderUserId.Should().Be("1029384756");
@@ -2355,6 +2356,132 @@ public class ExternalLoginServiceTests : EFTestsBase
         login.AvatarUrl.Should().Be("https://platform-lookaside.fbsbx.com/avatar.png");
         completion.UserAccountId.Should().Be(user.Id);
         completion.IsLinking.Should().BeFalse();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookSolePreferredEmail_WhenUnlinkAsync_ThenThrowsAndKeepsLoginAsync()
+    {
+        SeedProvider("Facebook");
+        var handler = FacebookSuccessHandler();
+        var sut = CreateService(
+            handler,
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            });
+
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var first = await sut.CompleteAsync("auth-code", ExtractState(url), null, null, CancellationToken.None);
+
+        // Password clears last-login guard; sole/preferred OAuth email still blocks UnlinkAsync.
+        var account = await Context.UsersAccounts.SingleAsync(x => x.Id == first.UserAccountId);
+        account.PasswordPhc = "argon2-placeholder";
+        await Context.SaveChangesAsync();
+
+        await FluentActions.Invoking(() =>
+                sut.UnlinkAsync("Facebook", first.UserAccountId, HostSuppliedClientContext.Empty, CancellationToken.None))
+            .Should()
+            .ThrowAsync<ValidationException>()
+            .WithMessage("*preferred or only email*");
+
+        (await Context.UsersExternalLogins.CountAsync()).Should().Be(1);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x =>
+            x.UserAccountId == first.UserAccountId && x.Address == "fb.user@example.com")).Should().Be(1);
+        account = await Context.UsersAccounts.SingleAsync(x => x.Id == first.UserAccountId);
+        account.Email.Should().Be("fb.user@example.com");
+        account.EmailVerified.Should().BeTrue();
+    }
+
+    [Test]
+    [Category(TestCategory.INTEGRATION)]
+    public async Task GivenFacebookSecondaryVerifiedEmail_WhenUnlinkAsync_ThenRemovesEndpointAndReloginCreatesNewAccountAsync()
+    {
+        var userAccountId = Guid.NewGuid();
+        var facebookId = SeedProvider("Facebook");
+        var loginId = Guid.NewGuid();
+        AddToDb(new UserAccountEntity
+        {
+            IsActive = true,
+            Id = userAccountId,
+            Email = "primary@example.com",
+            EmailVerified = true,
+            UserName = "user",
+            NormalizedUserName = "user",
+            PasswordPhc = "$pbkdf2$has-password",
+            CreatedAt = DateTime.UtcNow,
+            SecurityStamp = Guid.NewGuid(),
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        AddToDb(new UserExternalLoginEntity
+        {
+            Id = loginId,
+            UserAccountId = userAccountId,
+            UserAccount = null!,
+            ProviderId = facebookId,
+            ProviderEntity = null!,
+            ProviderUserId = "1029384756",
+            ProviderEmail = "fb.user@example.com",
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid(),
+        });
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "primary@example.com",
+            isPreferred: true,
+            source: CommunicationEndpointSource.Manual);
+        SeedEndpoint(
+            userAccountId,
+            ChannelEnum.Email,
+            "fb.user@example.com",
+            isPreferred: false,
+            source: CommunicationEndpointSource.ExternalProvider,
+            entityId: loginId);
+
+        var secondaryBefore = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "fb.user@example.com");
+        secondaryBefore.IsVerified.Should().BeTrue();
+
+        var jwt = new Mock<IJwtTokenService>();
+        jwt.Setup(j => j.RevokeAllTokensForUserAsync(
+                userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var sut = CreateService(
+            FacebookSuccessHandler(),
+            options =>
+            {
+                options.Providers["Facebook"] = new ExternalLoginProviderOptions
+                {
+                    ClientId = "fb-client",
+                    ClientSecret = "fb-secret",
+                };
+            },
+            jwtTokenService: jwt.Object);
+
+        await sut.UnlinkAsync("Facebook", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None);
+
+        (await Context.UsersExternalLogins.CountAsync(x => x.ProviderId == facebookId)).Should().Be(0);
+        (await Context.UsersCommunicationEndpoints.CountAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "fb.user@example.com")).Should().Be(0);
+        var original = await Context.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
+        original.Email.Should().Be("primary@example.com");
+        original.EmailVerified.Should().BeTrue();
+
+        // Real Unlink removed the verified FB address → next sign-in cannot match the old account.
+        var url = await sut.InitiateAsync("Facebook", null, null, CancellationToken.None);
+        var second = await sut.CompleteAsync("auth-code", ExtractState(url), null, null, CancellationToken.None);
+
+        second.UserAccountId.Should().NotBe(userAccountId);
+        (await Context.UsersAccounts.CountAsync()).Should().Be(2);
+        var forked = await Context.UsersAccounts.SingleAsync(x => x.Id == second.UserAccountId);
+        forked.Email.Should().Be("fb.user@example.com");
+        forked.EmailVerified.Should().BeTrue();
     }
 
     [Test]
@@ -2705,6 +2832,11 @@ public class ExternalLoginServiceTests : EFTestsBase
             entityId: loginId);
         SetAuthenticatedUser(userAccountId);
 
+        var secondaryBefore = await Context.UsersCommunicationEndpoints.SingleAsync(x =>
+            x.UserAccountId == userAccountId && x.Address == "secondary@example.com");
+        secondaryBefore.IsVerified.Should().BeTrue();
+        secondaryBefore.IsPreferred.Should().BeFalse();
+
         var jwt = new Mock<IJwtTokenService>();
         jwt.Setup(j => j.RevokeAllTokensForUserAsync(
                 userAccountId, RefreshTokenRevokedReason.EXTERNAL_LOGIN_REMOVED, It.IsAny<HostSuppliedClientContext>(), It.IsAny<CancellationToken>()))
@@ -2714,6 +2846,7 @@ public class ExternalLoginServiceTests : EFTestsBase
         await sut.UnlinkAsync("Google", userAccountId, HostSuppliedClientContext.Empty, CancellationToken.None);
 
         (await Context.UsersExternalLogins.CountAsync(x => x.ProviderId == googleId)).Should().Be(0);
+        // Verified secondary OAuth email is still removed (IsVerified does not protect unlink).
         (await Context.UsersCommunicationEndpoints.CountAsync(x =>
             x.UserAccountId == userAccountId && x.Address == "secondary@example.com")).Should().Be(0);
         var account = await Context.UsersAccounts.SingleAsync(x => x.Id == userAccountId);
@@ -3128,6 +3261,21 @@ public class ExternalLoginServiceTests : EFTestsBase
             .Returns(Task.CompletedTask);
         return jwt;
     }
+
+    private static OAuthTestHttpHandler FacebookSuccessHandler()
+        => new(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>
+        {
+            ["https://graph.facebook.com/v21.0/oauth/access_token"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new { access_token = "fb-token" }),
+            ["https://graph.facebook.com/v21.0/me"] = _ =>
+                OAuthTestHttpHandler.JsonResponse(HttpStatusCode.OK, new
+                {
+                    id = "1029384756",
+                    name = "Facebook User",
+                    email = "fb.user@example.com",
+                    picture = new { data = new { url = "https://platform-lookaside.fbsbx.com/avatar.png" } },
+                }),
+        });
 
     private static OAuthTestHttpHandler GoogleSuccessHandler()
         => new(new Dictionary<string, Func<HttpRequestMessage, HttpResponseMessage>>

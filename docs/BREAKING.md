@@ -5,6 +5,7 @@ Sections are **newest first** (top) → **oldest last** (bottom). When skipping 
 
 | Upgrade path | Section |
 |---|---|
+| `2.17.x` → `2.18.0+` | [From 2.17.x to 2.18.0](#from-217x-to-2180) |
 | `2.16.0` → `2.17.0+` | [From 2.16.0 to 2.17.0](#from-2160-to-2170) |
 | `2.15.0` → `2.16.0+` | [From 2.15.0 to 2.16.0](#from-2150-to-2160) |
 | `2.14.0` → `2.15.0+` | [From 2.14.0 to 2.15.0](#from-2140-to-2150) |
@@ -33,6 +34,23 @@ There was no `2.1.0` package — next published release after [v2.0.0](https://g
 DB scripts: [`Infrastructure/Scripts/README.md`](../Infrastructure/Scripts/README.md).
 
 Breaking-change details live **only** in this file. [`Cross.Identity/config.nuspec`](../Cross.Identity/config.nuspec) `releaseNotes` should link here and must not duplicate the versioned sections.
+
+---
+
+## From 2.17.x to 2.18.0
+
+Release: [v2.18.0](https://github.com/denis-peshkov/Cross.Identity/releases/tag/v2.18.0).
+
+### OAuth provider email always verified when present
+
+| Area | Was (≤2.17.x) | Now (2.18.0+) |
+|---|---|---|
+| `ExternalOAuthProfile.EmailVerified` | Provider-specific (Facebook / Microsoft Graph often `false`) | **`true` whenever email is non-empty** (all providers); CompleteAsync also forces this |
+| Missing provider email | Already rejected | Unchanged — `ValidationException`, no account / link |
+| New `UsersAccounts.EmailVerified` | Followed provider attestation | **`true`** for OAuth registrations with email |
+| Same-email sign-in | Verified match required provider attestation; unverified squat threw or forked | Auto-link only to an existing **verified** same-email account; otherwise **new** verified account (unverified rows are not reused) |
+
+**Action:** hosts can rely on OAuth sign-in/link producing a verified account email. UI copy that assumed Facebook/Microsoft emails stay unverified should be updated. Do not expect automatic promote/re-link onto legacy unverified same-email rows.
 
 ---
 

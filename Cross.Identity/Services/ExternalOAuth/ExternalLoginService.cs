@@ -185,6 +185,19 @@ internal sealed class ExternalLoginService : IExternalLoginService
                 "External provider did not return an email address. Sign-in cannot continue.");
         }
 
+        // Product rule: any non-empty provider email is treated as verified for account / collision rules.
+        if (!profile.EmailVerified)
+        {
+            profile = new ExternalOAuthProfile
+            {
+                ProviderUserId = profile.ProviderUserId,
+                Email = profile.Email,
+                EmailVerified = true,
+                DisplayName = profile.DisplayName,
+                AvatarUrl = profile.AvatarUrl,
+            };
+        }
+
         if (payload.UserAccountId.HasValue)
         {
             await ThrowIfLinkConflictNeedsMergeAsync(
@@ -942,27 +955,7 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
             if (verifiedUserAccountId != Guid.Empty)
             {
-                if (!profile.EmailVerified)
-                {
-                    throw new ValidationException(
-                        "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
-                }
-
                 return verifiedUserAccountId;
-            }
-
-            if (!profile.EmailVerified)
-            {
-                var squatExists = await _identityContext.UsersAccounts
-                    .AsNoTracking()
-                    .AnyAsync(x => x.Email == normalizedEmail && !x.EmailVerified, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (squatExists)
-                {
-                    throw new ValidationException(
-                        "An account with this email already exists. Sign in with your password, verify your email, or link the provider from account settings.");
-                }
             }
         }
 
@@ -1078,8 +1071,8 @@ internal sealed class ExternalLoginService : IExternalLoginService
 
     /// <summary>
     /// Upserts the provider email as a verified <see cref="CommunicationEndpointSource.ExternalProvider"/> endpoint.
-    /// Linked OAuth emails are trusted without OTP; <see cref="ExternalOAuthProfile.EmailVerified"/> still
-    /// gates new-account <c>UsersAccounts.EmailVerified</c> and email-collision rules.
+    /// Linked OAuth emails are trusted without OTP. CompleteAsync requires a non-empty email and treats it
+    /// as verified for new-account <c>UsersAccounts.EmailVerified</c> and collision rules.
     /// </summary>
     private async Task SyncProviderEmailEndpointAsync(
         Guid userAccountId,
